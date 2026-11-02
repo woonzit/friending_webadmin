@@ -377,12 +377,16 @@ sent with `correction_id` ends with `correction {correction_id, status:
 `admin_review`. The re-research route is still PROVISIONAL (not yet in Core's
 contract): its receipt is read nested (`recheck`) or flat with
 `recheck_status`, never as a second top-level `status` beside the envelope's.
-The test bodies in `tests/fixtures/dates_external_autopub_admin_wire_provisional`
-are the lane's, written to that contract, not Core's bytes (see its
-`provenance.txt`). Vendor Core's genuine corpus
-(`tests/fixtures/dates_external_review_wire` in Core) and move the three routes
-out of `PROVISIONAL_ROUTES` (`tests/datesAdminProjection.test.mts`) before
-release. Core-B's text sends the selector on every Dates Admin request; the
+Core's genuine corpus is vendored byte for byte as
+`tests/fixtures/dates_external_review_wire` (Core 5ac724df, generated at
+4b58099c) and held by `tests/datesExternalReviewWire.test.mts` and the
+projection census. Known Core defect: a note-only correction is served with
+`"proposed": []` where the contract says an object; the console lists that row
+as unreadable and keeps its neighbours. The re-research bodies and a job
+history are still the lane's (`tests/fixtures/dates_external_autopub_admin_wire_provisional`,
+see its `provenance.txt`); `dates_external_event_recheck` stays in
+`PROVISIONAL_ROUTES` (`tests/datesAdminProjection.test.mts`) until Core's are
+vendored. Core-B's text sends the selector on every Dates Admin request; the
 console sends it on the seven routes whose body or input it changes, which by
 the same byte-identity rule is the same contract.
 

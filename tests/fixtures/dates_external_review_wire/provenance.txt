@@ -1,0 +1,30 @@
+dates_external_review_wire: Core's genuine bodies of the D-149 review contract - members'
+corrections (the app's side, member-*) and the console's side (webadmin-*): the external list and
+detail with the external admin contract selector v2, the "reviewed, OK" mark, the corrections queue,
+a rejection and an update that approves a correction, with their refusals.
+
+Source: Core tests/fixtures/dates_external_review_wire at commit
+        5ac724df ("Capture the genuine review console bodies (D-149)") on Core-B's lane branch
+        claude/areyouin-autopub-20261102-core (local, not yet published when copied on 2026-11-02).
+        The corpus was generated at 4b58099cdd25b9bf41eaa3d37110fdaabf32a0ff (manifest.json,
+        `source_commit`) by tests/dates_external_review_fixture_dump.php: real HTTP through
+        public/index.php under PHP's own web server, the console's form transport with its secret
+        and both selectors (manifest.json `selectors.webadmin`).
+How:    BYTE COPIES of the 47 bodies and manifest.json of that directory, extracted with
+        `git archive 5ac724df tests/fixtures/dates_external_review_wire`; nothing was edited.
+        tests/datesExternalReviewWire.test.mts checks every body against the sha256 the manifest
+        names, the manifest's `fixture_set_sha256`, and that this directory holds nothing else but
+        this note. The member-* bodies are the app's side; they are kept so that the copy is whole.
+
+Not yet in this corpus: the re-research route (`dates_external_event_recheck`, Core-B step 3, in
+progress when copied). Its bodies, and the job history of a detail (the genuine detail's `rechecks`
+is empty), are still the lane's PROVISIONAL ones in
+tests/fixtures/dates_external_autopub_admin_wire_provisional.
+
+Known Core defect (reported to the lead): a correction a member sent with only a note is served with
+`"proposed": []` (PHP's empty array) although Core's contract (docs/DATES_EXTERNAL_ADMIN_V1.md,
+"Member corrections") says an empty object. The console reads `proposed` as an object, so that row
+is listed as unreadable (its neighbours stay); three bodies carry it: webadmin-correction-list-pending,
+webadmin-external-detail and webadmin-external-detail-after-correction. They are held to that exact
+behaviour in tests/datesExternalReviewWire.test.mts and left out of the projection census until Core
+encodes the object.

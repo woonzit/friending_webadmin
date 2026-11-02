@@ -1,0 +1,292 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_00000000000000000000000000000001",
+        "activity_id": "act_00000000000000000000000000000001",
+        "revision": 1,
+        "activity_revision": 2,
+        "status": "published",
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "soft_deleted": false,
+        "title": "Community concert 1",
+        "category": "concert",
+        "sensitive": false,
+        "start_at": 1793459600,
+        "end_at": 1793470400,
+        "start_local": "2026-10-31T16:13:20+01:00",
+        "end_local": "2026-10-31T19:13:20+01:00",
+        "timezone": "Europe/Budapest",
+        "city": "Budapest",
+        "country_code": "HU",
+        "venue_name": "Community square 1",
+        "organizer_name": "Community Orchestra",
+        "verification_tier": "admin",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790604800,
+        "credit_channel": "admin",
+        "going_count": 1,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": true,
+        "facts": {
+            "title": "Community concert 1",
+            "summary": {
+                "hu": "Nyilvános koncert a téren.",
+                "en": "A public concert in the square."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1793459600,
+            "end_at": 1793470400,
+            "start_local": "2026-10-31T16:13:20+01:00",
+            "end_local": "2026-10-31T19:13:20+01:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "Europe/Budapest",
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": null,
+            "name": "Community square 1",
+            "formatted_address": "Budapest, Közösségi tér 1.",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    19.0402,
+                    47.4979
+                ]
+            },
+            "city": "Budapest",
+            "city_key": "budapest",
+            "country_code": "HU",
+            "resolved_by": "admin_pin",
+            "resolved_at": 1790000000
+        },
+        "organizer": {
+            "name": "Community Orchestra",
+            "website": "https://orchestra.example.test/"
+        },
+        "links": {
+            "official_url": "https://orchestra.example.test/concert-1",
+            "ticket_url": null
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "admin",
+            "admin_confirmations": {
+                "source": true,
+                "public_venue": true,
+                "timezone": true,
+                "content_safe": true
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790604800
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://events.example.test/concert-1",
+                "hostname": "events.example.test",
+                "source_id": "src_00000000000000000000000000000001",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": false,
+        "credit": {
+            "channel": "admin",
+            "submitted_by_uid": null,
+            "anonymous": true,
+            "first_submitter_uid": null
+        },
+        "editor_input": {
+            "title": "Community concert 1",
+            "summary": {
+                "hu": "Nyilvános koncert a téren.",
+                "en": "A public concert in the square."
+            },
+            "category": "concert",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1793459600,
+            "end_at": 1793470400,
+            "timezone": "Europe/Budapest",
+            "all_day": false,
+            "is_free": true,
+            "price_text": null,
+            "age_restriction": null,
+            "venue": {
+                "name": "Community square 1",
+                "formatted_address": "Budapest, Közösségi tér 1.",
+                "longitude": 19.0402,
+                "latitude": 47.4979,
+                "city": "Budapest",
+                "country_code": "HU"
+            },
+            "organizer": {
+                "name": "Community Orchestra",
+                "website": "https://orchestra.example.test/"
+            },
+            "links": {
+                "official_url": "https://orchestra.example.test/concert-1",
+                "ticket_url": null
+            },
+            "source_url": "https://events.example.test/concert-1",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        },
+        "intake": null,
+        "admin_review": {
+            "reviewed": false,
+            "by": null,
+            "at": null,
+            "at_revision": null
+        },
+        "possible_duplicate_of": null,
+        "rechecks": [],
+        "corrections": [
+            {
+                "correction_id": "cor_00000000000000000000000000000001",
+                "external_event_id": "xev_00000000000000000000000000000001",
+                "activity_id": "act_00000000000000000000000000000001",
+                "event_title": "Community concert 1",
+                "event_status": "published",
+                "event_revision": 1,
+                "event_revision_at_submit": 1,
+                "current": {
+                    "title": "Community concert 1",
+                    "starts_local": "2026-10-31T16:13",
+                    "ends_local": "2026-10-31T19:13",
+                    "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                    "status": null,
+                    "official_url": "https://orchestra.example.test/concert-1"
+                },
+                "proposed": {
+                    "title": "Community jazz concert",
+                    "starts_local": "2026-10-31T16:43",
+                    "venue": "Kossuth tér 2, Budapest"
+                },
+                "note": "The organizer moved it to the other square and starts later.",
+                "submitter": {
+                    "uid": 6401,
+                    "display_name": "Anna"
+                },
+                "created_at": 1790000000,
+                "status": "pending",
+                "decided_by": null,
+                "decided_at": null,
+                "decision_reason": null,
+                "decision_note": null
+            },
+            {
+                "correction_id": "cor_00000000000000000000000000000003",
+                "external_event_id": "xev_00000000000000000000000000000001",
+                "activity_id": "act_00000000000000000000000000000001",
+                "event_title": "Community concert 1",
+                "event_status": "published",
+                "event_revision": 1,
+                "event_revision_at_submit": 1,
+                "current": {
+                    "title": "Community concert 1",
+                    "starts_local": "2026-10-31T16:13",
+                    "ends_local": "2026-10-31T19:13",
+                    "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                    "status": null,
+                    "official_url": "https://orchestra.example.test/concert-1"
+                },
+                "proposed": [],
+                "note": "Check number 1.",
+                "submitter": {
+                    "uid": 6404,
+                    "display_name": "Dani"
+                },
+                "created_at": 1790000000,
+                "status": "pending",
+                "decided_by": null,
+                "decided_at": null,
+                "decision_reason": null,
+                "decision_note": null
+            },
+            {
+                "correction_id": "cor_00000000000000000000000000000002",
+                "external_event_id": "xev_00000000000000000000000000000001",
+                "activity_id": "act_00000000000000000000000000000001",
+                "event_title": "Community concert 1",
+                "event_status": "published",
+                "event_revision": 1,
+                "event_revision_at_submit": 1,
+                "current": {
+                    "title": "Community concert 1",
+                    "starts_local": "2026-10-31T16:13",
+                    "ends_local": "2026-10-31T19:13",
+                    "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                    "status": null,
+                    "official_url": "https://orchestra.example.test/concert-1"
+                },
+                "proposed": {
+                    "ends_local": null,
+                    "status": "postponed",
+                    "official_url": "https://orchestra.example.test/concert-1-new"
+                },
+                "note": null,
+                "submitter": {
+                    "uid": 6402,
+                    "display_name": "Bori"
+                },
+                "created_at": 1790000000,
+                "status": "rejected",
+                "decided_by": "moderator@example.test",
+                "decided_at": 1790000000,
+                "decision_reason": "not_accurate",
+                "decision_note": "The organizer's page still lists the original date."
+            }
+        ]
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

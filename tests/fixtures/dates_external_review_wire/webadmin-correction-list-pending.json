@@ -1,0 +1,122 @@
+{
+    "success": true,
+    "status_code": 200,
+    "corrections": [
+        {
+            "correction_id": "cor_00000000000000000000000000000001",
+            "external_event_id": "xev_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "event_title": "Community concert 1",
+            "event_status": "published",
+            "event_revision": 1,
+            "event_revision_at_submit": 1,
+            "current": {
+                "title": "Community concert 1",
+                "starts_local": "2026-10-31T16:13",
+                "ends_local": "2026-10-31T19:13",
+                "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                "status": null,
+                "official_url": "https://orchestra.example.test/concert-1"
+            },
+            "proposed": {
+                "title": "Community jazz concert",
+                "starts_local": "2026-10-31T16:43",
+                "venue": "Kossuth tér 2, Budapest"
+            },
+            "note": "The organizer moved it to the other square and starts later.",
+            "submitter": {
+                "uid": 6401,
+                "display_name": "Anna"
+            },
+            "created_at": 1790000000,
+            "status": "pending",
+            "decided_by": null,
+            "decided_at": null,
+            "decision_reason": null,
+            "decision_note": null
+        },
+        {
+            "correction_id": "cor_00000000000000000000000000000002",
+            "external_event_id": "xev_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "event_title": "Community concert 1",
+            "event_status": "published",
+            "event_revision": 1,
+            "event_revision_at_submit": 1,
+            "current": {
+                "title": "Community concert 1",
+                "starts_local": "2026-10-31T16:13",
+                "ends_local": "2026-10-31T19:13",
+                "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                "status": null,
+                "official_url": "https://orchestra.example.test/concert-1"
+            },
+            "proposed": {
+                "ends_local": null,
+                "status": "postponed",
+                "official_url": "https://orchestra.example.test/concert-1-new"
+            },
+            "note": null,
+            "submitter": {
+                "uid": 6402,
+                "display_name": "Bori"
+            },
+            "created_at": 1790000000,
+            "status": "pending",
+            "decided_by": null,
+            "decided_at": null,
+            "decision_reason": null,
+            "decision_note": null
+        },
+        {
+            "correction_id": "cor_00000000000000000000000000000003",
+            "external_event_id": "xev_00000000000000000000000000000001",
+            "activity_id": "act_00000000000000000000000000000001",
+            "event_title": "Community concert 1",
+            "event_status": "published",
+            "event_revision": 1,
+            "event_revision_at_submit": 1,
+            "current": {
+                "title": "Community concert 1",
+                "starts_local": "2026-10-31T16:13",
+                "ends_local": "2026-10-31T19:13",
+                "venue": "Community square 1, Budapest, Közösségi tér 1.",
+                "status": null,
+                "official_url": "https://orchestra.example.test/concert-1"
+            },
+            "proposed": [],
+            "note": "Check number 1.",
+            "submitter": {
+                "uid": 6404,
+                "display_name": "Dani"
+            },
+            "created_at": 1790000000,
+            "status": "pending",
+            "decided_by": null,
+            "decided_at": null,
+            "decision_reason": null,
+            "decision_note": null
+        }
+    ],
+    "page": 1,
+    "limit": 3,
+    "total": 12,
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

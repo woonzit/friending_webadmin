@@ -20,7 +20,7 @@ import { datesCaseDetail, datesEvidenceRead, datesModerationQueue } from "../lib
 const FIXTURES = new URL("./fixtures/", import.meta.url);
 const CORPORA = ["dates_admin_command_wire", "dates_event_intake_admin_wire", "dates_external_admin_wire", "dates_external_admin_wire_released", "dates_moderation_console_wire",
   "dates_moderation_wire", "dates_event_icons_wire", "dates_external_pins_wire", "dates_suggestion_leaderboard_member_wire", "dates_event_content_wire",
-  "dates_host_moderation_admin_wire"];
+  "dates_host_moderation_admin_wire", "dates_external_review_wire"];
 const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`${corpus}/${file}`, FIXTURES), "utf8"));
 /**
  * Core's host moderation corpus records the route that answered each body in its manifest; an excerpt (the memberships
@@ -32,12 +32,21 @@ const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`
 const HOST_MODERATION_REDUCED = "admin-activity-detail.json";
 const HOST_MODERATION_ROUTES = new Map<string, string | null>((read("dates_host_moderation_admin_wire", "manifest.json").fixtures as Array<{ file: string; route: string; excerpt: boolean }>)
   .map((entry) => [entry.file, entry.excerpt || entry.file === HOST_MODERATION_REDUCED ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
+/**
+ * D-149: Core's review corpus records the consumer and route of each body. Three of its console bodies carry a
+ * note-only correction served as `"proposed": []` (a Core defect: its contract says an object); their projection drops
+ * that one `proposed` by design, so tests/datesExternalReviewWire.test.mts holds them to their exact projection instead.
+ */
+const REVIEW_PROPOSED_ARRAY = ["webadmin-correction-list-pending.json", "webadmin-external-detail.json", "webadmin-external-detail-after-correction.json"];
+const REVIEW_ROUTES = new Map<string, string | null>((read("dates_external_review_wire", "manifest.json").fixtures as Array<{ file: string; route: string; consumer: string }>)
+  .map((entry) => [entry.file, entry.consumer !== "webadmin" || REVIEW_PROPOSED_ARRAY.includes(entry.file) ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** Which route answered a genuine body, by the corpus's file names. `null`: not a console body (the app's). */
 function routeOf(corpus: string, file: string): string | null {
   const name = file.slice(0, -5);
   if (corpus === "dates_host_moderation_admin_wire") return HOST_MODERATION_ROUTES.has(file) ? HOST_MODERATION_ROUTES.get(file) ?? null : "?";
+  if (corpus === "dates_external_review_wire") return file === "provenance.txt" ? null : REVIEW_ROUTES.has(file) ? REVIEW_ROUTES.get(file) ?? null : "?";
   if (corpus === "dates_event_content_wire") return !name.startsWith("admin-") ? null : name === "admin-wall-review" ? "dates_event_content_review" : "dates_event_content";
   // The icon corpus names a file after its route, then "-" and the case (tests/fixtures/dates_event_icons_wire/provenance.txt).
   if (corpus === "dates_event_icons_wire") return name.split("-")[0];
@@ -87,11 +96,11 @@ const GENUINE: Genuine[] = CORPORA.flatMap((corpus) => readdirSync(new URL(`${co
   .flatMap((file) => { const route = routeOf(corpus, file); return route === null ? [] : [{ corpus, file, route, body: read(corpus, file) }]; }));
 const SUCCESSES = GENUINE.filter((item) => item.body.success === true && item.route !== "dates_event_intake_image");
 /**
- * D-149 (T-908): routes whose trees are PROVISIONAL - written from the specification while Core-B finalises the admin
- * contract. No genuine body exists yet; tests/datesExternalReview.test.mts holds them to the provisional fixtures in
- * tests/fixtures/dates_external_autopub_admin_wire_provisional. They leave this list when Core's corpus is vendored.
+ * D-149 (T-908): the route whose tree is still PROVISIONAL - the AI re-research of one event, not yet in Core's review
+ * corpus (Core-B step 3). tests/datesExternalReview.test.mts holds it to the lane's bodies in
+ * tests/fixtures/dates_external_autopub_admin_wire_provisional; it leaves this list when Core's bodies are vendored.
  */
-const PROVISIONAL_ROUTES = ["dates_external_correction_decide", "dates_external_correction_list", "dates_external_event_recheck"];
+const PROVISIONAL_ROUTES = ["dates_external_event_recheck"];
 
 test("every Dates Admin route this console calls has its named fields, and no other route is projected", () => {
   assert.deepEqual(GENUINE.filter((item) => item.route === "?").map((item) => item.file), [], "every genuine body is mapped to its route");
