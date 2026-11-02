@@ -188,7 +188,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       const message = receipt.hold_change === null ? successMessage
         : t(receipt.hold_change === "unchanged" ? (payload.action === "place" ? "legalHoldAlreadyInPlace" : "legalHoldNothingHeld")
           : receipt.hold_change === "placed" ? "legalHoldPlaced" : receipt.hold_change === "amended" ? "legalHoldAmended" : "legalHoldReleased");
-      // Since Core b50e9423 a hold is never refused over media: the receipt names each file it could no longer preserve.
+      // Since Core e5f36ebd a hold is never refused over media: the receipt names each file it could no longer preserve.
       const unavailable = (receipt.media_unavailable ?? []).map((item) => {
         const state = item.state === "deleting" ? t("holdMediaStates.deleting") : t("holdMediaStates.completed");
         return item.scope === "activity_photos" ? t("holdMediaActivityPhotos", { activity: item.activity_id, state })
@@ -202,7 +202,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
       return receipt === null ? null : { message: receipt.existing ? t("trailEvidenceExisting") : successMessage, revision: receipt.revision };
     }
     if (!datesCaseResolutionReceipt(response, payload)) return null;
-    // What the decision did because the host may not publish (Core b50e9423), said instead of the generic wording.
+    // What the decision did because the host may not publish (Core e5f36ebd), said instead of the generic wording.
     const effect = datesCaseResolutionEffect(response);
     return { message: effect === "replacement_withdrawn" ? t("submissionWithdrawn") : effect === "draft_kept" ? t("submissionDraftKept")
       : effect === "restoration_skipped" ? t("restorationSkippedHostUnavailable") : successMessage, revision: (response as { revision: number }).revision };
@@ -238,8 +238,8 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
         : consoleReceipt === null ? null : { message: successMessage, revision: consoleReceipt.revision };
       const outcome = datesCommandOutcome(response, settled !== null, "fresh");
       if (outcome.kind === "refused") {
-        // Two refusals are worded: approval of a submission whose host may not publish (Core b50e9423), after which
-        // `dismiss` is offered; and the hold refused over media a Core before b50e9423 had begun to delete.
+        // Two refusals are worded: approval of a submission whose host may not publish (Core e5f36ebd), after which
+        // `dismiss` is offered; and the hold refused over media a Core before e5f36ebd had begun to delete.
         const hostRefused = action === "dates_moderation_resolve" && outcome.error === "dates-moderation-host-unavailable";
         if (hostRefused) setHostUnavailable(true);
         setFeedback({ tone: "error", text: hostRefused ? t("hostUnavailableRefused")
@@ -377,7 +377,7 @@ function DatesModerationCase({ caseId }: { caseId: string }) {
     if (result === "success") setEscalationReason("");
   }
 
-  /** A decision's name on this case: on a member's submission `dismiss` withdraws it (Core b50e9423, host unavailable). */
+  /** A decision's name on this case: on a member's submission `dismiss` withdraws it (Core e5f36ebd, host unavailable). */
   function resolutionLabel(action: string): string {
     return action === "dismiss" && data !== null && isDatesActivitySubmissionCase(data.case) ? t("withdrawSubmission") : t(`actions.${action}`);
   }

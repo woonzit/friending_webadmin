@@ -16,8 +16,8 @@ import { datesCommandOutcome } from "../lib/datesExternalAdmin.ts";
 // 20261003T023124Z-opus-core-fix-to-lead-t891-core-pin-evidence.md). Against the first pin (33265e46, 61 bodies,
 // set 80c762f2...) three evidence reads were added - after a legal hold was placed, amended and released - and no
 // body changed.
-// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip
-// b50e9423931ebce1f55e23905ceafa1f03f17fea (manifest source cc0d70ec; the AreYouIn port, on live Core e311d69d): the
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, final tip
+// e5f36ebda94a8e6b3590b07e2fc696fb63215d9d (manifest source c2d24033; the AreYouIn port, on live Core 8c8aac82): the
 // three revision-bound place receipts (`admin-hold-selected-placed`, `-unchanged`, `-amended`) gained
 // `media_unavailable: []`, and nothing else moved. Their live bodies are kept in tests/fixtures/dates_ayi_live_e311d69d
 // and the difference is proven from bytes in tests/datesAyiPortCompatibility.test.mts.
@@ -28,8 +28,8 @@ import { datesCommandOutcome } from "../lib/datesExternalAdmin.ts";
 // each request / answer pair the tests of this console use is transcribed from
 // it at the place it is used, with its line.
 const DIRECTORY = new URL("./fixtures/dates_admin_command_wire/", import.meta.url);
-const SOURCE = "cc0d70ece8d9fca31813bb60c15d8f0a02c80950";
-const MANIFEST_SHA = "436526b03e219d6968111cad0f17ba79ae8185fa98943a0baf651a4fb109aff5";
+const SOURCE = "c2d240334430c631fbde0d5cce78fbdd7ad9e79e";
+const MANIFEST_SHA = "1d4e84bef1c1c6da6281338eb88fd299eec385f0619478d2a5aababd00922b48";
 const GENERATOR_SHA = "d65e9154ecdf5e3b0ffd0813bbee1c20f9d05f5ed8fe13a15b7dac62428e6945";
 const SET_SHA = "6e36fff7774b544cca387488a37de30abd3fe6de5a18700c6def62c413014230";
 const hash = (bytes: string | Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -87,7 +87,7 @@ test("the command corpus is Core's capture at the pinned commit: 64 bodies, each
   assert.deepEqual([manifest.schema_version, manifest.contract, manifest.source_commit], [1, "dates-admin-command-v1", SOURCE]);
   assert.equal(manifest.provenance.generator, "tests/dates_admin_command_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
-  assert.equal(manifest.provenance.source_paths.length, 192);
+  assert.equal(manifest.provenance.source_paths.length, 193);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   // The released console's requests get the released keys; the `selected` bodies answer requests that carry a selector.
   assert.match(manifest.provenance.released_console, /without expected_revision/);

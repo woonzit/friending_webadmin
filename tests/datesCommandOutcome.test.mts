@@ -138,7 +138,7 @@ test("the legal hold's receipt says what the command did, bound to the request's
     ["admin-hold-selected-release-unchanged", "release", null, 4, "unchanged", 4]] as const;
   for (const [name, action, reviewAt, expected, change, revision] of EXTENDED) {
     const request = hold(2, action, reviewAt, { expected_revision: expected });
-    // Core b50e9423: a place also lists what it could not preserve - nothing in this capture; a release says nothing of it.
+    // Core e5f36ebd: a place also lists what it could not preserve - nothing in this capture; a release says nothing of it.
     assert.deepEqual(datesLegalHoldCommandReceipt(command(name), request), { hold_change: change, revision, media_unavailable: action === "place" ? [] : null }, name);
     // The same answer to another revision, another action or another case is not this command's receipt.
     assert.equal(datesLegalHoldCommandReceipt(command(name), { ...request, expected_revision: expected + 1 }), null, `${name} +1`);
@@ -338,7 +338,7 @@ test("legal hold: Core's genuine answers say what the command did, the revision 
   }
 });
 
-test("AreYouIn port (Core b50e9423): a host who cannot publish is said and offers Dismiss, the withdrawal is said, and a hold names what it could not preserve", async () => {
+test("AreYouIn port (Core e5f36ebd): a host who cannot publish is said and offers Dismiss, the withdrawal is said, and a hold names what it could not preserve", async () => {
   // DERIVED: Core's refusal of the approval (DatesModerationTargetService, 409), in Core's envelope as every refusal of the corpus.
   const hostRefusal = core("dates-moderation-host-unavailable", 409);
   const resolve = (action: string, revision = 2, caseId = `cas_${"4".padStart(32, "0")}`) => ({ kind: "resolve", label: action, payload: { case_id: caseId,
@@ -356,13 +356,13 @@ test("AreYouIn port (Core b50e9423): a host who cannot publish is said and offer
     assert.deepEqual(plain(h.state.Feedback), { tone: "error", text: `operationFailed:${body.error}` }, action);
     assert.equal(h.writes.includes("HostUnavailable"), false, action);
   }
-  // A Core before b50e9423 refused a hold over media it had begun to delete: worded, still a refusal.
+  // A Core before e5f36ebd refused a hold over media it had begun to delete: worded, still a refusal.
   const purge = caseHarness(() => core("dates-legal-hold-media-purge-started", 409)); purge.api.prepareLegalHold(submit); await purge.api.executeConfirmed();
   assert.deepEqual(plain(purge.state.Feedback), { tone: "error", text: "legalHoldMediaPurgeStarted" });
   assert.equal(datesCommandOutcome(core("dates-legal-hold-media-purge-started", 409), false, "fresh").kind, "refused");
 
   // DERIVED from Core's genuine dismissal receipt (command corpus, case 4 at revision 2) with the target result Core's
-  // withdrawal writes (DatesModerationCommandService::withdrawUnavailableHostsReplacement, b50e9423).
+  // withdrawal writes (DatesModerationCommandService::withdrawUnavailableHostsReplacement, e5f36ebd).
   const genuine = command("admin-resolve-dismiss");
   const replacement = { ...genuine, target_result: { ...genuine.target_result, target_path: "pending_public_revision",
     before: { pending_revision: 3, moderation_state: "pending" }, after: { pending_public_revision: null, withdrawn: "host_unavailable" } } };

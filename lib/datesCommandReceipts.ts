@@ -126,7 +126,7 @@ export function datesCaseResolutionReceipt(value: unknown, request: Fields): boo
 }
 
 /**
- * What a resolution did to its target because the host may not publish (Core b50e9423), read from the receipt's
+ * What a resolution did to its target because the host may not publish (Core e5f36ebd), read from the receipt's
  * `target_result` (DatesModerationCommandService::withdrawUnavailableHostsReplacement, DatesModerationTargetService::
  * skippedDecisionTarget):
  * - `replacement_withdrawn`: `dismiss` withdrew the waiting replacement (`target_path: "pending_public_revision"`,

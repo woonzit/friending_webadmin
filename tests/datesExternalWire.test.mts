@@ -29,14 +29,14 @@ const DIRECTORY = new URL("./fixtures/dates_external_admin_wire/", import.meta.u
 // (`case.revision` 3 -> 4), admin-moderation-detail-purged (`case.revision` 3 -> 5). No key changed; the generator is
 // the same file (same digest); the resolution request of the capture now carries `expected_revision: 3`
 // (tests/support/dates_external_console_capture.php at 33265e46). The other 134 bodies are byte-identical to main's.
-// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip
-// b50e9423931ebce1f55e23905ceafa1f03f17fea (manifest source cc0d70ec; the AreYouIn port on live Core e311d69d): one
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, final tip
+// e5f36ebda94a8e6b3590b07e2fc696fb63215d9d (manifest source c2d24033; the AreYouIn port on live Core 8c8aac82): one
 // more body differs from main's, the external activity detail, by two appended lines - the activity page's
 // `conflict_of_interest` and `audit_reasons_withheld`, both false (APPENDED). The generator digest moved with Core
 // main's c0de7750 (the suite interpreter for every PHP child), which changes no body.
-const SOURCE = "cc0d70ece8d9fca31813bb60c15d8f0a02c80950";
-const SOURCE_SHA = "43a148408585e1bc4c7b650a2a2b83cb88e68cf193ed5ba8dd4ad314b22155a5";
-const MANIFEST_SHA = "422dc27c394c4301555f8d11139f9724d4114f334ba7a3e83f1f70f20f21498d";
+const SOURCE = "c2d240334430c631fbde0d5cce78fbdd7ad9e79e";
+const SOURCE_SHA = "10c00315a7e585cd581608259c8c375ca5ba8daab95b23d846c59314c4e9611e";
+const MANIFEST_SHA = "70384ea60c7851ff70fbd8311dfb0501d09cb9bae6bbe9ca50e96973a7b5b417";
 const GENERATOR_SHA = "0421d5860c2acdb8d184651ef5e0b548d39bf5e74ffbc4642808f6ce5235f528";
 const SET_SHA = "45d8a92c55abb3d0fe3ab32fb75ccca5b872cdb41e9712abb460eade9215a007";
 /** The released set (Core main 07215298) and the four bodies that differ from it, with the one value that moved. */
@@ -45,7 +45,7 @@ const MOVED: Record<string, [string, number, number]> = {
   "admin-moderation-resolve.json": ["revision", 3, 4], "admin-moderation-resolve-replay.json": ["revision", 3, 4],
   "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
 };
-/** Core b50e9423: bodies that differ from main's by appended keys only, each `false` in this capture. */
+/** Core e5f36ebd (the AreYouIn port): bodies that differ from main's by appended keys only, each `false` in this capture. */
 const APPENDED: Record<string, string[]> = { "admin-activity-detail-external.json": ["conflict_of_interest", "audit_reasons_withheld"] };
 /** The corpus of Core main 07215298, vendored for D-143: the bodies this directory must equal. */
 const RELEASED = new URL("./fixtures/dates_external_admin_wire_released/", import.meta.url);
@@ -79,7 +79,7 @@ test("external console corpus is the complete 138-response genuine capture with 
   assert.equal(manifest.provenance.generator, "tests/dates_external_admin_fixture_dump.php");
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.equal(manifest.fixture_count, 138);
-  assert.equal(manifest.provenance.source_paths.length, 365);
+  assert.equal(manifest.provenance.source_paths.length, 366);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = ["admin-activity-list-external.json", ...LISTS.map((name) => `admin-list-${name}.json`),
     ...DETAILS.map((name) => `admin-detail-${name}.json`), ...PLACES.map((name) => `admin-places-${name}.json`),

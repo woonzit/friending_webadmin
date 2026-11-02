@@ -317,7 +317,7 @@ test("resolution and claim options follow the principal's capabilities (AYI-076)
   }
   assert.deepEqual(permittedResolutionActions(userCase, moderator), ["dismiss", "warn", "remove_participant"]);
   assert.deepEqual(permittedResolutionActions(prepublication, moderator), ["approve_content", "reject_content"]);
-  // Core b50e9423: after Core refused the approval because the host cannot publish, `dismiss` withdraws the submission. Only
+  // Core e5f36ebd: after Core refused the approval because the host cannot publish, `dismiss` withdraws the submission. Only
   // on a member's activity submission: not on a held message, a review or an appeal, and never before that refusal.
   assert.deepEqual(permittedResolutionActions(prepublication, moderator, { hostUnavailable: true }), ["approve_content", "reject_content", "dismiss"]);
   assert.deepEqual(permittedResolutionActions(prepublication, moderator, { hostUnavailable: false }), ["approve_content", "reject_content"]);

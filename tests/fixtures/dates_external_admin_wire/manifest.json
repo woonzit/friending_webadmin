@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "dates-external-admin-v1",
-    "source_commit": "cc0d70ece8d9fca31813bb60c15d8f0a02c80950",
-    "source_checksum": "43a148408585e1bc4c7b650a2a2b83cb88e68cf193ed5ba8dd4ad314b22155a5",
+    "source_commit": "c2d240334430c631fbde0d5cce78fbdd7ad9e79e",
+    "source_checksum": "10c00315a7e585cd581608259c8c375ca5ba8daab95b23d846c59314c4e9611e",
     "fixture_count": 138,
     "fixture_set_sha256": "45d8a92c55abb3d0fe3ab32fb75ccca5b872cdb41e9712abb460eade9215a007",
     "provenance": {
@@ -129,6 +129,7 @@
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
             "src/Http/Controllers/WebadminLayer2Controller.php",
             "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMailDeliveryController.php",
             "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
             "src/Http/Controllers/WebadminMembershipController.php",
             "src/Http/Controllers/WebadminModeCardsController.php",

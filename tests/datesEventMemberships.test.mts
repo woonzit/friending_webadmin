@@ -73,7 +73,7 @@ for (const locale of ["en", "hu"]) test(`${locale}: a banned or removed member s
   for (const uid of [8112, 8114, 8115]) assert.equal(page.get(uid), `<div class="dates-list-row"><span>UID ${uid}</span><span class="badge">joined</span></div></div>`, String(uid));
 
   // Absent - the same members as a request without the command contract selector is served them: what the row itself
-  // says of a removal is shown - removed, and when - and nothing of a ban or a note, and (Core b50e9423 serves no
+  // says of a removal is shown - removed, and when - and nothing of a ban or a note, and (Core e5f36ebd serves no
   // `removed_by_uid` / `removed_reason` there) nobody is named as having removed them. The member Core would list as
   // banned is, to this console, a removed member.
   const released = entries(locale, ROWS.released);

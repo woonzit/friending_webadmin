@@ -769,7 +769,7 @@ export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target
 
 /**
  * What the page has learnt about a case beside its metadata. `hostUnavailable`: Core refused to approve this case's
- * submission with `dates-moderation-host-unavailable` (409, Core b50e9423) - its host may not publish (banned,
+ * submission with `dates-moderation-host-unavailable` (409, Core e5f36ebd) - its host may not publish (banned,
  * suspended, restricted, being deleted or erased). Such a case can then be closed with `dismiss`, which withdraws the
  * waiting submission. Core serves no flag for it on the case row, so the page knows it only from that refusal; a Core
  * before that release never sends it.
@@ -878,7 +878,7 @@ export function datesCaseClaimableByRole(
 }
 
 /**
- * The operator's conflict of interest with an activity, from its `dates_activity_detail` body (Core b50e9423). Core
+ * The operator's conflict of interest with an activity, from its `dates_activity_detail` body (Core e5f36ebd). Core
  * applies the case rule to the activity as a whole - the operator's linked member hosts it, takes part in it or
  * reported something in it - and then withholds the free-text reasons of its audit history (`reason: null` on each
  * row; this console never prints that field anyway).

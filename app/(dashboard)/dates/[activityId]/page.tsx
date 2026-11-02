@@ -52,7 +52,7 @@ type ActivityDetail = {
   moderation_cases: CaseRow[];
   moderation_decisions: Array<Record<string, unknown>>;
   audit_history: Array<Record<string, unknown>>;
-  /** Core b50e9423; absent from a Core before it (lib/datesAdmin.ts, datesActivityConflict). */
+  /** Core e5f36ebd; absent from a Core before it (lib/datesAdmin.ts, datesActivityConflict). */
   conflict_of_interest?: unknown;
   audit_reasons_withheld?: unknown;
 };

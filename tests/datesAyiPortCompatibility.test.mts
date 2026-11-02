@@ -13,13 +13,14 @@ import { datesCommandOutcome, projectDatesActivityOriginDetail } from "../lib/da
 import { datesMemberships } from "../lib/datesMemberships.ts";
 import { datesCaseDetail, datesLegalHoldAllowed, datesLegalHoldCommandReceipt, datesModerationQueue } from "../lib/datesModerationRead.ts";
 
-// The AreYouIn port of Core (branch claude/freelove-port2-20261102-core-ayi, tip b50e9423, on live Core e311d69d).
+// The AreYouIn port of Core (branch claude/freelove-port2-20261102-core-ayi, final tip e5f36ebd, on live Core 8c8aac82).
 // Webadmin deploys first and Core follows, so the console reads BOTH shapes. This file holds it to both, on genuine bodies:
 //
 // - LIVE: tests/fixtures/dates_ayi_live_e311d69d - the 16 bodies the port moved, as the live Core serves them: byte
 //   copies of what this console had vendored (Webadmin 7515a72), byte-identical to the same files at Core e311d69d
-//   (git objects; `git -C <core> show e311d69d:tests/fixtures/<corpus>/<file> | cmp - <file>`). Pinned below.
-// - NEW: the same files in the six re-vendored corpora (pinned by their own tests), byte copies of Core b50e9423.
+//   (git objects; `git -C <core> show e311d69d:tests/fixtures/<corpus>/<file> | cmp - <file>`), and still byte-identical
+//   at the live Core 8c8aac82 the port is rebased on. Pinned below.
+// - NEW: the same files in the six re-vendored corpora (pinned by their own tests), byte copies of Core e5f36ebd.
 //
 // For each body the difference is proven from bytes, and both shapes are read the way the browser receives them:
 // through the bridge's projection, then the page's own decoder. What no genuine body holds is DERIVED from a genuine
@@ -95,7 +96,7 @@ test("the live bodies are the 16 the port moved, byte for byte as live Core serv
   assert.deepEqual(found, Object.keys(LIVE_PIN).sort());
   for (const [file, digest] of Object.entries(LIVE_PIN)) {
     assert.equal(sha256(readFileSync(new URL(file, LIVE))), digest, file);
-    // ... and each differs from what Core b50e9423 serves in its place (that body is pinned by its corpus's own test).
+    // ... and each differs from what Core e5f36ebd serves in its place (that body is pinned by its corpus's own test).
     assert.notEqual(sha256(readFileSync(new URL(file, NEW))), digest, file);
   }
   assert.equal(found.length, QUEUES.length + DETAILS.length + HOLDS.length + ACTIVITIES.length + 1);
@@ -189,16 +190,16 @@ test("cases, both shapes: every row decodes, and the case page offers the same a
 });
 
 test("the moderator of an appealed decision: notes withheld with or without the conflict flag, nothing offered; anything else withheld is refused", () => {
-  // DERIVED from Core's genuine appeal detail (b50e9423) as Core serves it to the moderator whose decision is appealed
-  // (DatesModerationReadService::detail, `$notesWithheld`): every flag false, notes withheld and empty. The branch tip
-  // b50e9423 serves `conflict_of_interest: false` beside them; its review fix serves `true`. Both are read; so is the
-  // live shape (the genuine bodies above).
+  // DERIVED from Core's genuine appeal detail (e5f36ebd) as Core serves it to the moderator whose decision is appealed
+  // (DatesModerationReadService::detail, `$notesWithheld`): every flag false, notes withheld and empty. The final tip
+  // e5f36ebd serves `conflict_of_interest: true` beside them (a conflict or the original moderator, caseRow); an
+  // intermediate tip of the port (b50e9423) served `false`. Both are read; so is the live shape (the genuine bodies above).
   const genuine = current(DETAILS[0]);
   assert.deepEqual(genuine.case.capabilities, { can_claim: false, can_read_evidence: false, can_resolve: false, can_break_glass: false });
   const withheld = { ...copy(genuine), report_notes_withheld: true, internal_notes: [], internal_notes_withheld: true };
   const fixed = { ...copy(withheld), case: { ...copy(withheld.case), conflict_of_interest: true } };
   const senior = principal("senior@example.invalid", "senior_moderator", SENIOR);
-  for (const [name, body] of [["b50e9423", withheld], ["review fix", fixed]] as const) {
+  for (const [name, body] of [["intermediate b50e9423", withheld], ["final e5f36ebd", fixed]] as const) {
     const read = datesCaseDetail(sent("dates_moderation_detail", body), body.case.case_id);
     assert.ok(read, name); assert.equal(read.report_notes_withheld, true, name);
     assert.deepEqual(datesCaseInternalNotes(body), { status: "withheld" }, name);
@@ -287,11 +288,11 @@ test("legal hold and resolution receipts, both shapes: the browser receives what
     assert.deepEqual({ ...after, media_unavailable: null }, before, file);
     assert.deepEqual([before.media_unavailable, after.media_unavailable], [null, []], file);
   }
-  // A Core before b50e9423 refused a hold over media it had begun to delete (409); the page still words it as a refusal.
+  // A Core before e5f36ebd refused a hold over media it had begun to delete (409); the page still words it as a refusal.
   const purge = { success: false, status_code: 409, error: "dates-legal-hold-media-purge-started", message: 200, status: 200, can_send: 0 };
   assert.deepEqual(sent("dates_moderation_legal_hold", purge), purge);
   assert.deepEqual(datesCommandOutcome(purge, false, "fresh"), { kind: "refused", error: "dates-legal-hold-media-purge-started" });
-  // Core b50e9423's refusal of an approval whose host cannot publish reaches the page as Core's six keys, a refusal.
+  // Core e5f36ebd's refusal of an approval whose host cannot publish reaches the page as Core's six keys, a refusal.
   const host = { ...purge, error: "dates-moderation-host-unavailable" };
   assert.deepEqual(sent("dates_moderation_resolve", host), host);
   assert.deepEqual(datesCommandOutcome(host, false, "fresh"), { kind: "refused", error: "dates-moderation-host-unavailable" });

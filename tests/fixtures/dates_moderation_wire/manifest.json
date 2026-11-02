@@ -1,7 +1,7 @@
 {
     "schema_version": 1,
     "contract": "dates-moderation-read-v1",
-    "source_commit": "862e57636a77b76d219a9b7048c1b2934ef01869",
+    "source_commit": "c2d240334430c631fbde0d5cce78fbdd7ad9e79e",
     "fixture_set_sha256": "2652bb9888837cc6a9a008d983effc545195ed037bbce96b1f820378911d56d6",
     "provenance": {
         "generator": "tests/dates_moderation_fixture_dump.php",
@@ -110,6 +110,7 @@
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
             "src/Http/Controllers/WebadminLayer2Controller.php",
             "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMailDeliveryController.php",
             "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
             "src/Http/Controllers/WebadminMembershipController.php",
             "src/Http/Controllers/WebadminModeCardsController.php",

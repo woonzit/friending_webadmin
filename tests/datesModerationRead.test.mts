@@ -13,12 +13,12 @@ import type { DatesAdminPrincipal } from "../lib/datesAdmin.ts";
 // Source commit names the generator/runtime inputs, not its mechanical capture commit.
 const DIRECTORY = new URL("./fixtures/dates_moderation_wire/", import.meta.url);
 // T-872: source-only manifest refresh to Core 8fe14ecf; bodies and generator unchanged.
-// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip b50e9423 (manifest source
-// 862e5763; the AreYouIn port on live Core e311d69d): the two viewer details moved in one capability VALUE each (a
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, final tip e5f36ebd (manifest
+// source c2d24033; the AreYouIn port on live Core 8c8aac82): the two viewer details moved in one capability VALUE each (a
 // support viewer is not offered a claim). The live bodies and the proof are in tests/fixtures/dates_ayi_live_e311d69d
 // and tests/datesAyiPortCompatibility.test.mts.
-const SOURCE = "862e57636a77b76d219a9b7048c1b2934ef01869";
-const MANIFEST_SHA = "f2facc70af8eb487004439393f891b76d5e28e402ab88d412153b72d3e7255c2";
+const SOURCE = "c2d240334430c631fbde0d5cce78fbdd7ad9e79e";
+const MANIFEST_SHA = "8678778a299f5c7b3396cf1e7951fa95f010422fa2fa0ceebccd3528955e89d7";
 const GENERATOR_SHA = "e212ec243b70589995a8d6c15c38873724f84d4fb9185f87be77cff2a5202354";
 const SET_SHA = "2652bb9888837cc6a9a008d983effc545195ed037bbce96b1f820378911d56d6";
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");

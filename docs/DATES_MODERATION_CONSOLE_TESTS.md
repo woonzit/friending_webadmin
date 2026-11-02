@@ -8,8 +8,8 @@ this consumer so the provenance is reachable; the provider changes no runtime
 code, route or response shape and needs no migration or data action.
 
 Re-vendored 2026-11-02 from the AreYouIn port, Core branch
-`claude/freelove-port2-20261102-core-ayi` tip `b50e9423`, manifest source
-`d03a542fbe1275572498b7d0d514c6c641dfcf31`: seven queue bodies moved in their
+`claude/freelove-port2-20261102-core-ayi` final tip `e5f36ebd`, manifest source
+`c2d240334430c631fbde0d5cce78fbdd7ad9e79e`: seven queue bodies moved in their
 capability values only (each `true -> false`; a support viewer is offered no
 claim, a moderator no appeal). The live bodies are kept in
 `tests/fixtures/dates_ayi_live_e311d69d`, and `tests/datesAyiPortCompatibility.test.mts`

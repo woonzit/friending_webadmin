@@ -109,7 +109,7 @@ const MOVED: Record<string, [string, number, number]> = {
   "admin-moderation-detail-closed.json": ["case.revision", 3, 4], "admin-moderation-detail-purged.json": ["case.revision", 3, 5],
 };
 /**
- * The AreYouIn port (Core branch claude/freelove-port2-20261102-core-ayi, b50e9423): the activity detail gains the
+ * The AreYouIn port (Core branch claude/freelove-port2-20261102-core-ayi, e5f36ebd): the activity detail gains the
  * operator's `conflict_of_interest` and `audit_reasons_withheld` on every request, with the selector or without it.
  * Appended keys only; the released decoders tolerate a key beside the activity and the event (below, and the released
  * console's own wire tests).

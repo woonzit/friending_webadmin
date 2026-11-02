@@ -16,7 +16,7 @@ rule; the provider is the Core lane's contract `dates-event-intake-admin-v1`.
   pinned at the tip `62cee304c68eaeda456ddf0b042cb340b8702d48` of the Core
   branch `claude/t865-p2-core` (a lane commit, not an ancestor of Core main).
   The intake corpus is now vendored byte-identically from the AreYouIn port,
-  Core branch `claude/freelove-port2-20261102-core-ayi` tip `b50e9423`
+  Core branch `claude/freelove-port2-20261102-core-ayi` final tip `e5f36ebd`
   (`tests/fixtures/dates_event_intake_admin_wire/`, 161 bodies, set `db972f0c…`;
   against the Core main `a5bbba5c` pin, set `a672e1e6…`, only the AI-assisted
   activity detail differs, by its two appended conflict booleans; against the

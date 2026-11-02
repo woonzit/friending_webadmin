@@ -222,7 +222,7 @@ export function datesLegalHoldReceipt(value: unknown, caseId: string, action: un
 export const DATES_LEGAL_HOLD_CHANGES = ["placed", "amended", "unchanged", "released"] as const;
 export type DatesLegalHoldChange = typeof DATES_LEGAL_HOLD_CHANGES[number];
 /**
- * A file a placed hold could no longer preserve (Core b50e9423, DatesPhotoCleanupService::guardHold and the
+ * A file a placed hold could no longer preserve (Core e5f36ebd, DatesPhotoCleanupService::guardHold and the
  * whole-activity photo purge): its deletion was already claimed (`deleting`) or finished (`completed`). `photo` is one
  * file of the activity (`photo_id`: the file's name, or `null` when Core could not name it); `activity_photos` is every
  * photo of the activity, `photo_id` then always `null`. Core serves `at: null`.
@@ -237,7 +237,7 @@ export type DatesLegalHoldCommandReceipt = {
   revision: number | null;
   /**
    * What the hold could not preserve, in Core's order; `[]`: everything that still existed is held. `null` when not
-   * served: a release, a request without `expected_revision`, or a Core before b50e9423 - which refused such a hold
+   * served: a release, a request without `expected_revision`, or a Core before e5f36ebd - which refused such a hold
    * with `dates-legal-hold-media-purge-started` instead.
    */
   media_unavailable: DatesHoldMediaUnavailable[] | null;
@@ -266,7 +266,7 @@ function holdMediaUnavailable(value: unknown): DatesHoldMediaUnavailable[] | und
  * nothing (and changed no evidence row). When none of them is served (a Core
  * without T-891) the released receipt stands, and what the command did is not
  * said. Some but not all of them is no receipt.
- * Since Core b50e9423 a place receipt with the extension also lists what the
+ * Since Core e5f36ebd a place receipt with the extension also lists what the
  * hold could not preserve (`media_unavailable`, `[]` when nothing); a list
  * that is not what Core writes makes the body no receipt. A Core before that
  * release does not serve the list (`null`).
@@ -331,9 +331,9 @@ export function datesTrailEvidenceCommandReceipt(value: unknown, request: Record
  * Whether the notes of a case may be withheld from this principal, as Core decides it (DatesModerationReadService::
  * detail): always for a conflict of interest; and on an appeal case from the moderator of the decision under appeal,
  * who is kept away from the appeal altogether - every capability flag false (DatesModerationReadService::caseRow,
- * `$originalModerator`). The Core branch at b50e9423 serves that moderator `conflict_of_interest: false` beside the
- * withheld notes; its review fix serves `true`, and the live Core withholds the notes exactly when there is a
- * conflict. This rule reads all three.
+ * `$originalModerator`). An intermediate tip of the port (b50e9423) served that moderator `conflict_of_interest:
+ * false` beside the withheld notes; the final tip (e5f36ebd) serves `true` (a conflict or the original moderator), and
+ * the live Core withholds the notes exactly when there is a conflict. This rule reads all three.
  */
 function notesWithheldAllowed(item: DatesCaseSummary): boolean {
   const { can_claim, can_read_evidence, can_resolve, can_break_glass } = item.capabilities;

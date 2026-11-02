@@ -33,17 +33,17 @@ import {
 // The manifest digest and the generator digest were read from Core's git objects
 // at a5bbba5c, not from the vendored copy; the source commit, the source checksum
 // and the set digest are that manifest's.
-// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, tip
-// b50e9423931ebce1f55e23905ceafa1f03f17fea (manifest source cc0d70ec; the AreYouIn port on live Core e311d69d): ONE
+// Re-vendored byte for byte from Core branch claude/freelove-port2-20261102-core-ayi, final tip
+// e5f36ebda94a8e6b3590b07e2fc696fb63215d9d (manifest source c2d24033; the AreYouIn port on live Core 8c8aac82): ONE
 // body changed, `admin-activity-detail-ai-assisted.json`, by two appended lines - `conflict_of_interest` and
 // `audit_reasons_withheld`, both false. The pin test proves it from bytes as above; the live body is kept in
-// tests/fixtures/dates_ayi_live_e311d69d. The manifest's scoped source list grew by 17 files.
+// tests/fixtures/dates_ayi_live_e311d69d. The manifest's scoped source list grew by 18 files.
 // Rows marked DERIVED are built from a genuine body for a branch no genuine
 // body carries; they are named in the lane's report.
 const DIRECTORY = new URL("./fixtures/dates_event_intake_admin_wire/", import.meta.url);
-const SOURCE = "cc0d70ece8d9fca31813bb60c15d8f0a02c80950";
-const SOURCE_SHA = "e32277af508b626044be2578c57425cc1861bab7c00b2f20cf857cc04535993b";
-const MANIFEST_SHA = "a294bd9e43d6ef96d18bfc722dcde68c1044991383e2664bc0730a3dd8ac509b";
+const SOURCE = "c2d240334430c631fbde0d5cce78fbdd7ad9e79e";
+const SOURCE_SHA = "7acc57705338565f4e815d27a49076e206a0e339e96cf8ea654abceaf122cfd1";
+const MANIFEST_SHA = "6874d32a6309a34f126eb3ad72819b75c80873d6ed3808a05c0612c7aee2e572";
 const GENERATOR_SHA = "8be05a0aaa3838c449e8efc6fc069b5b2e68e587e7ecab5984b3fda2cc1af3e6";
 const SET_SHA = "db972f0ce8af90b3af999c58253a1540dd9598acf2fb00000386ae63cec88951";
 // The pin before this one (Core a5bbba5c, the corpus the live Core e311d69d serves): its set digest, and the one body
@@ -126,7 +126,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
   assert.equal(manifest.provenance.generator_sha256, GENERATOR_SHA);
   assert.match(manifest.provenance.transport, /real HTTP.*application\/x-www-form-urlencoded/s);
   assert.equal(manifest.fixture_count, 161);
-  assert.equal(manifest.provenance.source_paths.length, 320);
+  assert.equal(manifest.provenance.source_paths.length, 321);
   assert.equal(manifest.fixture_set_sha256, SET_SHA);
   const names = [...LISTS.map((name) => `admin-list-${name}.json`), ...[...DETAILS, ...MEMBER_DETAILS].map((name) => `admin-detail-${name}.json`),
     ...CREATES.map((name) => `admin-create-${name}.json`), ...LEASES.map((name) => `admin-lease-${name}.json`),
@@ -148,7 +148,7 @@ test("intake corpus is the complete 148-response genuine capture with independen
   });
   assert.equal(hash(lines.join("\n")), SET_SHA);
   // Against the previous pin, from bytes: the AI-assisted activity detail without its two appended lines (the activity
-  // page's conflict booleans, Core b50e9423) is the previous body, and with that one digest the previous set comes back.
+  // page's conflict booleans, Core e5f36ebd) is the previous body, and with that one digest the previous set comes back.
   const activity = readFileSync(new URL("admin-activity-detail-ai-assisted.json", DIRECTORY), "utf8").split("\n");
   assert.deepEqual(activity.splice(95, 2).map((line) => line.trim()), ['"conflict_of_interest": false,', '"audit_reasons_withheld": false,']);
   assert.equal(hash(activity.join("\n")), PREVIOUS_ACTIVITY_DETAIL_SHA);
