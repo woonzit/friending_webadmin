@@ -120,7 +120,11 @@ test("page logic: filters, approvals by edit or by command, unknown facts, chang
   const route = readFileSync(new URL("../app/(dashboard)/dates/external/[externalId]/page.tsx", import.meta.url), "utf8");
   assert.match(route, /\/\^cor_\[a-f0-9\]\{32\}\$\/\.test\(correction\)/);
   const panel = readFileSync(new URL("../components/DatesExternalRecheckPanel.tsx", import.meta.url), "utf8");
-  assert.match(panel, /if \(!open\) return;/, "the job is polled only while it is open");
+  assert.match(panel, /const polling = open !== null;/); assert.match(panel, /if \(!polling\) return;/, "the job is polled only while it is open");
+  // Codex F4: the poll loop schedules its own next read (tests/datesExternalRecheckPoll.test.mts); `jobs` no longer drives it.
+  assert.match(panel, /return pollDatesExternalRecheck\(\(signal\) => reading\.current > 0 \? Promise\.resolve\(true\) : refresh\(signal\), POLL_MS\);/);
+  assert.match(panel, /\}, \[polling, refresh\]\);/);
+  assert.equal(/window\.setTimeout/.test(panel), false, "no one-shot timer of its own");
   for (const file of ["../app/(dashboard)/dates/intakes/page.tsx", "../components/DatesIntakePanels.tsx", "../components/DatesResearchRuns.tsx"])
     assert.match(readFileSync(new URL(file, import.meta.url), "utf8"), /<DatesSystemClosureNote closure=\{/, file);
 });

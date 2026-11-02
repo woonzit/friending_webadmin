@@ -6,8 +6,9 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { adminCall } from "@/lib/adminClient";
 import {
   DATES_EXTERNAL_RECHECK_INSTRUCTIONS_MAX, DATES_EXTERNAL_RECHECK_OPEN, datesExternalRecheckInstructions, datesExternalRechecks,
-  decodeDatesExternalDetail, type DatesExternalDetailRow, type DatesExternalRecheck, type DatesExternalRows,
+  type DatesExternalDetailRow, type DatesExternalRecheck, type DatesExternalRows,
 } from "@/lib/datesExternalAdmin";
+import { datesExternalRecheckStatus, pollDatesExternalRecheck } from "@/lib/datesExternalRecheckPoll";
 import {
   datesExternalReviewRefusalKey, prepareDatesExternalRecheck, readDatesExternalRecheckPending, runDatesExternalRecheck,
   type DatesExternalRecheckPendingRead, type DatesExternalRecheckStorage,
@@ -46,6 +47,8 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
   const [notice, setNotice] = useState<{ tone: "success" | "error" | "info"; text: string } | null>(null);
   const [pollError, setPollError] = useState(false);
   const busyRef = useRef(false), revision = useRef(event.revision), alive = useRef(true);
+  // Reads of the detail: how many are in flight, and the newest one's number (an older answer never replaces a newer one).
+  const reading = useRef(0), latestRead = useRef(0);
   // The caller's callback may be a new function on every render; the poll must not restart because of it.
   const factsChanged = useRef(onFactsChanged);
   factsChanged.current = onFactsChanged;
@@ -53,21 +56,29 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
   useEffect(() => { setPending(readDatesExternalRecheckPending(storage(), actor, event.external_event_id)); }, [actor, event.external_event_id]);
 
   const open = jobs?.rows.find((job) => DATES_EXTERNAL_RECHECK_OPEN.includes(job.status)) ?? null;
-  const refresh = useCallback(async (signal?: AbortSignal) => {
+  /** Reads the detail again; resolves to whether a job is still open, or may be (a failed or undecodable read). */
+  const refresh = useCallback(async (signal?: AbortSignal): Promise<boolean> => {
+    const read = ++latestRead.current;
+    ++reading.current;
     let response: unknown;
     try { response = await adminCall("dates_external_event_detail", { external_event_id: event.external_event_id }, signal); } catch { response = null; }
-    if (signal?.aborted || !alive.current) return;
-    const detail = decodeDatesExternalDetail(response, event.external_event_id);
-    if (!detail) { setPollError(true); return; }
-    setPollError(false); setJobs(datesExternalRechecks(detail.event, detail.server_now));
+    finally { --reading.current; }
+    if (signal?.aborted || !alive.current) return false;
+    if (read !== latestRead.current) return true;
+    const status = datesExternalRecheckStatus(response, event.external_event_id);
+    if (!status) { setPollError(true); return true; }
+    setPollError(false); setJobs(status.jobs);
     // A job that applied facts moved the ledger: the page's revision is stale, so its writes wait for a reload.
-    if (detail.event.revision !== revision.current) { revision.current = detail.event.revision; factsChanged.current(); }
+    if (status.detail.event.revision !== revision.current) { revision.current = status.detail.event.revision; factsChanged.current(); }
+    return status.open;
   }, [event.external_event_id]);
+  // Codex F4: while a job is open, the next read is scheduled when the previous one settled - after a failed or
+  // undecodable read too - and not by a change of `jobs`. A tick that finds a read in flight (Refresh) waits for the next.
+  const polling = open !== null;
   useEffect(() => {
-    if (!open) return;
-    const controller = new AbortController(), timer = window.setTimeout(() => void refresh(controller.signal), POLL_MS);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [open, jobs, refresh]);
+    if (!polling) return;
+    return pollDatesExternalRecheck((signal) => reading.current > 0 ? Promise.resolve(true) : refresh(signal), POLL_MS);
+  }, [polling, refresh]);
 
   async function send(retry: boolean) {
     if (busyRef.current || !canManage) return;
