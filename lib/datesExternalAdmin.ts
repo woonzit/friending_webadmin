@@ -96,10 +96,39 @@ const rowShape = {
   title: text(3, 120), category: oneOf(DATES_EXTERNAL_CATEGORIES), sensitive: bool,
   start_at: epoch, end_at: epoch, start_local: localTimestamp, end_local: localTimestamp, timezone: text(1, 80),
   city: text(1, 120), country_code: ((v: unknown): v is string => typeof v === "string" && /^[A-Z]{2}$/.test(v)),
-  venue_name: text(1, 200), organizer_name: text(1, 160), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
+  // D-149: a research event whose page does not state its organizer has none (null); see `datesExternalUnknownFactsAllowed`.
+  venue_name: text(1, 200), organizer_name: nullable(text(1, 160)), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
   checked_at: epoch, next_reverify_at: epoch, credit_channel: oneOf(DATES_EXTERNAL_CHANNELS),
   going_count: integer(), interested_count: integer(), created_at: epoch, updated_at: epoch, can_edit: bool,
 };
+// ---------------------------------------------------------------- D-149 (T-908): re-research jobs
+
+/** A display value of a change set: a fact before or after a re-research. Facts are scalars; anything else is not shown. */
+const changeValue = (value: unknown): value is string | number | boolean | null => value === null || typeof value === "boolean"
+  || (typeof value === "number" && Number.isFinite(value)) || (typeof value === "string" && value.length <= 64000 && !/[\uD800-\uDFFF]/u.test(value));
+/** Plain operator or member text with line breaks, bounded in code points (Core's `mb_strlen`). */
+const plainText = (minimum: number, maximum: number): Guard<string> => (value): value is string => typeof value === "string"
+  && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\uD800-\uDFFF]/u.test(value) && Array.from(value).length >= minimum && Array.from(value).length <= maximum;
+const cost: Guard<number> = (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
+/** Core-B: `rck_` + 32 hex. */
+const recheckId: Guard<string> = id("rck");
+/**
+ * A re-research job (Core-B c268ae4b, "Re-research of one event"): the same object in the request's receipt, in the
+ * detail's `rechecks` (latest five, newest first) and as the list row's `last_recheck`. `changes[].before/after` are the
+ * event's facts (times as epoch seconds; a fact the event did not know is null).
+ */
+const recheckFields = object({ recheck_id: recheckId, status: oneOf(DATES_EXTERNAL_RECHECK_STATUSES),
+  instructions: nullable(plainText(1, DATES_EXTERNAL_RECHECK_INSTRUCTIONS_MAX)), requested_by: nullable(text(1, 320)),
+  created_at: epoch, finished_at: nullable(epoch), reason: nullable(text(1, 200)),
+  changes: array(object({ field: text(1, 100), before: changeValue, after: changeValue }), 100), cost_usd: nullable(cost) });
+export type DatesExternalRecheck = Parsed<typeof recheckFields>;
+/** The job's own rules: open exactly while not finished; only an applied job changed something, and says what. */
+function recheckJob(value: unknown, now: number): DatesExternalRecheck | null {
+  return recheckFields(value) && value.created_at <= now && (value.finished_at === null) === DATES_EXTERNAL_RECHECK_OPEN.includes(value.status)
+    && (value.finished_at === null || (value.finished_at >= value.created_at && value.finished_at <= now))
+    && (value.status === "applied" ? value.changes.length > 0 && value.reason === null : value.changes.length === 0) ? value : null;
+}
+const recheckGuard: Guard<DatesExternalRecheck> = (value): value is DatesExternalRecheck => recheckFields(value);
 /**
  * D-149 (T-908): what the external admin contract selector v2 adds to a list row and to the detail's event. Every key
  * is optional - absent means "not served" (a Core before T-906, or a request without the selector) and nothing that
@@ -108,21 +137,20 @@ const rowShape = {
  *   keep them (who cleared it) or not. `at_revision` is the ledger revision it was set at (the detail's).
  * - `possible_duplicate_of`: the best match of a `review`-band dedupe at automatic publication (decision 4).
  * - `open_corrections` / `open_reports`: counts.
- * - `last_recheck`: the newest re-research job, if any.
+ * - `last_recheck`: the newest re-research job (the whole job object), or null.
  */
 const adminReviewGuard = object({ reviewed: bool, by: nullable(text(1, 320)), at: nullable(epoch), at_revision: optional(nullable(integer(1))) });
 export type DatesExternalAdminReview = Parsed<typeof adminReviewGuard>;
-const lastRecheckGuard = object({ status: oneOf(DATES_EXTERNAL_RECHECK_STATUSES), finished_at: nullable(epoch) });
 const reviewShape = {
   admin_review: optional(adminReviewGuard), possible_duplicate_of: optional(nullable(id("xev"))),
-  open_corrections: optional(integer()), open_reports: optional(integer()), last_recheck: optional(nullable(lastRecheckGuard)),
+  open_corrections: optional(integer()), open_reports: optional(integer()), last_recheck: optional(nullable(recheckGuard)),
 };
 function reviewConsistent(row: { external_event_id: string; admin_review?: DatesExternalAdminReview; possible_duplicate_of?: string | null;
-  last_recheck?: Parsed<typeof lastRecheckGuard> | null }, now: number): boolean {
+  last_recheck?: DatesExternalRecheck | null }, now: number): boolean {
   const review = row.admin_review, recheck = row.last_recheck;
   return (!review || ((!review.reviewed || (review.by !== null && review.at !== null)) && (review.at === null || review.at <= now)))
     && row.possible_duplicate_of !== row.external_event_id
-    && (!recheck || (recheck.finished_at === null) === DATES_EXTERNAL_RECHECK_OPEN.includes(recheck.status));
+    && (!recheck || recheckJob(recheck, now) !== null);
 }
 // P2a: the list row ends with the label the detail carries. `rowShape` stays the
 // part both share; the detail has its own `ai_assisted` among its extra keys.
@@ -170,7 +198,8 @@ const factsShape = {
   title: text(3, 120), summary: object({ en: multiline, hu: multiline }), category: oneOf(DATES_EXTERNAL_CATEGORIES),
   sensitive: object({ flag: bool, reason: nullable(text(1, 300)) }), start_at: epoch, end_at: epoch,
   start_local: localTimestamp, end_local: localTimestamp, end_estimated: bool, all_day: bool, timezone: text(1, 80),
-  is_free: bool, price_text: nullable(text(1, 200)), age_restriction: nullable(integer(18, 99)),
+  // D-149: null = the free/paid status is not known (a research event only); its price text is then null too.
+  is_free: nullable(bool), price_text: nullable(text(1, 200)), age_restriction: nullable(integer(18, 99)),
 };
 const coordinates: Guard<[number, number]> = (value): value is [number, number] => Array.isArray(value) && value.length === 2
   && value.every((item) => typeof item === "number" && Number.isFinite(item)) && Math.abs(value[0]) <= 180 && Math.abs(value[1]) <= 90;
@@ -182,7 +211,7 @@ const venueShape = {
   point: object({ type: literal("Point"), coordinates }), city: text(1, 120), city_key: text(1, 512),
   country_code: rowShape.country_code, resolved_by: oneOf(["admin_pin", "places"] as const), resolved_at: epoch,
 };
-const organizerGuard = object({ name: text(1, 160), website: nullable(datesExternalHttpsUrl) });
+const organizerGuard = object({ name: nullable(text(1, 160)), website: nullable(datesExternalHttpsUrl) });
 const linksGuard = object({ official_url: nullable(datesExternalHttpsUrl), ticket_url: nullable(datesExternalHttpsUrl) });
 const verificationGuard = object({ tier: oneOf(DATES_EXTERNAL_TIERS), checked_at: epoch, next_reverify_at: epoch,
   // Each is what an administrator confirmed. An event Core published without a reviewer (the member channel's
@@ -214,7 +243,18 @@ function rowConsistent(row: DatesExternalRow | DatesExternalDetailRow, caps: str
     && row.next_reverify_at >= row.checked_at
     && row.can_edit === (caps.includes("dates_external_event_manage") && ["published", "rechecking", "in_review"].includes(row.status)
       && row.lifecycle === "active" && !row.soft_deleted)
-    && reviewConsistent(row, now);
+    && reviewConsistent(row, now)
+    && (row.organizer_name !== null || datesExternalUnknownFactsAllowed(row));
+}
+
+/**
+ * D-149 (Core-B c268ae4b, "Unknown organizer and price"): an event published by research from a page that does not
+ * state them may have no organizer (`organizer.name` null) and no known free/paid status (`facts.is_free` null, its
+ * price text null). Core's writer allows it for an event from an `ai_research` intake - credited to that channel - and
+ * keeps it for every later edit of such an event; a manual event still needs both. The console reads the same rule.
+ */
+export function datesExternalUnknownFactsAllowed(row: { credit_channel: string }): boolean {
+  return row.credit_channel === "ai_research";
 }
 
 export function decodeDatesExternalList(value: unknown, expected: { page: number; limit: number }): DatesExternalList | null {
@@ -250,6 +290,7 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
     || facts.summary.en !== editor.summary.en || facts.summary.hu !== editor.summary.hu
     || facts.all_day !== editor.all_day || facts.is_free !== editor.is_free || facts.price_text !== editor.price_text
     || facts.age_restriction !== editor.age_restriction || row.attendee_list !== editor.attendee_list
+    || (facts.is_free === null && (facts.price_text !== null || !datesExternalUnknownFactsAllowed(row)))
     || (row.sensitive && row.attendee_list !== "count_only")
     || row.city !== row.venue.city || row.country_code !== row.venue.country_code || row.venue_name !== row.venue.name
     || row.venue.name !== editor.venue.name || row.venue.formatted_address !== editor.venue.formatted_address
@@ -273,20 +314,6 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
 
 // ---------------------------------------------------------------- D-149 (T-908): re-research and corrections
 
-/** A display value of a change set: a fact before or after a re-research. Facts are scalars; anything else is not shown. */
-const changeValue = (value: unknown): value is string | number | boolean | null => value === null || typeof value === "boolean"
-  || (typeof value === "number" && Number.isFinite(value)) || (typeof value === "string" && value.length <= 64000 && !/[\uD800-\uDFFF]/u.test(value));
-/** Plain operator or member text with line breaks, bounded in code points (Core's `mb_strlen`). */
-const plainText = (minimum: number, maximum: number): Guard<string> => (value): value is string => typeof value === "string"
-  && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\uD800-\uDFFF]/u.test(value) && Array.from(value).length >= minimum && Array.from(value).length <= maximum;
-const cost: Guard<number> = (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
-/** PROVISIONAL: the specification names no prefix for a re-research job; the console accepts a Dates-style id. */
-const recheckId: Guard<string> = (value): value is string => typeof value === "string" && /^[a-z]{2,8}_[a-f0-9]{32}$/.test(value);
-const recheckGuard = object({ recheck_id: recheckId, status: oneOf(DATES_EXTERNAL_RECHECK_STATUSES),
-  instructions: nullable(plainText(1, DATES_EXTERNAL_RECHECK_INSTRUCTIONS_MAX)), requested_by: nullable(text(1, 320)),
-  created_at: epoch, finished_at: nullable(epoch), reason: nullable(text(1, 200)),
-  changes: array(object({ field: text(1, 100), before: changeValue, after: changeValue }), 100), cost_usd: nullable(cost) });
-export type DatesExternalRecheck = Parsed<typeof recheckGuard>;
 export type DatesExternalRows<T> = { rows: T[]; unreadable: { index: number; id: string | null }[] };
 
 function rows<T>(value: unknown[], guard: (item: unknown) => T | null, idKey: string): DatesExternalRows<T> {
@@ -303,10 +330,7 @@ function rows<T>(value: unknown[], guard: (item: unknown) => T | null, idKey: st
 /** The event's latest re-research jobs, newest first as Core serves them; null when the detail did not carry them. */
 export function datesExternalRechecks(event: DatesExternalDetailRow, now: number): DatesExternalRows<DatesExternalRecheck> | null {
   if (event.rechecks === undefined) return null;
-  return rows(event.rechecks, (item) => recheckGuard(item) && item.created_at <= now
-    && (item.finished_at === null) === DATES_EXTERNAL_RECHECK_OPEN.includes(item.status) && (item.finished_at === null || item.finished_at >= item.created_at)
-    // A job that applied facts names what it changed; a job that did not apply any changed nothing.
-    && (item.status === "applied" ? item.changes.length > 0 : item.changes.length === 0) ? item : null, "recheck_id");
+  return rows(event.rechecks, (item) => recheckJob(item, now), "recheck_id");
 }
 
 const localMinute = (value: unknown): value is string => typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(value);
@@ -353,7 +377,7 @@ export function datesExternalCorrections(event: DatesExternalDetailRow, now: num
 }
 
 /**
- * `dates_external_correction_list`. PROVISIONAL page shape: `corrections`, `page`, `total` (and `limit` when served).
+ * `dates_external_correction_list` (Core-B): `corrections`, `page`, `limit`, `total`, `capabilities`.
  * Null only when the page itself cannot be trusted; a damaged row is listed as unreadable and its neighbours stay.
  */
 const correctionListGuard = object({ ...envelope, corrections: array((_: unknown): _ is unknown => true, 100), page: integer(1, 10000), total: integer(),
@@ -368,19 +392,17 @@ export function decodeDatesExternalCorrectionList(value: unknown, expected: { pa
 }
 
 /**
- * `dates_external_event_recheck`: the queued job. The legacy envelope already has a top-level `status` (200), so the
- * job's state cannot sit beside it under that name. PROVISIONAL: read nested (`recheck: {recheck_id, status}`) or flat
- * (`recheck_id` with `recheck_status`). A replay may answer with the job as it stands now.
+ * `dates_external_event_recheck` (Core-B c268ae4b): `replayed`, `external_event_id`, `recheck` (the job), `audit_id`
+ * beside the legacy envelope, whose top-level `status` stays 200. A new job is queued with the request's instructions; a
+ * replay answers with the job as it stands now.
  */
-const recheckJobGuard = object({ recheck_id: recheckId, status: oneOf(DATES_EXTERNAL_RECHECK_STATUSES), external_event_id: optional(id("xev")) });
-const recheckNested = object({ ...envelope, recheck: recheckJobGuard, replayed: optional(bool) });
-const recheckFlat = object({ ...envelope, recheck_id: recheckId, recheck_status: oneOf(DATES_EXTERNAL_RECHECK_STATUSES), external_event_id: optional(id("xev")), replayed: optional(bool) });
+const recheckReceiptGuard = object({ ...envelope, replayed: bool, external_event_id: id("xev"), recheck: recheckFields, audit_id: id("aud") });
 export type DatesExternalRecheckReceipt = { recheck_id: string; status: DatesExternalRecheckStatus; replayed: boolean };
 export function decodeDatesExternalRecheckReceipt(value: unknown, request: Record<string, unknown>): DatesExternalRecheckReceipt | null {
-  const job = recheckNested(value) ? { ...value.recheck, replayed: value.replayed }
-    : recheckFlat(value) ? { recheck_id: value.recheck_id, status: value.recheck_status, external_event_id: value.external_event_id, replayed: value.replayed } : null;
-  if (!job || (job.external_event_id !== undefined && job.external_event_id !== request.external_event_id)) return null;
-  return job.replayed === true || job.status === "queued" ? { recheck_id: job.recheck_id, status: job.status, replayed: job.replayed === true } : null;
+  if (!recheckReceiptGuard(value) || value.external_event_id !== request.external_event_id || !recheckJob(value.recheck, value.server_now)) return null;
+  const job = value.recheck;
+  if (!value.replayed && job.status !== "queued") return null;
+  return { recheck_id: job.recheck_id, status: job.status, replayed: value.replayed };
 }
 
 /**
@@ -426,7 +448,7 @@ const memberActivityShape = { ...activityShape, title: memberText(120), city: nu
 // Core projects the stored profile name as-is; there is no 200-grapheme DTO bound.
 const memberHost = object({ uid: integer(1), display_name: memberText(64000) });
 const externalActivityShape = { origin: literal("external"), external_event_id: id("xev"), host: literal(null),
-  organizer_name: text(1, 160), organizer_url: nullable(datesExternalHttpsUrl), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
+  organizer_name: nullable(text(1, 160)), organizer_url: nullable(datesExternalHttpsUrl), verification_tier: oneOf(DATES_EXTERNAL_TIERS),
   ai_assisted: bool, can_host_transfer: literal(false) };
 /**
  * What tells the two kinds of activity apart is `origin` (and the event id that goes with it), not the size of the
@@ -531,7 +553,7 @@ export function datesExternalProxyCapabilityAuthorized(action: string, membershi
   if (!DATES_EXTERNAL_ACTIONS.includes(action as DatesExternalAction)) return undefined;
   const principal = datesAdminPrincipal(membership);
   // D-149 (Core-B 4b58099c): the corrections queue and its rejection need the review capability (moderator and above);
-  // an approval is an update (manage). PROVISIONAL: the re-research is taken as manage.
+  // an approval is an edit or a command (manage); a re-research is manage too (administrator and above).
   if (action === "dates_external_correction_list" || action === "dates_external_correction_decide")
     return principal !== null && hasDatesCapability(principal, "dates_external_event_review");
   const read = action === "dates_external_event_list" || action === "dates_external_event_detail";
@@ -613,10 +635,11 @@ export function decodeDatesExternalReceipt(value: unknown, action: DatesExternal
   if (receipt.event_status !== status) return null;
   if (command && (!("action" in receipt) || receipt.action !== body.action || receipt.soft_deleted !== false
     || receipt.lifecycle !== (["withdraw", "cancel"].includes(String(body.action)) ? "canceled" : "active"))) return null;
-  // D-149 (Core-B 4b58099c): an edit sent with `correction_id` ends with `correction {correction_id, status: "approved"}`,
-  // and only then. An edit that did not approve the correction it named is not this command's receipt.
+  // D-149 (Core-B c268ae4b): an edit, a cancellation or an official update sent with `correction_id` ends with
+  // `correction {correction_id, status: "approved"}`, and only then. One that did not approve the correction it named
+  // is not this command's receipt.
   const echoed = (receipt as Record<string, unknown>).correction;
-  if (!command && (Object.hasOwn(body, "correction_id")
+  if ((Object.hasOwn(body, "correction_id")
     ? !(record(echoed) && echoed.correction_id === body.correction_id && echoed.status === "approved")
     : Object.hasOwn(receipt, "correction"))) return null;
   return receipt;
@@ -648,14 +671,14 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
   // P2b: the member channel's switch and the "duplicate of an event that is not there" refusal are raised inside the
   // publication's / the question's / the rejection's transaction too (Core 32d418cf).
   403: ["dates-external-publishing-disabled", "dates-intake-admin-drafts-disabled", "dates-intake-lease-owner-required",
-    "dates-intake-suggestions-disabled"],
-  // D-149 (T-908) PROVISIONAL: the specification names the refusal tokens of the re-research and of the correction
-  // decision, not their HTTP statuses or where they are raised. Each is listed under the status Core-B is expected to
-  // use; an entry the genuine corpus does not confirm is removed at the re-pin. A wrong status only leaves a refusal
-  // "unconfirmed" (the request kept for the same retry), never the other way round.
+    "dates-intake-suggestions-disabled",
+    // Core-B c268ae4b: a re-research while the research master switch is off (no job written).
+    "dates-research-disabled"],
+  // D-149: the re-research and correction tokens below are at the statuses of Core-B's genuine corpus
+  // (tests/fixtures/dates_external_review_wire, c268ae4b) and its contract, each raised before anything is written.
   404: ["dates-external-unavailable", "dates-admin-activity-unavailable", "dates-intake-unavailable",
     "dates-moderation-case-unavailable", "dates-moderation-evidence-unavailable", "dates-trail-evidence-unavailable",
-    "dates-activity-unavailable", "dates-recheck-unavailable", "dates-correction-unavailable"],
+    "dates-activity-unavailable", "dates-correction-unavailable"],
   409: ["dates-external-conflict", "dates-external-duplicate", "dates-external-content-state-invalid",
     "dates-external-projection-unavailable", "dates-external-command-state-invalid", "dates-external-thread-unavailable", "dates-thread-read-only",
     "dates-admin-stale-revision", "dates-admin-activity-purge-not-eligible", "dates-admin-activity-open-case", "dates-admin-activity-legal-hold",
@@ -665,8 +688,11 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     "dates-legal-hold-case-open", "dates-legal-hold-media-purge-started", "dates-trail-evidence-activity-unavailable",
     "dates-host-transfer-already-pending", "dates-host-transfer-target-not-joined", "dates-host-transfer-ineligible", "dates-stale-revision",
     "dates-intake-duplicate-event-unavailable",
-    // D-149 PROVISIONAL (see 404): one open re-research per event; the research budget's 70 % stop; a correction already decided.
-    "dates-recheck-open", "dates-research-budget-paused", "dates-correction-state-invalid"],
+    // D-149 (see 404): one open re-research per event; the research budget's 70 % stop; a correction already decided.
+    "dates-recheck-open", "dates-research-budget-paused", "dates-correction-state-invalid",
+    // Core-B c268ae4b: an edit with `correction_id` that changes no fact writes nothing; the event is not
+    // re-researchable (genuine status 409, raised before the job is written).
+    "dates-correction-no-change", "dates-recheck-unavailable"],
   // A request larger than Core reads at all.
   413: ["dates-intake-image-invalid"],
   422: ["dates-external-id-invalid", "dates-external-revision-invalid", "dates-external-filter-invalid", "dates-external-input-invalid",
@@ -691,9 +717,9 @@ const refusalCodes: Readonly<Record<number, readonly string[]>> = {
     // catalogue that does not validate.
     "dates-external-pins-invalid", "dates-external-pin-invalid", "dates-external-pin-name-invalid",
     "dates-external-pin-image-required", "dates-external-pin-color-invalid",
-    // D-149 PROVISIONAL (see 404): a request check of the re-research and of the correction decision.
+    // D-149 (see 404): request checks of the re-research, the correction decision and an approval's command.
     "dates-recheck-instructions-invalid", "dates-correction-id-invalid", "dates-correction-reason-invalid",
-    "dates-correction-decision-invalid", "dates-correction-note-invalid"],
+    "dates-correction-decision-invalid", "dates-correction-note-invalid", "dates-correction-action-invalid"],
 };
 
 /** Only pinned Core no-land refusals release an attempted command's identity. */
@@ -775,7 +801,7 @@ export function normalizeDatesExternalPendingBody(action: string, body: Record<s
 export function datesExternalRecheckInstructions(value: unknown): value is string {
   return plainText(1, DATES_EXTERNAL_RECHECK_INSTRUCTIONS_MAX)(value) && value.trim() !== "";
 }
-/** A correction's rejection code as the console sends it: Core owns the vocabulary (see the PROVISIONAL list above). */
+/** A correction's rejection code as the console sends it: Core owns the vocabulary (`DATES_EXTERNAL_CORRECTION_REJECT_REASONS`). */
 const reasonCode: Guard<string> = (value): value is string => typeof value === "string" && /^[a-z][a-z0-9_]{1,63}$/.test(value);
 const optionalNote = (value: unknown) => value === undefined || (typeof value === "string" && value.trim() !== "" && plainText(1, 4000)(value)
   && [...segmenter.segment(value)].length <= DATES_EXTERNAL_CORRECTION_NOTE_MAX);
@@ -819,9 +845,12 @@ export function normalizeDatesExternalProxyBody(action: string, body: Record<str
   if (action === "dates_external_event_command") {
     if (!oneOf(DATES_EXTERNAL_COMMANDS)(body.action)) return null;
     const fields = body.action === "reverify" ? ["confirmations"] : body.action === "official_update" ? ["text"] : [];
-    if (!bodyKeys(body, ["action", "external_event_id", "expected_revision", "reason", "idempotency_key", ...fields])
+    // D-149 (Core-B c268ae4b): a member's status-only correction is approved by the command that says so - `cancel` for
+    // "canceled", `official_update` for "postponed" - with its `correction_id`; no other command takes one.
+    const approving = body.action === "cancel" || body.action === "official_update" ? ["correction_id"] : [];
+    if (!bodyKeys(body, ["action", "external_event_id", "expected_revision", "reason", "idempotency_key", ...fields], approving)
       || !id("xev")(body.external_event_id) || !formInteger(body.expected_revision, 1, Number.MAX_SAFE_INTEGER)
-      || !reason(body.reason) || !requestKey(body.idempotency_key)) return null;
+      || !reason(body.reason) || !requestKey(body.idempotency_key) || (Object.hasOwn(body, "correction_id") && !id("cor")(body.correction_id))) return null;
     if (body.action === "reverify" && !object({ source: literal(true), public_venue: literal(true), timezone: literal(true), content_safe: literal(true) })(body.confirmations)) return null;
     if (body.action === "official_update" && !datesExternalOfficialText(body.text)) return null;
     return body;
@@ -829,7 +858,8 @@ export function normalizeDatesExternalProxyBody(action: string, body: Record<str
   const updating = action === "dates_external_event_update";
   // D-149: an update may approve one member correction of this event (Core approves it in the same transaction).
   if (!bodyKeys(body, ["event", "reason", "idempotency_key", ...(updating ? ["external_event_id", "expected_revision"] : [])], updating ? ["correction_id"] : [])
-    || normalizeDatesExternalManualEvent(body.event) === null || !reason(body.reason)
+    // D-149: an update may leave a research event's organizer / free-paid status unknown (Core binds it to the event).
+    || normalizeDatesExternalManualEvent(body.event, updating) === null || !reason(body.reason)
     || !requestKey(body.idempotency_key)
     || (updating && (!id("xev")(body.external_event_id) || !formInteger(body.expected_revision, 1, Number.MAX_SAFE_INTEGER)
       || (Object.hasOwn(body, "correction_id") && !id("cor")(body.correction_id))))) return null;

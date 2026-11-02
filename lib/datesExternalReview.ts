@@ -131,6 +131,7 @@ export const DATES_EXTERNAL_REVIEW_REFUSALS: Readonly<Record<string, string>> = 
   "dates-correction-id-invalid": "correctionUnavailable", "dates-external-unavailable": "eventUnavailable",
   "dates-admin-stale-revision": "stale", "dates-external-conflict": "stale", "dates-external-command-state-invalid": "stateInvalid",
   "dates-admin-capability-required": "capability", "admin-write-required": "capability",
+  "dates-admin-reason-required": "reasonRequired", "dates-correction-no-change": "noChange", "dates-correction-action-invalid": "actionInvalid", "dates-research-disabled": "researchDisabled",
 };
 export function datesExternalReviewRefusalKey(error: string | null): string {
   return error !== null && Object.hasOwn(DATES_EXTERNAL_REVIEW_REFUSALS, error) ? DATES_EXTERNAL_REVIEW_REFUSALS[error] : "other";

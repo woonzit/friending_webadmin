@@ -3,6 +3,68 @@
     "status_code": 200,
     "corrections": [
         {
+            "correction_id": "cor_00000000000000000000000000000005",
+            "external_event_id": "xev_00000000000000000000000000000005",
+            "activity_id": "act_00000000000000000000000000000005",
+            "event_title": "Community concert 5",
+            "event_status": "published",
+            "event_revision": 2,
+            "event_revision_at_submit": 1,
+            "current": {
+                "title": "Community concert 5",
+                "starts_local": "2026-10-31T20:13",
+                "ends_local": "2026-10-31T23:13",
+                "venue": "Community square 5, Budapest, Közösségi tér 5.",
+                "status": null,
+                "official_url": "https://orchestra.example.test/concert-5"
+            },
+            "proposed": {
+                "status": "postponed"
+            },
+            "note": "The organizer moved it to the spring.",
+            "submitter": {
+                "uid": 6403,
+                "display_name": "Csaba"
+            },
+            "created_at": 1790000000,
+            "status": "approved",
+            "decided_by": "admin@example.test",
+            "decided_at": 1790000000,
+            "decision_reason": null,
+            "decision_note": null
+        },
+        {
+            "correction_id": "cor_00000000000000000000000000000004",
+            "external_event_id": "xev_00000000000000000000000000000004",
+            "activity_id": "act_00000000000000000000000000000004",
+            "event_title": "Community concert 4",
+            "event_status": "canceled_upstream",
+            "event_revision": 2,
+            "event_revision_at_submit": 1,
+            "current": {
+                "title": "Community concert 4",
+                "starts_local": "2026-10-31T19:13",
+                "ends_local": "2026-10-31T22:13",
+                "venue": "Community square 4, Budapest, Közösségi tér 4.",
+                "status": "canceled",
+                "official_url": "https://orchestra.example.test/concert-4"
+            },
+            "proposed": {
+                "status": "canceled"
+            },
+            "note": null,
+            "submitter": {
+                "uid": 6403,
+                "display_name": "Csaba"
+            },
+            "created_at": 1790000000,
+            "status": "approved",
+            "decided_by": "admin@example.test",
+            "decided_at": 1790000000,
+            "decision_reason": null,
+            "decision_note": null
+        },
+        {
             "correction_id": "cor_00000000000000000000000000000001",
             "external_event_id": "xev_00000000000000000000000000000001",
             "activity_id": "act_00000000000000000000000000000001",
@@ -38,7 +100,7 @@
     ],
     "page": 1,
     "limit": 40,
-    "total": 1,
+    "total": 3,
     "capabilities": [
         "dates_activity_read",
         "dates_case_read",

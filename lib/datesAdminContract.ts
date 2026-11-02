@@ -96,14 +96,14 @@ export function datesAdminResearchContractParams(action: string, params: Record<
  */
 export const DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_external_admin_contract_version", value: 2 };
 /**
- * The routes the v2 selector goes with: every route whose body or input it changes (Core-B 4b58099c, "The review
- * contract selector": the list, the detail and the command, the update's `correction_id`, and the three new routes,
- * which refuse a request without it). Core-B's text has the console send it on every Dates Admin request; on any other
- * route it changes nothing (byte-identical bodies, D-143), so sending it only here is the same contract with no
- * change to the released requests of the other routes.
+ * The routes the v2 selector goes with (Core-B c268ae4b, "The review contract selector"): the list, the detail and the
+ * command, whose bodies it changes; the update (`correction_id`, where it changes nothing); the three new routes, which
+ * refuse a request without it; and the intake list, the intake detail and the research run detail, where it adds
+ * `system_closure`. Core-B: sending it on exactly these is sufficient; on any other route it changes nothing.
  */
 export const DATES_EXTERNAL_ADMIN_V2_ROUTES: readonly string[] = ["dates_external_event_list", "dates_external_event_detail", "dates_external_event_update",
-  "dates_external_event_command", "dates_external_event_recheck", "dates_external_correction_list", "dates_external_correction_decide"];
+  "dates_external_event_command", "dates_external_event_recheck", "dates_external_correction_list", "dates_external_correction_decide",
+  "dates_event_intake_list", "dates_event_intake_detail", "dates_event_research_run_detail"];
 export function datesExternalAdminContractParams(action: string): Record<string, number | string> {
   return DATES_EXTERNAL_ADMIN_V2_ROUTES.includes(action)
     ? { [DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR.parameter]: DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR.value } : {};

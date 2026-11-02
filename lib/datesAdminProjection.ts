@@ -68,16 +68,16 @@ const EDITOR_INPUT = {
 };
 /** D-149 (T-908), served with the external admin contract selector v2: the "reviewed, OK" mark. */
 const ADMIN_REVIEW = leaves("reviewed by at at_revision");
+/** v2: a re-research job - the same object in its receipt, the detail's `rechecks` and a list row's `last_recheck`. `instructions` is the administrator's own text; `changes` are the event's public facts before and after. */
+const RECHECK = { ...leaves("recheck_id status instructions requested_by created_at finished_at reason cost_usd"), changes: [leaves("field before after")] };
 const EXTERNAL_ROW = {
   ...leaves("external_event_id activity_id revision activity_revision status lifecycle moderation_state soft_deleted title category sensitive "
     + "start_at end_at start_local end_local timezone city country_code venue_name organizer_name verification_tier checked_at next_reverify_at credit_channel "
     + "going_count interested_count created_at updated_at can_edit ai_assisted "
     // v2: the best match of a review-band dedupe, and the open corrections and reports of the event (counts).
     + "possible_duplicate_of open_corrections open_reports"),
-  admin_review: ADMIN_REVIEW, last_recheck: leaves("status finished_at"),
+  admin_review: ADMIN_REVIEW, last_recheck: RECHECK,
 };
-/** v2: a re-research job. `instructions` is the administrator's own text; `changes` are the event's public facts before and after. */
-const RECHECK = { ...leaves("recheck_id status instructions requested_by created_at finished_at reason cost_usd"), changes: [leaves("field before after")] };
 /** v2: a member's correction. The member is named to the moderators (uid and profile name); the note is member content. */
 const CORRECTION_FACTS = leaves("title starts_local ends_local venue status official_url");
 const CORRECTION = {
@@ -125,10 +125,10 @@ const REASON = leaves("reason_id scope key name_en name_hu explanation_en explan
 
 const INTAKE_ROW = {
   ...leaves("intake_id revision channel status status_detail input_kind source_host image_count provider event_count published_count first_title earliest_start_at "
-    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look research_run_id "
-    // D-149 PROVISIONAL: the blocker of the system's "not publishable" decision on a research intake.
-    + "publication_blocker"),
+    + "hard_fails warning_count dedupe_decision decision_action created_at updated_at second_look research_run_id"),
   lease: leaves("holder until active mine"),
+  // D-149, served with the external admin contract selector v2: why the SYSTEM closed a research intake.
+  system_closure: leaves("decision blocker"),
 };
 const EVIDENCE = leaves("quoted verified denotes match source quote model_confidence confidence");
 const INTAKE_EVENT = {
@@ -277,11 +277,11 @@ export const DATES_ADMIN_NAMED: Readonly<Record<string, DatesNamedTree>> = {
     correction: leaves("correction_id status") },
   dates_external_event_command: { ...ENVELOPE,
     ...leaves("replayed external_event_id activity_id revision activity_revision action event_status lifecycle soft_deleted audit_id thread_id message_id message_sequence"),
-    // v2: the receipt of mark_reviewed / clear_reviewed.
-    admin_review: ADMIN_REVIEW },
-  // D-149 (T-908), v2 routes. PROVISIONAL trees, from the specification until Core's genuine bodies are vendored.
-  // The legacy envelope has a top-level `status` (200): the job's and the correction's states are nested, or `*_status`.
-  dates_external_event_recheck: { ...ENVELOPE, ...leaves("recheck_id recheck_status external_event_id replayed audit_id"), recheck: { ...RECHECK, external_event_id: L } },
+    // v2: the receipt of mark_reviewed / clear_reviewed, and the correction a cancel / official update approved.
+    admin_review: ADMIN_REVIEW, correction: leaves("correction_id status") },
+  // D-149 (T-908), v2 routes (Core-B's genuine corpus, tests/fixtures/dates_external_review_wire). The legacy envelope has a
+  // top-level `status` (200): the job is nested, the correction's state is `correction_status`.
+  dates_external_event_recheck: { ...ENVELOPE, ...leaves("replayed external_event_id audit_id"), recheck: RECHECK },
   dates_external_correction_list: { ...ENVELOPE, ...leaves("page limit total capabilities"), corrections: [CORRECTION] },
   dates_external_correction_decide: { ...ENVELOPE, ...leaves("correction_id external_event_id correction_status decided_at replayed audit_id") },
   dates_event_intake_list: {

@@ -84,7 +84,7 @@
                 "status": null,
                 "official_url": "https://orchestra.example.test/concert-1"
             },
-            "proposed": [],
+            "proposed": {},
             "note": "Check number 1.",
             "submitter": {
                 "uid": 6404,

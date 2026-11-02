@@ -15,7 +15,7 @@ import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
 import { datesAdminPrincipal, hasDatesCapability, type DatesAdminPrincipal } from "@/lib/datesAdmin";
-import { DATES_EXTERNAL_COMMANDS, datesExternalCorrections, datesExternalOfficialText, decodeDatesExternalDetail, decodeDatesExternalList,
+import { DATES_EXTERNAL_COMMANDS, datesExternalCorrections, datesExternalOfficialText, datesExternalUnknownFactsAllowed, decodeDatesExternalDetail, decodeDatesExternalList,
   type DatesExternalCorrection, type DatesExternalDetail, type DatesExternalMutationAction, type DatesExternalMutationBaseline } from "@/lib/datesExternalAdmin";
 import { datesExternalCorrectionPrefill } from "@/lib/datesExternalReview";
 import { datesExternalBrowserStorage, prepareDatesExternalPending, readDatesExternalMutationAccess, readDatesExternalPending,
@@ -52,6 +52,8 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
   const [confirmations, setConfirmations] = useState(FRESH);
   const [formDirty, setFormDirty] = useState(false);
   const [rejecting, setRejecting] = useState<DatesExternalCorrection | null>(null);
+  // D-149: the correction a status-only approval (cancel / official update) carries, set by its approve button.
+  const [commandCorrection, setCommandCorrection] = useState<string | null>(null);
   const generation = useRef(0), lifetime = useRef(0), busyRef = useRef(false);
   const commandsRef = useRef<HTMLElement>(null), commandReasonRef = useRef<HTMLTextAreaElement>(null);
 
@@ -88,7 +90,7 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
     if (hasDatesCapability(nextPrincipal, "dates_external_event_manage") && decoded.capabilities.includes("dates_external_event_manage")) setEditorOpened(true);
     setPending(saved!);
     setNeedsReload(false); setState("ready"); setFormGeneration((value) => value + 1); setFormDirty(false);
-    setConfirmations(FRESH); setCommandReason(""); setCommandText("");
+    setConfirmations(FRESH); setCommandReason(""); setCommandText(""); setCommandCorrection(null);
   }, [externalId]);
 
   /**
@@ -165,7 +167,8 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
       if (currentLifetime !== lifetime.current) return;
       setPending(readDatesExternalPending(storage, access.actor)); setCandidate(null);
       if (result.kind === "success") {
-        const approved = operation.action === "dates_external_event_update" && typeof operation.body.correction_id === "string";
+        // An edit, a cancellation or an official update that carried a correction approved it in the same step.
+        const approved = typeof operation.body.correction_id === "string";
         setFeedback({ tone: "success", key: result.retained ? "successRetained" : approved ? "correctionApproved" : "success" });
         if (!result.retained && approved && externalId) router.replace(`/dates/external/${externalId}`);
         if (!result.retained) {
@@ -179,7 +182,11 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
           "dates-external-projection-unavailable", "dates-external-unavailable", "dates-admin-stale-revision",
           "dates-admin-activity-not-deleted", "dates-admin-activity-deleted", "dates-admin-activity-terminal"].includes(result.error);
         setNeedsReload(conflict);
-        setFeedback({ tone: "error", key: result.retained ? "refusedRetained" : conflict ? "conflict"
+        // D-149: an approval that changed nothing writes nothing (reject the correction instead); one whose correction is
+        // no longer pending here cannot approve it.
+        const correction = result.error === "dates-correction-no-change" ? "correctionNoChange"
+          : ["dates-correction-state-invalid", "dates-correction-unavailable", "dates-correction-action-invalid"].includes(result.error) ? "correctionClosed" : null;
+        setFeedback({ tone: "error", key: result.retained ? "refusedRetained" : conflict ? "conflict" : correction !== null ? correction
           : result.error === "dates-external-duplicate" ? "duplicate" : result.error === "dates-external-publishing-disabled" ? "publishingDisabled" : "refused" });
       } else setFeedback({ tone: "error", key: result.kind });
     } finally {
@@ -190,9 +197,20 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
 
   /** D-149 W3: "Remove" is the withdraw command, with its reason and its confirmation. */
   function startRemove() {
-    setCommand("withdraw"); setConfirmations(FRESH); setFeedback(null);
+    setCommand("withdraw"); setConfirmations(FRESH); setFeedback(null); setCommandCorrection(null);
     window.requestAnimationFrame(() => { commandsRef.current?.scrollIntoView({ block: "start" }); commandReasonRef.current?.focus(); });
   }
+
+  /**
+   * D-149 (Core-B c268ae4b): a status-only correction is approved by the command that says so, with its `correction_id`:
+   * "canceled" by recording the organizer's cancellation, "postponed" by an official update.
+   */
+  function startApproveCommand(action: "cancel" | "official_update") {
+    if (!approving) return;
+    setCommand(action); setConfirmations(FRESH); setFeedback(null); setCommandCorrection(approving.correction_id);
+    window.requestAnimationFrame(() => { commandsRef.current?.scrollIntoView({ block: "start" }); commandReasonRef.current?.focus(); });
+  }
+  const commandApproves = commandCorrection !== null && approving?.correction_id === commandCorrection && (command === "cancel" || command === "official_update");
 
   function proposeCommand(submit: React.FormEvent) {
     submit.preventDefault();
@@ -206,6 +224,7 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
       : { external_event_id: externalId, expected_revision: event.revision }), action: command, reason: commandReason.trim() };
     if (command === "reverify") body.confirmations = { ...confirmations };
     if (command === "official_update") body.text = commandText;
+    if (commandApproves) body.correction_id = commandCorrection;
     setCandidate({ action: generic ? "dates_activity_command" : "dates_external_event_command", body, baseline: baseline() });
   }
   function operationLabel(action: string, body: Record<string, unknown>) {
@@ -251,8 +270,8 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
         <dt>{t("form.summaryHu")}</dt><dd className="preserve-whitespace">{event.facts.summary.hu}</dd>
         <dt>{t("form.venueTitle")}</dt><dd>{event.venue.name} · {event.venue.formatted_address} · {event.city} · {event.country_code}<br />{event.venue.point.coordinates[1]}, {event.venue.point.coordinates[0]}</dd>
         <dt>{t("form.timeTitle")}</dt><dd><time dateTime={event.start_local}>{event.start_local}</time> — <time dateTime={event.end_local}>{event.end_local}</time> · {event.timezone}{event.facts.end_estimated && <p>{t("editor.estimated")}</p>}</dd>
-        <dt>{t("form.organizerName")}</dt><dd>{event.organizer.name}{event.organizer.website && <> · <a href={event.organizer.website} target="_blank" rel="noopener noreferrer">{t("editor.organizerSite")}</a></>}</dd>
-        <dt>{t("form.priceText")}</dt><dd>{event.facts.is_free ? t("form.isFree") : event.facts.price_text ?? t("editor.priceUnknown")}{event.facts.age_restriction !== null && <> · {t("editor.minimumAge", { age: event.facts.age_restriction })}</>}</dd>
+        <dt>{t("form.organizerName")}</dt><dd>{event.organizer.name ?? t("unknownFact")}{event.organizer.website && <> · <a href={event.organizer.website} target="_blank" rel="noopener noreferrer">{t("editor.organizerSite")}</a></>}</dd>
+        <dt>{t("form.priceText")}</dt><dd>{event.facts.is_free === null ? t("unknownFact") : event.facts.is_free ? t("form.isFree") : event.facts.price_text ?? t("editor.priceUnknown")}{event.facts.age_restriction !== null && <> · {t("editor.minimumAge", { age: event.facts.age_restriction })}</>}</dd>
         <dt>{t("form.attendeeList")}</dt><dd>{t(event.attendee_list === "visible" ? "form.attendeeVisible" : "form.attendeeCountOnly")}{event.sensitive && <> · {event.facts.sensitive.reason}</>}</dd>
       </dl>
       <p>{t("counts", { going: event.going_count, interested: event.interested_count })} · {t("operatorCounts")}</p><p>{t("form.imagePolicy")}</p>
@@ -281,9 +300,14 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
         <DatesExternalCorrectionView correction={approving} showEvent={false} />
         {prefill.venue !== null && <p>{t("review.venueHint", { venue: prefill.venue })}</p>}
         {prefill.status !== null && <p>{t(prefill.status === "canceled" ? "review.statusCanceledHint" : "review.statusPostponedHint")}</p>}
-        {prefill.unapplied.length > 0 && <p>{t("review.unappliedHint")}</p>}</div>}
+        {prefill.unapplied.length > 0 && <p>{t("review.unappliedHint")}</p>}
+        {canManage && prefill.status !== null && <div className="row-actions">
+          {prefill.status === "canceled" && <button type="button" className="button button-danger button-small" disabled={writeLocked || !commandAllowed("cancel")}
+            onClick={() => startApproveCommand("cancel")}>{t("review.approveCancel")}</button>}
+          {prefill.status === "postponed" && <button type="button" className="button button-secondary button-small" disabled={writeLocked || !commandAllowed("official_update")}
+            onClick={() => startApproveCommand("official_update")}>{t("review.approvePostponed")}</button>}</div>}</div>}
       <DatesExternalEventForm key={formGeneration} initial={event?.editor_input} initialDraft={prefill?.draft} disabled={locked}
-        onEdit={() => setFormDirty(true)}
+        onEdit={() => setFormDirty(true)} unknownAllowed={externalId !== undefined && event !== undefined && datesExternalUnknownFactsAllowed(event)}
         submitLabel={approving ? t("review.approveReview") : t(externalId ? "editor.reviewSave" : "editor.reviewPublish")} onSubmit={(facts, reason) => {
           if (locked) return;
           setCandidate({ action: externalId ? "dates_external_event_update" : "dates_external_event_publish", baseline: baseline(),
@@ -293,9 +317,10 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
     </section>}
     {canManage && event && <section className="panel dates-external-fields" ref={commandsRef}><h2>{t("editor.commandsTitle")}</h2>
       <form onSubmit={proposeCommand}><fieldset className="dates-external-fields" disabled={writeLocked}>
-        <label className="field"><span>{t("editor.command")}</span><select value={command} onChange={(change) => { setCommand(change.target.value as Command); setConfirmations(FRESH); }}>
+        <label className="field"><span>{t("editor.command")}</span><select value={command} onChange={(change) => { setCommand(change.target.value as Command); setConfirmations(FRESH); setCommandCorrection(null); }}>
           {[...DATES_EXTERNAL_COMMANDS, ...ACTIVITY_COMMANDS].map((action) => <option key={action} value={action} disabled={!commandAllowed(action)}>{t(`commands.${action}.label`)}</option>)}</select></label>
         <p>{t(`commands.${command}.copy`)}</p>
+        {commandApproves && <p className="alert alert-info">{t("review.approveCommandNote")}</p>}
         {command === "reverify" && <div className="dates-checkbox-stack">{Object.keys(FRESH).map((key) => <label key={key} className="checkbox-field"><input type="checkbox" required checked={confirmations[key as keyof typeof FRESH]} onChange={(change) => setConfirmations((value) => ({ ...value, [key]: change.target.checked }))} /><span>{t(`editor.confirmations.${key}`)}</span></label>)}</div>}
         {command === "official_update" && <label className="field"><span>{t("editor.updateText")}</span><textarea required rows={4} maxLength={32000} value={commandText} onChange={(change) => setCommandText(change.target.value)} /></label>}
         <label className="field"><span>{t("form.reason")}</span><textarea ref={commandReasonRef} required minLength={3} maxLength={1000} rows={2} value={commandReason} onChange={(change) => setCommandReason(change.target.value)} /></label>
@@ -308,6 +333,7 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
       onCancel={() => { if (!busyRef.current) setCandidate(null); }} onConfirm={() => void execute(candidate)}>
       <p className="preserve-whitespace">{String(candidate.body.reason)}</p>
       {candidate.body.action === "official_update" && <p className="preserve-whitespace">{String(candidate.body.text)}</p>}
+      {typeof candidate.body.correction_id === "string" && candidate.action === "dates_external_event_command" && <p className="alert alert-info">{t("review.approveCommandNote")}</p>}
     </ConfirmDialog>}
     {rejecting && <DatesExternalCorrectionReject correction={rejecting} onCancel={() => setRejecting(null)} onSettled={async (outcome) => {
       const current = rejecting.correction_id === correctionId;

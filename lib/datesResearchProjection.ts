@@ -21,8 +21,8 @@ const source = {
   effective: leaf("window_days autopublish"), robots: leaf("state checked_at"), stock: leaf("upcoming max missing"), last_check: last,
 };
 const run = {
-  // D-149 PROVISIONAL: the gate's blocker for a candidate the system did not publish.
-  ...runSummary, candidates: [leaf("title date_text url_host outcome reason intake_id publication_blocker")],
+  // D-149, served with the external admin contract selector v2: why the SYSTEM closed the candidate's intake.
+  ...runSummary, candidates: [{ ...leaf("title date_text url_host outcome reason intake_id"), system_closure: leaf("decision blocker") }],
 };
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */
 export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {

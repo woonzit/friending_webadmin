@@ -10,7 +10,7 @@ import { webadminErrorEnvelope } from "../lib/webadminEnvelope.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
 import {
-  DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminCommandContractParams, datesAdminContractParams, withDatesAdminContract,
+  DATES_ADMIN_COMMAND_CONTRACT_SELECTOR, DATES_ADMIN_INTAKE_CONTRACT_SELECTOR, datesAdminCommandContractParams, datesAdminContractParams, datesExternalAdminContractParams, withDatesAdminContract,
 } from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "../lib/datesExternalAdmin.ts";
@@ -122,14 +122,16 @@ async function forward(action: string, browserBody: unknown, answer: unknown) {
 }
 const fields = (form: URLSearchParams) => Object.fromEntries(form.entries());
 /** The server-owned selector as the form carries it (D-143); empty until the Core lane announces its name. */
-const owned = (action: string) => Object.fromEntries(Object.entries(datesAdminContractParams(action)).map(([key, value]) => [key, String(value)]));
+// D-149: and the external admin contract selector v2 on the routes it goes with (the intake list and detail among them).
+const owned = (action: string) => Object.fromEntries(Object.entries({ ...datesAdminContractParams(action), ...datesExternalAdminContractParams(action) })
+  .map(([key, value]) => [key, String(value)]));
 function common(sent: Sent, action: string, names: string[]) {
   assert.equal(sent.url, `https://core.invalid/v1/webadmin/${action}`);
   assert.equal(sent.contentType, "application/x-www-form-urlencoded;charset=UTF-8");
   const form = sent.form!;
   // D-143: the Admin intake contract selector is server-owned and goes with every Dates Admin request - once Core has
   // announced it (until then the constant is null and nothing is added).
-  const selector = datesAdminContractParams(action);
+  const selector = { ...datesAdminContractParams(action), ...datesExternalAdminContractParams(action) };
   assert.deepEqual([...form.keys()].sort(), [...names, "admin_email", "secret", ...Object.keys(selector)].sort(), "exactly these parameters, each once");
   for (const [key, value] of Object.entries(selector)) assert.equal(form.get(key), String(value), "the selector, set by the server");
   assert.equal(new Set(form.keys()).size, [...form.keys()].length, "no repeated parameter name");

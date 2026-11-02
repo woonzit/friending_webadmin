@@ -14,14 +14,14 @@ import {
 } from "@/lib/datesExternalReview";
 import { formatDate } from "@/lib/format";
 
-/** PROVISIONAL: the job reasons the console words; any other code Core reports is shown as it was written. */
-export const DATES_EXTERNAL_RECHECK_REASONS = ["no_change", "not_same_event", "no_valid_page", "fetch_failed", "robots_disallowed", "validation_failed",
-  "provider_unavailable", "budget_paused", "event_not_published", "event_changed", "timeout"] as const;
-/** The change-set fields the console names in words (the editor's labels); any other is shown as Core wrote it. */
-const FIELD_LABELS: Readonly<Record<string, string>> = { title: "title", start_at: "startLocal", starts_local: "startLocal", start_local: "startLocal",
-  end_at: "endLocal", ends_local: "endLocal", end_local: "endLocal", venue: "venueName", venue_name: "venueName", venue_address: "venueAddress",
-  formatted_address: "venueAddress", official_url: "officialUrl", ticket_url: "ticketUrl", price_text: "priceText", is_free: "isFree",
-  organizer_name: "organizerName", timezone: "timezone", all_day: "allDay", category: "category" };
+/** A job's reason codes (Core-B c268ae4b), which the console words; any other code Core reports is shown as it was written. */
+export const DATES_EXTERNAL_RECHECK_REASONS = ["same_facts", "event_unavailable", "research_disabled", "budget_paused", "provider_unavailable", "no_page",
+  "not_same_event", "validation_failed", "publisher_refused", "interrupted"] as const;
+/** The change-set fields (Core-B c268ae4b) in the editor's words; any other is shown as Core wrote it. */
+const FIELD_LABELS: Readonly<Record<string, string>> = { title: "title", start_at: "startLocal", end_at: "endLocal", all_day: "allDay",
+  venue: "venueName", official_url: "officialUrl", ticket_url: "ticketUrl", organizer: "organizerName", price_text: "priceText", is_free: "isFree" };
+/** Times of a change set are epoch seconds, shown in the event's own time zone. */
+const TIME_FIELDS = new Set(["start_at", "end_at"]);
 
 function storage(): DatesExternalRecheckStorage | null {
   try { return typeof window === "undefined" ? null : window.sessionStorage; } catch { return null; }
@@ -38,7 +38,7 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
   event: DatesExternalDetailRow; serverNow: number; actor: string; canManage: boolean; onFactsChanged: () => void;
 }) {
   const t = useTranslations("datesAdmin.external.recheck"), review = useTranslations("datesAdmin.external.review");
-  const form = useTranslations("datesAdmin.external.form"), common = useTranslations("common"), locale = useLocale();
+  const form = useTranslations("datesAdmin.external.form"), external = useTranslations("datesAdmin.external"), common = useTranslations("common"), locale = useLocale();
   const [jobs, setJobs] = useState<DatesExternalRows<DatesExternalRecheck> | null>(() => datesExternalRechecks(event, serverNow));
   // Read from this tab's session storage after mounting (null: not read yet - nothing can be started until it is).
   const [pending, setPending] = useState<DatesExternalRecheckPendingRead | null>(null);
@@ -96,8 +96,14 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
   const length = Array.from(instructions).length;
   const instructionsValid = instructions.trim() === "" || datesExternalRecheckInstructions(instructions);
   const usd = (value: number) => new Intl.NumberFormat(locale, { style: "currency", currency: "USD", maximumFractionDigits: 4 }).format(value);
-  const shown = (value: string | number | boolean | null) => value === null ? t("empty") : typeof value === "boolean" ? common(value ? "yes" : "no") : String(value);
-  const startable = canManage && !open && pending?.kind === "empty" && (event.status === "published" || event.status === "rechecking") && !event.soft_deleted;
+  // A fact the event did not know is null: "not known", like everywhere else on the page.
+  const shown = (field: string, value: string | number | boolean | null) => value === null ? external("unknownFact")
+    : typeof value === "boolean" ? common(value ? "yes" : "no")
+      : typeof value === "number" && TIME_FIELDS.has(field) ? new Intl.DateTimeFormat(locale, { timeZone: event.timezone, dateStyle: "medium", timeStyle: "short" }).format(value * 1000)
+        : String(value);
+  // Core-B: published, rechecking or in review, active, undeleted (Core checks again, and refuses an ended one).
+  const startable = canManage && !open && pending?.kind === "empty" && ["published", "rechecking", "in_review"].includes(event.status)
+    && event.lifecycle === "active" && !event.soft_deleted;
 
   return <section className="panel dates-external-fields" id="recheck" aria-labelledby="recheck-title">
     <div className="panel-header"><h2 id="recheck-title">{t("title")}</h2>
@@ -135,7 +141,7 @@ export default function DatesExternalRecheckPanel({ event, serverNow, actor, can
             {job.changes.length > 0 && <table className="data-table dates-embedded-table"><thead><tr><th>{t("columns.field")}</th><th>{t("columns.before")}</th><th>{t("columns.after")}</th></tr></thead>
               <tbody>{job.changes.map((change, index) => <tr key={`${change.field}-${index}`}>
                 <td>{Object.hasOwn(FIELD_LABELS, change.field) ? form(FIELD_LABELS[change.field]) : <code>{change.field}</code>}</td>
-                <td className="preserve-whitespace">{shown(change.before)}</td><td className="preserve-whitespace">{shown(change.after)}</td></tr>)}</tbody></table>}
+                <td className="preserve-whitespace">{shown(change.field, change.before)}</td><td className="preserve-whitespace">{shown(change.field, change.after)}</td></tr>)}</tbody></table>}
             {job.reason === null && job.changes.length === 0 && "—"}</td>
           <td>{job.cost_usd === null ? "—" : usd(job.cost_usd)}</td>
         </tr>)}</tbody></table></div>}

@@ -12,7 +12,7 @@ import {
 
 type TextField = { [K in keyof DatesExternalDraft]: DatesExternalDraft[K] extends string ? K : never }[keyof DatesExternalDraft];
 
-export default function DatesExternalEventForm({ initial, initialDraft, notice, disabled, submitLabel, onSubmit, onEdit }: {
+export default function DatesExternalEventForm({ initial, initialDraft, notice, disabled, submitLabel, onSubmit, onEdit, unknownAllowed = false }: {
   initial?: DatesExternalManualEvent | DatesExternalEditorInput | null; disabled: boolean; submitLabel: string;
   /** P2a: Core's prefill for an AI intake, where a field Core does not know is left empty for the reviewer. */
   initialDraft?: DatesExternalDraft;
@@ -21,6 +21,11 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
   onSubmit: (event: DatesExternalManualEvent, reason: string) => void | Promise<void>;
   /** D-149: told once the operator changes anything, so a page does not reload the form under unsaved work. */
   onEdit?: () => void;
+  /**
+   * D-149 (Core-B c268ae4b): an edit of a research event may leave its organizer and its free/paid status unknown, as
+   * Core's writer accepts for an event from an `ai_research` intake. Off for a manual event and a publication.
+   */
+  unknownAllowed?: boolean;
 }) {
   const t = useTranslations("datesAdmin.external.form");
   const [draft, setDraft] = useState(() => initialDraft ?? datesExternalDraft(initial));
@@ -30,10 +35,11 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
     setDraft((current) => ({ ...current, ...DATES_EXTERNAL_FRESH_CONFIRMATIONS, [key]: value }));
     setError(""); onEdit?.();
   }
-  function input(key: TextField, maximum: number, type = "text", required = false) {
-    return <label className="field"><span>{t(key)}</span><input value={draft[key]} type={type} maxLength={maximum}
-      required={required} onChange={(event) => edit(key, event.target.value as DatesExternalDraft[typeof key])} /></label>;
+  function input(key: TextField, maximum: number, type = "text", required = false, off = false) {
+    return <label className="field"><span>{t(key)}</span><input value={off ? "" : draft[key]} type={type} maxLength={maximum}
+      required={required && !off} disabled={off} onChange={(event) => edit(key, event.target.value as DatesExternalDraft[typeof key])} /></label>;
   }
+  const organizerUnknown = unknownAllowed && draft.organizerUnknown, freeUnknown = unknownAllowed && draft.freeUnknown;
   const latitude = draft.latitude.trim() === "" ? NaN : Number(draft.latitude);
   const longitude = draft.longitude.trim() === "" ? NaN : Number(draft.longitude);
   const center = Number.isFinite(latitude) && Math.abs(latitude) <= 90 && Number.isFinite(longitude) && Math.abs(longitude) <= 180
@@ -42,7 +48,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (disabled) return;
-    const parsed = datesExternalDraftInput(draft);
+    const parsed = datesExternalDraftInput(draft, unknownAllowed);
     if (!parsed.ok) { setError(t(`errors.${parsed.error}`)); return; }
     if (reason.trim().length < 3) { setError(t("errors.reason")); return; }
     setError("");
@@ -100,11 +106,14 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
       </div>
       <h3>{t("sourceTitle")}</h3>
       <div className="form-grid">
-        {input("organizerName", 32000, "text", true)}{input("organizerWebsite", 2048, "url")}
-        {input("sourceUrl", 2048, "url", true)}{input("officialUrl", 2048, "url", !draft.isFree)}{input("ticketUrl", 2048, "url")}
-        <label className="checkbox-field"><input type="checkbox" checked={draft.isFree} onChange={(event) => edit("isFree", event.target.checked)} /><span>{t("isFree")}</span></label>
-        {input("priceText", 32000)}{input("ageRestriction", 2)}
+        {input("organizerName", 32000, "text", true, organizerUnknown)}{input("organizerWebsite", 2048, "url")}
+        {unknownAllowed && <label className="checkbox-field"><input type="checkbox" checked={draft.organizerUnknown} onChange={(event) => edit("organizerUnknown", event.target.checked)} /><span>{t("organizerUnknown")}</span></label>}
+        {input("sourceUrl", 2048, "url", true)}{input("officialUrl", 2048, "url", !draft.isFree && !freeUnknown)}{input("ticketUrl", 2048, "url")}
+        <label className="checkbox-field"><input type="checkbox" checked={draft.isFree && !freeUnknown} disabled={freeUnknown} onChange={(event) => edit("isFree", event.target.checked)} /><span>{t("isFree")}</span></label>
+        {unknownAllowed && <label className="checkbox-field"><input type="checkbox" checked={draft.freeUnknown} onChange={(event) => edit("freeUnknown", event.target.checked)} /><span>{t("freeUnknown")}</span></label>}
+        {input("priceText", 32000, "text", false, freeUnknown)}{input("ageRestriction", 2)}
       </div>
+      {unknownAllowed && <p className="field-hint">{t("unknownHint")}</p>}
       <p className="field-hint">{t("linksHint")}</p>
       <p className="alert alert-info">{t("imagePolicy")}</p>
       <h3>{t("confirmationsTitle")}</h3>

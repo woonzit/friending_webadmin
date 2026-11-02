@@ -1,0 +1,22 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": true,
+    "external_event_id": "xev_00000000000000000000000000000006",
+    "recheck": {
+        "recheck_id": "rck_00000000000000000000000000000001",
+        "status": "queued",
+        "instructions": "Check the start time on the organizer's own page.",
+        "requested_by": "admin@example.test",
+        "created_at": 1790000000,
+        "finished_at": null,
+        "reason": null,
+        "changes": [],
+        "cost_usd": 0
+    },
+    "audit_id": "aud_00000000000000000000000000000007",
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

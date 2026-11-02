@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "friending-dates-external-review-wire-v1",
-    "source_commit": "4b58099cdd25b9bf41eaa3d37110fdaabf32a0ff",
-    "fixture_set_sha256": "0001c70c30ce50fb8798126766563bf969d679521e62c76eb7122913ea001e2f",
+    "source_commit": "3e151a15539f5343e0b4f959252b4db41386afeb",
+    "fixture_set_sha256": "4c2fb04ad838113a2a7c2e0aeb59df966e0176425b4b24f5578af6c0093f2357",
     "selectors": {
         "member": {
             "dates_api_version": 1,
@@ -21,7 +21,7 @@
     },
     "provenance": {
         "generator": "tests/dates_external_review_fixture_dump.php",
-        "generator_sha256": "02fbd3ebaf31b2813f59b167ad52f984bdcc3edde79c7ec03183dbf3d72d433a",
+        "generator_sha256": "9f5ab82cfda11d24c75bb036a8995626989bf736879d0857374d3ce5c5e33c16",
         "transport": "Real HTTP: public/index.php under PHP's own web server on 127.0.0.1. Member calls are form-encoded as the iOS app encodes them, with every selector the build sends; console calls as the console encodes them, with its secret.",
         "wire_adapters": {
             "ios": "public/index.php -> Friending\\Core\\Router::dispatch -> Response::send",
@@ -29,8 +29,8 @@
         },
         "declared_orchestration": "Members, sessions, switches and the operator rows (administrator, moderator, support viewer) are written by the generator. Every event is published, edited, marked and withdrawn through the console routes; corrections, joins, hides and the report are the members' own HTTP calls. A Dates restriction and the section switch are toggled on stored rows for two assertions and restored. The approving edit waits for the next second so that \"last decided first\" is not a tie.",
         "evaluated_at": 1790000000,
-        "normalized_clock_fields": "Every integer inside the capture's own run window becomes 1790000000 (Monday 2026-09-21 14:13:20 UTC), and one inside that window plus seven days (the next manual check) 1790604800; an event start or end, which the generator sets at a fixed offset from the start of the run, becomes the same offset from 1790000000, and its Europe/Budapest wall-time spellings those of that instant.",
-        "normalized_identifier_fields": "act_, xev_, cor_, thr_, aud_, rck_ and src_ identifiers are mapped to stable ones in first-seen order",
+        "normalized_clock_fields": "Every integer inside the capture's own run window becomes 1790000000 (Monday 2026-09-21 14:13:20 UTC), and one inside that window plus seven days (the next manual check) 1790604800, and one inside that window plus an intake's two retention spans that constant plus the span; an event start or end, which the generator sets at a fixed offset from the start of the run, becomes the same offset from 1790000000, and its Europe/Budapest wall-time spellings those of that instant; the re-researched event's times are whole minutes (its page states minutes) and become the same whole minutes after 1790000000.",
+        "normalized_identifier_fields": "act_, xev_, cor_, thr_, aud_, rck_, src_, msg_, xin_, rru_ and rso_ identifiers are mapped to stable ones in first-seen order",
         "selector_variants": {
             "member-activity-detail-released.json": "sent without dates_event_correction_contract_version (the released build)",
             "member-correction-submit-selector-denied.json": "sent without dates_event_correction_contract_version",
@@ -38,7 +38,13 @@
             "webadmin-external-list-released.json": "sent without dates_external_admin_contract_version (the released console)",
             "webadmin-external-detail-released.json": "sent without dates_external_admin_contract_version (the released console)",
             "webadmin-correction-list-selector-denied.json": "sent without dates_external_admin_contract_version",
-            "webadmin-command-mark-reviewed-selector-denied.json": "sent without dates_external_admin_contract_version"
+            "webadmin-command-mark-reviewed-selector-denied.json": "sent without dates_external_admin_contract_version",
+            "member-activity-detail-unknown-facts-v2.json": "dates_event_correction_contract_version=2 (reads an unknown organizer and price)",
+            "member-activity-mine-unknown-facts-v2.json": "dates_event_correction_contract_version=2",
+            "member-activity-detail-unknown-facts-released-denied.json": "sent without dates_event_correction_contract_version",
+            "webadmin-intake-list-system-closure-released.json": "sent without dates_external_admin_contract_version",
+            "webadmin-intake-detail-system-closure-released.json": "sent without dates_external_admin_contract_version",
+            "webadmin-research-run-detail-system-closure-released.json": "sent without dates_external_admin_contract_version; with dates_event_research_admin_contract_version=1 like every research body"
         },
         "source_paths": [
             "config/dates_v1_fixture.json",
@@ -168,13 +174,25 @@
             "src/Services/DatesAdminAuthorizationService.php",
             "src/Services/DatesAdminException.php",
             "src/Services/DatesAdminIdempotencyService.php",
+            "src/Services/DatesAiBudget.php",
             "src/Services/DatesAudienceVisibilityService.php",
             "src/Services/DatesCityPointService.php",
             "src/Services/DatesDomainException.php",
             "src/Services/DatesDomainOutbox.php",
             "src/Services/DatesDraftService.php",
+            "src/Services/DatesEventGoogleClient.php",
             "src/Services/DatesEventIconService.php",
+            "src/Services/DatesEventImageScreening.php",
             "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/DatesEventIntakePipeline.php",
+            "src/Services/DatesEventIntakeStore.php",
+            "src/Services/DatesEventIntakeWorker.php",
+            "src/Services/DatesEventResearchAdminService.php",
+            "src/Services/DatesEventResearchCommands.php",
+            "src/Services/DatesEventResearchFetch.php",
+            "src/Services/DatesEventResearchRunService.php",
+            "src/Services/DatesEventResearchStore.php",
+            "src/Services/DatesEventVenueResolver.php",
             "src/Services/DatesExternalAccessService.php",
             "src/Services/DatesExternalAttendanceService.php",
             "src/Services/DatesExternalCorrectionService.php",
@@ -187,6 +205,8 @@
             "src/Services/DatesExternalMessageReportService.php",
             "src/Services/DatesExternalPinService.php",
             "src/Services/DatesExternalReadService.php",
+            "src/Services/DatesExternalRecheckService.php",
+            "src/Services/DatesExternalRecheckSpendGuard.php",
             "src/Services/DatesExternalReportService.php",
             "src/Services/DatesExternalReviewAdminService.php",
             "src/Services/DatesExternalSafetyService.php",
@@ -232,19 +252,32 @@
             "src/Support/AppAppearancePolicy.php",
             "src/Support/AppReviewDemoVisibility.php",
             "src/Support/AppSettings.php",
+            "src/Support/AppearancePolicy.php",
             "src/Support/AudienceVisibilityPolicy.php",
             "src/Support/AudienceVisibilityReadinessPolicy.php",
             "src/Support/AuthMethodPolicy.php",
             "src/Support/DatesActivityPhotoPolicy.php",
             "src/Support/DatesActivityPolicy.php",
+            "src/Support/DatesAdminInput.php",
             "src/Support/DatesCanonicalPayload.php",
+            "src/Support/DatesChatPolicy.php",
             "src/Support/DatesCityKey.php",
             "src/Support/DatesContract.php",
             "src/Support/DatesEventContract.php",
             "src/Support/DatesEventCorrectionContract.php",
+            "src/Support/DatesEventDedupe.php",
+            "src/Support/DatesEventDraftValidator.php",
+            "src/Support/DatesEventEvidence.php",
             "src/Support/DatesEventIcons.php",
             "src/Support/DatesEventIntakeAdminContract.php",
+            "src/Support/DatesEventIntakePolicy.php",
+            "src/Support/DatesEventIntakeProjection.php",
+            "src/Support/DatesEventIntakeSettings.php",
             "src/Support/DatesEventOrigin.php",
+            "src/Support/DatesEventResearchDomainPolicy.php",
+            "src/Support/DatesEventResearchPolicy.php",
+            "src/Support/DatesEventText.php",
+            "src/Support/DatesEventVenuePolicy.php",
             "src/Support/DatesExternalAdminContract.php",
             "src/Support/DatesExternalAvailabilityPolicy.php",
             "src/Support/DatesExternalCapabilityPolicy.php",
@@ -254,6 +287,7 @@
             "src/Support/DatesExternalEventPolicy.php",
             "src/Support/DatesExternalEventProjection.php",
             "src/Support/DatesExternalPins.php",
+            "src/Support/DatesExternalPlacePolicy.php",
             "src/Support/DatesExternalRecheckPolicy.php",
             "src/Support/DatesFeatureFlags.php",
             "src/Support/DatesHostModerationPolicy.php",
@@ -261,6 +295,9 @@
             "src/Support/DatesInput.php",
             "src/Support/DatesMapSnapshotPolicy.php",
             "src/Support/DatesMembershipPolicy.php",
+            "src/Support/DatesResearchDomain.php",
+            "src/Support/DatesResearchPublicationPolicy.php",
+            "src/Support/DatesResearchRobots.php",
             "src/Support/DatesResponseSerializer.php",
             "src/Support/DatesReviewSandboxPolicy.php",
             "src/Support/DatesRevisionPolicy.php",
@@ -270,7 +307,26 @@
             "src/Support/DatesWireResponse.php",
             "src/Support/EmailProofPolicy.php",
             "src/Support/ErrorLogDestination.php",
+            "src/Support/EventAi/AbstractEventAiProvider.php",
+            "src/Support/EventAi/EventAiContext.php",
+            "src/Support/EventAi/EventAiPricing.php",
+            "src/Support/EventAi/EventAiPrompt.php",
+            "src/Support/EventAi/EventAiProvider.php",
+            "src/Support/EventAi/EventAiResult.php",
+            "src/Support/EventAi/EventAiRouter.php",
+            "src/Support/EventAi/EventAiRouting.php",
+            "src/Support/EventAi/EventAiSpendGuard.php",
+            "src/Support/EventAi/EventAiTransport.php",
+            "src/Support/EventAi/EventAreaResearch.php",
+            "src/Support/EventAi/EventAreaResearchProvider.php",
+            "src/Support/EventAi/EventAreaResearchSchema.php",
             "src/Support/EventAi/EventImageNormalizer.php",
+            "src/Support/EventAi/EventPageText.php",
+            "src/Support/EventAi/EventRecheckProvider.php",
+            "src/Support/EventAi/EventRecheckResearch.php",
+            "src/Support/EventAi/EventResearchProvider.php",
+            "src/Support/EventAi/EventSheetSchema.php",
+            "src/Support/EventAi/OpenAiEventAiProvider.php",
             "src/Support/ForcedVerificationEvaluator.php",
             "src/Support/ForcedVerificationPolicy.php",
             "src/Support/IdentityV2Policy.php",
@@ -286,10 +342,12 @@
             "src/Support/PublicProfileLinkPolicy.php",
             "src/Support/PublicWebBasePolicy.php",
             "src/Support/PushDeliveryModePolicy.php",
+            "src/Support/SafeExternalFetch.php",
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
             "src/Support/SessionScopePolicy.php",
             "src/Support/SignupOutcomeDiagnostics.php",
+            "src/Support/StrictJson.php",
             "src/Support/UnprovedAccountPolicy.php",
             "src/Support/VerificationCompletion.php",
             "src/Support/VerificationMemberEvaluator.php",
@@ -331,12 +389,52 @@
             "sha256": "2b8053762836d50434848b9f071dabc0c3230b44b719b166bcaa50b058a3fa32"
         },
         {
+            "file": "member-activity-detail-unknown-facts-released-denied.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "4679d386912af9860a503b84ae186621164ec73f67d9a5819a1fe61ce75884a4"
+        },
+        {
+            "file": "member-activity-detail-unknown-facts-v1-denied.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "4679d386912af9860a503b84ae186621164ec73f67d9a5819a1fe61ce75884a4"
+        },
+        {
+            "file": "member-activity-detail-unknown-facts-v2.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "236349e63aed7f9d6438d16a4fabeaaba2060e4af8385969ebbc9e927fffc17d"
+        },
+        {
             "file": "member-activity-mine-correctable.json",
             "consumer": "ios",
             "route": "/v1/dates/mine",
             "http_status": 200,
             "status_code": 200,
             "sha256": "acf88c52f98a4ac71b8cebc852ef2db5c1e10705cb9c882ad64afd5010916c67"
+        },
+        {
+            "file": "member-activity-mine-unknown-facts-v1.json",
+            "consumer": "ios",
+            "route": "/v1/dates/mine",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "388a886288ebd4b7be1c3bb067140eeff6f49952d1822a302be21883905de5b7"
+        },
+        {
+            "file": "member-activity-mine-unknown-facts-v2.json",
+            "consumer": "ios",
+            "route": "/v1/dates/mine",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9f12ad5ff33da469d22726a3cdeff98cff0b1406180d98c43f2cb0e07db3fd4f"
         },
         {
             "file": "member-correction-mine-approved.json",
@@ -443,6 +541,14 @@
             "sha256": "7d95135ad69f84811b617b056b19a2bd851ece1a9950d6ac0c2bc6ffacd82e3f"
         },
         {
+            "file": "webadmin-command-cancel-with-correction.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_command",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4df337f151b30da507c3e06c234571050d4e17188b971a4f1ac228b171874323"
+        },
+        {
             "file": "webadmin-command-clear-reviewed-reason-denied.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_external_event_command",
@@ -499,6 +605,22 @@
             "sha256": "79fc8e6ca1c1b59ebb8f09755bb60704414c6b6d7c94b71357bf2228874a3d62"
         },
         {
+            "file": "webadmin-command-official-update-with-correction.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_command",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "aec599bf80f7c1fa035817d264edd25c9580521b68e2cbf895384d0f0b9c1281"
+        },
+        {
+            "file": "webadmin-command-withdraw-with-correction-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_command",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "9293af697ba533ad6b1314ef9e8317acd2f1b2afd225be872fb2b585cd2a0c79"
+        },
+        {
             "file": "webadmin-correction-decide-note-required-denied.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_external_correction_decide",
@@ -544,7 +666,7 @@
             "route": "/v1/webadmin/dates_external_correction_list",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "df5eb034c55a207659ec6fd713bbb832cc454e707ca107a31394600eca97c98d"
+            "sha256": "f31e5772602411c541a99848fe661194e23465e46cf0fcca0fb2ed3dfc9b1078"
         },
         {
             "file": "webadmin-correction-list-filter-denied.json",
@@ -560,7 +682,7 @@
             "route": "/v1/webadmin/dates_external_correction_list",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b63cccce5261e6838baab25e54787a93cb7ade8dd85673fb7d72266e353c3d9b"
+            "sha256": "eba72e0a989847cd1d0928b674b2560641640cf3a9f5ec9d06a94c0ddf4d12a0"
         },
         {
             "file": "webadmin-correction-list-rejected.json",
@@ -592,7 +714,47 @@
             "route": "/v1/webadmin/dates_external_event_detail",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "396a552417093390c9416df5daf55d2c0cce17ea1793a0aba5daa5c0593a0126"
+            "sha256": "107bceff4179b69042aaec95c5e8d1bcae9ea4591304e95132feb047d479591b"
+        },
+        {
+            "file": "webadmin-external-detail-recheck-applied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a65ccddabcf4232b6b09698110b32cc3b5e36b8dde54bafa1f124e2ea694f6a0"
+        },
+        {
+            "file": "webadmin-external-detail-recheck-failed.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "4bdb1d4581d704d4f2c2064f9eed800fb7fe115e9f1229fa499f3825fd82142f"
+        },
+        {
+            "file": "webadmin-external-detail-recheck-no-change.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "33c22fd1eeaac7378ce3541be3956aa14d45b143575ad0701ffc90590ef2be5d"
+        },
+        {
+            "file": "webadmin-external-detail-recheck-queued.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "412739db773e4e2f61a4903d57a4ee8b1f9641d72d66c7170db43fb651037ed2"
+        },
+        {
+            "file": "webadmin-external-detail-recheck-running.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7ca4de480b85a1d7620c34fb87df7302f00a903ecde4ce2de3ae90819fdab3f2"
         },
         {
             "file": "webadmin-external-detail-released.json",
@@ -608,7 +770,7 @@
             "route": "/v1/webadmin/dates_external_event_detail",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "5f0367e28eae213df27a9be63bb9334b899e34c997779707f167f90d50dfcde1"
+            "sha256": "ee8377d9dcc2ed042966b242df808b12bfc765b278a0e85d501a5aa1b001e2f7"
         },
         {
             "file": "webadmin-external-list-filter-denied.json",
@@ -627,6 +789,14 @@
             "sha256": "2f0f628884fc8ed40866e04ef254d8812151a67b503019c2dcfdffa8a91dd619"
         },
         {
+            "file": "webadmin-external-list-recheck.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_list",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c97811bdf114b723eae968968babe9d56e0f30221bbdef443b52d8c693328dcd"
+        },
+        {
             "file": "webadmin-external-list-released.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_external_event_list",
@@ -643,12 +813,140 @@
             "sha256": "96a6ca94ca14998cf5e34053735fbcd5126c5e6e71b6e93e4f28063b276f9a47"
         },
         {
+            "file": "webadmin-intake-detail-system-closure-released.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_intake_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "638131d507c9be7a90c987ceddf2db96de66acfef5d0fbec7605e3885487eac8"
+        },
+        {
+            "file": "webadmin-intake-detail-system-closure.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_intake_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "842106c95c0492cc8873621a25000e66f8113b503208aacc14717bd3b7ea51da"
+        },
+        {
+            "file": "webadmin-intake-detail-system-duplicate.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_intake_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7674d429a1491b17a2997b19e0cd9b736467c257b94b739adcaa8621f7755bd9"
+        },
+        {
+            "file": "webadmin-intake-list-system-closure-released.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_intake_list",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "77f0f4fc6182b76af9ceafeecb0e96ff45003f40e0254cd12952596c5acdd926"
+        },
+        {
+            "file": "webadmin-intake-list-system-closure.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_intake_list",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "19f73eecd8e07a13e83a5308ada8f0347d5ab2a468faea0470e69faa6f11ed48"
+        },
+        {
+            "file": "webadmin-recheck-budget-paused-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "780a98e76722982a9a628ea2252a726bd04f6abf262d2690043271cd25a1a28d"
+        },
+        {
+            "file": "webadmin-recheck-instructions-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "77e605aab4fdb36ed9895490837e97c7deb65e11edbb643a60b82d3cf1250439"
+        },
+        {
+            "file": "webadmin-recheck-moderator-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "webadmin-recheck-open-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f87340486795d32821e2786ef73a9efb0191c41ef7e62458d6dcdf5ed0057d5c"
+        },
+        {
+            "file": "webadmin-recheck-queued-replay.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "ad534a21e403dc8f20b6ec36dc27d56ef904d24049059b721e2539cbdab4bb7e"
+        },
+        {
+            "file": "webadmin-recheck-queued.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "70bdbada54004a9fc06b3b0061a4bbafdb1334fb9b15a7eb607ddbcd41a58168"
+        },
+        {
+            "file": "webadmin-recheck-selector-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 426,
+            "sha256": "1307b805b3d51d7905d159301fd22356e5e7dccff8b62b92424dfcc132d0b458"
+        },
+        {
+            "file": "webadmin-recheck-unavailable-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_recheck",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "86d361ebecbd115e4d4857d132702bc31415327b6ffeb413149f0133c0a149df"
+        },
+        {
+            "file": "webadmin-research-run-detail-system-closure-released.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_research_run_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e78fc5c04f2f07f7f0fb22556f7cefe9f63952ed232171e9e8451d483c60e9f9"
+        },
+        {
+            "file": "webadmin-research-run-detail-system-closure.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_event_research_run_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "82759bb8c02a38abe0585e35288ef1264fa1975b1678f9657ba0727c5f16eb0f"
+        },
+        {
             "file": "webadmin-update-with-correction-moderator-denied.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_external_event_update",
             "http_status": 200,
             "status_code": 403,
             "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "webadmin-update-with-correction-no-change-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_update",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "bb83e447b6813f82a5909d2724fe43d7909c4dd2bf48926ec9fd1034ff55acd7"
         },
         {
             "file": "webadmin-update-with-correction-other-event-denied.json",

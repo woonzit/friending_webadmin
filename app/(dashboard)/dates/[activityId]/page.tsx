@@ -307,7 +307,7 @@ export default function DatesActivityDetailPage() {
         <section className="panel">
           <div className="panel-header"><div><h2>{t("overview")}</h2><p>{t("overviewCopy")}</p></div><div className="row-actions"><span className={`badge ${activity.soft_deleted ? "badge-warning" : "badge-active"}`}>{activity.soft_deleted ? t("softDeleted") : values(activity.lifecycle)}</span><span className={`badge ${activity.moderation_state === "ok" || activity.moderation_state === "approved" ? "badge-active" : "badge-warning"}`}>{values(activity.moderation_state)}</span></div></div>
           <div className="panel-body"><dl className="detail-list">
-            <div className="detail-row"><dt>{isExternal ? external("form.organizerName") : t("host")}</dt><dd>{activity.host === null ? activity.organizer_name : <>{activity.host.display_name || "—"} · UID {activity.host.uid}</>}</dd></div>
+            <div className="detail-row"><dt>{isExternal ? external("form.organizerName") : t("host")}</dt><dd>{activity.host === null ? activity.organizer_name ?? external("unknownFact") : <>{activity.host.display_name || "—"} · UID {activity.host.uid}</>}</dd></div>
             <div className="detail-row"><dt>{t("type")}</dt><dd>{values(activity.activity_type)}</dd></div>
             <div className="detail-row"><dt>{t("schedule")}</dt><dd>{values(activity.time_mode)} · {activity.start_at ? formatDate(activity.start_at, locale, true) : "—"} → {activity.end_at ? formatDate(activity.end_at, locale, true) : "—"}</dd></div>
             <div className="detail-row"><dt>{t("location")}</dt><dd>{values(activity.location_mode)} · {[activity.city, activity.country_code].filter(Boolean).join(", ") || "—"}</dd></div>

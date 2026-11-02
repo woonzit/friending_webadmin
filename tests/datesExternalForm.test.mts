@@ -18,7 +18,8 @@ test("manual form copy covers every draft field and category in EN and HU", () =
     for (const key of ["manualOnly", "timeHint", "endHint", "mapHint", "mapUnavailable", "imagePolicy"]) assert.ok(copy[key]);
   }
   assert.doesNotMatch(form, /adminCall|fetch\(|type="file"/);
-  assert.match(form, /datesExternalDraftInput\(draft\)/);
+  // D-149: a research event's edit may leave the organizer and the free/paid status unknown (`unknownAllowed`).
+  assert.match(form, /datesExternalDraftInput\(draft, unknownAllowed\)/);
   assert.match(form, /fieldset className="dates-external-fields" disabled=\{disabled\}/);
   assert.match(form, /\.\.\.current, \.\.\.DATES_EXTERNAL_FRESH_CONFIRMATIONS, \[key\]: value/);
   assert.match(form, /if \(disabled\) return;/);

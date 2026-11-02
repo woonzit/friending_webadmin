@@ -3045,7 +3045,7 @@
           "approve": {
             "title": "Approve and edit",
             "purpose": "Opens the event editor prefilled with the proposed title, times and website; saving it with the four checks approves the correction in the same step.",
-            "guidance": "A proposed place is free text: find it with the place search. A cancellation is recorded with the event's cancel command, not by saving. Members are notified as for any edit.",
+            "guidance": "A proposed place is free text: find it with the place search. A cancellation is approved with “Approve: record the cancellation” and a postponement with “Approve: post an official update”; an edit that changes nothing is refused - reject such a correction instead. Members are notified as for any edit.",
             "actions": {
               "1": "Check every prefilled value against the source before you tick the four checks.",
               "2": "If the save reports a conflict, refresh and review again; the correction stays pending until a save succeeds."
@@ -8558,6 +8558,28 @@
       }
     },
     "research": {
+      "closure": {
+        "notPublishable": "Closed by the system: not publishable",
+        "duplicate": "Closed by the system: duplicate of a listed event",
+        "blockers": {
+          "not-a-single-event": "Not exactly one event",
+          "hard-fail": "Failed a required check",
+          "title-unverified": "Title not verified on the page",
+          "date-unverified": "Date not verified on the page",
+          "time-unverified": "Time not verified on the page",
+          "venue-unverified": "Venue not verified on the page",
+          "sensitive": "Sensitive category",
+          "prompt-injection": "Suspected manipulation of the AI",
+          "canceled-or-postponed": "Canceled or postponed",
+          "possibly-private": "Possibly a private event",
+          "blocked-domain": "Blocked website",
+          "aggregator-reclassified": "The site turned out to be a listing site",
+          "start-passed": "The start has passed",
+          "outside-window": "Outside the time window",
+          "outside-area": "Outside the area",
+          "duplicate": "Duplicate of a listed event"
+        }
+      },
       "eyebrow": "AreYouIn operations",
       "title": "Research",
       "subtitle": "Automatic event collection by city and source. Global defaults, city overrides and the results of each run.",
@@ -8653,25 +8675,6 @@
       "editedRowUnavailable": "The row being edited is unavailable. Refresh before changing it.",
       "mapHint": "Choose a city from search. Core resolves its place identity and bounds; the map shows the resulting centre and radius.",
       "aggregatorHint": "Aggregators provide facts only: their own summaries and images are not imported. Their events follow the city's or the global automatic publication setting, like those of official sources.",
-      "publication": {
-        "notPublishable": "Not publishable (system decision)",
-        "blockers": {
-          "not_single_event": "Not exactly one event",
-          "not_an_event": "Not an event",
-          "hard_fail": "Failed a required check",
-          "title_unverified": "Title not verified",
-          "date_unverified": "Date not verified",
-          "time_unverified": "Time not verified",
-          "venue_unverified": "Venue not verified",
-          "sensitive": "Sensitive category",
-          "prompt_injection_suspected": "Suspected manipulation of the AI",
-          "duplicate": "Duplicate of a published event",
-          "domain_blocked": "Blocked website",
-          "outside_area": "Outside the area",
-          "outside_window": "Outside the time window",
-          "start_in_past": "Start is in the past"
-        }
-      },
       "test": "Test",
       "runNow": "Check now",
       "sourceEffective": "Window: {days} days · automatic publication: {publish}",
@@ -8716,9 +8719,7 @@
         "imported": "Imported",
         "would_import": "Would import",
         "duplicate": "Duplicate",
-        "dropped": "Dropped",
-        "published": "Published",
-        "not_publishable": "Not publishable"
+        "dropped": "Dropped"
       },
       "dropReasons": {
         "past_date": "Past event",
@@ -9108,7 +9109,11 @@
       "usage": "AI usage"
     },
     "external": {
+      "unknownFact": "Not known",
       "review": {
+        "approveCommandNote": "This command also approves the member's correction.",
+        "approvePostponed": "Approve: post an official update",
+        "approveCancel": "Approve: record the cancellation",
         "quickViews": "Quick view:",
         "researchUnreviewed": "Research, published, not reviewed",
         "filterValues": {
@@ -9126,6 +9131,10 @@
         "clearReason": "Reason",
         "uncertain": "It is not known whether the mark was saved: no readable answer came back. The event was read again; check its mark before you repeat it.",
         "refusals": {
+          "reasonRequired": "Write a reason of at least 3 characters.",
+          "researchDisabled": "Research is switched off, so the event cannot be re-researched.",
+          "actionInvalid": "This command cannot approve a correction. A cancellation is approved with “Record organizer cancellation”, a postponement with “Post official update”.",
+          "noChange": "Nothing changed: the event already shows what the member proposed. Reject the correction with “The event already shows this” instead.",
           "recheckOpen": "A re-research of this event is already queued or running. Wait for it to finish.",
           "recheckUnavailable": "This event cannot be re-researched: it is no longer a published external event, or research is switched off.",
           "budgetPaused": "Research is paused: this month's AI research spend reached its 70% stop. Raise the cap or wait for next month.",
@@ -9157,8 +9166,8 @@
         "approveTitle": "Approving a member's correction",
         "approveCopy": "The editor below is prefilled with the proposed values. Check them against the source, complete what the form could not take over, tick the four checks, then save: the save approves this correction. Nothing the member wrote is shown to others before that.",
         "venueHint": "Proposed place: “{venue}”. Find it with the place search and check the pin; free text is not copied into the venue fields.",
-        "statusCanceledHint": "The member says the event is canceled. If the organizer confirms it, use “Record organizer cancellation” among the commands; saving here does not cancel the event.",
-        "statusPostponedHint": "The member says the event is postponed. Enter the new date and time if the source confirms them.",
+        "statusCanceledHint": "The member says the event is canceled. If the organizer confirms it, use “Approve: record the cancellation”: it cancels the event, notifies the members going or interested, and approves this correction in one step.",
+        "statusPostponedHint": "The member says the event is postponed. If the source gives the new date, enter it and save (that approves the correction); otherwise use “Approve: post an official update” to tell the members in the event's conversation.",
         "unappliedHint": "Some proposed values could not be put into the form as they are (for example a link that is not https). They are listed above; enter them by hand if they are right.",
         "approveReview": "Review approval",
         "approveSave": "Approve correction and save"
@@ -9200,17 +9209,16 @@
           "failed": "Failed"
         },
         "reasons": {
-          "no_change": "The facts were found unchanged.",
-          "not_same_event": "The pages found describe a different event; nothing was applied.",
-          "no_valid_page": "No page described this event in a way that validated.",
-          "fetch_failed": "The event's pages could not be fetched.",
-          "robots_disallowed": "The site's robots rules do not allow reading the page.",
-          "validation_failed": "The extracted facts did not pass validation.",
-          "provider_unavailable": "The AI provider was unavailable.",
+          "same_facts": "The page states the same facts; nothing changed.",
+          "event_unavailable": "The event could no longer be re-researched, or it changed while the job ran; nothing was applied.",
+          "research_disabled": "Research was switched off.",
           "budget_paused": "Research was paused by the budget.",
-          "event_not_published": "The event was no longer published when the job ran.",
-          "event_changed": "The event was edited while the job ran; nothing was applied.",
-          "timeout": "The job did not finish in time."
+          "provider_unavailable": "The AI provider was unavailable.",
+          "no_page": "No page could be read (robots rules, a blocked site or failed downloads).",
+          "not_same_event": "The pages found describe a different event; nothing was applied.",
+          "validation_failed": "No page described this event in a way that validated.",
+          "publisher_refused": "The new facts were refused when they were saved; the event is unchanged.",
+          "interrupted": "The job was interrupted and is not repeated (a paid call may already have been made)."
         },
         "confirmTitle": "Re-research this event with AI?",
         "confirmCopy": "This starts one paid AI job for this event. Changed facts are applied and members are notified; if the result is not the same event, nothing changes. Instructions:",
@@ -9233,6 +9241,8 @@
       "emptyPage": "This page contains no events. The list may have changed while loading; refresh or return to the previous page.",
       "origin": { "label": "Event origin", "all": "All origins", "member": "Member programs", "external": "External events" },
       "provenance": {
+        "unknownFacts": "Not stated by the source",
+        "unknownFactsHint": "Automatic research found no organizer or free/paid status on the page. Fill them in on the editor when you know them.",
         "title": "Verification and sources", "tier": "Verification tier", "submitter": "Submitted by", "adminEntered": "Entered by an administrator; no member submitter",
         "anonymous": "Anonymous or not disclosed", "member": "Member UID {uid}", "channel": "Submission channel",
         "assistance": "AI assistance", "noAi": "None — manually entered and checked",
@@ -9337,6 +9347,8 @@
         "payload": "Review exact saved request", "open": "Open the outstanding operation", "retry": "Retry the same operation"
       },
       "feedback": {
+        "correctionClosed": "This correction can no longer be approved here (it was decided, or it belongs to another event). Refresh to see it.",
+        "correctionNoChange": "Nothing changed: the event already shows what the member proposed. Nothing was saved and the correction is still pending; reject it with “The event already shows this”.",
         "changedElsewhere": "The event changed while you were editing (a review mark, a re-research or a correction decision). Your draft is kept, but nothing can be saved on the old revision. Refresh to load the current facts, then review your changes again.",
         "correctionApproved": "Core saved the edit and approved the member's correction in the same step. Members are notified as for any edit.",
         "correctionRejected": "The correction was rejected. The member sees that it was not accepted; the event is unchanged.",
@@ -9355,6 +9367,10 @@
         "refused": "Core refused this operation. Review the facts, time bounds, source and ticket links, audit reason and current event state before preparing a corrected request."
       },
       "form": {
+        "freeUnknownField": "Free or paid",
+        "unknownHint": "A research event may stay without an organizer or a known free/paid status when its page does not state them. Fill them in when you know them; a manual event needs both.",
+        "freeUnknown": "Free or paid: not known",
+        "organizerUnknown": "Organizer not known",
         "factsTitle": "Manual event facts",
         "manualOnly": "Enter facts checked against the source. This form does not use AI or automatically verify the organizer or venue.",
         "title": "Title (3–120 characters)",
@@ -10818,7 +10834,6 @@
         "awaiting_budget": "The monthly AI budget is used up or set to zero. The worker tries again every hour; raise the cap in Configuration to continue sooner."
       },
       "statusDetailValues": {
-        "research-not-publishable": "Closed by the system: not publishable",
         "image-empty": "Empty flyer file",
         "image-unreadable": "Flyer cannot be read",
         "image-too-large": "Flyer file too large",
@@ -10848,7 +10863,6 @@
         "ai-budget-overrun": "AI billed beyond its limit"
       },
       "statusDetailHelp": {
-        "research-not-publishable": "The automatic publication gate found this research event not publishable, and the system closed it. The reason is shown beside the decision; nobody has to act on it.",
         "image-empty": "The uploaded file had no content. Upload the photo again.",
         "image-unreadable": "Core could not decode the file as an image. Try a JPEG or PNG copy of the flyer.",
         "image-too-large": "The file is larger than 10 MiB.",

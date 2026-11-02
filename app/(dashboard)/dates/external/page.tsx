@@ -114,7 +114,7 @@ export default function DatesExternalEventsPage() {
         <thead><tr><th>{t("columns.event")}</th><th>{t("columns.status")}</th>{reviewServed && <th>{t("columns.reviewed")}</th>}<th>{t("columns.venue")}</th><th>{t("columns.start")}</th><th>{t("columns.counts")}</th><th>{t("columns.recheck")}</th></tr></thead>
         <tbody>{data.events.map((row) => <tr key={row.external_event_id}>
           <td><Link href={`/dates/external/${row.external_event_id}`}>{row.title}</Link><div><span className="badge badge-demo">{t("badge")}</span>{row.ai_assisted && <span className="badge badge-warning">{t("aiBadge")}</span>}
-            {row.possible_duplicate_of && <Link className="badge badge-warning" href={`/dates/external/${row.possible_duplicate_of}`} title={t("review.duplicateHint")}>{t("review.duplicate")}</Link>}</div><small>{row.organizer_name}</small>
+            {row.possible_duplicate_of && <Link className="badge badge-warning" href={`/dates/external/${row.possible_duplicate_of}`} title={t("review.duplicateHint")}>{t("review.duplicate")}</Link>}</div><small>{row.organizer_name ?? t("unknownFact")}</small>
             {(row.open_corrections ?? 0) > 0 && <div><Link href="/dates/corrections"><small>{t("review.openCorrections", { count: row.open_corrections ?? 0 })}</small></Link></div>}
             {(row.open_reports ?? 0) > 0 && <div><Link href={`/dates/${row.activity_id}`}><small>{t("review.openReports", { count: row.open_reports ?? 0 })}</small></Link></div>}</td>
           <td>{t(`statusValues.${row.status}`)}<div><small>{t(`tierValues.${row.verification_tier}`)}</small></div></td>

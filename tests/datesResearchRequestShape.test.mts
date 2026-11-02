@@ -9,7 +9,7 @@ import { adminBridgeCoreTransportError } from "../lib/adminBridge.ts";
 import { webadminErrorEnvelope } from "../lib/webadminEnvelope.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
 import { datesAvailabilityWriteIsRetired } from "../lib/datesAdmin.ts";
-import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
+import { DATES_EXTERNAL_ADMIN_V2_ROUTES, withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "../lib/datesAdminProjection.ts";
 import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } from "../lib/datesIntakeAdmin.ts";
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "../lib/datesResearchProxy.ts";
@@ -66,7 +66,10 @@ function formOf(result: Awaited<ReturnType<typeof bridge>>, action: string, fiel
   const { form, url, headers, cache } = result.sent[0];
   assert.equal(url, `https://core.invalid/v1/webadmin/${action}`); assert.equal(cache, "no-store"); assert.equal(result.headers.get("cache-control"), "no-store");
   assert.equal(headers.get("content-type"), "application/x-www-form-urlencoded;charset=UTF-8");
-  assert.deepEqual([...form.keys()].sort(), [...fields, "secret", "admin_email", "dates_event_intake_admin_contract_version", "dates_event_research_admin_contract_version"].sort());
+  // D-149: the run detail and the intake list also carry the external admin contract selector v2 (`system_closure`).
+  const v2 = DATES_EXTERNAL_ADMIN_V2_ROUTES.includes(action) ? ["dates_external_admin_contract_version"] : [];
+  assert.deepEqual([...form.keys()].sort(), [...fields, "secret", "admin_email", "dates_event_intake_admin_contract_version", "dates_event_research_admin_contract_version", ...v2].sort());
+  if (v2.length) assert.equal(form.get("dates_external_admin_contract_version"), "2");
   assert.equal(new Set(form.keys()).size, [...form.keys()].length); assert.equal([...form.keys()].some((name) => /[\[\].]/.test(name)), false);
   assert.equal(form.get("secret"), fakeSecret); assert.equal(form.get("admin_email"), actor); assert.equal([...form.keys()].at(-1), "secret");
   assert.equal(form.get("dates_event_research_admin_contract_version"), "1"); assert.equal(form.get("dates_event_intake_admin_contract_version"), "1");

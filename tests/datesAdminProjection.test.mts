@@ -32,14 +32,9 @@ const read = (corpus: string, file: string) => JSON.parse(readFileSync(new URL(`
 const HOST_MODERATION_REDUCED = "admin-activity-detail.json";
 const HOST_MODERATION_ROUTES = new Map<string, string | null>((read("dates_host_moderation_admin_wire", "manifest.json").fixtures as Array<{ file: string; route: string; excerpt: boolean }>)
   .map((entry) => [entry.file, entry.excerpt || entry.file === HOST_MODERATION_REDUCED ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
-/**
- * D-149: Core's review corpus records the consumer and route of each body. Three of its console bodies carry a
- * note-only correction served as `"proposed": []` (a Core defect: its contract says an object); their projection drops
- * that one `proposed` by design, so tests/datesExternalReviewWire.test.mts holds them to their exact projection instead.
- */
-const REVIEW_PROPOSED_ARRAY = ["webadmin-correction-list-pending.json", "webadmin-external-detail.json", "webadmin-external-detail-after-correction.json"];
+/** D-149: Core's review corpus records the consumer and route of each body; the app's (member-*) are not console bodies. */
 const REVIEW_ROUTES = new Map<string, string | null>((read("dates_external_review_wire", "manifest.json").fixtures as Array<{ file: string; route: string; consumer: string }>)
-  .map((entry) => [entry.file, entry.consumer !== "webadmin" || REVIEW_PROPOSED_ARRAY.includes(entry.file) ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
+  .map((entry) => [entry.file, entry.consumer !== "webadmin" ? null : entry.route.replace(/^\/v1\/webadmin\//, "")]));
 const copy = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 /** Which route answered a genuine body, by the corpus's file names. `null`: not a console body (the app's). */
@@ -95,12 +90,7 @@ type Genuine = { corpus: string; file: string; route: string; body: any };
 const GENUINE: Genuine[] = CORPORA.flatMap((corpus) => readdirSync(new URL(`${corpus}/`, FIXTURES)).filter((file) => file.endsWith(".json") && file !== "manifest.json").sort()
   .flatMap((file) => { const route = routeOf(corpus, file); return route === null ? [] : [{ corpus, file, route, body: read(corpus, file) }]; }));
 const SUCCESSES = GENUINE.filter((item) => item.body.success === true && item.route !== "dates_event_intake_image");
-/**
- * D-149 (T-908): the route whose tree is still PROVISIONAL - the AI re-research of one event, not yet in Core's review
- * corpus (Core-B step 3). tests/datesExternalReview.test.mts holds it to the lane's bodies in
- * tests/fixtures/dates_external_autopub_admin_wire_provisional; it leaves this list when Core's bodies are vendored.
- */
-const PROVISIONAL_ROUTES = ["dates_external_event_recheck"];
+
 
 test("every Dates Admin route this console calls has its named fields, and no other route is projected", () => {
   assert.deepEqual(GENUINE.filter((item) => item.route === "?").map((item) => item.file), [], "every genuine body is mapped to its route");
@@ -135,9 +125,8 @@ test("the projection of every genuine body is that body: no named field is lost,
   assert.ok(successes > 300 && refusals > 140, `${successes} / ${refusals}`);
   // Each route that has a genuine success body, by name - the others are listed with the reason they have none.
   const covered = new Set(SUCCESSES.map((item) => item.route));
-  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !(DATES_RESEARCH_ACTIONS as readonly string[]).includes(route) && !covered.has(route)).sort(),
-    ["dates_activity_location", ...PROVISIONAL_ROUTES],
-    "no genuine body: only the break-glass location (since T-891 every command receipt has Core's genuine bodies) and the provisional D-149 routes");
+  assert.deepEqual(Object.keys(DATES_ADMIN_NAMED).filter((route) => !(DATES_RESEARCH_ACTIONS as readonly string[]).includes(route) && !covered.has(route)).sort(), ["dates_activity_location"],
+    "no genuine body: only the break-glass location (since T-891 every command receipt has Core's genuine bodies, since D-149 every review route)");
 });
 
 /** Adds a key to every object the tree names (not inside a part kept whole): what the projection must take out again. */
@@ -164,7 +153,8 @@ test("per route: a key this console does not name, at any depth, is not in what 
     perRoute.set(route, (perRoute.get(route) ?? 0) + added.count);
   }
   // Every route family with a genuine body was exercised, and deep: the intake detail alone has dozens of named objects.
-  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - DATES_RESEARCH_ACTIONS.length - 1 - PROVISIONAL_ROUTES.length);
+  // The research corpora are held by their own tests; D-149's review corpus adds the run detail with its closures.
+  assert.equal(perRoute.size, Object.keys(DATES_ADMIN_NAMED).length - DATES_RESEARCH_ACTIONS.length - 1 + 1);
   assert.ok(perRoute.get("dates_event_intake_detail")! > 500 && perRoute.get("dates_moderation_detail")! > 30 && perRoute.get("dates_external_event_detail")! > 100);
   // A refusal is Core's six keys and nothing beside them.
   const refusal = GENUINE.find((item) => item.body.success === false)!.body;

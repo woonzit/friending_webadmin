@@ -1,5 +1,6 @@
 "use client";
 
+import DatesSystemClosureNote from "@/components/DatesSystemClosure";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
@@ -37,6 +38,8 @@ export function DatesIntakeStatusPanel({ intake, polling = false }: { intake: Da
       {intake.unreadable_sections.includes("decision") && <><dt>{t("detail.decision")}</dt><dd>{t("detail.couldNotRead")}</dd></>}
       {decision && <><dt>{t("detail.decision")}</dt><dd>{t(`decisionValues.${decision.action}`)} · {decision.by === "system" ? t("detail.bySystem") : decision.by === "member" ? t("detail.byMember") : decision.by} · {formatDate(decision.at, locale, true)}
         {decision.reason_code && <div>{t(`rejectReasons.${decision.reason_code}`)}</div>}
+        {/* D-149: why the system closed a research intake (served with the external admin contract selector v2). */}
+        {intake.system_closure && <div><DatesSystemClosureNote closure={intake.system_closure} /></div>}
         {decision.statement && <blockquote className="preserve-whitespace">{locale === "hu" ? decision.statement.hu : decision.statement.en}</blockquote>}</dd></>}
       {duplicate && <><dt>{t("detail.duplicateOf")}</dt><dd>{t(`dedupeKinds.${duplicate.kind}`)} · {duplicateHref
         ? <Link href={duplicateHref}><code>{duplicate.id}</code></Link> : <code>{duplicate.id}</code>}</dd></>}

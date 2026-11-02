@@ -1,0 +1,55 @@
+{
+    "success": true,
+    "status_code": 200,
+    "run": {
+        "run_id": "rru_00000000000000000000000000000001",
+        "kind": "source",
+        "source_id": "rso_00000000000000000000000000000001",
+        "area_id": null,
+        "trigger": "manual",
+        "dry_run": false,
+        "status": "queued",
+        "found": 0,
+        "imported": 0,
+        "duplicates": 0,
+        "dropped": [],
+        "cost_micro_usd": 0,
+        "started_at": null,
+        "finished_at": null,
+        "source_revision_before": null,
+        "source_revision_after": null,
+        "area_revision_before": null,
+        "area_revision_after": null,
+        "discovery_tool_usage": null,
+        "candidates": [
+            {
+                "title": "Nyári Kamarakoncert",
+                "date_text": "",
+                "url_host": "research-organiser.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000003"
+            },
+            {
+                "title": "Elmaradó Kamarakoncert",
+                "date_text": "",
+                "url_host": "research-organiser.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000001"
+            },
+            {
+                "title": "Nyári Kamarakoncert",
+                "date_text": "",
+                "url_host": "research-organiser.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000002"
+            }
+        ]
+    },
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

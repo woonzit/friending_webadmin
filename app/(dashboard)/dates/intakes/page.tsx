@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesIntakeRefusal from "@/components/DatesIntakeRefusal";
 import DatesIntakeSourcePanel from "@/components/DatesIntakeSourcePanel";
-import DatesResearchBlocker from "@/components/DatesResearchBlocker";
+import DatesSystemClosureNote from "@/components/DatesSystemClosure";
 import DatesResearchBatch from "@/components/DatesResearchBatch";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -141,7 +141,7 @@ export default function DatesIntakeQueuePage() {
               {row.unreadable_fields.length > 0 && <div><small role="status">{common("unreadableField")} · {row.unreadable_fields.join(", ")}</small></div>}</td>
             <td>{t(`statusValues.${row.status}`)}{row.second_look && <> <span className="badge badge-warning">{t("queue.secondLookBadge")}</span></>}{row.status_detail && <div><small>{t(`statusDetailValues.${row.status_detail}`)}</small></div>}
               {row.decision_action && <div><small>{t(`decisionValues.${row.decision_action}`)}</small></div>}
-              {(row.status_detail === "research-not-publishable" || (row.publication_blocker ?? null) !== null) && <div><DatesResearchBlocker code={row.publication_blocker ?? null} /></div>}</td>
+              {row.system_closure && <div><DatesSystemClosureNote closure={row.system_closure} /></div>}</td>
             <td>{row.channel ? t(`channelValues.${row.channel}`) : "—"}<div><small>{row.input_kind ? t(`inputKindValues.${row.input_kind}`) : "—"}{row.source_host ? ` · ${row.source_host}` : ""}{row.image_count ? ` · ${t("queue.images", { count: row.image_count })}` : ""}</small></div>
               {row.provider && <div><small>{t(`providerValues.${row.provider}`)}</small></div>}</td>
             <td>{row.hard_fails === null ? "—" : row.hard_fails.length === 0 ? t("queue.noHardFails") : <span className="badge badge-warning">{t("queue.hardFails", { count: row.hard_fails.length })}</span>}

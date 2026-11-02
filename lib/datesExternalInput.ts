@@ -16,13 +16,15 @@ export type DatesExternalManualEvent = {
   timezone: string;
   all_day: boolean;
   price_text: string | null;
-  is_free: boolean;
+  /** D-149: null = not known; only a research event may send it (see `normalizeDatesExternalManualEvent`). */
+  is_free: boolean | null;
   age_restriction: number | null;
   venue: {
     name: string; formatted_address: string; latitude: number; longitude: number;
     city: string; country_code: string;
   };
-  organizer: { name: string; website: string | null };
+  /** D-149: `name` null = not known; only a research event may send it. */
+  organizer: { name: string | null; website: string | null };
   links: { official_url: string | null; ticket_url: string | null };
   source_url: string;
   attendee_list: "visible" | "count_only";
@@ -114,7 +116,7 @@ const CONFIRMATIONS = ["source", "public_venue", "timezone", "content_safe"] as 
  * With `exact` false it is the same facts as Core serves them back (the
  * editor seed): bound on the fields, any other key tolerated.
  */
-function manualEvent(value: unknown, maximumBytes: number, exact = true): DatesExternalManualEvent | null {
+function manualEvent(value: unknown, maximumBytes: number, exact = true, unknownAllowed = false): DatesExternalManualEvent | null {
   if (!closed(value, ["title", "summary", "category", "sensitive", "start_at", "end_at",
     "timezone", "all_day", "price_text", "is_free", "age_restriction", "venue", "organizer",
     "links", "source_url", "attendee_list", "confirmations"], exact)) return null;
@@ -128,7 +130,7 @@ function manualEvent(value: unknown, maximumBytes: number, exact = true): DatesE
     || !optionalText(sensitive.reason, 300) || (sensitive.flag && sensitive.reason === null)
     || !epoch(value.start_at) || (value.end_at !== null && !epoch(value.end_at))
     || !namedTimezone(value.timezone) || typeof value.all_day !== "boolean"
-    || typeof value.is_free !== "boolean" || !optionalText(value.price_text, 200)
+    || !(typeof value.is_free === "boolean" || (unknownAllowed && value.is_free === null && value.price_text === null)) || !optionalText(value.price_text, 200)
     || (value.age_restriction !== null && (typeof value.age_restriction !== "number"
       || !Number.isInteger(value.age_restriction) || value.age_restriction < 18 || value.age_restriction > 99))
     || !closed(venue, ["name", "formatted_address", "latitude", "longitude", "city", "country_code"], exact)
@@ -136,9 +138,10 @@ function manualEvent(value: unknown, maximumBytes: number, exact = true): DatesE
     || typeof venue.country_code !== "string" || !/^[A-Z]{2}$/.test(venue.country_code)
     || typeof venue.latitude !== "number" || !Number.isFinite(venue.latitude) || Math.abs(venue.latitude) > 90
     || typeof venue.longitude !== "number" || !Number.isFinite(venue.longitude) || Math.abs(venue.longitude) > 180
-    || !closed(organizer, ["name", "website"], exact) || !text(organizer.name, 1, 160) || !optionalUrl(organizer.website)
+    || !closed(organizer, ["name", "website"], exact) || !((unknownAllowed && organizer.name === null) || text(organizer.name, 1, 160)) || !optionalUrl(organizer.website)
     || !closed(links, ["official_url", "ticket_url"], exact) || !optionalUrl(links.official_url) || !optionalUrl(links.ticket_url)
-    || (!value.is_free && links.official_url === null) || !datesExternalHttpsUrl(value.source_url)
+    // A paid event needs its official link; one whose free/paid status is not known does not (Core's writer).
+    || (value.is_free === false && links.official_url === null) || !datesExternalHttpsUrl(value.source_url)
     || !["visible", "count_only"].includes(value.attendee_list as string)
     || !closed(confirmations, ["source", "public_venue", "timezone", "content_safe"], exact)
     || CONFIRMATIONS.some((key) => confirmations[key] !== true)) return null;
@@ -148,8 +151,13 @@ function manualEvent(value: unknown, maximumBytes: number, exact = true): DatesE
   return value as DatesExternalManualEvent;
 }
 
-export function normalizeDatesExternalManualEvent(value: unknown): DatesExternalManualEvent | null {
-  return manualEvent(value, MAX_EVENT_BYTES);
+/**
+ * `unknownAllowed`: D-149 - an edit of a research event may leave its organizer (`organizer.name`) and its free/paid
+ * status (`is_free`, with `price_text` null) unknown, as Core's writer accepts for an event from an `ai_research` intake.
+ * A manual publication never may; Core refuses it for any other event.
+ */
+export function normalizeDatesExternalManualEvent(value: unknown, unknownAllowed = false): DatesExternalManualEvent | null {
+  return manualEvent(value, MAX_EVENT_BYTES, true, unknownAllowed);
 }
 
 /** Read-only editor seed: a historical attestation must never pre-check this form. */
@@ -161,8 +169,9 @@ export function normalizeDatesExternalEditorInput(value: unknown): DatesExternal
   // is not a DTO ceiling; submission still rechecks the original 32 KB limit.
   // A read is bound on its fields; a key this console does not know is tolerated (the form is built from the known
   // fields only, and what it sends is the closed request shape again).
+  // A read accepts the unknown facts of a research event; the detail decoder binds them to the event's channel.
   const checked = manualEvent({ ...value,
-    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } }, MAX_EVENT_BYTES * 2, false);
+    confirmations: { source: true, public_venue: true, timezone: true, content_safe: true } }, MAX_EVENT_BYTES * 2, false, true);
   return checked ? value as DatesExternalEditorInput : null;
 }
 
@@ -210,6 +219,8 @@ export type DatesExternalDraft = {
   priceText: string; isFree: boolean; ageRestriction: string;
   venueName: string; venueAddress: string; latitude: string; longitude: string; city: string; countryCode: string;
   organizerName: string; organizerWebsite: string; officialUrl: string; ticketUrl: string; sourceUrl: string;
+  /** D-149: a research event's organizer / free-paid status left unknown (sent as null only where it is allowed). */
+  organizerUnknown: boolean; freeUnknown: boolean;
   confirmSource: boolean; confirmPublicVenue: boolean; confirmTimezone: boolean; confirmContentSafe: boolean;
 };
 
@@ -226,11 +237,12 @@ export function datesExternalDraft(initial?: DatesExternalManualEvent | DatesExt
     sensitiveReason: initial?.sensitive.reason ?? "", attendeeList: initial?.attendee_list ?? "visible",
     startLocal: start?.local ?? "", startOffset: start?.offset ?? "", endLocal: end?.local ?? "", endOffset: end?.offset ?? "",
     timezone: initial?.timezone ?? "", allDay: initial?.all_day ?? false,
-    priceText: initial?.price_text ?? "", isFree: initial?.is_free ?? false, ageRestriction: initial?.age_restriction?.toString() ?? "",
+    priceText: initial?.price_text ?? "", isFree: initial?.is_free === true, ageRestriction: initial?.age_restriction?.toString() ?? "",
     venueName: initial?.venue.name ?? "", venueAddress: initial?.venue.formatted_address ?? "",
     latitude: initial?.venue.latitude.toString() ?? "", longitude: initial?.venue.longitude.toString() ?? "",
     city: initial?.venue.city ?? "", countryCode: initial?.venue.country_code ?? "",
     organizerName: initial?.organizer.name ?? "", organizerWebsite: initial?.organizer.website ?? "",
+    organizerUnknown: initial?.organizer.name === null, freeUnknown: initial?.is_free === null,
     officialUrl: initial?.links.official_url ?? "", ticketUrl: initial?.links.ticket_url ?? "", sourceUrl: initial?.source_url ?? "",
     ...DATES_EXTERNAL_FRESH_CONFIRMATIONS,
   };
@@ -240,7 +252,7 @@ function decimalInput(value: string): number {
   return /^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(value) ? Number(value) : NaN;
 }
 
-export function datesExternalDraftInput(draft: DatesExternalDraft):
+export function datesExternalDraftInput(draft: DatesExternalDraft, unknownAllowed = false):
   | { ok: true; event: DatesExternalManualEvent }
   | { ok: false; error: "startTime" | "endTime" | "confirmations" | "facts" } {
   const start = datesExternalTimeFromInput(draft.startLocal, draft.startOffset, draft.timezone);
@@ -252,20 +264,21 @@ export function datesExternalDraftInput(draft: DatesExternalDraft):
   const trim = datesExternalTrim;
   const optional = (value: string) => trim(value) || null;
   const age = trim(draft.ageRestriction);
+  const freeUnknown = unknownAllowed && draft.freeUnknown, organizerUnknown = unknownAllowed && draft.organizerUnknown;
   const event = normalizeDatesExternalManualEvent({
     title: trim(draft.title), summary: { en: trim(draft.summaryEn), hu: trim(draft.summaryHu) }, category: draft.category,
     sensitive: { flag: draft.sensitive, reason: draft.sensitive ? optional(draft.sensitiveReason) : null },
     start_at: start, end_at: end, timezone: draft.timezone, all_day: draft.allDay,
-    price_text: optional(draft.priceText), is_free: draft.isFree,
+    price_text: freeUnknown ? null : optional(draft.priceText), is_free: freeUnknown ? null : draft.isFree,
     age_restriction: age === "" ? null : /^[1-9][0-9]$/.test(age) ? Number(age) : NaN,
     venue: {
       name: trim(draft.venueName), formatted_address: trim(draft.venueAddress), city: trim(draft.city),
       latitude: decimalInput(trim(draft.latitude)), longitude: decimalInput(trim(draft.longitude)), country_code: trim(draft.countryCode),
     },
-    organizer: { name: trim(draft.organizerName), website: optional(draft.organizerWebsite) },
+    organizer: { name: organizerUnknown ? null : trim(draft.organizerName), website: optional(draft.organizerWebsite) },
     links: { official_url: optional(draft.officialUrl), ticket_url: optional(draft.ticketUrl) }, source_url: trim(draft.sourceUrl),
     attendee_list: draft.sensitive ? "count_only" : draft.attendeeList,
     confirmations: { source: true, public_venue: true, timezone: true, content_safe: true },
-  });
+  }, unknownAllowed);
   return event ? { ok: true, event } : { ok: false, error: "facts" };
 }

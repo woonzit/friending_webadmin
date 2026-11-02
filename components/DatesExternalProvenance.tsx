@@ -29,6 +29,10 @@ export default function DatesExternalProvenance({ event }: { event: DatesExterna
       {event.intake && <><dt>{t("provenance.intake")}</dt><dd>
         <Link href={`/dates/intakes/${event.intake.intake_id}`}>{t("provenance.intakeLink")}</Link>
         {" · "}{channels(event.intake.channel)} · {t("provenance.intakeEvent", { index: event.intake.event_index + 1 })}</dd></>}
+      {/* D-149: a research event whose page does not state its organizer or its free/paid status keeps them unknown. */}
+      {(event.organizer.name === null || event.facts.is_free === null) && <><dt>{t("provenance.unknownFacts")}</dt><dd>
+        {[event.organizer.name === null ? t("form.organizerName") : null, event.facts.is_free === null ? t("form.freeUnknownField") : null]
+          .filter((label) => label !== null).join(" · ")}<div><small>{t("provenance.unknownFactsHint")}</small></div></dd></>}
       <dt>{t("provenance.venue")}</dt><dd>{event.venue.place_id === null ? t("provenance.venuePin")
         : <>{t("provenance.venuePlaces")} <code>{event.venue.place_id}</code></>}</dd>
       <dt>{t("form.sourceTitle")}</dt><dd>{event.sources.map((source) => <p key={source.source_id}>

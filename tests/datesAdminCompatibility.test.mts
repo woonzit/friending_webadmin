@@ -374,7 +374,8 @@ test("D-143: the Admin intake contract selector is one constant, attached by the
   const merged: Record<string, unknown> = Object.assign(Object.create(null), { intake_id: "x", dates_event_intake_admin_contract_version: 99, admin_email: "admin@example.test" });
   const sent = withDatesAdminContract("dates_event_intake_list", merged, standIn);
   assert.equal(sent, merged); assert.equal(Object.getPrototypeOf(sent), null);
-  assert.deepEqual({ ...sent }, { intake_id: "x", dates_event_intake_admin_contract_version: 1, admin_email: "admin@example.test" });
+  // D-149: the intake list also carries the external admin contract selector v2 (it adds `system_closure`).
+  assert.deepEqual({ ...sent }, { intake_id: "x", dates_event_intake_admin_contract_version: 1, admin_email: "admin@example.test", dates_external_admin_contract_version: 2 });
   assert.deepEqual({ ...withDatesAdminContract("users_list", Object.assign(Object.create(null), { q: "a", admin_email: "admin@example.test" }), standIn) },
     { q: "a", admin_email: "admin@example.test" });
   assert.deepEqual({ ...withDatesAdminContract("dates_configuration", Object.assign(Object.create(null), { admin_email: "admin@example.test" }), null) }, { admin_email: "admin@example.test" });

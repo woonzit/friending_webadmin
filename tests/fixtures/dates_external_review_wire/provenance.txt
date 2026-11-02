@@ -1,30 +1,33 @@
 dates_external_review_wire: Core's genuine bodies of the D-149 review contract - members'
-corrections (the app's side, member-*) and the console's side (webadmin-*): the external list and
-detail with the external admin contract selector v2, the "reviewed, OK" mark, the corrections queue,
-a rejection and an update that approves a correction, with their refusals.
+corrections (the app's side, member-*) and the console's side (webadmin-*):
+- the external list and detail with the external admin contract selector v2;
+- the "reviewed, OK" mark;
+- the corrections queue, a rejection, and the three approvals (an edit, a cancellation, an official
+  update) with `correction_id`;
+- the AI re-research of one event, its receipt, its refusals, and a detail in each job state;
+- the system's closure of research intakes (`system_closure`) on the intake list, the intake detail
+  and the research run detail;
+- with their refusals.
 
 Source: Core tests/fixtures/dates_external_review_wire at commit
-        5ac724df ("Capture the genuine review console bodies (D-149)") on Core-B's lane branch
-        claude/areyouin-autopub-20261102-core (local, not yet published when copied on 2026-11-02).
-        The corpus was generated at 4b58099cdd25b9bf41eaa3d37110fdaabf32a0ff (manifest.json,
-        `source_commit`) by tests/dates_external_review_fixture_dump.php: real HTTP through
-        public/index.php under PHP's own web server, the console's form transport with its secret
-        and both selectors (manifest.json `selectors.webadmin`).
-How:    BYTE COPIES of the 47 bodies and manifest.json of that directory, extracted with
-        `git archive 5ac724df tests/fixtures/dates_external_review_wire`; nothing was edited.
+        c268ae4b ("Capture unknown-organizer events and system closures (D-149)") on Core-B's lane
+        branch claude/areyouin-autopub-20261102-core (rebased onto Core-A 3110f2cb; local, not yet
+        published when copied on 2026-11-02).
+
+        The corpus was generated at 3e151a15539f5343e0b4f959252b4db41386afeb (manifest.json,
+        `source_commit`) by tests/dates_external_review_fixture_dump.php. That is real HTTP through
+        public/index.php under PHP's own web server, two captures compared byte for byte. It used the
+        console's form transport with its secret and both selectors (manifest.json `selectors.webadmin`).
+
+How:    BYTE COPIES of the 77 bodies and manifest.json of that directory, extracted with
+        `git archive c268ae4b tests/fixtures/dates_external_review_wire`; nothing was edited.
+
         tests/datesExternalReviewWire.test.mts checks every body against the sha256 the manifest
-        names, the manifest's `fixture_set_sha256`, and that this directory holds nothing else but
-        this note. The member-* bodies are the app's side; they are kept so that the copy is whole.
+        names and the manifest's `fixture_set_sha256`. It also checks that this directory holds
+        nothing else but this note.
 
-Not yet in this corpus: the re-research route (`dates_external_event_recheck`, Core-B step 3, in
-progress when copied). Its bodies, and the job history of a detail (the genuine detail's `rechecks`
-is empty), are still the lane's PROVISIONAL ones in
-tests/fixtures/dates_external_autopub_admin_wire_provisional.
+        The member-* bodies are the app's side; they are kept so that the copy is whole.
 
-Known Core defect (reported to the lead): a correction a member sent with only a note is served with
-`"proposed": []` (PHP's empty array) although Core's contract (docs/DATES_EXTERNAL_ADMIN_V1.md,
-"Member corrections") says an empty object. The console reads `proposed` as an object, so that row
-is listed as unreadable (its neighbours stay); three bodies carry it: webadmin-correction-list-pending,
-webadmin-external-detail and webadmin-external-detail-after-correction. They are held to that exact
-behaviour in tests/datesExternalReviewWire.test.mts and left out of the projection census until Core
-encodes the object.
+Checked: after Core-B's rebase, its tip 1735a158 holds this directory byte for byte (compared with
+        `git archive 1735a158`, 2026-11-02). Before a release, compare these files with the corpus at
+        the merged Core tip (the set hash in the test is the check).
