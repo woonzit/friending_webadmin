@@ -351,6 +351,85 @@ the claimed-case check inside the receipted transaction before the target
 decision. It clears only its exact journal and requires fresh human review;
 the same machine name with a different status remains uncertain.
 
+## Review of published events (D-149, T-908)
+
+Research events that the AI verified are published without pre-moderation
+(`team/handoffs/areyouin-autopublish-research.md`, D-149). The console's part is
+review after publication: a "reviewed, OK" mark, an AI re-research of one event,
+removal, and the members' corrections queue. Nothing here enables a switch.
+
+**Contract selector.** `dates_external_admin_contract_version=2`
+(`lib/datesAdminContract.ts`) is added by the server to the external list,
+detail, update and command and to the three new routes; publication and the
+place search keep their released shapes. Every v2 key is optional in the
+decoders: a Core without it answers as before and nothing that would show it is
+rendered. A Core that does not know the three routes refuses them; Core is
+released first.
+
+**PROVISIONAL bindings.** Built from the specification before Core-B's genuine
+admin bodies existed. The bodies in
+`tests/fixtures/dates_external_autopub_admin_wire_provisional` are the lane's,
+not Core's (see its `provenance.txt` for every guessed name). Re-pin them, and
+the three routes in `PROVISIONAL_ROUTES` (`tests/datesAdminProjection.test.mts`),
+against Core's corpus before release. Because the legacy envelope already has a
+top-level `status: 200`, the re-research and decision receipts are read nested
+(`recheck`, `correction`) or flat with `recheck_status` / `correction_status`,
+never as a second top-level `status`.
+
+**Reviewed mark (W1).** List rows and the detail show `admin_review`; the list
+has a reviewed / not reviewed filter (`reviewed=true|false`, sent only when
+chosen) and the quick view "Research, published, not reviewed"
+(`channel=ai_research`, `status=published`, `reviewed=false`).
+`mark_reviewed` (reason optional) and `clear_reviewed` (reason required) are
+`dates_external_event_command` actions sent OUTSIDE the durable journal: they
+are fenced by `expected_revision` and set a flag, so each attempt has a new key
+(the `fresh` identity of `datesCommandOutcome`); the journal decoder refuses a
+stored mark. Their receipt binds the event, activity, action and unchanged
+status; the revision may stay or move by one; an echoed `admin_review` must say
+what was asked. `possible_duplicate_of` links to the other event;
+`open_corrections` / `open_reports` link to the queue and to the activity page
+(its moderation cases).
+
+**Re-research (W2).** `dates_external_event_recheck` with optional instructions
+(1-1000 code points, admin-only text). It starts a paid job and a finished job
+does not stop another, so its identity is KEPT: the exact request is saved per
+operator and event in session storage before it is sent, an unanswered attempt
+is retried with the same key, and it is cleared only by a receipt or a pinned
+no-write refusal (`dates-recheck-open`, `dates-research-budget-paused`,
+`dates-recheck-unavailable`). Unreadable saved evidence blocks new requests and
+is never cleared silently. While the newest job is queued or running, the panel
+reads the detail every ten seconds without touching the editor. The last five
+jobs show status, instructions, reason in words (unknown codes as written), cost
+and the change set (field, before, after).
+
+**Remove (W3).** The `withdraw` command, relabelled "Remove event" /
+"Esemény eltávolítása"; the header's Remove button selects it and focuses its
+reason. Its journal, receipt and refusals are unchanged.
+
+**Corrections (W4).** `/dates/corrections` lists
+`dates_external_correction_list` (pending by default), row by row: a damaged row
+is listed as unreadable and its neighbours stay. Only proposed facts are shown,
+current beside proposed; member text is text. "Approve and edit" opens
+`/dates/external/<id>?correction=<cor_id>`: the editor is prefilled with the
+proposed title, venue-local start / end (the UTC offset is filled only when the
+wall time has exactly one) and an https website; a proposed place (free text)
+and a cancelled / postponed status are shown as hints, not copied. The four
+confirmations stay fresh. The save is the ordinary journaled
+`dates_external_event_update` with `correction_id`. "Reject" sends
+`dates_external_correction_decide` with a reason code (the console's list is
+PROVISIONAL; the bridge forwards any well-formed code) and an optional note,
+fenced by the correction's state. A mark, a re-research or a decision changes
+the event elsewhere: an untouched editor is read again, one with unsaved work
+asks for an explicit refresh.
+
+**Research (W5).** The `autopublish` help text describes the D-149 gate. An
+aggregator source shows its inherited automatic publication read-only; its own
+override stays closed (Core's pinned corpus refuses one). The intake queue row
+and the run candidate read an optional `publication_blocker`, the intake
+`status_detail` `research-not-publishable` and the candidate outcomes
+`published` / `not_publishable` - PROVISIONAL lists kept apart from the
+manifest-pinned vocabularies.
+
 ## Evidence boundaries
 
 Tests distinguish actual provider bytes, synthetic negative controls, production
