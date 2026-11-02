@@ -19,6 +19,7 @@ import { normalizeModeCardsProxyBody } from "@/lib/modeCards";
 import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
 import { normalizeUserModerationInsightProxyBody } from "@/lib/userModerationInsight";
 import { normalizeRegistrationPlatformStatsProxyBody } from "@/lib/registrationStats";
+import { normalizeMailDeliveryProxyBody, normalizeMailDeliveryResponse } from "@/lib/mailDelivery";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
@@ -405,6 +406,14 @@ export async function POST(
   }
   if (normalizedRegistrationStatsBody !== undefined) body = normalizedRegistrationStatsBody;
 
+  // Email delivery takes exactly its five closed filters; Core receives the defaults of the
+  // optional three left out, and its answer is checked against the same filters below.
+  const mailDeliveryBody = normalizeMailDeliveryProxyBody(action, body);
+  if (mailDeliveryBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (mailDeliveryBody !== undefined) body = mailDeliveryBody;
+
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer
   // depends on the order of an object literal to stay authoritative.
@@ -443,6 +452,16 @@ export async function POST(
       : bridgeError("invalid-core-response", 502);
   }
   if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
+  if (mailDeliveryBody !== undefined && (result.data as Record<string, unknown>).success === true) {
+    // The browser receives only the parsed answer for the filters it asked, never Core's raw body.
+    // A success that does not parse in full is not forwarded, nor one that would show a read-only
+    // viewer unmasked addresses. A named refusal travels on unchanged below.
+    const projected = result.status === 200
+      ? normalizeMailDeliveryResponse(result.data, mailDeliveryBody, { viewer: principal.role !== "owner" && principal.role !== "admin" })
+      : null;
+    if (!projected) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(projected, { status: 200, headers: NO_STORE_HEADERS });
+  }
   if (isDatesAdminRoute(action)) {
     // The browser never receives a raw Core body of a Dates route: only the fields this console names. A key on the
     // deny-list is dropped and reported by name (never by value) from the projection; the page is not failed for it.

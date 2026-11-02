@@ -4,7 +4,7 @@
  * Audited reads in this set must NEVER be recovery-loader registrations.
  */
 export const ADMIN_CLIENT_READ_ACTIONS = [
-  "overview", "list_users", "registration_platform_stats", "user_detail", "user_moderation_insight",
+  "overview", "list_users", "registration_platform_stats", "mail_delivery", "user_detail", "user_moderation_insight",
   "membership_configuration", "membership_user_detail", "app_review_sandbox_status", "list_landing", "get_settings",
   "invite_configuration", "list_signup_options", "list_profile_fields", "support_threads", "support_messages", "help_admin_list",
   "footprints_admin", "pinger_admin", "footprint_reports", "profile_verification_config", "profile_presence_configuration",

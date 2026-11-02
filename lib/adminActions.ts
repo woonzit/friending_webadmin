@@ -128,6 +128,7 @@ export const ADMIN_ACTIONS = [
   "overview",
   "list_users",
   "registration_platform_stats",
+  "mail_delivery",
   "user_detail",
   "user_moderation_insight",
   "reset_member_birthday_lock",
@@ -277,6 +278,9 @@ export const ADMIN_ACTION_ACCESS = {
   list_users: "read",
   // P-092: Core's requireAdminActor, a viewer included; read-only and no-store.
   registration_platform_stats: "read",
+  // Email delivery timings (Freelove port 2026-11-02): read-only, a viewer included. Core masks
+  // recipient addresses for a viewer, and the bridge refuses an answer that does not.
+  mail_delivery: "read",
   user_detail: "read",
   // P-074: Core's requireAdminActor, a viewer included; read-only and no-store.
   user_moderation_insight: "read",
