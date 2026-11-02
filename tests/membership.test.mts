@@ -687,8 +687,9 @@ test("the user panel renders truthful owner detail and stronger warning paths", 
   // Grant errors are mapped inside the pinned grant flow; expiry and revoke map theirs in the panel.
   const flows = readFileSync(new URL("../lib/membershipFlows.ts", import.meta.url), "utf8");
   assert.match(flows, /membershipActionErrorKey\("grant_create"/);
-  assert.match(panel, /actionErrorText\("expiry_update"/);
-  assert.match(panel, /actionErrorText\("grant_revoke"/);
+  assert.match(panel, /grantChangeFailureText\("expiry_update"/);
+  assert.match(panel, /grantChangeFailureText\("grant_revoke"/);
+  assert.match(panel, /const errorKey = membershipActionErrorKey\(action, response\?\.error\);\s*if \(errorKey !== "grantNotFound"\) return membershipErrors\(errorKey\);/);
   assert.match(panel, /return membershipErrors\(membershipActionErrorKey\(action, error\)\);/);
   assert.doesNotMatch(panel, /actionError[\s\S]*code/);
   assert.match(panel, /response\?\.success === true \? normalizeAdminRole\(response\.role\) : ""/);

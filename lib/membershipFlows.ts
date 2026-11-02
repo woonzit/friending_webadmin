@@ -195,6 +195,25 @@ export async function membershipCheckPendingGrant(
     : { kind: "unchanged", detail: refreshed };
 }
 
+/**
+ * The authoritative member after Core refused an expiry update or a revocation with a definite
+ * `membership-admin-grant-not-found` (404): the grant on screen is no longer one Core can change
+ * (another administrator revoked it, it expired, or its row is gone), so the operator must not keep
+ * looking at it. The member Core's answer carries is used when it is this member's readable detail
+ * (the refusal inside the write carries one; the early expiry check does not); otherwise the member
+ * is read. `null` when neither yields this member: nothing is adopted then, so an unread member is
+ * never shown as "no grant".
+ */
+export async function membershipMemberAfterGrantNotFound(
+  call: MembershipAdminCall,
+  uid: number,
+  response: { data?: unknown } | null,
+): Promise<MembershipUserDetail | null> {
+  const carried = membershipUserDetail(response?.data);
+  if (carried && carried.uid === uid && carried.effective_membership.lifecycle_state !== "unavailable") return carried;
+  return membershipReadUserDetail(call, uid);
+}
+
 // ------------------------------------------------------ pinned grant persistence
 
 /**

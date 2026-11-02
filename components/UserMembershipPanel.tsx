@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
-import { adminCall } from "@/lib/adminClient";
+import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import { normalizeAdminRole } from "@/lib/authPolicy";
 import {
   membershipActionErrorKey,
@@ -21,6 +21,7 @@ import {
   type MembershipAdminGrant,
   type MembershipAction,
   type MembershipGrantPreview,
+  type MembershipMutationOutcome,
   type MembershipQuotaMode,
   type MembershipRolloutMode,
   type MembershipUserDetail,
@@ -29,6 +30,7 @@ import {
   MEMBERSHIP_PENDING_GRANT_TTL_MS,
   membershipAdminScope,
   membershipCheckPendingGrant,
+  membershipMemberAfterGrantNotFound,
   membershipReadUserDetail,
   membershipRememberPendingGrant,
   membershipRestorePendingGrant,
@@ -132,6 +134,9 @@ export default function UserMembershipPanel({
   const [pendingGrant, setPendingGrant] = useState<MembershipPendingGrant | null>(null);
   const [expiryEdit, setExpiryEdit] = useState(() => toLocalInput(initial.admin_grant?.expires_at ?? null));
   const [expiryReason, setExpiryReason] = useState("");
+  // Core refused the grant on screen as not found (revoked, expired or removed) and the member could
+  // not be read since: its expiry and revoke controls stay off until a read shows the current grant.
+  const [grantStale, setGrantStale] = useState(false);
   const restoreChecked = useRef<string | null>(null);
 
   const loadAdminAccess = useCallback(async () => {
@@ -211,7 +216,7 @@ export default function UserMembershipPanel({
   const customWire = preset === "custom" ? toWireInstant(customExpiry) : null;
   const grantInputValid = editor && validReason(reason) && (preset !== "custom" || customWire !== null);
   const currentGrant = detail.admin_grant;
-  const canEditGrant = editor && isEditableGrant(currentGrant);
+  const canEditGrant = editor && isEditableGrant(currentGrant) && !grantStale;
   // While a grant request is pinned, no other grant mutation may run against the same member.
   const grantLocked = pendingGrant !== null;
   const expiryWire = toWireInstant(expiryEdit);
@@ -231,6 +236,7 @@ export default function UserMembershipPanel({
 
   function adoptParsed(parsed: MembershipUserDetail) {
     setDetail(parsed);
+    setGrantStale(false);
     setExpiryEdit(toLocalInput(parsed.admin_grant?.expires_at ?? null));
   }
 
@@ -243,6 +249,34 @@ export default function UserMembershipPanel({
 
   function actionErrorText(action: MembershipAction, error: unknown): string {
     return membershipErrors(membershipActionErrorKey(action, error));
+  }
+
+  /**
+   * The notice after an expiry update or a revocation that did not land. An unknown outcome or a
+   * conflict reads the authoritative member, so the operator sees whether the change landed before
+   * trying again. A definite not-found says the grant on screen is no longer one Core can change
+   * (another administrator revoked it, it expired, or its row is gone): Core's member is shown
+   * (`membershipMemberAfterGrantNotFound`), so the refused grant never stays on screen as Active with
+   * its controls enabled. When the member cannot be obtained, nothing is adopted (an unread member is
+   * never shown as "no grant"), the controls stay off until a read succeeds and the notice says so.
+   */
+  async function grantChangeFailureText(
+    action: "expiry_update" | "grant_revoke",
+    response: AdminResponse | null,
+    outcome: MembershipMutationOutcome,
+  ): Promise<string> {
+    if (outcome === "conflict" && response?.data) adopt(response.data);
+    if (outcome === "uncertain" || outcome === "conflict") await reloadDetail();
+    if (response?.success === true) return membershipErrors("invalidResponse");
+    const errorKey = membershipActionErrorKey(action, response?.error);
+    if (errorKey !== "grantNotFound") return membershipErrors(errorKey);
+    const member = await membershipMemberAfterGrantNotFound(adminCall, uid, response);
+    if (member) {
+      adoptParsed(member);
+      return membershipErrors("grantNotFound");
+    }
+    setGrantStale(true);
+    return `${membershipErrors("grantNotFound")} ${t("loadError")}`;
   }
 
   /** Reads the authoritative member state; `null` when it could not be read. */
@@ -410,17 +444,10 @@ export default function UserMembershipPanel({
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("expiry_update", response, adopted);
     if (outcome !== "success") {
-      // The expected revision fences a second attempt; an unknown outcome reads the authoritative
-      // state so the operator sees whether the change landed before trying again.
-      if (outcome === "conflict" && response?.data) adopt(response.data);
-      if (outcome === "uncertain" || outcome === "conflict") await reloadDetail();
+      // The expected revision fences a second attempt.
+      const text = await grantChangeFailureText("expiry_update", response, outcome);
       setBusy("");
-      setNotice({
-        tone: "error",
-        text: response?.success === true
-          ? membershipErrors("invalidResponse")
-          : actionErrorText("expiry_update", response?.error),
-      });
+      setNotice({ tone: "error", text });
       return;
     }
     setBusy("");
@@ -429,7 +456,7 @@ export default function UserMembershipPanel({
   }
 
   async function revokeGrant() {
-    if (!owner || grantLocked || !currentGrant || !isEditableGrant(currentGrant) || !validReason(expiryReason)) return;
+    if (!owner || grantLocked || grantStale || !currentGrant || !isEditableGrant(currentGrant) || !validReason(expiryReason)) return;
     if (!window.confirm(t("revokeConfirm"))) return;
     setBusy("revoke");
     setNotice(null);
@@ -443,15 +470,9 @@ export default function UserMembershipPanel({
     const adopted = response?.success === true && adopt(response.data);
     const outcome = membershipMutationOutcome("grant_revoke", response, adopted);
     if (outcome !== "success") {
-      if (outcome === "conflict" && response?.data) adopt(response.data);
-      if (outcome === "uncertain" || outcome === "conflict") await reloadDetail();
+      const text = await grantChangeFailureText("grant_revoke", response, outcome);
       setBusy("");
-      setNotice({
-        tone: "error",
-        text: response?.success === true
-          ? membershipErrors("invalidResponse")
-          : actionErrorText("grant_revoke", response?.error),
-      });
+      setNotice({ tone: "error", text });
       return;
     }
     setExpiryReason("");
@@ -740,7 +761,8 @@ export default function UserMembershipPanel({
                 ) : null}
               </dl>
             ) : <p className="page-subtitle">{t("manage.none")}</p>}
-            {isEditableGrant(currentGrant) ? (
+            {grantStale ? <p className="alert alert-warning" role="status" data-grant-stale="true">{t("manage.stale")}</p> : null}
+            {isEditableGrant(currentGrant) && !grantStale ? (
               <div className="form-stack membership-expiry-form">
                 <label className="field">
                   <span>{t("manage.newExpiry")}</span>

@@ -14,6 +14,7 @@ import {
   membershipAdminScope,
   membershipCheckPendingGrant,
   membershipClearPendingGrant,
+  membershipMemberAfterGrantNotFound,
   membershipPendingGrantStorageKey,
   membershipReadUserDetail,
   membershipRememberPendingGrant,
@@ -438,6 +439,37 @@ async function uncertainPinnedGrant(storage: ReturnType<typeof memoryStorage>["s
   return { pending: result.pending, sent: bridge.calls[0]!.body! };
 }
 
+test("a definite not-found on an expiry update or revoke yields Core's member, never the refused grant", async () => {
+  const revoked = { ...grantWire(GRANT_A, 2), status: "revoked", current: false, revoked_by: "other@example.invalid", revoked_at: LATER };
+  const notFound = (data?: unknown) => ({ success: false, error: "membership-admin-grant-not-found", status_code: 404, ...(data === undefined ? {} : { data }) });
+
+  // The refusal inside Core's write carries the member: it is used without another read.
+  const carried = mockCall([]);
+  const adopted = await membershipMemberAfterGrantNotFound(carried.call, 321, notFound(detailWire(revoked)));
+  carried.done();
+  assert.equal(adopted?.uid, 321);
+  assert.equal(adopted?.admin_grant?.status, "revoked");
+
+  // The early expiry check carries nothing; another member's or an unavailable detail is never used:
+  // the member is read.
+  for (const reply of [notFound(), notFound(detailWire(revoked, 999)), notFound(unavailableWire()), notFound({ uid: 321 })]) {
+    const read = mockCall([["membership_user_detail", { success: true, data: detailWire(null) }]]);
+    const member = await membershipMemberAfterGrantNotFound(read.call, 321, reply);
+    read.done();
+    assert.deepEqual(read.calls[0]!.body, { uid: 321 });
+    assert.equal(member?.uid, 321);
+    assert.equal(member?.admin_grant, null, "Core says there is no grant now: that is what is shown");
+  }
+
+  // Neither the refusal nor a read yields this member: nothing, never an invented "no grant".
+  for (const reply of [null, { success: false, error: "core-timeout" }, { success: true, data: unavailableWire() },
+    { success: true, data: detailWire(null, 999) }] as Reply[]) {
+    const blind = mockCall([["membership_user_detail", reply]]);
+    assert.equal(await membershipMemberAfterGrantNotFound(blind.call, 321, notFound()), null);
+    blind.done();
+  }
+});
+
 test("a pinned grant is stored before the send and a reload restores the same request and lock", async () => {
   const { storage, entries } = memoryStorage();
   const storedAtSend: number[] = [];
@@ -726,11 +758,21 @@ test("the member panel routes grants through the pinned flow and locks competing
   assert.match(panel, /const expiryValid = canEditGrant && !grantLocked/);
   assert.match(panel, /if \(!owner \|\| grantLocked \|\|/);
   assert.match(panel, /disabled=\{!validReason\(expiryReason\) \|\| Boolean\(busy\) \|\| grantLocked\}/);
-  // Expiry and revoke read the authoritative member after an unknown outcome.
+  // Expiry and revoke read the authoritative member after an unknown outcome or a conflict, and
+  // show Core's member after a definite not-found (one shared helper for both).
   for (const [action, kind] of [["membership_admin_grant_update", "expiry_update"], ["membership_admin_grant_revoke", "grant_revoke"]]) {
     assert.match(panel, new RegExp(`adminCall\\("${action}", \\{\\s*uid,\\s*expected_revision: currentGrant.revision,\\s*expected_grant_id: currentGrant.grant_id,`));
-    assert.match(panel, new RegExp(`membershipMutationOutcome\\("${kind}", response, adopted\\)[\\s\\S]*if \\(outcome === "uncertain" \\|\\| outcome === "conflict"\\) await reloadDetail\\(\\);`));
+    assert.match(panel, new RegExp(`membershipMutationOutcome\\("${kind}", response, adopted\\);\\s*if \\(outcome !== "success"\\) \\{[\\s\\S]{0,80}?const text = await grantChangeFailureText\\("${kind}", response, outcome\\);\\s*setBusy\\(""\\);\\s*setNotice\\(\\{ tone: "error", text \\}\\);`));
   }
+  const failure = panel.slice(panel.indexOf("async function grantChangeFailureText("), panel.indexOf("async function reloadDetail("));
+  assert.match(failure, /if \(outcome === "uncertain" \|\| outcome === "conflict"\) await reloadDetail\(\);/);
+  assert.match(failure, /if \(errorKey !== "grantNotFound"\) return membershipErrors\(errorKey\);\s*const member = await membershipMemberAfterGrantNotFound\(adminCall, uid, response\);\s*if \(member\) \{\s*adoptParsed\(member\);\s*return membershipErrors\("grantNotFound"\);\s*\}\s*setGrantStale\(true\);\s*return `\$\{membershipErrors\("grantNotFound"\)\} \$\{t\("loadError"\)\}`;/,
+    "a not-found shows Core's member, or keeps the controls off and says the state could not be loaded");
+  // A grant known to be stale stays uneditable until a read adopts a member.
+  assert.match(panel, /function adoptParsed\(parsed: MembershipUserDetail\) \{\s*setDetail\(parsed\);\s*setGrantStale\(false\);/);
+  assert.match(panel, /const canEditGrant = editor && isEditableGrant\(currentGrant\) && !grantStale;/);
+  assert.match(panel, /if \(!owner \|\| grantLocked \|\| grantStale \|\|/);
+  assert.match(panel, /\{grantStale \? <p className="alert alert-warning" role="status" data-grant-stale="true">\{t\("manage\.stale"\)\}<\/p> : null\}\s*\{isEditableGrant\(currentGrant\) && !grantStale \? \(/);
   // A discard reads first and keeps the pin when the member cannot be read.
   assert.match(panel, /async function discardPendingGrant\(\) \{[\s\S]*membershipCheckPendingGrant\([\s\S]*grant\.discardUnreadable/);
 });

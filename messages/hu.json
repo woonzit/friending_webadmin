@@ -3703,7 +3703,7 @@
     "unavailable": "Az előfizetési döntési pont átmenetileg nem elérhető. Újrapróbálás előtt frissítsd a hiteles állapotot.",
     "timeout": "A Core időtúllépést jelzett. A művelet ettől még befejeződhetett; újrapróbálás előtt frissítsd a hiteles előfizetési állapotot.",
     "grantUncertain": "A hozzáférés megadásának eredménye nem ismert, és az utána beolvasott tagállapot sem mutatja végrehajtottnak. A pontos kérést megtartottuk, az űrlapot zároltuk: az újraküldés ugyanazt a kérést küldi el, így nem adhat kétszer hozzáférést.",
-    "grantNotFound": "Ehhez a taghoz nincs jelenlegi, szerkeszthető admin-hozzáférés. Másik művelet előtt frissítsd az állapotot.",
+    "grantNotFound": "Semmi nem változott: ez az admin-hozzáférés már nem szerkeszthető. Egy másik admin visszavonta, lejárt, vagy a rekordját eltávolították.",
     "useExpiryUpdate": "Ez a művelet nem hosszabbítaná meg a hozzáférést. Ehhez a pontos lejárat szerkesztőjét használd.",
     "userNotFound": "A tag már nem létezik, vagy ez az admin már nem fér hozzá.",
     "invalidResponse": "A Core nem olvasható előfizetési választ adott. Nem feltételezünk sikert; újrapróbálás előtt frissíts.",
@@ -3864,6 +3864,7 @@
       "shortenWarning": "Ez a dátum korábbi a jelenlegi lejáratnál. A mentés lerövidíti az admin-hozzáférést.",
       "saveExpiry": "Lejárat frissítése",
       "revoke": "Admin-hozzáférés visszavonása",
+      "stale": "A Core szerint ez a hozzáférés már nem szerkeszthető, és a tag jelenlegi állapotát nem sikerült betölteni. Másik művelet előtt frissítsd az állapotot.",
       "lockedByPendingGrant": "Egy ismeretlen kimenetelű PLUS hozzáférési kérés függőben van. A lejárat módosítása és a visszavonás zárolva marad, amíg ez el nem dől: előbb frissíts, küldd újra vagy vesd el a kérést."
     },
     "store": {

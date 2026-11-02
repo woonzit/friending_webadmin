@@ -3703,7 +3703,7 @@
     "unavailable": "The membership authority is temporarily unavailable. Refresh the authoritative state before retrying.",
     "timeout": "Core timed out. The operation may have completed; refresh the authoritative membership state before retrying.",
     "grantUncertain": "The grant's outcome is unknown, and the member read afterwards does not show it applied. The exact request is kept and the grant form is locked: resending sends the same request, so it cannot add access twice.",
-    "grantNotFound": "There is no current editable administrator grant for this member. Refresh before choosing another action.",
+    "grantNotFound": "Nothing was changed: this administrator grant can no longer be edited. Another administrator revoked it, it expired, or its record was removed.",
     "useExpiryUpdate": "This grant would not extend access. Use the exact expiry editor for this change.",
     "userNotFound": "The member no longer exists or is no longer available to this administrator.",
     "invalidResponse": "Core returned an unreadable membership response. No success is assumed; refresh before retrying.",
@@ -3864,6 +3864,7 @@
       "shortenWarning": "This date is earlier than the current expiry. Saving it will shorten the administrator grant.",
       "saveExpiry": "Update expiry",
       "revoke": "Revoke admin grant",
+      "stale": "Core no longer holds this grant as editable, and the member's current state could not be loaded. Refresh before choosing another action.",
       "lockedByPendingGrant": "A PLUS grant request with an unknown outcome is pending. Expiry changes and revocation stay locked until it is settled: refresh, resend or discard that request first."
     },
     "store": {
