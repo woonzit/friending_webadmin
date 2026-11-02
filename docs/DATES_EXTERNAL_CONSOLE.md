@@ -445,6 +445,55 @@ publication writer's machine code is shown as Core wrote it. The `autopublish`
 help text describes the D-149 gate. An aggregator source shows its inherited
 automatic publication read-only; its own override stays closed.
 
+## Research yield: spans, ongoing and all-day events, stop details (D-149 yield)
+
+Core's yield round (lane `claude/areyouin-research-yield-20261102`, ef10bc77;
+`docs/DATES_EXTERNAL_ADMIN_V1.md` "Editor rules" and `drop_detail`). The console
+binds Core's genuine bodies: `tests/fixtures/dates_external_review_wire` (90
+bodies) and the research admin corpus re-pinned in
+`tests/fixtures/dates_event_research_p3b_admin_wire` (204 bodies).
+
+**Spans and ongoing events.** One rule, `datesExternalMaximumDuration`
+(`lib/datesExternalInput.ts`), mirrors Core's `maximumDuration`:
+- a festival or market may last 62 days and an exhibition 184; every other
+  category 24 hours;
+- an all-day event gets one more hour (a clock-change day);
+- longer is `dates-external-duration-invalid`.
+
+The list and detail decoders and the editor use the same rule. A festival,
+market or exhibition may be ongoing: it keeps its real, past start when a
+stated end is at least 24 hours away. Core judges that against its own clock,
+so the console never refuses a past start itself. Core's refusal is
+`dates-external-start-invalid`. Both refusals are shown in words on the
+editor; a client-side over-long span is caught before sending.
+
+**Showing time.** `lib/datesExternalSchedule.ts` and `DatesExternalWhen`
+format in the event's own zone:
+- a one-off event as before;
+- a span longer than 25 hours as a date range;
+- an all-day event without a clock time, its last day being the day before
+  the exclusive end;
+- a running span as "Running · until <last day>", using Core's `server_now`.
+
+The list row carries no `all_day`, so the list shows a local
+midnight-to-midnight row as all day. This is display only. The editor's
+all-day box says that Core stores the event midnight to midnight and that
+members on older app versions do not see it.
+
+**Stop details.** With the external admin contract selector v2, each research
+run candidate that stopped before becoming an intake carries `drop_detail`:
+- stage;
+- the extraction's answer and result, and the event count;
+- the title match, with the extracted title;
+- the validator's hard fails;
+- the publication gate code;
+- the fetch status.
+
+The run detail shows it in words (`DatesResearchDropDetail`), reusing the
+intake vocabularies and the closure blockers. Any code the console does not
+know is shown as Core wrote it. A malformed detail, or a detail on a
+candidate that became an intake, makes that candidate row unreadable.
+
 ## Evidence boundaries
 
 Tests distinguish actual provider bytes, synthetic negative controls, production

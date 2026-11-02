@@ -9,8 +9,8 @@
         "trigger": "manual",
         "dry_run": false,
         "status": "completed",
-        "found": 3,
-        "imported": 0,
+        "found": 4,
+        "imported": 1,
         "duplicates": 0,
         "dropped": [
             {
@@ -28,7 +28,7 @@
         ],
         "cost_micro_usd": 14579,
         "started_at": 1791201600,
-        "finished_at": 1791201603,
+        "finished_at": 1791201604,
         "source_revision_before": 2,
         "source_revision_after": 3,
         "area_revision_before": null,
@@ -54,6 +54,14 @@
             {
                 "title": "A different self-made title",
                 "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-organiser.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000003"
+            },
+            {
+                "title": "SELF-MADE empty detail",
+                "date_text": "2026-10-10",
                 "url_host": "research-organiser.example",
                 "outcome": "dropped",
                 "reason": "validation_failed",

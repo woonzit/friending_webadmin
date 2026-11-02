@@ -22,7 +22,9 @@ const source = {
 };
 const run = {
   // D-149, served with the external admin contract selector v2: why the SYSTEM closed the candidate's intake.
-  ...runSummary, candidates: [{ ...leaf("title date_text url_host outcome reason intake_id"), system_closure: leaf("decision blocker") }],
+  // D-149 yield: why a candidate stopped before it became an intake (`hard_fails` is a list of codes).
+  ...runSummary, candidates: [{ ...leaf("title date_text url_host outcome reason intake_id"), system_closure: leaf("decision blocker"),
+    drop_detail: leaf("stage provider_outcome extraction_result events_extracted title_match extracted_title hard_fails gate http_status") }],
 };
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */
 export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {

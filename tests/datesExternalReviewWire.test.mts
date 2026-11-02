@@ -23,15 +23,16 @@ const route = (entry: Entry) => entry.route.replace(/^\/v1\/webadmin\//, "");
 
 test("the corpus is Core's, byte for byte: every body has the sha256 its manifest names, and nothing else is here", () => {
   assert.equal(manifest.contract, "friending-dates-external-review-wire-v1");
-  assert.equal(manifest.source_commit, "3e151a15539f5343e0b4f959252b4db41386afeb");
-  assert.equal(manifest.fixture_set_sha256, "4c2fb04ad838113a2a7c2e0aeb59df966e0176425b4b24f5578af6c0093f2357");
+  // Re-pinned to the D-149 yield lane (Core ef10bc77): `drop_detail` on the run detail, and the span / ongoing / date-only details.
+  assert.equal(manifest.source_commit, "d9f54d599012d648dfbf1c42e82821748c4f76a1");
+  assert.equal(manifest.fixture_set_sha256, "c8660e08dbec515cb6e40577fa2de0a8315c0d1d56d4bffb056644b57081d78e");
   const lines = manifest.fixtures.map(({ file, sha256 }) => {
     assert.equal(createHash("sha256").update(bytes(file)).digest("hex"), sha256, file);
     return `${file}\0${sha256}`;
   });
   assert.equal(createHash("sha256").update(lines.join("\n")).digest("hex"), manifest.fixture_set_sha256);
   assert.deepEqual(readdirSync(DIR).sort(), [...manifest.fixtures.map((entry) => entry.file), "manifest.json", "provenance.txt"].sort());
-  assert.equal(manifest.fixtures.length, 77); assert.equal(CONSOLE.length, 55);
+  assert.equal(manifest.fixtures.length, 90); assert.equal(CONSOLE.length, 58);
 });
 
 test("the console's bridge sends the selectors Core captured with on every console route of the corpus (research routes keep their own beside them)", () => {

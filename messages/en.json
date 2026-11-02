@@ -8598,6 +8598,36 @@
       }
     },
     "research": {
+      "dropDetail": {
+        "labels": {
+          "stage": "Stopped at",
+          "httpStatus": "Page fetch",
+          "providerOutcome": "AI answer",
+          "extractionResult": "Extraction",
+          "titleMatch": "Title match",
+          "hardFails": "Failed checks",
+          "gate": "Publication gate"
+        },
+        "stages": {
+          "locator": "Finding the event page",
+          "fetch": "Fetching the page",
+          "page": "Reading the page",
+          "extraction": "AI extraction",
+          "title": "Matching the title",
+          "validation": "Checking the facts",
+          "schedule": "Checking the date and time",
+          "area": "Checking the area",
+          "import": "Creating the intake"
+        },
+        "titleMatches": {
+          "exact": "Same title as found",
+          "similar": "Similar title",
+          "different": "Different title",
+          "none": "No event with this title on the page"
+        },
+        "httpStatusValue": "HTTP {status}",
+        "eventsExtracted": "{count, plural, one {# event} other {# events}} on the page"
+      },
       "closure": {
         "notPublishable": "Closed by the system: not publishable",
         "duplicate": "Closed by the system: duplicate of a listed event",
@@ -9149,6 +9179,11 @@
       "usage": "AI usage"
     },
     "external": {
+      "schedule": {
+        "allDay": "All day",
+        "until": "Running · until {date}",
+        "allDayStored": "Stored from local midnight to local midnight; the last day is the day before the stored end."
+      },
       "unknownFact": "Not known",
       "review": {
         "approveCommandNote": "This command also approves the member's correction.",
@@ -9336,7 +9371,7 @@
         "query": "Title contains", "city": "City", "status": "Status", "tier": "Verification tier",
         "category": "Category", "channel": "Entry channel", "startFrom": "Starts from (UTC)", "startTo": "Starts through (UTC)", "reviewed": "Reviewed"
       },
-      "columns": { "event": "Event and organizer", "status": "Status", "venue": "Venue", "start": "Local start", "counts": "Participation", "recheck": "Next check", "reviewed": "Reviewed" },
+      "columns": { "event": "Event and organizer", "status": "Status", "venue": "Venue", "start": "When (local time)", "counts": "Participation", "recheck": "Next check", "reviewed": "Reviewed" },
       "statusValues": { "in_review": "In review", "published": "Published", "rechecking": "Rechecking", "canceled_upstream": "Canceled by organizer", "withdrawn": "Withdrawn", "ended": "Ended", "merged_into": "Merged", "rejected": "Rejected" },
       "tierValues": { "admin": "Administrator checked", "official": "Official source", "corroborated": "Corroborated", "single_source": "Single source" },
       "channelValues": { "admin": "Administrator", "member_suggestion": "Member suggestion", "ai_research": "AI research" },
@@ -9387,6 +9422,8 @@
         "payload": "Review exact saved request", "open": "Open the outstanding operation", "retry": "Retry the same operation"
       },
       "feedback": {
+        "startInvalid": "Core refused the start: only a festival, market or exhibition may already have started, and only when its stated end is at least 24 hours away. Any other event needs a future start; your draft is kept.",
+        "durationInvalid": "Core refused the time span: it is longer than the category allows (festival or market 62 days, exhibition 184 days, anything else 24 hours). Shorten it or choose the right category; your draft is kept.",
         "correctionClosed": "This correction can no longer be approved here (it was decided, or it belongs to another event). Refresh to see it.",
         "correctionNoChange": "Nothing changed: the event already shows what the member proposed. Nothing was saved and the correction is still pending; reject it with “The event already shows this”.",
         "changedElsewhere": "The event changed while you were editing (a review mark, a re-research or a correction decision). Your draft is kept, but nothing can be saved on the old revision. Refresh to load the current facts, then review your changes again.",
@@ -9407,6 +9444,8 @@
         "refused": "Core refused this operation. Review the facts, time bounds, source and ticket links, audit reason and current event state before preparing a corrected request."
       },
       "form": {
+        "allDayHint": "All day: Core stores the event from local midnight on the first day to local midnight after the last day. Members whose app is older than the current release do not see all-day events.",
+        "spanHint": "Festivals and markets may last up to 62 days and exhibitions up to 184, published as one event; every other category up to 24 hours. A festival, market or exhibition that has already started may be saved with its real start when its stated end is at least 24 hours away.",
         "freeUnknownField": "Free or paid",
         "unknownHint": "A research event may stay without an organizer or a known free/paid status when its page does not state them. Fill them in when you know them; a manual event needs both.",
         "freeUnknown": "Free or paid: not known",
@@ -9460,6 +9499,7 @@
         "confirmContentSafe": "I checked the content for safety and suitability.",
         "reason": "Audit reason (at least 3 characters)",
         "errors": {
+          "duration": "This is longer than the category allows: 62 days for a festival or market, 184 for an exhibition, 24 hours for anything else.",
           "startTime": "Check the start date, explicit UTC offset and venue timezone. Nonexistent local times and mismatched offsets are refused.",
           "endTime": "Check the end date, explicit UTC offset and venue timezone.",
           "confirmations": "Complete all four confirmations after the last facts edit.",

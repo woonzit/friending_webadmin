@@ -108,6 +108,24 @@ export function datesExternalDefaultDuration(category: DatesExternalCategory): n
   return 2 * 3600;
 }
 
+/**
+ * D-149 yield (Core `DatesExternalEventPolicy::maximumDuration`, docs/DATES_EXTERNAL_ADMIN_V1.md "Editor rules"): a
+ * festival or market may last up to 62 days and an exhibition up to 184, published as one span; every other category
+ * 24 hours (`dates-external-duration-invalid`). An all-day event, stored from local midnight to local midnight, may be
+ * one hour longer: the clock-change day.
+ */
+export const DATES_EXTERNAL_SPAN_DAYS: Readonly<Partial<Record<DatesExternalCategory, number>>> = { festival: 62, market: 62, exhibition: 184 };
+export function datesExternalMaximumDuration(category: DatesExternalCategory, allDay = false): number {
+  return (DATES_EXTERNAL_SPAN_DAYS[category] ?? 1) * 86400 + (allDay ? 3600 : 0);
+}
+/**
+ * Only these may be ongoing: started already, when a stated end leaves at least 24 hours of it
+ * (`dates-external-start-invalid` otherwise). Core checks the clock; the console does not refuse a past start itself.
+ */
+export function datesExternalMayBeOngoing(category: DatesExternalCategory): boolean {
+  return DATES_EXTERNAL_SPAN_DAYS[category] !== undefined;
+}
+
 const CONFIRMATIONS = ["source", "public_venue", "timezone", "content_safe"] as const;
 /**
  * Closed browser/server-boundary payload. This console sends all fields even
@@ -147,7 +165,7 @@ function manualEvent(value: unknown, maximumBytes: number, exact = true, unknown
     || CONFIRMATIONS.some((key) => confirmations[key] !== true)) return null;
   const duration = value.end_at === null
     ? datesExternalDefaultDuration(value.category as DatesExternalCategory) : Number(value.end_at) - value.start_at;
-  if (duration <= 0 || duration > (value.category === "festival" ? 14 : 1) * 86400) return null;
+  if (duration <= 0 || duration > datesExternalMaximumDuration(value.category as DatesExternalCategory, value.all_day === true)) return null;
   return value as DatesExternalManualEvent;
 }
 
@@ -254,11 +272,13 @@ function decimalInput(value: string): number {
 
 export function datesExternalDraftInput(draft: DatesExternalDraft, unknownAllowed = false):
   | { ok: true; event: DatesExternalManualEvent }
-  | { ok: false; error: "startTime" | "endTime" | "confirmations" | "facts" } {
+  | { ok: false; error: "startTime" | "endTime" | "duration" | "confirmations" | "facts" } {
   const start = datesExternalTimeFromInput(draft.startLocal, draft.startOffset, draft.timezone);
   if (start === null) return { ok: false, error: "startTime" };
   const end = draft.endLocal === "" ? null : datesExternalTimeFromInput(draft.endLocal, draft.endOffset, draft.timezone);
   if (draft.endLocal !== "" && end === null) return { ok: false, error: "endTime" };
+  // The category's longest span, said before Core refuses it (the same rule).
+  if (end !== null && end - start > datesExternalMaximumDuration(draft.category, draft.allDay)) return { ok: false, error: "duration" };
   if (!draft.confirmSource || !draft.confirmPublicVenue || !draft.confirmTimezone || !draft.confirmContentSafe)
     return { ok: false, error: "confirmations" };
   const trim = datesExternalTrim;

@@ -73,6 +73,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
       </div>
       <h3>{t("timeTitle")}</h3>
       <p className="field-hint">{t("timeHint")}</p>
+      <p className="field-hint">{t("spanHint")}</p>
       <div className="form-grid">
         {input("timezone", 80, "text", true)}
         <label className="field"><span>{t("startLocal")}</span><input required type="datetime-local" step={1} value={draft.startLocal} onChange={(event) => edit("startLocal", event.target.value)} /></label>
@@ -80,6 +81,7 @@ export default function DatesExternalEventForm({ initial, initialDraft, notice, 
         <label className="field"><span>{t("endLocal")}</span><input type="datetime-local" step={1} value={draft.endLocal} onChange={(event) => edit("endLocal", event.target.value)} /></label>
         {input("endOffset", 6, "text", draft.endLocal !== "")}
         <label className="checkbox-field"><input type="checkbox" checked={draft.allDay} onChange={(event) => edit("allDay", event.target.checked)} /><span>{t("allDay")}</span></label>
+        {draft.allDay && <p className="field-hint">{t("allDayHint")}</p>}
       </div>
       <p className="field-hint">{t("endHint")}</p>
       <h3>{t("venueTitle")}</h3>

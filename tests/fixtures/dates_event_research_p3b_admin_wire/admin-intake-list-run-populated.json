@@ -3,7 +3,7 @@
     "status_code": 200,
     "intakes": [
         {
-            "intake_id": "xin_00000000000000000000000000000005",
+            "intake_id": "xin_00000000000000000000000000000006",
             "revision": 2,
             "channel": "ai_research",
             "status": "in_review",
@@ -32,7 +32,7 @@
             "research_run_id": "rru_00000000000000000000000000000011"
         },
         {
-            "intake_id": "xin_00000000000000000000000000000004",
+            "intake_id": "xin_00000000000000000000000000000005",
             "revision": 2,
             "channel": "ai_research",
             "status": "in_review",
@@ -61,7 +61,7 @@
             "research_run_id": "rru_00000000000000000000000000000011"
         },
         {
-            "intake_id": "xin_00000000000000000000000000000003",
+            "intake_id": "xin_00000000000000000000000000000004",
             "revision": 2,
             "channel": "ai_research",
             "status": "in_review",

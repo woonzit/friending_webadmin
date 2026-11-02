@@ -36,12 +36,13 @@ function route(file: string, body: any): research.DatesResearchAction | "dates_e
   if (body.source || file.startsWith("admin-source-") || file.startsWith("admin-aggregator-")) return "dates_event_research_source_save";
   return "dates_event_research_defaults_save";
 }
-test("GENUINE accepted P3b pin: complete 200-body inventory, independent manifest/source/generator/set hashes", () => {
-  assert.equal(pin.provider_commit, "5f03015b57c516285b76f2d1a8d3f7f26f16b1a6");
+test("GENUINE accepted P3b pin (re-pinned to the D-149 yield corpus): complete inventory, independent manifest/source/generator/set hashes", () => {
+  // Accepted at Core 5f03015b; re-pinned byte for byte to the D-149 yield lane (Core ef10bc77), which adds the contract-2 drop_detail captures.
+  assert.equal(pin.provider_commit, "ef10bc7740a6a426948d3e240c218e60b8e78e46");
   assert.equal(hash(bytes("manifest.json")), pin.manifest_sha256);
   for (const key of ["contract", "source_commit", "source_checksum", "fixture_count", "fixture_set_sha256"]) assert.equal(manifest[key], pin[key], key);
   assert.equal(manifest.provenance.generator_sha256, pin.generator_sha256);
-  assert.equal(fixtures.length, 200); assert.deepEqual(readdirSync(directory).sort(), ["manifest.json", ...fixtures.map(entry => entry.file)].sort());
+  assert.equal(fixtures.length, 204); assert.equal(pin.fixture_count, 204); assert.deepEqual(readdirSync(directory).sort(), ["manifest.json", ...fixtures.map(entry => entry.file)].sort());
   for (const entry of fixtures) assert.equal(hash(bytes(entry.file)), entry.sha256, entry.file);
   assert.equal(hash(fixtures.map(entry => `${entry.file}\0${entry.sha256}`).join("\n")), pin.fixture_set_sha256);
   assert.match(manifest.provenance.transport, /Real loopback HTTP POSTs/);

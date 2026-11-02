@@ -1,6 +1,6 @@
 import { DATES_ACTIVITY_TYPES, datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
 import {
-  DATES_EXTERNAL_CATEGORIES, datesExternalDefaultDuration, datesExternalHttpsUrl,
+  DATES_EXTERNAL_CATEGORIES, datesExternalDefaultDuration, datesExternalHttpsUrl, datesExternalMaximumDuration,
   normalizeDatesExternalEditorInput, normalizeDatesExternalManualEvent,
   type DatesExternalEditorInput,
 } from "@/lib/datesExternalInput";
@@ -236,7 +236,8 @@ const detailGuard = object({ ...envelope, event: detailRowGuard, capabilities })
 export type DatesExternalDetail = Parsed<typeof detailGuard>;
 
 function rowConsistent(row: DatesExternalRow | DatesExternalDetailRow, caps: string[], now: number): boolean {
-  return row.end_at > row.start_at && row.end_at - row.start_at <= (row.category === "festival" ? 14 : 1) * 86400
+  // D-149 yield: the category's longest span (a list row does not say whether it is all day: its extra hour is allowed).
+  return row.end_at > row.start_at && row.end_at - row.start_at <= datesExternalMaximumDuration(row.category, true)
     // Core owns venue-local strings. Browser/PHP timezone databases can differ;
     // decoding a read must not reinterpret them through the browser database.
     && row.created_at <= row.updated_at && row.updated_at <= now && row.checked_at <= now
@@ -289,6 +290,7 @@ export function decodeDatesExternalEvent(value: unknown, caps: string[], now: nu
     || facts.sensitive.flag !== editor.sensitive.flag || facts.sensitive.reason !== editor.sensitive.reason
     || facts.summary.en !== editor.summary.en || facts.summary.hu !== editor.summary.hu
     || facts.all_day !== editor.all_day || facts.is_free !== editor.is_free || facts.price_text !== editor.price_text
+    || facts.end_at - facts.start_at > datesExternalMaximumDuration(facts.category, facts.all_day)
     || facts.age_restriction !== editor.age_restriction || row.attendee_list !== editor.attendee_list
     || (facts.is_free === null && (facts.price_text !== null || !datesExternalUnknownFactsAllowed(row)))
     || (row.sensitive && row.attendee_list !== "count_only")

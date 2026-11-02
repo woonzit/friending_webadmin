@@ -10,6 +10,7 @@ import { formatDate, formatNumber } from "@/lib/format";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { ResearchHelp } from "@/components/DatesResearchControls";
 import DatesSystemClosureNote from "@/components/DatesSystemClosure";
+import DatesResearchDropDetail from "@/components/DatesResearchDropDetail";
 
 export default function DatesResearchRuns({ areas, sources, focusRunId, refresh, active = true, onRunFinished }: { areas: ResearchArea[]; sources: ResearchSource[]; focusRunId: string | null; refresh: number; active?: boolean; onRunFinished?: () => Promise<void> | void }) {
   const t = useTranslations("datesAdmin.research"), common = useTranslations("common"), locale = useLocale();
@@ -90,7 +91,9 @@ export default function DatesResearchRuns({ areas, sources, focusRunId, refresh,
           {detail.candidates.unreadable.map((row) => <p className="alert alert-warning" key={row.index}>{t("unreadableRow", { row: row.index + 1 })}</p>)}
           {detail.candidates.rows.length === 0 && detail.candidates.unreadable.length === 0 ? <p>{t("candidatesEmpty")}</p> : <div className="table-wrap"><table className="data-table"><thead><tr>
             {["candidate", "date", "host", "outcome", "reason", "intake"].map((key) => <th key={key}>{t(`columns.${key}`)}</th>)}</tr></thead><tbody>
-            {detail.candidates.rows.map((row, index) => <tr key={index}><td>{row.title}</td><td>{row.date_text}</td><td>{row.url_host}</td><td>{t(`outcomes.${row.outcome}`)}</td><td>{row.reason ? t(`dropReasons.${row.reason}`) : row.system_closure ? <DatesSystemClosureNote closure={row.system_closure} /> : "—"}</td>
+            {detail.candidates.rows.map((row, index) => <tr key={index}><td>{row.title}</td><td>{row.date_text}</td><td>{row.url_host}</td><td>{t(`outcomes.${row.outcome}`)}</td><td>{row.reason ? t(`dropReasons.${row.reason}`) : row.system_closure ? <DatesSystemClosureNote closure={row.system_closure} /> : "—"}
+                {/* D-149 yield: why the candidate stopped (served with the external admin contract selector v2). */}
+                {row.drop_detail && <DatesResearchDropDetail detail={row.drop_detail} />}</td>
               <td>{row.intake_id ? <Link href={`/dates/intakes/${encodeURIComponent(row.intake_id)}`}>{t("columns.intake")}</Link> : "—"}</td></tr>)}</tbody></table></div>}
         </>}
       </>}

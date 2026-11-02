@@ -77,7 +77,29 @@ export type ResearchRun = {
 export type ResearchCandidate = { title: string; date_text: string; url_host: string;
   outcome: typeof DATES_RESEARCH_CANDIDATE_OUTCOMES[number]; reason: ResearchDropReason | null; intake_id: string | null;
   /** D-149: why the system closed the candidate's intake, served with the external admin contract selector v2 (lib/datesSystemClosure.ts). Absent: not served. */
-  system_closure?: DatesSystemClosure | null };
+  system_closure?: DatesSystemClosure | null;
+  /** D-149 yield: why the candidate stopped before it became an intake, served with the external admin contract selector v2. Absent: not served. */
+  drop_detail?: ResearchDropDetail | null };
+/**
+ * D-149 yield (Core ef10bc77, docs/DATES_EXTERNAL_ADMIN_V1.md): why a research candidate stopped BEFORE it became an
+ * intake; null for one that went on or was recorded before the field existed. Every key is always present. The codes
+ * are Core's; the console words the ones it knows and shows any other as written.
+ */
+export type ResearchDropDetail = { stage: string; provider_outcome: string | null; extraction_result: string | null; events_extracted: number | null;
+  title_match: string | null; extracted_title: string | null; hard_fails: string[]; gate: string | null; http_status: number | null };
+export const DATES_RESEARCH_DROP_STAGES = ["locator", "fetch", "page", "extraction", "title", "validation", "schedule", "area", "import"] as const;
+export const DATES_RESEARCH_TITLE_MATCHES = ["exact", "similar", "different", "none"] as const;
+const DROP_DETAIL_KEYS = ["stage", "provider_outcome", "extraction_result", "events_extracted", "title_match", "extracted_title", "hard_fails", "gate", "http_status"];
+const dropCode = (value: unknown): value is string => researchString(value) && /^[a-z][a-z0-9_-]{0,95}$/.test(value);
+export function decodeResearchDropDetail(value: unknown): ResearchDropDetail | null {
+  if (!researchRecord(value) || DROP_DETAIL_KEYS.some((key) => !Object.hasOwn(value, key)) || !dropCode(value.stage)
+    || !nullable(value.provider_outcome, dropCode) || !nullable(value.extraction_result, dropCode) || !nullable(value.events_extracted, researchInteger)
+    || !nullable(value.title_match, dropCode) || !nullable(value.extracted_title, (v): v is string => researchString(v) && Array.from(v).length <= 300)
+    || !Array.isArray(value.hard_fails) || value.hard_fails.length > 100 || !value.hard_fails.every(dropCode) || !nullable(value.gate, dropCode)
+    || !nullable(value.http_status, (v): v is number => researchInteger(v, 100) && (v as number) <= 599)) return null;
+  return { stage: value.stage, provider_outcome: value.provider_outcome, extraction_result: value.extraction_result, events_extracted: value.events_extracted,
+    title_match: value.title_match, extracted_title: value.extracted_title, hard_fails: [...value.hard_fails as string[]], gate: value.gate, http_status: value.http_status };
+}
 export type ResearchRunList = ResearchRows<ResearchRun> & { next_cursor: string | null };
 export type ResearchRunDetail = { run: ResearchRun; candidates: ResearchRows<ResearchCandidate> | null };
 export type ResearchBatchResult = { intake_id: string; outcome: typeof DATES_RESEARCH_BATCH_OUTCOMES[number]; refusal: string | null; external_event_id: string | null };
@@ -297,8 +319,11 @@ function candidate(value: unknown): ResearchCandidate | null {
   // A closure needs an intake; one that cannot be read makes the candidate row unreadable, never "not closed".
   const closure = Object.hasOwn(value, "system_closure") ? value.system_closure === null ? null : decodeDatesSystemClosure(value.system_closure) : undefined;
   if ((Object.hasOwn(value, "system_closure") && value.system_closure !== null && closure === null) || (closure && value.intake_id === null)) return null;
+  // A stop detail belongs to a candidate that did not become an intake; one that cannot be read makes the row unreadable.
+  const drop = Object.hasOwn(value, "drop_detail") ? value.drop_detail === null ? null : decodeResearchDropDetail(value.drop_detail) : undefined;
+  if ((Object.hasOwn(value, "drop_detail") && value.drop_detail !== null && drop === null) || (drop && value.intake_id !== null)) return null;
   return { title: value.title as string, date_text: value.date_text as string, url_host: value.url_host as string, outcome: value.outcome, reason: value.reason, intake_id: value.intake_id,
-    ...(closure !== undefined ? { system_closure: closure } : {}) };
+    ...(closure !== undefined ? { system_closure: closure } : {}), ...(drop !== undefined ? { drop_detail: drop } : {}) };
 }
 export function decodeResearchRunDetail(value: unknown, runId: string): ResearchRunDetail | null {
   if (!researchSuccess(value)) return null;

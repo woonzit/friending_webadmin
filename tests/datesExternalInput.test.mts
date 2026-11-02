@@ -56,7 +56,11 @@ const invalid: Array<[string, (value: Record<string, any>) => void]> = [
   ["invalid timezone", (v) => { v.timezone = "Machine/Implicit"; }],
   ["zero duration", (v) => { v.end_at = v.start_at; }],
   ["nonfestival duration over 24h", (v) => { v.end_at = v.start_at + 86401; }],
-  ["festival duration over 14 days", (v) => { v.category = "festival"; v.end_at = v.start_at + 14 * 86400 + 1; }],
+  // D-149 yield (Core ef10bc77): festival and market up to 62 days, exhibition 184, every other category 24 hours.
+  ["festival duration over 62 days", (v) => { v.category = "festival"; v.end_at = v.start_at + 62 * 86400 + 1; }],
+  ["market duration over 62 days", (v) => { v.category = "market"; v.end_at = v.start_at + 62 * 86400 + 1; }],
+  ["exhibition duration over 184 days", (v) => { v.category = "exhibition"; v.end_at = v.start_at + 184 * 86400 + 1; }],
+  ["concert duration over 24 hours", (v) => { v.category = "concert"; v.end_at = v.start_at + 86400 + 1; }],
   ["age below adult", (v) => { v.age_restriction = 17; }],
   ["loose price boolean", (v) => { v.is_free = 1; }],
   ["paid without official link", (v) => { v.is_free = false; }],

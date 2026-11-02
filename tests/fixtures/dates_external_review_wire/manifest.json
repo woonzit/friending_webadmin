@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "friending-dates-external-review-wire-v1",
-    "source_commit": "3e151a15539f5343e0b4f959252b4db41386afeb",
-    "fixture_set_sha256": "4c2fb04ad838113a2a7c2e0aeb59df966e0176425b4b24f5578af6c0093f2357",
+    "source_commit": "d9f54d599012d648dfbf1c42e82821748c4f76a1",
+    "fixture_set_sha256": "c8660e08dbec515cb6e40577fa2de0a8315c0d1d56d4bffb056644b57081d78e",
     "selectors": {
         "member": {
             "dates_api_version": 1,
@@ -21,7 +21,7 @@
     },
     "provenance": {
         "generator": "tests/dates_external_review_fixture_dump.php",
-        "generator_sha256": "9f5ab82cfda11d24c75bb036a8995626989bf736879d0857374d3ce5c5e33c16",
+        "generator_sha256": "398b51c0375c37089f760a3308e2cd8a1cf8157bb6fd63f1183432ecff5e6a62",
         "transport": "Real HTTP: public/index.php under PHP's own web server on 127.0.0.1. Member calls are form-encoded as the iOS app encodes them, with every selector the build sends; console calls as the console encodes them, with its secret.",
         "wire_adapters": {
             "ios": "public/index.php -> Friending\\Core\\Router::dispatch -> Response::send",
@@ -44,7 +44,14 @@
             "member-activity-detail-unknown-facts-released-denied.json": "sent without dates_event_correction_contract_version",
             "webadmin-intake-list-system-closure-released.json": "sent without dates_external_admin_contract_version",
             "webadmin-intake-detail-system-closure-released.json": "sent without dates_external_admin_contract_version",
-            "webadmin-research-run-detail-system-closure-released.json": "sent without dates_external_admin_contract_version; with dates_event_research_admin_contract_version=1 like every research body"
+            "webadmin-research-run-detail-system-closure-released.json": "sent without dates_external_admin_contract_version; with dates_event_research_admin_contract_version=1 like every research body",
+            "member-activity-detail-date-only-v3.json": "dates_event_correction_contract_version=3 (shows a date-only / all-day event without a clock time)",
+            "member-activity-detail-date-only-v2-denied.json": "dates_event_correction_contract_version=2",
+            "member-activity-detail-date-only-released-denied.json": "sent without dates_event_correction_contract_version",
+            "member-activity-detail-festival-v3.json": "dates_event_correction_contract_version=3",
+            "member-activity-detail-festival-released.json": "sent without dates_event_correction_contract_version",
+            "member-activity-detail-exhibition-ongoing-v3.json": "dates_event_correction_contract_version=3",
+            "member-activity-detail-exhibition-ongoing-released.json": "sent without dates_event_correction_contract_version"
         },
         "source_paths": [
             "config/dates_v1_fixture.json",
@@ -143,6 +150,7 @@
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
             "src/Http/Controllers/WebadminLayer2Controller.php",
             "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMailDeliveryController.php",
             "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
             "src/Http/Controllers/WebadminMembershipController.php",
             "src/Http/Controllers/WebadminModeCardsController.php",
@@ -381,6 +389,70 @@
             "sha256": "aa0bff8aecc29afd44d84ac2d1786d47cfee5e4d0fac1803623e2487e78da408"
         },
         {
+            "file": "member-activity-detail-date-only-released-denied.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "4679d386912af9860a503b84ae186621164ec73f67d9a5819a1fe61ce75884a4"
+        },
+        {
+            "file": "member-activity-detail-date-only-v2-denied.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "4679d386912af9860a503b84ae186621164ec73f67d9a5819a1fe61ce75884a4"
+        },
+        {
+            "file": "member-activity-detail-date-only-v3.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "90190298c11aa501262c31cab08f362060e997a09364d90c0d26b242c9c3eb73"
+        },
+        {
+            "file": "member-activity-detail-exhibition-ongoing-joined.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "12be906d0397343e239f1a6567c83c52dc034f8d167d6faa5310ad26d56ae062"
+        },
+        {
+            "file": "member-activity-detail-exhibition-ongoing-released.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a21ebed740c8233809327e1e0d4093c132a82e53dace925ae2c7be95c497aacf"
+        },
+        {
+            "file": "member-activity-detail-exhibition-ongoing-v3.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a447c5c854f72c78eb022f7b900a002e3b873897e1b56ad8697bceb84cc7cc41"
+        },
+        {
+            "file": "member-activity-detail-festival-released.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f3e3102e21a507e8eb1064bc16c6b877c8736c9be7aee8faab8f13fce209bf83"
+        },
+        {
+            "file": "member-activity-detail-festival-v3.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "47d333e204cc190fab22f2c5742a892cc28b7c6fe1360f6b4ffab45030541f6c"
+        },
+        {
             "file": "member-activity-detail-released.json",
             "consumer": "ios",
             "route": "/v1/dates/activity/detail",
@@ -411,6 +483,22 @@
             "http_status": 200,
             "status_code": 200,
             "sha256": "236349e63aed7f9d6438d16a4fabeaaba2060e4af8385969ebbc9e927fffc17d"
+        },
+        {
+            "file": "member-activity-join-exhibition-ongoing.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/join",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f3c9818b404876767da9c83a8aa03fe6f4224ac60fddd08355473c5434328ef4"
+        },
+        {
+            "file": "member-activity-leave-exhibition-ongoing.json",
+            "consumer": "ios",
+            "route": "/v1/dates/activity/leave",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "7f8c4b4e0cf89701b5e1c53e7ffefc6c7d9c6b5c00f77a565ff5fd70d90c3880"
         },
         {
             "file": "member-activity-mine-correctable.json",
@@ -717,6 +805,30 @@
             "sha256": "107bceff4179b69042aaec95c5e8d1bcae9ea4591304e95132feb047d479591b"
         },
         {
+            "file": "webadmin-external-detail-date-only.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "e6d17a0a2d3147c7da0f63a7b933ec5216cb079c7ddea00d6914659051f558bf"
+        },
+        {
+            "file": "webadmin-external-detail-exhibition-ongoing.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3dbbab75044ec99766101af959ebd94144fc7135b1d24e2962933814f236904b"
+        },
+        {
+            "file": "webadmin-external-detail-festival.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/dates_external_event_detail",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c27677d819d2da6aaedb1de2a2a81c3fa8c6d1ff130e6431b4ab0a87a829f724"
+        },
+        {
             "file": "webadmin-external-detail-recheck-applied.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/dates_external_event_detail",
@@ -930,7 +1042,7 @@
             "route": "/v1/webadmin/dates_event_research_run_detail",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "82759bb8c02a38abe0585e35288ef1264fa1975b1678f9657ba0727c5f16eb0f"
+            "sha256": "724d42f0d134c751d8aba596691352696b4b4c1938ffa51ca84cfac952d7388c"
         },
         {
             "file": "webadmin-update-with-correction-moderator-denied.json",

@@ -5,22 +5,24 @@ corrections (the app's side, member-*) and the console's side (webadmin-*):
 - the corrections queue, a rejection, and the three approvals (an edit, a cancellation, an official
   update) with `correction_id`;
 - the AI re-research of one event, its receipt, its refusals, and a detail in each job state;
-- the system's closure of research intakes (`system_closure`) on the intake list, the intake detail
-  and the research run detail;
+- the system's closure of research intakes (`system_closure`) and, since the yield round, the
+  run candidates' `drop_detail`;
+- the yield round's details of a festival span, an ongoing exhibition and a date-only (all-day)
+  event, with the member side of contract 3;
 - with their refusals.
 
 Source: Core tests/fixtures/dates_external_review_wire at commit
-        c268ae4b ("Capture unknown-organizer events and system closures (D-149)") on Core-B's lane
-        branch claude/areyouin-autopub-20261102-core (rebased onto Core-A 3110f2cb; local, not yet
-        published when copied on 2026-11-02).
+        ef10bc77 ("Rebind every wire corpus to live b5784fca plus the yield lane; capture contract 3")
+        on the yield lane branch claude/areyouin-research-yield-20261102 (local, not yet published when
+        copied on 2026-11-02).
 
-        The corpus was generated at 3e151a15539f5343e0b4f959252b4db41386afeb (manifest.json,
-        `source_commit`) by tests/dates_external_review_fixture_dump.php. That is real HTTP through
-        public/index.php under PHP's own web server, two captures compared byte for byte. It used the
-        console's form transport with its secret and both selectors (manifest.json `selectors.webadmin`).
+        The corpus was generated at d9f54d59 (manifest.json, `source_commit`) by
+        tests/dates_external_review_fixture_dump.php. That is real HTTP through public/index.php under
+        PHP's own web server, two captures compared byte for byte. It used the console's form transport
+        with its secret and both selectors (manifest.json `selectors.webadmin`).
 
-How:    BYTE COPIES of the 77 bodies and manifest.json of that directory, extracted with
-        `git archive c268ae4b tests/fixtures/dates_external_review_wire`; nothing was edited.
+How:    BYTE COPIES of the 90 bodies and manifest.json of that directory, extracted with
+        `git archive ef10bc77 tests/fixtures`; nothing was edited.
 
         tests/datesExternalReviewWire.test.mts checks every body against the sha256 the manifest
         names and the manifest's `fixture_set_sha256`. It also checks that this directory holds
@@ -28,6 +30,9 @@ How:    BYTE COPIES of the 77 bodies and manifest.json of that directory, extrac
 
         The member-* bodies are the app's side; they are kept so that the copy is whole.
 
-Checked: after Core-B's rebase, its tip 1735a158 holds this directory byte for byte (compared with
-        `git archive 1735a158`, 2026-11-02). Before a release, compare these files with the corpus at
-        the merged Core tip (the set hash in the test is the check).
+Changed against the previous pin (Core-B 1735a158, 77 bodies):
+- webadmin-research-run-detail-system-closure.json gains `"drop_detail": null` after each
+  `system_closure`;
+- 13 new bodies: 10 member (date-only on contract 3, festival, ongoing exhibition, joining it) and 3
+  console details (festival, exhibition-ongoing, date-only).
+Every other body is byte-identical.

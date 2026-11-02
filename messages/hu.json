@@ -8598,6 +8598,36 @@
       }
     },
     "research": {
+      "dropDetail": {
+        "labels": {
+          "stage": "Megállt itt",
+          "httpStatus": "Letöltés",
+          "providerOutcome": "MI-válasz",
+          "extractionResult": "Kinyerés",
+          "titleMatch": "Cím egyezése",
+          "hardFails": "Sikertelen ellenőrzések",
+          "gate": "Közzétételi kapu"
+        },
+        "stages": {
+          "locator": "Eseményoldal keresése",
+          "fetch": "Oldal letöltése",
+          "page": "Oldal olvasása",
+          "extraction": "MI-kinyerés",
+          "title": "Cím egyeztetése",
+          "validation": "Adatok ellenőrzése",
+          "schedule": "Dátum és időpont ellenőrzése",
+          "area": "Terület ellenőrzése",
+          "import": "Beküldés létrehozása"
+        },
+        "titleMatches": {
+          "exact": "Ugyanaz a cím",
+          "similar": "Hasonló cím",
+          "different": "Eltérő cím",
+          "none": "Az oldalon nincs ilyen című esemény"
+        },
+        "httpStatusValue": "HTTP {status}",
+        "eventsExtracted": "{count} esemény az oldalon"
+      },
       "closure": {
         "notPublishable": "A rendszer lezárta: nem közzétehető",
         "duplicate": "A rendszer lezárta: már szereplő esemény duplikátuma",
@@ -9149,6 +9179,11 @@
       "usage": "MI-költés"
     },
     "external": {
+      "schedule": {
+        "allDay": "Egész nap",
+        "until": "Folyamatban, vége: {date}",
+        "allDayStored": "Helyi éjféltől helyi éjfélig tárolva; az utolsó nap a tárolt vég előtti nap."
+      },
       "unknownFact": "Nem ismert",
       "review": {
         "approveCommandNote": "Ez a művelet a tag javítását is jóváhagyja.",
@@ -9336,7 +9371,7 @@
         "query": "Cím tartalmazza", "city": "Város", "status": "Állapot", "tier": "Ellenőrzési szint",
         "category": "Kategória", "channel": "Felviteli csatorna", "startFrom": "Kezdés ettől (UTC)", "startTo": "Kezdés eddig (UTC)", "reviewed": "Átnézve"
       },
-      "columns": { "event": "Esemény és szervező", "status": "Állapot", "venue": "Helyszín", "start": "Helyi kezdés", "counts": "Részvétel", "recheck": "Következő ellenőrzés", "reviewed": "Átnézés" },
+      "columns": { "event": "Esemény és szervező", "status": "Állapot", "venue": "Helyszín", "start": "Időpont (helyi)", "counts": "Részvétel", "recheck": "Következő ellenőrzés", "reviewed": "Átnézés" },
       "statusValues": { "in_review": "Ellenőrzés alatt", "published": "Publikált", "rechecking": "Újraellenőrzés alatt", "canceled_upstream": "Szervező által lemondva", "withdrawn": "Visszavonva", "ended": "Befejeződött", "merged_into": "Összevonva", "rejected": "Elutasítva" },
       "tierValues": { "admin": "Admin által ellenőrzött", "official": "Hivatalos forrás", "corroborated": "Több forrásból megerősített", "single_source": "Egyetlen forrás" },
       "channelValues": { "admin": "Adminisztrátor", "member_suggestion": "Tag javaslata", "ai_research": "MI-kutatás" },
@@ -9387,6 +9422,8 @@
         "payload": "Pontos mentett kérés megtekintése", "open": "Függő művelet megnyitása", "retry": "Ugyanazon művelet újrapróbálása"
       },
       "feedback": {
+        "startInvalid": "A Core elutasította a kezdést: csak fesztivál, vásár vagy kiállítás kezdődhetett el már, és csak akkor, ha a megadott vége még legalább 24 óra múlva van. Minden más eseménynek jövőbeli kezdés kell; a piszkozatod megmaradt.",
+        "durationInvalid": "A Core elutasította az időtartamot: hosszabb, mint amit a kategória enged (fesztivál vagy vásár 62 nap, kiállítás 184 nap, minden más 24 óra). Rövidítsd, vagy válaszd a megfelelő kategóriát; a piszkozatod megmaradt.",
         "correctionClosed": "Ez a javítás itt már nem hagyható jóvá (döntöttek róla, vagy másik eseményhez tartozik). Frissíts a megtekintéséhez.",
         "correctionNoChange": "Nincs változás: az esemény már azt mutatja, amit a tag javasolt. Semmi nem mentődött, a javítás függőben maradt; utasítsd el „Az esemény már ezt mutatja” okkal.",
         "changedElsewhere": "Az esemény szerkesztés közben megváltozott (átnézési jelölés, AI-újrakeresés vagy javításról hozott döntés miatt). A piszkozatod megmaradt, de a régi változatra nem menthető. Frissíts a mostani adatokért, majd nézd át újra a módosításaidat.",
@@ -9407,6 +9444,8 @@
         "refused": "A Core elutasította a műveletet. Javított kérés előtt ellenőrizd az adatokat, időhatárokat, forrás- és jegylinkeket, auditindokot és az esemény aktuális állapotát."
       },
       "form": {
+        "allDayHint": "Egész napos: a Core az első nap helyi éjfélétől az utolsó nap utáni helyi éjfélig tárolja az eseményt. Az aktuális kiadásnál régebbi alkalmazást használó tagok nem látják az egész napos eseményeket.",
+        "spanHint": "Fesztivál és vásár legfeljebb 62 napig, kiállítás legfeljebb 184 napig tarthat, egy eseményként közzétéve; minden más kategória legfeljebb 24 óráig. A már elkezdődött fesztivál, vásár vagy kiállítás a valódi kezdésével menthető, ha a megadott vége még legalább 24 óra múlva van.",
         "freeUnknownField": "Ingyenes vagy fizetős",
         "unknownHint": "Kutatásból érkező esemény szervező és ismert ingyenes/fizetős állapot nélkül is maradhat, ha az oldala nem adja meg őket. Ha megtudod, töltsd ki; kézzel felvitt eseménynél mindkettő kötelező.",
         "freeUnknown": "Ingyenes vagy fizetős: nem ismert",
@@ -9460,6 +9499,7 @@
         "confirmContentSafe": "Ellenőriztem a tartalom biztonságát és megfelelőségét.",
         "reason": "Audit indoklás (legalább 3 karakter)",
         "errors": {
+          "duration": "Ez hosszabb, mint amit a kategória enged: fesztiválnál és vásárnál 62 nap, kiállításnál 184 nap, minden másnál 24 óra.",
           "startTime": "Ellenőrizd a kezdés dátumát, UTC-eltolását és a helyszín időzónáját. Nem létező helyi időpont vagy eltérő eltolás nem fogadható el.",
           "endTime": "Ellenőrizd a befejezés dátumát, UTC-eltolását és a helyszín időzónáját.",
           "confirmations": "Az adatok utolsó módosítása után végezd el mind a négy megerősítést.",

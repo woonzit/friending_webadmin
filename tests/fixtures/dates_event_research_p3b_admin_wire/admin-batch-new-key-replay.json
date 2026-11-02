@@ -4,19 +4,19 @@
     "replayed": true,
     "results": [
         {
-            "intake_id": "xin_00000000000000000000000000000003",
+            "intake_id": "xin_00000000000000000000000000000004",
             "outcome": "published",
             "refusal": null,
             "external_event_id": "xev_00000000000000000000000000000001"
         },
         {
-            "intake_id": "xin_00000000000000000000000000000004",
+            "intake_id": "xin_00000000000000000000000000000005",
             "outcome": "refused",
             "refusal": "dates-research-organizer-unverified",
             "external_event_id": null
         },
         {
-            "intake_id": "xin_00000000000000000000000000000005",
+            "intake_id": "xin_00000000000000000000000000000006",
             "outcome": "refused",
             "refusal": "dates-research-price-unverified",
             "external_event_id": null

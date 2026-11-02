@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
     "contract": "dates-event-research-admin-v1",
-    "source_commit": "0da6f55d542c094120d40018d096a6e63f817bd6",
-    "source_checksum": "5456561289b2bc1e107923c3c1ea3033d489379d584af2f27cddee0df7b12771",
-    "fixture_count": 200,
-    "fixture_set_sha256": "c0faf4de01f4944f4fe6991091ff8bbd0701ba0c44c9bc315b830b974aeedbe5",
+    "source_commit": "14f3a32e669eadbad20c5883045d01723e4a0e99",
+    "source_checksum": "997cbdf26ed5e2a05292ba040d36ef42d6c6425a754f19caf6e8703e924b8998",
+    "fixture_count": 204,
+    "fixture_set_sha256": "4e67d795c2e9aef4f59b248978500fc5b8ddfc56b42d60cd0b26a69ed365fbd0",
     "vocabularies": {
         "mode": [
             "auto",
@@ -163,6 +163,10 @@
             "batch-same-key-replay",
             "discovery_pause",
             "discovery_tool_counts",
+            "drop_detail_area-run-dry-completed",
+            "drop_detail_area-run-real-completed",
+            "drop_detail_run-candidate-fetch-robots-validation",
+            "drop_detail_run-candidate-outside-area",
             "dry_run",
             "filtered_queue_empty",
             "filtered_queue_populated",
@@ -206,7 +210,7 @@
     },
     "provenance": {
         "generator": "tests/dates_event_research_admin_fixture_dump.php",
-        "generator_sha256": "cab57ed86b5ae925f45fa4fb43aa2a0a2c06093c4652365f0213a952a707c124",
+        "generator_sha256": "491a61df83577f9d9d9e0b5bb3b06a363489fc1e4903f80c7cfa19db85413fc5",
         "transport": "Real loopback HTTP POSTs through unchanged public/index.php, PHP body parsing, Router, middleware, services and Webadmin serializer. Form scalars/objects follow released lib/core.ts; one typed JSON-body replay additionally proves integer selector 1.",
         "provider_boundary": "No live AI provider call or public-page fetch. Actual source workers, SafeExternalFetch, evidence/Places validation and publication replay recorded genuine OpenAI/Gemini answers on SELF-MADE listing/event/robots pages (dates_event_research_ai and event_research_source_harness.php). Recorded request fingerprints are checked by the replay transport. The new city geocoder alone is synthetic self-made data (event_research_harness.php), never labelled genuine provider evidence.",
         "declared_adjustments": {
@@ -248,6 +252,7 @@
             "src/Http/Controllers/DatesChatController.php",
             "src/Http/Controllers/DatesController.php",
             "src/Http/Controllers/DatesEventSuggestionController.php",
+            "src/Http/Controllers/DatesExternalCorrectionController.php",
             "src/Http/Controllers/DatesExternalMembershipController.php",
             "src/Http/Controllers/DatesHostTransferController.php",
             "src/Http/Controllers/DatesLiveController.php",
@@ -255,10 +260,12 @@
             "src/Http/Controllers/DatesNotificationController.php",
             "src/Http/Controllers/DatesReviewController.php",
             "src/Http/Controllers/DatesSafetyController.php",
+            "src/Http/Controllers/DatesWallController.php",
             "src/Http/Controllers/EmailVerificationController.php",
             "src/Http/Controllers/FeedController.php",
             "src/Http/Controllers/FootprintController.php",
             "src/Http/Controllers/ForcedVerificationAdminController.php",
+            "src/Http/Controllers/FriendingStartController.php",
             "src/Http/Controllers/GiveawayController.php",
             "src/Http/Controllers/GoogleRtdnController.php",
             "src/Http/Controllers/HealthController.php",
@@ -269,10 +276,12 @@
             "src/Http/Controllers/IosadminController.php",
             "src/Http/Controllers/JoinController.php",
             "src/Http/Controllers/LocationController.php",
+            "src/Http/Controllers/MeetController.php",
             "src/Http/Controllers/MembershipController.php",
             "src/Http/Controllers/MembershipStoreController.php",
             "src/Http/Controllers/ModerationController.php",
             "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PasskeyController.php",
             "src/Http/Controllers/PeopleController.php",
             "src/Http/Controllers/PersonaController.php",
             "src/Http/Controllers/PersonaScreensAdminController.php",
@@ -296,6 +305,7 @@
             "src/Http/Controllers/RetiredFeatureController.php",
             "src/Http/Controllers/SessionActivityController.php",
             "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SharingController.php",
             "src/Http/Controllers/SportInterestController.php",
             "src/Http/Controllers/SubscriptionController.php",
             "src/Http/Controllers/UserController.php",
@@ -310,10 +320,12 @@
             "src/Http/Controllers/WebadminDatesIntakeController.php",
             "src/Http/Controllers/WebadminDatesResearchController.php",
             "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Http/Controllers/WebadminFriendingStartPolicyController.php",
             "src/Http/Controllers/WebadminIntoTagModerationController.php",
             "src/Http/Controllers/WebadminInviteConfigurationController.php",
             "src/Http/Controllers/WebadminLayer2Controller.php",
             "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMailDeliveryController.php",
             "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
             "src/Http/Controllers/WebadminMembershipController.php",
             "src/Http/Controllers/WebadminModeCardsController.php",
@@ -396,6 +408,7 @@
             "src/Support/DatesEventSuggestionPolicy.php",
             "src/Support/DatesEventText.php",
             "src/Support/DatesEventVenuePolicy.php",
+            "src/Support/DatesExternalAdminContract.php",
             "src/Support/DatesExternalAvailabilityPolicy.php",
             "src/Support/DatesExternalEventDedupe.php",
             "src/Support/DatesExternalEventInput.php",
@@ -426,6 +439,7 @@
             "src/Support/EventAi/EventImageNormalizer.php",
             "src/Support/EventAi/EventListingSchema.php",
             "src/Support/EventAi/EventPageText.php",
+            "src/Support/EventAi/EventRecheckProvider.php",
             "src/Support/EventAi/EventResearchPrompt.php",
             "src/Support/EventAi/EventResearchProvider.php",
             "src/Support/EventAi/EventSheetSchema.php",
@@ -442,6 +456,7 @@
             "src/Support/SafeExternalFetch.php",
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
+            "src/Support/SignupOutcomeDiagnostics.php",
             "src/Support/StrictJson.php",
             "src/Support/VerificationPolicy.php",
             "src/Support/Webadmin.php",
@@ -492,11 +507,13 @@
             "tests/fixtures/dates_event_research_area_ai/cases.php",
             "tests/fixtures/dates_event_research_area_ai/london_city.openai.json",
             "tests/fixtures/dates_event_research_area_ai/pages/native_candidate.html",
+            "tests/fixtures/dates_event_research_area_ai/prompt_v1.txt",
             "tests/support/dates_event_research_admin_wire_contract.php",
             "tests/support/event_area_research_corpus.php",
             "tests/support/event_area_research_runtime_harness.php",
             "tests/support/event_intake_http.php",
             "tests/support/event_research_ai_corpus.php",
+            "tests/support/event_research_fixture_clock.php",
             "tests/support/event_research_harness.php",
             "tests/support/event_research_runtime_harness.php",
             "tests/support/event_research_source_harness.php"
@@ -572,6 +589,13 @@
             "http_status": 200,
             "status_code": 403,
             "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
+        },
+        {
+            "file": "admin-area-run-dry-completed-contract2.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "bfcec4c59822aa9028d42a7c8d3cf86faf4dbd7fb9a99f496c60b3d95982903b"
         },
         {
             "file": "admin-area-run-dry-completed-new-key-replay.json",
@@ -679,6 +703,13 @@
             "sha256": "2eaf28378997fb5be812f99841b257218c9f79a2faab0d91bc6fa3d4df1fae4d"
         },
         {
+            "file": "admin-area-run-real-completed-contract2.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "59337bc03e4dccaccd7575acec61972d5c0e0acf7475cac013f9ea3cb5de67d0"
+        },
+        {
             "file": "admin-area-run-real-completed-new-key-replay.json",
             "consumer": "webadmin",
             "http_status": 200,
@@ -690,7 +721,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "9166ebabb90d15fcfdc2739049aa760c487959cf6d2f94329b0938957e6ef15b"
+            "sha256": "d8518db5de3cab0436287d64510299e4751c99c36fabe57259a33768c5d172dd"
         },
         {
             "file": "admin-area-run-real-history.json",
@@ -767,7 +798,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7351c4457fa6ecc582e2442f8c0e82bc163d330e5e631e4f00c275f39cfd74b6"
+            "sha256": "0556c3784e3514bc3b4f02f4f388968ee122133c5ff1b0206f4977ce94363151"
         },
         {
             "file": "admin-area-run-scheduled-master-off-open-replay.json",
@@ -851,35 +882,35 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "484cc9028a17fbb40a82790e2035897d15b7f9ef233f51f6c7db8d3a50335633"
+            "sha256": "d71d934b4550435c004ba7285eda50205492b6e4d4d35fc4bf6edbec10fa140d"
         },
         {
             "file": "admin-batch-opposite-returns-published.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "8d58018294da4f4b8f4ddb05dbc5bb30b21333debbe03feb7a1b12a790d76d65"
+            "sha256": "333c9ab0905f5799c5f35f4a2e6b776fe6a77990c61605709bfb2848721bb446"
         },
         {
             "file": "admin-batch-opposite-returns-rejected.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "8c1ee1a38b4861b09a9c1a3b5bb690d7658a0f1368ae6c31f2c455a35d9b4404"
+            "sha256": "3d2324f076a9c3d83fd9af212e3a8f03568f833a9ef3f92e0764a29984962a43"
         },
         {
             "file": "admin-batch-publish-mixed.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "4c2050ae09f24bd13fec6ff9c19e09a79fb17ebedea60d9a132c60e0a4270581"
+            "sha256": "46e804ce71f4f65ce35174502dd072df1c240010f141ebeac43d77235fd85460"
         },
         {
             "file": "admin-batch-reject-decided.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "8c1ee1a38b4861b09a9c1a3b5bb690d7658a0f1368ae6c31f2c455a35d9b4404"
+            "sha256": "3d2324f076a9c3d83fd9af212e3a8f03568f833a9ef3f92e0764a29984962a43"
         },
         {
             "file": "admin-batch-revisions-denied.json",
@@ -893,35 +924,35 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "8601af67a24d4d6a24b90b5b1fce322d434ef95a3e5d49dbaf67a6a95836ae00"
+            "sha256": "8f89a82f9df0f02d1a7a110fbcdd98e00fcbb47a19be90a3ff5a9b9d910a9ad5"
         },
         {
             "file": "admin-batch-row-lease-refused.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "149399964d1d284ce4429eb4ddea4922339d65d75fbb6dff9edfa30589952e1e"
+            "sha256": "601cadf2a06ee7b7f3a31a193170724216e634a50c96aa285b2ba426c32c0e4a"
         },
         {
             "file": "admin-batch-row-not-found-refused.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "943434fc3eefa54ca86585b19ee02504671b446e8e5feb0d986e3d6522209c42"
+            "sha256": "561c4f1b0389c7e08747d997789b4349da3059debebfd51208c12c6bdc527228"
         },
         {
             "file": "admin-batch-row-revision-refused.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b60280c2f2905de603138479cf3b80b67da543f2ff70cebc09d88e78e15fe73a"
+            "sha256": "c0194159b3fe837c05995127ab186c73a58d5ba8d18ce1783737890f8ede211d"
         },
         {
             "file": "admin-batch-same-key-replay.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "484cc9028a17fbb40a82790e2035897d15b7f9ef233f51f6c7db8d3a50335633"
+            "sha256": "d71d934b4550435c004ba7285eda50205492b6e4d4d35fc4bf6edbec10fa140d"
         },
         {
             "file": "admin-batch-selector-denied.json",
@@ -1194,7 +1225,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b9192609fd1e7e332509036bbbce8513f91b495ec994f34c28388f11810112e7"
+            "sha256": "7db32b8e736a54cffc36d55e0d21b26b35fa5e13e3b191bdc76387ae477f7812"
         },
         {
             "file": "admin-intake-list-run-empty.json",
@@ -1215,7 +1246,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d05a4da8e19af045ee6a288fbbb8e6c00e23062a00d507170df3a954e36da795"
+            "sha256": "a57a879babf34c5c1bc6822eb45ebc454be6662da2cbbd389dfddbe6762d28f4"
         },
         {
             "file": "admin-key-denied.json",
@@ -1404,7 +1435,7 @@
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7ab11e671b026fc66ded7fa0180b9742a019c842850f64411ed1eb35404e6071"
+            "sha256": "02ec6fe9c816620bc95e459526ab3f7896242550221124765a0e49c95ffe4754"
         },
         {
             "file": "admin-run-candidate-blocked-domain.json",
@@ -1414,11 +1445,18 @@
             "sha256": "88fcf71dcd0a73231cf52fca521e9a4aef0944acae3bd63c7aabae0c357fb73d"
         },
         {
+            "file": "admin-run-candidate-fetch-robots-validation-contract2.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "10e4e05b27b7ac29d3ff8a7af96acd30dc823ed5b3bf344a2295a036b4f0256b"
+        },
+        {
             "file": "admin-run-candidate-fetch-robots-validation.json",
             "consumer": "webadmin",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "7ce196cad4220e9aede7b399a0a4c855053a07cd16a2b2ccab7ae1fbbeb4abbe"
+            "sha256": "4045448fcaf74e5d2e021efb02749084dc07f7c55e5416c3b21d0264c68501e8"
         },
         {
             "file": "admin-run-candidate-known-url.json",
@@ -1426,6 +1464,13 @@
             "http_status": 200,
             "status_code": 200,
             "sha256": "aa8df01537cce5f7363e1b3f37a49682e7a4426c91e88e4065b0eba79c651f3f"
+        },
+        {
+            "file": "admin-run-candidate-outside-area-contract2.json",
+            "consumer": "webadmin",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "206c3a250b0f44880526295d82cc07992b237b858343310c706eeabb84b8777f"
         },
         {
             "file": "admin-run-candidate-outside-area.json",

@@ -1,0 +1,200 @@
+{
+    "success": true,
+    "status_code": 200,
+    "event": {
+        "external_event_id": "xev_00000000000000000000000000000009",
+        "activity_id": "act_00000000000000000000000000000009",
+        "revision": 1,
+        "activity_revision": 1,
+        "status": "published",
+        "lifecycle": "active",
+        "moderation_state": "ok",
+        "soft_deleted": false,
+        "title": "Régi Óbuda fényképeken",
+        "category": "exhibition",
+        "sensitive": false,
+        "start_at": 1788249600,
+        "end_at": 1793466000,
+        "start_local": "2026-09-01T10:00:00+02:00",
+        "end_local": "2026-10-31T18:00:00+01:00",
+        "timezone": "Europe/Budapest",
+        "city": "Budapest",
+        "country_code": "HU",
+        "venue_name": "Óbudai Társaskör",
+        "organizer_name": "Fiktív Őszi Kamara Egyesület",
+        "verification_tier": "single_source",
+        "checked_at": 1790000000,
+        "next_reverify_at": 1790000000,
+        "credit_channel": "ai_research",
+        "going_count": 0,
+        "interested_count": 0,
+        "created_at": 1790000000,
+        "updated_at": 1790000000,
+        "can_edit": true,
+        "facts": {
+            "title": "Régi Óbuda fényképeken",
+            "summary": {
+                "hu": "Nyilvános, személyesen látogatható kamarazenei est az Óbudai Társaskörben, vonósnégyes közreműködésével.",
+                "en": "A public, in-person chamber music evening at Óbudai Társaskör featuring a string quartet."
+            },
+            "category": "exhibition",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1788249600,
+            "end_at": 1793466000,
+            "start_local": "2026-09-01T10:00:00+02:00",
+            "end_local": "2026-10-31T18:00:00+01:00",
+            "end_estimated": false,
+            "all_day": false,
+            "timezone": "Europe/Budapest",
+            "is_free": true,
+            "price_text": "A belépés ingyenes.",
+            "age_restriction": null
+        },
+        "venue": {
+            "place_id": "ChIJ05GekV7ZQUcRCBf57RooyEg",
+            "name": "Óbudai Társaskör",
+            "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+            "point": {
+                "type": "Point",
+                "coordinates": [
+                    19.04,
+                    47.54
+                ]
+            },
+            "city": "Budapest",
+            "city_key": "budapest",
+            "country_code": "HU",
+            "resolved_by": "places",
+            "resolved_at": 1790000000
+        },
+        "organizer": {
+            "name": "Fiktív Őszi Kamara Egyesület",
+            "website": "https://research-organiser.example/events/recheck"
+        },
+        "links": {
+            "official_url": "https://research-organiser.example/events/recheck",
+            "ticket_url": null
+        },
+        "attendee_list": "visible",
+        "verification": {
+            "tier": "single_source",
+            "admin_confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            },
+            "checked_at": 1790000000,
+            "next_reverify_at": 1790000000
+        },
+        "image": {
+            "kind": "category_art",
+            "url": null,
+            "credit": null,
+            "license_note": null
+        },
+        "sources": [
+            {
+                "kind": "admin",
+                "url": "https://research-organiser.example/events/photo-exhibition",
+                "hostname": "research-organiser.example",
+                "source_id": "src_00000000000000000000000000000006",
+                "confirmed_at": 1790000000
+            }
+        ],
+        "ai_assisted": true,
+        "credit": {
+            "channel": "ai_research",
+            "submitted_by_uid": null,
+            "anonymous": true,
+            "first_submitter_uid": null
+        },
+        "editor_input": {
+            "title": "Régi Óbuda fényképeken",
+            "summary": {
+                "hu": "Nyilvános, személyesen látogatható kamarazenei est az Óbudai Társaskörben, vonósnégyes közreműködésével.",
+                "en": "A public, in-person chamber music evening at Óbudai Társaskör featuring a string quartet."
+            },
+            "category": "exhibition",
+            "sensitive": {
+                "flag": false,
+                "reason": null
+            },
+            "start_at": 1788249600,
+            "end_at": 1793466000,
+            "timezone": "Europe/Budapest",
+            "all_day": false,
+            "is_free": true,
+            "price_text": "A belépés ingyenes.",
+            "age_restriction": null,
+            "venue": {
+                "name": "Óbudai Társaskör",
+                "formatted_address": "1036 Budapest, Kiskorona utca 7. [stand-in]",
+                "longitude": 19.04,
+                "latitude": 47.54,
+                "city": "Budapest",
+                "country_code": "HU"
+            },
+            "organizer": {
+                "name": "Fiktív Őszi Kamara Egyesület",
+                "website": "https://research-organiser.example/events/recheck"
+            },
+            "links": {
+                "official_url": "https://research-organiser.example/events/recheck",
+                "ticket_url": null
+            },
+            "source_url": "https://research-organiser.example/events/photo-exhibition",
+            "attendee_list": "visible",
+            "confirmations": {
+                "source": false,
+                "public_venue": false,
+                "timezone": false,
+                "content_safe": false
+            }
+        },
+        "intake": {
+            "intake_id": "xin_00000000000000000000000000000005",
+            "channel": "ai_research",
+            "event_index": 0
+        },
+        "admin_review": {
+            "reviewed": false,
+            "by": null,
+            "at": null,
+            "at_revision": null
+        },
+        "possible_duplicate_of": null,
+        "rechecks": [],
+        "corrections": []
+    },
+    "capabilities": [
+        "dates_activity_read",
+        "dates_case_read",
+        "dates_reason_read",
+        "dates_sla_read",
+        "dates_audit_read",
+        "dates_configuration_read",
+        "dates_external_event_read",
+        "dates_case_claim",
+        "dates_case_resolve",
+        "dates_evidence_read",
+        "dates_case_note",
+        "dates_external_event_review",
+        "dates_appeal_resolve",
+        "dates_restrict_user",
+        "dates_legal_hold",
+        "dates_trail_evidence_capture",
+        "dates_activity_edit",
+        "dates_activity_command",
+        "dates_reason_manage",
+        "dates_configuration_manage",
+        "dates_external_event_manage"
+    ],
+    "server_now": 1790000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

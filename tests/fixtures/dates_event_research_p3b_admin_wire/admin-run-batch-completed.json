@@ -28,14 +28,6 @@
                 "url_host": "research-tickets.example",
                 "outcome": "imported",
                 "reason": null,
-                "intake_id": "xin_00000000000000000000000000000003"
-            },
-            {
-                "title": "Őszi Kamarakoncert",
-                "date_text": "2026-10-10T19:00:00+02:00",
-                "url_host": "research-tickets.example",
-                "outcome": "imported",
-                "reason": null,
                 "intake_id": "xin_00000000000000000000000000000004"
             },
             {
@@ -45,6 +37,14 @@
                 "outcome": "imported",
                 "reason": null,
                 "intake_id": "xin_00000000000000000000000000000005"
+            },
+            {
+                "title": "Őszi Kamarakoncert",
+                "date_text": "2026-10-10T19:00:00+02:00",
+                "url_host": "research-tickets.example",
+                "outcome": "imported",
+                "reason": null,
+                "intake_id": "xin_00000000000000000000000000000006"
             }
         ]
     },

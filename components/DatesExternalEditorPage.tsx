@@ -11,6 +11,7 @@ import DatesExternalEventForm from "@/components/DatesExternalEventForm";
 import DatesExternalProvenance from "@/components/DatesExternalProvenance";
 import DatesExternalRecheckPanel from "@/components/DatesExternalRecheckPanel";
 import DatesExternalReviewMark from "@/components/DatesExternalReviewMark";
+import DatesExternalWhen from "@/components/DatesExternalWhen";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
 import { adminCall } from "@/lib/adminClient";
@@ -187,7 +188,9 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
         const correction = result.error === "dates-correction-no-change" ? "correctionNoChange"
           : ["dates-correction-state-invalid", "dates-correction-unavailable", "dates-correction-action-invalid"].includes(result.error) ? "correctionClosed" : null;
         setFeedback({ tone: "error", key: result.retained ? "refusedRetained" : conflict ? "conflict" : correction !== null ? correction
-          : result.error === "dates-external-duplicate" ? "duplicate" : result.error === "dates-external-publishing-disabled" ? "publishingDisabled" : "refused" });
+          : result.error === "dates-external-duplicate" ? "duplicate" : result.error === "dates-external-publishing-disabled" ? "publishingDisabled"
+            // D-149 yield: the category's span and the ongoing-start rule, in words.
+            : result.error === "dates-external-duration-invalid" ? "durationInvalid" : result.error === "dates-external-start-invalid" ? "startInvalid" : "refused" });
       } else setFeedback({ tone: "error", key: result.kind });
     } finally {
       busyRef.current = false;
@@ -269,7 +272,9 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
         <dt>{t("form.summaryEn")}</dt><dd className="preserve-whitespace">{event.facts.summary.en}</dd>
         <dt>{t("form.summaryHu")}</dt><dd className="preserve-whitespace">{event.facts.summary.hu}</dd>
         <dt>{t("form.venueTitle")}</dt><dd>{event.venue.name} · {event.venue.formatted_address} · {event.city} · {event.country_code}<br />{event.venue.point.coordinates[1]}, {event.venue.point.coordinates[0]}</dd>
-        <dt>{t("form.timeTitle")}</dt><dd><time dateTime={event.start_local}>{event.start_local}</time> — <time dateTime={event.end_local}>{event.end_local}</time> · {event.timezone}{event.facts.end_estimated && <p>{t("editor.estimated")}</p>}</dd>
+        <dt>{t("form.timeTitle")}</dt><dd><DatesExternalWhen row={{ ...event, all_day: event.facts.all_day }} now={data!.server_now} detail />
+          <div><small><time dateTime={event.start_local}>{event.start_local}</time> — <time dateTime={event.end_local}>{event.end_local}</time> · {event.timezone}</small></div>
+          {event.facts.end_estimated && <p>{t("editor.estimated")}</p>}</dd>
         <dt>{t("form.organizerName")}</dt><dd>{event.organizer.name ?? t("unknownFact")}{event.organizer.website && <> · <a href={event.organizer.website} target="_blank" rel="noopener noreferrer">{t("editor.organizerSite")}</a></>}</dd>
         <dt>{t("form.priceText")}</dt><dd>{event.facts.is_free === null ? t("unknownFact") : event.facts.is_free ? t("form.isFree") : event.facts.price_text ?? t("editor.priceUnknown")}{event.facts.age_restriction !== null && <> · {t("editor.minimumAge", { age: event.facts.age_restriction })}</>}</dd>
         <dt>{t("form.attendeeList")}</dt><dd>{t(event.attendee_list === "visible" ? "form.attendeeVisible" : "form.attendeeCountOnly")}{event.sensitive && <> · {event.facts.sensitive.reason}</>}</dd>

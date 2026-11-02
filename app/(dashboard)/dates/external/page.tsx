@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesExternalReviewMark from "@/components/DatesExternalReviewMark";
+import DatesExternalWhen from "@/components/DatesExternalWhen";
 import DatesIntakeSourceEntry from "@/components/DatesIntakeSourceEntry";
 import PageHeader from "@/components/PageHeader";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
@@ -121,7 +122,7 @@ export default function DatesExternalEventsPage() {
           {reviewServed && <td>{row.admin_review ? <DatesExternalReviewMark target={row} review={row.admin_review} canManage={canManage} compact
             onSettled={async (outcome) => { setReviewOutcome(outcome.kind === "success" ? null : outcome); await load(); }} /> : "—"}</td>}
           <td>{row.venue_name}<div><small>{row.city} · {row.country_code}</small></div></td>
-          <td><time dateTime={row.start_local}>{new Intl.DateTimeFormat(locale, { timeZone: row.timezone, dateStyle: "medium", timeStyle: "short" }).format(row.start_at * 1000)}</time><div><small>{row.timezone}</small></div></td>
+          <td><DatesExternalWhen row={row} now={data.server_now} /><div><small>{row.timezone}</small></div></td>
           <td>{t("counts", { going: formatNumber(row.going_count, locale), interested: formatNumber(row.interested_count, locale) })}</td>
           <td>{formatDate(row.next_reverify_at, locale, true)}
             {row.last_recheck && <div><small>{t("review.lastRecheck", { status: t(`recheck.statuses.${row.last_recheck.status}`) })}</small></div>}</td>

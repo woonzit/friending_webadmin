@@ -29,7 +29,8 @@
                 "outcome": "imported",
                 "reason": null,
                 "intake_id": "xin_00000000000000000000000000000003",
-                "system_closure": null
+                "system_closure": null,
+                "drop_detail": null
             },
             {
                 "title": "Elmaradó Kamarakoncert",
@@ -41,7 +42,8 @@
                 "system_closure": {
                     "decision": "research_not_publishable",
                     "blocker": "canceled-or-postponed"
-                }
+                },
+                "drop_detail": null
             },
             {
                 "title": "Nyári Kamarakoncert",
@@ -53,7 +55,8 @@
                 "system_closure": {
                     "decision": "duplicate",
                     "blocker": "duplicate"
-                }
+                },
+                "drop_detail": null
             }
         ]
     },
