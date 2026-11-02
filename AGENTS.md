@@ -58,6 +58,13 @@ Webadmin is the authenticated operations console for:
 - administrator allow-list and immutable audit history;
 - App Review sandbox readiness, guarded reset, and reset audit state.
 
+Email delivery (`/mail-delivery`, ported from Freelove 2026-11-02) is read-only: Core's
+`mail_delivery` reports when each transactional email reached Mailgun and when Mailgun delivered
+it (Core polls Mailgun's events on its own one-minute timer), with the receiving server's answer
+when it held a message back, and tells the last complete poll (`synced_at`) from a later failed one
+(`sync_failed_at`). The bridge forwards only the parsed answer, and a viewer never receives
+unmasked recipient addresses.
+
 Do not reintroduce AYI/Are You In, Deplug, curated activities/events, event creation/joining,
 waiting room, mandatory walkthrough, or other retired Friending surfaces. Persona verification is
 in scope only through its reviewed Core contract and dedicated operations surfaces.

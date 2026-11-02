@@ -2568,6 +2568,45 @@
           }
         }
       },
+      "mailDelivery": {
+        "title": "Checking email delivery",
+        "summary": "Core hands every transactional email, sign-in and signup codes first, to Mailgun. This page shows, per email and per receiving domain, how long it then took until the receiving mail server accepted it, and what that server answered when it held a message back.",
+        "steps": {
+          "one": "Pick a period, and for a member who is waiting for a code choose the sign-in and signup code type.",
+          "two": "Read the domain table: a slow or refusing domain points at the receiving mail server, not at Friending or Mailgun.",
+          "three": "Search the member's exact address to see each of their emails with its delivery time and state."
+        },
+        "sections": {
+          "filters": {
+            "title": "Filters",
+            "purpose": "Period, type and state narrow the list; the recipient search shows only the emails sent to one exact address, after you press Search.",
+            "guidance": "Period and type also change the cards and the domain table; the state filter changes only the list. A partial or misspelled address is not searched.",
+            "actions": {
+              "1": "Choose Slow to list only deliveries that took longer than the limit shown on the card.",
+              "2": "Choose Held back, retrying to see the emails a receiving server is refusing for now.",
+              "3": "Press Clear recipient to return to the emails of every recipient."
+            }
+          },
+          "summary": {
+            "title": "Summary and domains",
+            "purpose": "The cards and the domain table describe every email of the period and type, whatever the state filter: how many, how many were delivered, the typical, 90% and slowest delivery time, and the problems.",
+            "guidance": "Delivery time runs from Mailgun's acceptance to the receiving server's acceptance. A member's mail app may show the email later, and the spam folder is not visible here.",
+            "actions": {
+              "1": "Compare periods or types to see whether a slow delivery is new or usual.",
+              "2": "Look for a domain with many slow deliveries before you suspect the member's address."
+            }
+          },
+          "list": {
+            "title": "Email list",
+            "purpose": "Each row is one email: when it was created, its type, the recipient, the delivery time, its state and the receiving server's last temporary answer, such as a 421 timeout before Mailgun's retry.",
+            "guidance": "Mailgun's events are read every minute, so a just-sent email first waits for delivery. When the last read failed, a warning says so and the times may be behind. A read-only viewer sees masked addresses.",
+            "actions": {
+              "1": "Press Refresh to read the latest stored Mailgun events again.",
+              "2": "Use Previous and Next to page through more than fifty emails."
+            }
+          }
+        }
+      },
       "support": {
         "title": "Support inbox help",
         "summary": "The Support inbox contains one direct operations conversation per member. Replies can reach the member through the in-app bell, realtime delivery and background push, while recent client context helps diagnose app-specific problems.",
@@ -3315,6 +3354,7 @@
     "admins": "Admin users",
     "audit": "Audit log",
     "support": "Support inbox",
+    "mailDelivery": "Email delivery",
     "helpCms": "Help centre CMS",
     "footprints": "Footprints",
     "pinger": "Pinger",
@@ -12409,6 +12449,100 @@
       "writeRequired": "Your administrator role cannot reset the sandbox.",
       "unavailable": "The sandbox service is unavailable right now.",
       "generic": "The reset was refused."
+    }
+  },
+  "mailDelivery": {
+    "eyebrow": "Member support",
+    "title": "Email delivery",
+    "subtitle": "When each email reached Mailgun and when the receiving mail server accepted it.",
+    "summaryLabel": "Delivery summary",
+    "maskedNote": "Your role sees recipient addresses masked. Searching an exact address still finds that member's emails.",
+    "filters": {
+      "period": "Period",
+      "days": {
+        "1": "Last 24 hours",
+        "7": "Last 7 days",
+        "30": "Last 30 days"
+      },
+      "kind": "Type",
+      "state": "State",
+      "all": "All",
+      "recipient": "Recipient",
+      "recipientPlaceholder": "exact email address",
+      "recipientInvalid": "Enter one complete email address, for example name@example.com.",
+      "clearRecipient": "Clear recipient"
+    },
+    "kind": {
+      "email_auth_verification": "Sign-in and signup code",
+      "admin_login_verification": "Admin login code",
+      "moderation_report": "Moderation report",
+      "legacy_engagement": "Reactivation email",
+      "other": "Other"
+    },
+    "stateFilter": {
+      "delivered": "Delivered",
+      "slow": "Slow",
+      "pending": "Waiting for delivery",
+      "retrying": "Held back, retrying",
+      "failed": "Not delivered",
+      "not_sent": "Not sent"
+    },
+    "state": {
+      "delivered": "Delivered",
+      "pending": "Waiting for delivery",
+      "retrying": "Held back, retrying",
+      "failed": "Not delivered",
+      "not_sent": "Not sent"
+    },
+    "cards": {
+      "total": "Emails",
+      "delivered": "Delivered",
+      "median": "Typical delivery",
+      "p90": "90% within",
+      "slowest": "Slowest",
+      "slow": "Over {s} s",
+      "problems": "Held back or failed"
+    },
+    "byDomain": {
+      "title": "By receiving domain",
+      "subtitle": "The ten domains with the most slow deliveries, then the most emails.",
+      "domain": "Domain",
+      "total": "Emails",
+      "delivered": "Delivered",
+      "median": "Typical",
+      "slowest": "Slowest",
+      "slow": "Slow",
+      "unknown": "Unknown domain"
+    },
+    "list": {
+      "title": "Emails",
+      "empty": "No emails in this view.",
+      "created": "Created",
+      "kind": "Type",
+      "recipient": "Recipient",
+      "delivery": "Delivery time",
+      "state": "State",
+      "issue": "Receiving server's answer",
+      "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+      "queued": "{time} before Mailgun accepted it",
+      "refusals": "{count, plural, one {# temporary refusal} other {# temporary refusals}}",
+      "page": "Page {page}"
+    },
+    "sync": {
+      "synced": "Mailgun events read {time}.",
+      "never": "No Mailgun events read yet.",
+      "attempted": "Last attempt {time}.",
+      "failed": "Mailgun did not answer the event poll at {time}. Delivery times and states are as of the last complete read and may be behind."
+    },
+    "duration": {
+      "underSecond": "under 1 s",
+      "seconds": "{s} s",
+      "minutes": "{m} min {s} s",
+      "hours": "{h} h {m} min"
+    },
+    "failures": {
+      "invalid": "Core refused these filters. Check the recipient address and try again.",
+      "error": "Email delivery could not be loaded. Nothing is shown rather than an incomplete list."
     }
   },
   "registrationStats": {

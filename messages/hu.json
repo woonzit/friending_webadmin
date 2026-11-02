@@ -2568,6 +2568,45 @@
           }
         }
       },
+      "mailDelivery": {
+        "title": "Az e-mail-kézbesítés ellenőrzése",
+        "summary": "A Core minden tranzakciós levelet, elsősorban a belépési és regisztrációs kódokat, átad a Mailgunnak. Ez az oldal levelenként és fogadó domainenként mutatja, mennyi idő telt el, amíg a címzett levelezőszervere átvette a levelet, és mit válaszolt az a szerver, ha visszatartott egy levelet.",
+        "steps": {
+          "one": "Válassz időszakot, és ha egy tag kódra vár, válaszd a belépési és regisztrációs kód típust.",
+          "two": "Nézd meg a domaintáblát: a lassú vagy elutasító domain a fogadó levelezőszervert jelzi, nem a Friendinget vagy a Mailgunt.",
+          "three": "Keress rá a tag pontos e-mail-címére, és minden levelét látod a kézbesítési idővel és az állapottal."
+        },
+        "sections": {
+          "filters": {
+            "title": "Szűrők",
+            "purpose": "Az időszak, a típus és az állapot szűkíti a listát; a címzettkeresés a Keresés gomb megnyomása után csak egy pontos címre küldött leveleket mutatja.",
+            "guidance": "Az időszak és a típus a kártyákat és a domaintáblát is módosítja, az állapotszűrő csak a listát. Részleges vagy elgépelt címre nem keresünk.",
+            "actions": {
+              "1": "A Lassú szűrő csak a kártyán látható határnál lassabb kézbesítéseket mutatja.",
+              "2": "A Visszatartva, újrapróbálja szűrő azokat a leveleket mutatja, amelyeket egy fogadó szerver egyelőre elutasít.",
+              "3": "A Címzett törlése gombbal újra minden címzett levele látszik."
+            }
+          },
+          "summary": {
+            "title": "Összegzés és domainek",
+            "purpose": "A kártyák és a domaintábla az időszak és a típus minden levelét leírják, az állapotszűrőtől függetlenül: hány levél ment, hányat kézbesítettek, mennyi volt a szokásos, a 90%-os és a leglassabb kézbesítési idő, és hány akadt el.",
+            "guidance": "A kézbesítési idő a Mailgun átvételétől a fogadó szerver átvételéig tart. A tag levelezőappja később is mutathatja a levelet, a spammappát pedig innen nem látjuk.",
+            "actions": {
+              "1": "Időszakokat vagy típusokat összevetve látod, hogy egy lassú kézbesítés új vagy szokásos.",
+              "2": "Mielőtt a tag címére gyanakodnál, keress olyan domaint, ahol sok a lassú kézbesítés."
+            }
+          },
+          "list": {
+            "title": "Levéllista",
+            "purpose": "Minden sor egy levél: mikor jött létre, a típusa, a címzett, a kézbesítési idő, az állapot és a fogadó szerver utolsó átmeneti válasza, például egy 421-es időtúllépés a Mailgun újrapróbálkozása előtt.",
+            "guidance": "A Mailgun eseményeit percenként olvassuk be, így egy friss levél először kézbesítésre vár. Ha az utolsó beolvasás nem sikerült, figyelmeztetés jelzi, és az idők lemaradhatnak. A csak olvasó admin rejtett címeket lát.",
+            "actions": {
+              "1": "A Frissítés gomb újra beolvassa a legutóbb tárolt Mailgun-eseményeket.",
+              "2": "Az Előző és a Következő gombbal lapozhatsz, ha ötvennél több levél van."
+            }
+          }
+        }
+      },
       "support": {
         "title": "Support inbox súgó",
         "summary": "A Support inbox minden taghoz egy közvetlen üzemeltetési beszélgetést tart. A válasz az in-app bell, realtime és háttér-push csatornán is elérheti a tagot, a legutóbbi klienskontextus pedig app-specifikus hibák diagnosztizálását segíti.",
@@ -3315,6 +3354,7 @@
     "admins": "Admin userek",
     "audit": "Admin napló",
     "support": "Support üzenetek",
+    "mailDelivery": "E-mail-kézbesítés",
     "helpCms": "Súgó CMS",
     "footprints": "Footprints",
     "pinger": "Pinger",
@@ -12409,6 +12449,100 @@
       "writeRequired": "Az adminszereped nem resetelheti a sandboxot.",
       "unavailable": "A sandbox-szolgáltatás most nem elérhető.",
       "generic": "A reset visszautasítva."
+    }
+  },
+  "mailDelivery": {
+    "eyebrow": "Tagi támogatás",
+    "title": "E-mail-kézbesítés",
+    "subtitle": "Mikor ért el egy-egy levél a Mailgunhoz, és mikor vette át a címzett levelezőszervere.",
+    "summaryLabel": "Kézbesítési összegzés",
+    "maskedNote": "A szereped rejtett címzettcímeket lát. Pontos címre keresve így is megtalálod a tag leveleit.",
+    "filters": {
+      "period": "Időszak",
+      "days": {
+        "1": "Utolsó 24 óra",
+        "7": "Utolsó 7 nap",
+        "30": "Utolsó 30 nap"
+      },
+      "kind": "Típus",
+      "state": "Állapot",
+      "all": "Összes",
+      "recipient": "Címzett",
+      "recipientPlaceholder": "pontos e-mail-cím",
+      "recipientInvalid": "Egyetlen teljes e-mail-címet adj meg, például nev@example.com.",
+      "clearRecipient": "Címzett törlése"
+    },
+    "kind": {
+      "email_auth_verification": "Belépési és regisztrációs kód",
+      "admin_login_verification": "Admin belépési kód",
+      "moderation_report": "Moderációs jelentés",
+      "legacy_engagement": "Visszahívó levél",
+      "other": "Egyéb"
+    },
+    "stateFilter": {
+      "delivered": "Kézbesítve",
+      "slow": "Lassú",
+      "pending": "Kézbesítésre vár",
+      "retrying": "Visszatartva, újrapróbálja",
+      "failed": "Nem kézbesíthető",
+      "not_sent": "Nem ment el"
+    },
+    "state": {
+      "delivered": "Kézbesítve",
+      "pending": "Kézbesítésre vár",
+      "retrying": "Visszatartva, újrapróbálja",
+      "failed": "Nem kézbesíthető",
+      "not_sent": "Nem ment el"
+    },
+    "cards": {
+      "total": "Levelek",
+      "delivered": "Kézbesítve",
+      "median": "Szokásos kézbesítés",
+      "p90": "90%-uk ennyin belül",
+      "slowest": "Leglassabb",
+      "slow": "{s} mp felett",
+      "problems": "Visszatartva vagy sikertelen"
+    },
+    "byDomain": {
+      "title": "Fogadó domain szerint",
+      "subtitle": "Az a tíz domain, ahol a legtöbb lassú kézbesítés volt, azután a legtöbb levél.",
+      "domain": "Domain",
+      "total": "Levelek",
+      "delivered": "Kézbesítve",
+      "median": "Szokásos",
+      "slowest": "Leglassabb",
+      "slow": "Lassú",
+      "unknown": "Ismeretlen domain"
+    },
+    "list": {
+      "title": "Levelek",
+      "empty": "Ebben a nézetben nincs levél.",
+      "created": "Létrehozva",
+      "kind": "Típus",
+      "recipient": "Címzett",
+      "delivery": "Kézbesítési idő",
+      "state": "Állapot",
+      "issue": "A fogadó szerver válasza",
+      "attempts": "{count} próbálkozás",
+      "queued": "{time} telt el, mire a Mailgun átvette",
+      "refusals": "{count} átmeneti elutasítás",
+      "page": "{page}. oldal"
+    },
+    "sync": {
+      "synced": "Mailgun-események beolvasva: {time}.",
+      "never": "Még nincs beolvasott Mailgun-esemény.",
+      "attempted": "Utolsó próbálkozás: {time}.",
+      "failed": "A Mailgun nem válaszolt az eseménylekérdezésre ({time}). A kézbesítési idők és állapotok az utolsó teljes beolvasás szerintiek, és lemaradhatnak."
+    },
+    "duration": {
+      "underSecond": "1 mp alatt",
+      "seconds": "{s} mp",
+      "minutes": "{m} perc {s} mp",
+      "hours": "{h} óra {m} perc"
+    },
+    "failures": {
+      "invalid": "A Core elutasította ezeket a szűrőket. Ellenőrizd a címzett címét, és próbáld újra.",
+      "error": "Az e-mail-kézbesítés nem tölthető be. Hiányos lista helyett inkább semmit sem mutatunk."
     }
   },
   "registrationStats": {

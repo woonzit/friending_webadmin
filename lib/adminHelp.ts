@@ -488,6 +488,13 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/support"),
   },
   {
+    // Freelove port 2026-11-02: read-only; the filters, the summary with its domain table, and the list.
+    key: "mailDelivery",
+    route: "/mail-delivery",
+    sections: ["filters", "summary", "list"],
+    matches: exact("/mail-delivery"),
+  },
+  {
     key: "helpCms",
     route: "/help-cms",
     sections: ["articleEditor", "metadata", "languages", "contentBlocks", "categories", "articleList", "publishing"],

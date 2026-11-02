@@ -13,7 +13,7 @@ import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness"
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -44,6 +44,9 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/invite-configuration", key: "inviteConfiguration", icon: "invite" },
   { href: "/canned-templates", key: "cannedTemplates", icon: "templates" },
   { href: "/support", key: "support", icon: "chat" },
+  // Freelove port 2026-11-02: when each email (sign-in codes first) reached the inbox, beside the
+  // support inbox where "my code never arrived" is reported.
+  { href: "/mail-delivery", key: "mailDelivery", icon: "mail" },
   { href: "/help-cms", key: "helpCms", icon: "audit" },
   { href: "/configuration", key: "configuration", icon: "config" },
   { href: "/app-review", key: "appReview", icon: "appReview" },
@@ -92,6 +95,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   config: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.1A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 3.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2V9.6h.1A1.7 1.7 0 0 0 3.6 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8 3.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2h4v.1A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 8a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.7 1.6Z"/></>,
   admins: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></>,
   audit: <><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
+  // An envelope with a clock hand: when an email arrived, not the support conversation (`chat`).
+  mail: <><path d="M14 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5"/><path d="m3 7 9 6 9-6"/><circle cx="18" cy="17.5" r="3.5"/><path d="M18 16v1.5l1 1"/></>,
 };
 
 function NavIcon({ name }: { name: IconName }) {

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import React, { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { NextIntlClientProvider } from "next-intl";
 import ts from "typescript";
 import * as actions from "../lib/adminActions.ts";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "../lib/adminMembership.ts";
@@ -20,8 +23,10 @@ import {
   mailDeliveryFailure,
   normalizeMailDeliveryProxyBody,
   normalizeMailDeliveryResponse,
+  type MailDelivery,
   type MailDeliveryFilters,
 } from "../lib/mailDelivery.ts";
+import { MailDeliveryView, type MailDeliveryLoad } from "../components/MailDeliveryConsole.tsx";
 import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
 
 type Json = Record<string, any>;
@@ -278,4 +283,92 @@ test("DERIVED bridge projection: the route wires the normalizers and refuses bef
   assert.match(routeSource, /const mailDeliveryBody = normalizeMailDeliveryProxyBody\(action, body\);\s*if \(mailDeliveryBody === null\) \{\s*return bridgeError\("invalid-input", 400\);/);
   assert.match(routeSource, /normalizeMailDeliveryResponse\(result\.data, mailDeliveryBody, \{ viewer: principal\.role !== "owner" && principal\.role !== "admin" \}\)/);
   assert.ok(routeSource.indexOf("normalizeMailDeliveryProxyBody(action, body)") < routeSource.indexOf("const result = await coreCall("));
+});
+
+const MESSAGES = {
+  en: JSON.parse(readFileSync(new URL("../messages/en.json", import.meta.url), "utf8")),
+  hu: JSON.parse(readFileSync(new URL("../messages/hu.json", import.meta.url), "utf8")),
+};
+
+// PageHeader relies on the automatic JSX runtime of the Next build; tsx compiles it to React.createElement.
+(globalThis as { React?: typeof React }).React = React;
+
+function render(locale: "en" | "hu", data: MailDelivery | null, load: MailDeliveryLoad, filters = FILTERS): string {
+  const noop = () => undefined;
+  return renderToStaticMarkup(createElement(NextIntlClientProvider, {
+    locale, messages: MESSAGES[locale], timeZone: "UTC", onError: (error: Error) => { throw error; },
+  }, createElement(MailDeliveryView, { data, load, filters, onFilters: noop, onReload: noop })));
+}
+
+function escaped(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+}
+
+test("the page renders Core's answer in both locales: cards, domains, rows, held-back answer and the failed poll", () => {
+  const data = mailDelivery(ANSWER, FILTERS)!;
+  for (const locale of ["en", "hu"] as const) {
+    const copy = MESSAGES[locale].mailDelivery;
+    const html = render(locale, data, "ready");
+    for (const text of [copy.title, copy.byDomain.title, copy.list.title, copy.state.delivered, copy.state.pending, copy.state.not_sent,
+      copy.kind.email_auth_verification, copy.kind.admin_login_verification, copy.kind.other, copy.byDomain.unknown]) {
+      assert.ok(html.includes(escaped(text)), `${locale}: ${text}`);
+    }
+    // Every option of the closed filters has its label.
+    for (const kind of MAIL_DELIVERY_KINDS) assert.ok(html.includes(escaped(copy.kind[kind])), `${locale}: ${kind}`);
+    for (const state of MAIL_DELIVERY_STATES) assert.ok(html.includes(escaped(copy.stateFilter[state])), `${locale}: ${state}`);
+    assert.ok(html.includes("bela@example.hu"));
+    assert.ok(html.includes("<code>421</code> 4.4.2 Connection timed out for &lt;address&gt;"));
+    assert.ok(html.includes("<code>provider_rejected</code>"));
+    assert.ok(html.includes(locale === "en" ? "10 min 34 s" : "10 perc 34 mp"), "634 s");
+    assert.ok(html.includes(locale === "en" ? "2 attempts" : "2 próbálkozás"));
+    assert.ok(html.includes(locale === "en" ? "1 temporary refusal" : "1 átmeneti elutasítás"));
+    assert.ok(html.includes(locale === "en" ? "13 s before Mailgun accepted it" : "13 mp telt el, mire a Mailgun átvette"), "the queue wait");
+    assert.ok(html.includes('class="alert alert-warning mail-delivery-sync-alert"'), "the failed poll is told apart");
+    assert.equal([...html.matchAll(/<table/g)].length, 2);
+    assert.doesNotMatch(html, new RegExp(escaped(copy.maskedNote)));
+    assert.doesNotMatch(html, /role="alert"/);
+  }
+});
+
+test("a viewer's page says the addresses are masked; an empty page is not a failure", () => {
+  for (const locale of ["en", "hu"] as const) {
+    const copy = MESSAGES[locale].mailDelivery;
+    const html = render(locale, mailDelivery(masked(), FILTERS)!, "ready");
+    assert.ok(html.includes(escaped(copy.maskedNote)));
+    assert.ok(html.includes("be•••@example.hu"));
+    assert.equal(html.includes("bela@example.hu"), false);
+    const empty = clone(ANSWER) as Json;
+    Object.assign(empty.data, { rows: [], summary: { total: 0, counts: { delivered: 0, pending: 0, retrying: 0, failed: 0, not_sent: 0 },
+      median_seconds: null, p90_seconds: null, max_seconds: null, slow: 0, by_domain: [] }, sync_failed_at: null });
+    const emptyHtml = render(locale, mailDelivery(empty, FILTERS)!, "ready");
+    assert.ok(emptyHtml.includes(escaped(copy.list.empty)));
+    assert.equal([...emptyHtml.matchAll(/<table/g)].length, 0);
+    assert.doesNotMatch(emptyHtml, /mail-delivery-sync-alert/);
+  }
+});
+
+test("a failed read says why and never renders cards, tables or zeros", () => {
+  for (const locale of ["en", "hu"] as const) {
+    const copy = MESSAGES[locale].mailDelivery;
+    for (const load of ["invalid", "error"] as const) {
+      const html = render(locale, null, load);
+      assert.ok(html.includes(escaped(copy.failures[load])), `${locale} ${load}`);
+      assert.doesNotMatch(html, /<table|stat-card/u);
+    }
+    const loading = render(locale, null, "loading");
+    assert.match(loading, /loading-state/);
+    assert.doesNotMatch(loading, /<table|stat-card/u);
+  }
+});
+
+test("the page is one read per filter change, never a recovery loader, and is in the navigation", () => {
+  const console = readFileSync(new URL("../components/MailDeliveryConsole.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(console, /useAdminReadRecovery/);
+  assert.match(console, /adminCall\("mail_delivery", \{ \.\.\.filters \}, controller\.signal\)/);
+  assert.match(console, /onFilters=\{\(next\) => \{ setData\(null\); setFilters\(next\); \}\}/, "an answer is never shown under other filters");
+  const page = readFileSync(new URL("../app/(dashboard)/mail-delivery/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /return <MailDeliveryConsole \/>;/);
+  const shell = readFileSync(new URL("../components/Shell.tsx", import.meta.url), "utf8");
+  assert.match(shell, /\{ href: "\/mail-delivery", key: "mailDelivery", icon: "mail" \}/);
+  for (const locale of ["en", "hu"] as const) assert.equal(typeof MESSAGES[locale].nav.mailDelivery, "string", locale);
 });

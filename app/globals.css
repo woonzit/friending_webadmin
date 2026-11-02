@@ -15516,3 +15516,88 @@ fieldset.dates-external-fields {
 .dates-member-note { overflow-wrap: anywhere; color: var(--text-soft); }
 .dates-host-review .panel-body { display: grid; gap: 12px; }
 .dates-host-review .detail-list + .detail-list { padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* Email delivery (Freelove port 2026-11-02) */
+.mail-delivery-filter-bar {
+  grid-template-columns: repeat(3, minmax(150px, 0.8fr)) minmax(240px, 1.5fr) auto;
+}
+
+.mail-delivery-filter-bar .row-actions {
+  flex-wrap: nowrap;
+}
+
+.mail-delivery-body.is-refreshing { opacity: 0.6; transition: opacity 0.2s; }
+
+.stat-grid.mail-delivery-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mail-delivery-stats .stat-card {
+  min-height: 0;
+}
+
+.mail-delivery-stats .stat-value {
+  font-size: 28px;
+}
+
+.mail-delivery-panel {
+  margin-bottom: 18px;
+}
+
+.mail-delivery-panel .table-wrap {
+  border: 0;
+  border-radius: 0;
+}
+
+.mail-delivery-sync-alert {
+  margin: 16px 22px 0;
+}
+
+.mail-delivery-panel .empty-state {
+  border: 0;
+}
+
+.mail-delivery-issue {
+  min-width: 260px;
+  white-space: normal;
+}
+
+.mail-delivery-pagination {
+  margin: 0;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.badge.mail-delivery-failed {
+  border-color: rgba(255, 90, 105, 0.3);
+  background: var(--danger-soft);
+  color: #f68a96;
+}
+
+.badge.mail-delivery-failed::before {
+  background: var(--danger);
+}
+
+@media (max-width: 1120px) {
+  .mail-delivery-filter-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-grid.mail-delivery-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .mail-delivery-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .mail-delivery-filter-bar .row-actions {
+    flex-wrap: wrap;
+  }
+
+  .mail-delivery-stats .stat-value {
+    font-size: 22px;
+  }
+}

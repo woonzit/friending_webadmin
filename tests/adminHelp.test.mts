@@ -73,8 +73,9 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // page: 44 live guides plus 2 redirects.
   // T-896 adds Research: 45 live guides plus the same two redirects.
   // D-149 (T-908) adds the AreYouIn corrections queue: 46 live guides plus the same two redirects.
-  assert.equal(actualRoutes.length, 48, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 46, "review the live-screen census");
+  // The Freelove port adds Email delivery: 47 live guides plus the same two redirects.
+  assert.equal(actualRoutes.length, 49, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 47, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -159,7 +160,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // Host moderation adds the case page's "Host review" section: what the event's host was shown and decided (285).
   // D-149 (T-908) adds the reviewed mark on the external list (1), review and AI re-research on the external detail (2)
   // and the three topics of the corrections queue (3) (291).
-  assert.equal(totalSections, 291, "review the functional-section census when the UI changes");
+  // The Email delivery page (Freelove port) adds its filters, summary and list (294).
+  assert.equal(totalSections, 294, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
