@@ -3,8 +3,6 @@ import assert from "node:assert/strict";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "../lib/adminMembership.ts";
 import { MEMBERSHIP_CASES } from "./support/adminMembershipCases.mts";
 import { DerivedNextResponse, serverModule, sessionHarness, writerRequest, WRITER_ROUTES } from "./support/adminMembershipServerHarness.mts";
-import { SESSION_VERSION } from "../lib/sessionCodec.ts";
-import type { NextResponse } from "next/server";
 
 for (const answer of MEMBERSHIP_CASES) {
   test(`DERIVED session identity gate: ${answer.name}`, async () => {
@@ -84,35 +82,4 @@ test("DERIVED session gates: a previous positive answer is never cached for the 
   await assert.rejects(h.api.adminMe(), h.api.AdminMembershipUnconfirmedError);
   const result = await h.api.requireAdminWriter(); assert.equal(result.ok, false); if (!result.ok) assert.equal(result.status, 503);
   assert.equal(h.calls.length, 3);
-});
-
-test("DERIVED legacy session cookie upgrade keeps the original deadline and secure cookie attributes", async () => {
-  const h = await sessionHarness(MEMBERSHIP_CASES[0]);
-  const now = Math.floor(Date.now() / 1000), issued = now - 3600;
-  const writes: unknown[][] = [];
-  const response = { cookies: { set: (...args: unknown[]) => writes.push(args) } } as unknown as NextResponse;
-  h.api.upgradeLegacyAdminSessionCookie(response, {
-    v: SESSION_VERSION, email: "owner@example.com", iat: issued, exp: issued + 12 * 3600, nonce: "derived_nonce_12345678",
-  });
-  assert.equal(writes.length, 1);
-  assert.equal(writes[0][0], "flwa_session");
-  const options = writes[0][2] as ReturnType<typeof h.api.adminCookieOptions>;
-  assert.equal(options.httpOnly, true); assert.equal(options.secure, true);
-  assert.equal(options.sameSite, "lax"); assert.equal(options.path, "/");
-  assert.ok(options.maxAge >= 23 * 3600 - 1 && options.maxAge <= 23 * 3600);
-  assert.equal("domain" in options, false);
-  h.state.token = writes[0][1] as string;
-  const session = await h.api.readAdminSession(); assert.ok(session);
-  assert.equal(session.iat, issued); assert.equal(session.exp, issued + 24 * 3600);
-  h.api.upgradeLegacyAdminSessionCookie(response, session);
-  assert.equal(writes.length, 1, "the upgraded cookie does not become a rolling session");
-});
-
-test("DERIVED legacy cookie upgrade never renews a session that expired during a request", async () => {
-  const h = await sessionHarness(MEMBERSHIP_CASES[0]);
-  const now = Math.floor(Date.now() / 1000);
-  const response = { cookies: { set: () => assert.fail("expired cookie must not be renewed") } } as unknown as NextResponse;
-  h.api.upgradeLegacyAdminSessionCookie(response, {
-    v: SESSION_VERSION, email: "owner@example.com", iat: now - 12 * 3600, exp: now, nonce: "derived_nonce_12345678",
-  });
 });

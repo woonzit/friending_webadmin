@@ -104,8 +104,7 @@ test("every Dates Admin route this console calls has its named fields, and no ot
   assert.equal(projectDatesAdminBody("dates_event_intake_list", null), null);
   for (const odd of ["text", 5, [1], true]) assert.equal(projectDatesAdminBody("dates_event_intake_list", odd), undefined);
   const bridge = readFileSync(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8");
-  assert.match(bridge, /if \(isDatesAdminRoute\(action\)\) \{[\s\S]{0,400}const projected = projectDatesAdminResponse\(action, result\.data\);\s+if \(projected === undefined\) return bridgeError\("invalid-core-response", 502\);\s+return featureResponse\(projected, result\.status \|\| 502\);/);
-  assert.match(bridge, /function featureResponse\(data: unknown, status: number\) \{\s+const response = NextResponse\.json\(data, \{ status, headers: NO_STORE_HEADERS \}\);/);
+  assert.match(bridge, /if \(isDatesAdminRoute\(action\)\) \{[\s\S]{0,400}const projected = projectDatesAdminResponse\(action, result\.data\);\s+if \(projected === undefined\) return bridgeError\("invalid-core-response", 502\);\s+return NextResponse\.json\(projected,/);
   // The route handler itself writes to no log (a released test holds it to that); the one line of a denied key comes from the projection.
   assert.doesNotMatch(bridge, /console\./);
   const module = readFileSync(new URL("../lib/datesAdminProjection.ts", import.meta.url), "utf8");

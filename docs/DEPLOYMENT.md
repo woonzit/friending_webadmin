@@ -73,14 +73,6 @@ transactional mail pipeline. The Next.js application signs its own host-only
 HttpOnly session cookie and rechecks active Core membership on every protected
 request.
 
-Admin sessions and their cookies have a fixed 24-hour lifetime from sign-in;
-ordinary activity does not slide that deadline. There is no shorter idle timer.
-Still-valid cookies issued by the previous 12-hour policy remain accepted until
-their original expiry. Their next successful same-origin protected JSON read,
-after a fresh Core membership check, upgrades them once to 24 hours from the
-original sign-in. Expired, locally revoked, guest, or unconfirmed sessions are
-not upgraded. New 24-hour cookies are never refreshed by this migration.
-
 ## Deploy
 
 A release ships one reviewed commit, in this order. `deploy.sh` implements
