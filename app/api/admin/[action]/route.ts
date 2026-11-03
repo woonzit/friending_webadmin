@@ -40,6 +40,7 @@ import {
 } from "@/lib/profileTextModeration";
 import {
   adminActionBodyLimit,
+  adminActionAccess,
   adminActionTimeoutMs,
   adminPrincipalFrom,
   invalidatesAdminSession,
@@ -62,7 +63,7 @@ import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
 import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { normalizeManagedSettingsProxyBody } from "@/lib/sectionAvailability";
-import { readAdminSession } from "@/lib/session";
+import { readAdminSession, upgradeLegacyAdminSessionCookie } from "@/lib/session";
 import {
   normalizeVerificationMethodProxyBody,
   verificationMethodProxyCapabilityAuthorized,
@@ -452,6 +453,17 @@ export async function POST(
       : bridgeError("invalid-core-response", 502);
   }
   if (result.data === null) return bridgeError("core-unavailable", result.status || 502);
+  const confirmedSession = session;
+  function featureResponse(data: unknown, status: number) {
+    const response = NextResponse.json(data, { status, headers: NO_STORE_HEADERS });
+    // Migrate existing 12-hour cookies on an ordinary successful read. New
+    // sessions do not roll forward, and writes never acquire a cookie side effect.
+    if (status === 200 && (data as Record<string, unknown>)?.success === true
+      && adminActionAccess(action) === "read") {
+      upgradeLegacyAdminSessionCookie(response, confirmedSession);
+    }
+    return response;
+  }
   if (mailDeliveryBody !== undefined && (result.data as Record<string, unknown>).success === true) {
     // The browser receives only the parsed answer for the filters it asked, never Core's raw body.
     // A success that does not parse in full is not forwarded, nor one that would show a read-only
@@ -460,17 +472,14 @@ export async function POST(
       ? normalizeMailDeliveryResponse(result.data, mailDeliveryBody, { viewer: principal.role !== "owner" && principal.role !== "admin" })
       : null;
     if (!projected) return bridgeError("invalid-core-response", 502);
-    return NextResponse.json(projected, { status: 200, headers: NO_STORE_HEADERS });
+    return featureResponse(projected, 200);
   }
   if (isDatesAdminRoute(action)) {
     // The browser never receives a raw Core body of a Dates route: only the fields this console names. A key on the
     // deny-list is dropped and reported by name (never by value) from the projection; the page is not failed for it.
     const projected = projectDatesAdminResponse(action, result.data);
     if (projected === undefined) return bridgeError("invalid-core-response", 502);
-    return NextResponse.json(projected, { status: result.status || 502, headers: NO_STORE_HEADERS });
+    return featureResponse(projected, result.status || 502);
   }
-  return NextResponse.json(
-    result.data,
-    { status: result.status || 502, headers: NO_STORE_HEADERS },
-  );
+  return featureResponse(result.data, result.status || 502);
 }

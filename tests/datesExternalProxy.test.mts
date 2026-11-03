@@ -49,6 +49,7 @@ function harness() {
     normalizeDatesExternalPinsProxyBody, normalizeDatesLeaderboardProxyBody,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => state.session,
+    upgradeLegacyAdminSessionCookie: () => undefined,
     coreCall: async (action: string, body: any) => { state.calls.push({ action, body }); return action === "admin_me" ? state.member : state.response; },
     NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }) },
     isReservedCoreParam: (key: string) => ["secret", "admin_email"].includes(key),

@@ -24,11 +24,12 @@ const code = ts.transpileModule(tree.statements.filter((node) => !ts.isImportDec
 
 async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; sessionThrows?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; research?: boolean; body?: unknown; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
   const controller = new AbortController(), forwarded: string[] = [], checks: unknown[] = [];
-  let bodyReads = 0;
+  let bodyReads = 0, sessionUpgrades = 0;
   const context: any = { exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
     adminBridgeCoreTransportError, webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => { if (config.sessionThrows) throw new Error("DERIVED cookie read failure"); return config.guest ? null : { email: MEMBERSHIP_EMAIL }; },
+    upgradeLegacyAdminSessionCookie: () => { sessionUpgrades++; },
     coreCall: async (name: string, payload: Record<string, unknown>, timeout: number, options: unknown) => {
       assert.equal(payload.admin_email, MEMBERSHIP_EMAIL);
       if (name === "admin_me") {
@@ -62,7 +63,7 @@ async function bridge(answer: MembershipCase, action: string, config: { guest?: 
   const response = await context.exports.POST({ headers, signal: controller.signal, text: async () => {
     bodyReads++; if (config.abandonBody) controller.abort(); return JSON.stringify(config.body ?? {});
   } }, { params: Promise.resolve({ action }) }) as Response;
-  return { status: response.status, body: await response.json(), headers: response.headers, checks, forwarded, bodyReads };
+  return { status: response.status, body: await response.json(), headers: response.headers, checks, forwarded, bodyReads, sessionUpgrades };
 }
 
 for (const answer of MEMBERSHIP_CASES) for (const action of ["overview", "set_settings"]) {
@@ -76,6 +77,8 @@ for (const answer of MEMBERSHIP_CASES) for (const action of ["overview", "set_se
     if (expected !== 200) assert.equal(result.body.protected_value, undefined);
     if (expected === 503) { assert.equal(result.body.error, ADMIN_MEMBERSHIP_UNCONFIRMED); assert.equal(result.bodyReads, 0); }
     if (expected === 401) assert.equal(result.body.error, "auth-required");
+    assert.equal(result.sessionUpgrades, expected === 200 && action === "overview" ? 1 : 0,
+      "only a successful protected read after confirmed membership may upgrade a legacy cookie");
   });
 }
 test("DERIVED action gate: a local non-session never reaches Core", async () => {

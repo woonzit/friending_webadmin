@@ -103,7 +103,7 @@ async function forward(action: string, browserBody: unknown, answer: unknown) {
       isDatesAdminRoute, projectDatesAdminResponse,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
-      readAdminSession: async () => ({ email }), coreCall: core, mergeCoreParams, isReservedCoreParam,
+      readAdminSession: async () => ({ email }), upgradeLegacyAdminSessionCookie: () => undefined, coreCall: core, mergeCoreParams, isReservedCoreParam,
       NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }) } };
     for (const node of routeTree.statements) {
       if (!ts.isImportDeclaration(node) || !node.importClause?.namedBindings || !ts.isNamedImports(node.importClause.namedBindings)) continue;

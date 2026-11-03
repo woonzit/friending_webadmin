@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import {
@@ -24,6 +25,7 @@ import {
 } from "@/lib/verificationMethod";
 import {
   createSessionToken,
+  legacySessionUpgrade,
   SESSION_MAX_AGE_SECONDS,
   sessionRevocations,
   verifyActiveSessionToken,
@@ -170,4 +172,10 @@ export function adminCookieOptions(maxAge = SESSION_MAX_AGE_SECONDS) {
     path: "/",
     maxAge,
   };
+}
+
+/** Only call after a fresh, confirmed Core membership check and a successful read. */
+export function upgradeLegacyAdminSessionCookie(response: NextResponse, session: SessionPayload): void {
+  const upgrade = legacySessionUpgrade(session, sessionSecret());
+  if (upgrade) response.cookies.set(ADMIN_COOKIE, upgrade.token, adminCookieOptions(upgrade.maxAge));
 }

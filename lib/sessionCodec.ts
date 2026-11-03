@@ -1,7 +1,9 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const SESSION_VERSION = 1;
-export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
+// Absolute lifetime from sign-in, including time spent away from the console.
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24;
+const LEGACY_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
 
@@ -83,7 +85,9 @@ export function verifySessionToken(
   if (
     (data.iat as number) > nowSeconds + 60 ||
     (data.exp as number) <= nowSeconds ||
-    (data.exp as number) - (data.iat as number) !== SESSION_MAX_AGE_SECONDS
+    ![SESSION_MAX_AGE_SECONDS, LEGACY_SESSION_MAX_AGE_SECONDS].includes(
+      (data.exp as number) - (data.iat as number),
+    )
   ) {
     return null;
   }
@@ -94,6 +98,19 @@ export function verifySessionToken(
     iat: data.iat as number,
     exp: data.exp as number,
     nonce: data.nonce,
+  };
+}
+
+/** Upgrade a still-valid old session once, without moving its original sign-in time. */
+export function legacySessionUpgrade(
+  session: SessionPayload,
+  secret: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): { token: string; maxAge: number } | null {
+  if (session.exp - session.iat !== LEGACY_SESSION_MAX_AGE_SECONDS || session.exp <= nowSeconds) return null;
+  return {
+    token: createSessionToken(session.email, secret, session.iat),
+    maxAge: session.iat + SESSION_MAX_AGE_SECONDS - nowSeconds,
   };
 }
 
