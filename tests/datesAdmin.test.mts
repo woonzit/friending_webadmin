@@ -101,6 +101,9 @@ const EXPECTED_DATES_ACTIONS = [
   "dates_event_research_run_list",
   "dates_event_research_run_detail",
   "dates_event_intake_batch_decide",
+  // Research follow-ups (owner request 2026-11-03): the manual-check list and the save of one row's state.
+  "dates_event_research_followups",
+  "dates_event_research_followup_save",
 ] as const;
 
 test("retired and inactive activity types are readable but never newly assigned", () => {

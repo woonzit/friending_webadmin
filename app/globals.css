@@ -15289,6 +15289,26 @@ fieldset.dates-external-fields {
 .research-batch-selection, .research-batch-confirmations { display: grid; gap: .4rem; margin: 1rem 0; }
 .research-batch input[type="checkbox"], .research-field input[type="checkbox"] { width: 1rem; min-width: 1rem; height: 1rem; }
 @media (max-width: 760px) { .research-runs .dates-filter-grid { grid-template-columns: minmax(0, 1fr); } .research-panel, .research-editor, .research-runs, .research-batch { padding: 16px; } }
+/* Research follow-ups (components/DatesResearchFollowups.tsx): one card per event the AI could not check. */
+.research-subnav a { padding: .35rem .75rem; border-radius: 999px; border: 1px solid var(--border); text-decoration: none; }
+.research-subnav a[aria-current="page"] { border-color: var(--accent); color: var(--accent); }
+.research-followups-filters .dates-filter-grid { align-items: start; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.research-followup-states { margin: .75rem 0 1rem; flex-wrap: wrap; }
+.research-followup { padding: 20px 24px; margin-top: 1rem; }
+.research-followup[data-state="done"], .research-followup[data-state="dismissed"] { opacity: .8; }
+.research-followup-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.research-followup-head h3 { margin: 0 0 .25rem; overflow-wrap: anywhere; }
+.research-followup-facts { display: grid; grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr); gap: .45rem 1rem; margin: 1rem 0; }
+.research-followup-facts dt { color: var(--muted); }
+.research-followup-facts dd { margin: 0; overflow-wrap: anywhere; }
+.research-followup-reason ul { margin: .35rem 0 0; padding-left: 1.1rem; }
+.research-followup-group { display: block; color: var(--muted); margin-top: .25rem; }
+.research-followup-links { flex-wrap: wrap; }
+.research-followup-note { margin: .75rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.research-followup-actions { border-top: 1px solid var(--border); margin-top: 1rem; padding-top: 1rem; display: grid; gap: .5rem; }
+.research-followup-pages { margin: 1rem 0 2rem; }
+@media (max-width: 760px) { .research-followups-filters .dates-filter-grid { grid-template-columns: minmax(0, 1fr); } .research-followup { padding: 16px; }
+  .research-followup-facts { grid-template-columns: minmax(0, 1fr); } .research-followup-facts dt { margin-top: .35rem; } }
 .dates-event-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; max-width: 680px; }
 .dates-event-photo-grid figure { margin: 0; }
 .dates-event-photo-grid img { width: 100%; aspect-ratio: 4/3; object-fit: contain; border-radius: 10px; background: var(--bg-soft); }

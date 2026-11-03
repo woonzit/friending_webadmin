@@ -1,0 +1,18 @@
+{
+    "success": true,
+    "status_code": 200,
+    "replayed": false,
+    "followup": {
+        "key": "rfu_599a0e0b304546d1bdaa1654738f5029",
+        "state": "open",
+        "note": null,
+        "revision": 2,
+        "updated_by": "admin@example.test",
+        "updated_at": 1800000000
+    },
+    "audit_id": "aud_00000000000000000000000000000000",
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

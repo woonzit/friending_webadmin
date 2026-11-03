@@ -1,0 +1,28 @@
+{
+    "success": true,
+    "status_code": 200,
+    "followups": [],
+    "next_cursor": null,
+    "limit": 50,
+    "counts": {
+        "states": {
+            "open": 0,
+            "done": 0,
+            "dismissed": 0
+        },
+        "groups": {
+            "fetch": 0,
+            "validation": 0,
+            "gate": 0,
+            "other": 0
+        },
+        "areas": []
+    },
+    "horizon_days": 60,
+    "runs_scanned": 4,
+    "truncated": false,
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

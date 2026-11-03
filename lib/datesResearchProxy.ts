@@ -1,4 +1,6 @@
 import { datesAdminPrincipal, hasDatesCapability } from "@/lib/datesAdmin";
+import { DATES_RESEARCH_FOLLOWUP_GROUPS, DATES_RESEARCH_FOLLOWUP_LIMIT_MAX, DATES_RESEARCH_FOLLOWUP_NO_AREA, DATES_RESEARCH_FOLLOWUP_STATES,
+  DATES_RESEARCH_FOLLOWUP_STATE_FILTERS, researchFollowupCursor, researchFollowupKey, researchFollowupNoteValid, researchFollowupQueryValid } from "@/lib/datesResearchFollowups";
 import { datesIntakeId, DATES_INTAKE_REJECT_REASONS } from "@/lib/datesIntakeAdmin";
 import { DATES_RESEARCH_ACTIONS, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYPES, DATES_RESEARCH_RUN_KINDS,
   DATES_RESEARCH_VALUE_FIELDS, decodeResearchOverrides, decodeResearchValues, researchId, researchInteger, researchOneOf,
@@ -6,7 +8,7 @@ import { DATES_RESEARCH_ACTIONS, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYP
 
 export const DATES_RESEARCH_READ_CAPABILITY = "dates_external_event_review";
 export const DATES_RESEARCH_WRITE_CAPABILITY = "dates_external_event_manage";
-const READS: readonly string[] = ["dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail"];
+const READS: readonly string[] = ["dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail", "dates_event_research_followups"];
 export function datesResearchProxyCapabilityAuthorized(action: string, membership: unknown): boolean | undefined {
   if (!(DATES_RESEARCH_ACTIONS as readonly string[]).includes(action)) return undefined;
   const principal = datesAdminPrincipal(membership);
@@ -144,7 +146,28 @@ export function normalizeDatesResearchProxyBody(action: string, body: Record<str
     if (Object.hasOwn(body, "limit")) { if (!researchInteger(body.limit, 1)) return null; result.limit = body.limit; }
     return result;
   }
+  if (action === "dates_event_research_followups") return normalizeResearchFollowupsBody(body);
+  if (action === "dates_event_research_followup_save") return keys(body, ["key", "state", "expected_revision", "idempotency_key"], ["note"])
+    && researchFollowupKey(body.key) && researchOneOf(body.state, DATES_RESEARCH_FOLLOWUP_STATES) && researchInteger(body.expected_revision)
+    && (!Object.hasOwn(body, "note") || researchFollowupNoteValid(body.note)) && command(body) ? body : null;
   return normalizeResearchBatchBody(body);
+}
+/** Research follow-ups list filters: every one optional; an empty value is no filter and is not forwarded. */
+export function normalizeResearchFollowupsBody(body: Record<string, unknown>): Record<string, unknown> | null {
+  if (!keys(body, [], ["area_id", "group", "state", "q", "cursor", "limit"])) return null;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body)) {
+    if (value === "" && key !== "limit") continue;
+    const valid = key === "area_id" ? value === DATES_RESEARCH_FOLLOWUP_NO_AREA || researchId(value)
+      : key === "group" ? researchOneOf(value, DATES_RESEARCH_FOLLOWUP_GROUPS)
+        : key === "state" ? researchOneOf(value, DATES_RESEARCH_FOLLOWUP_STATE_FILTERS)
+          : key === "q" ? researchFollowupQueryValid(value)
+            : key === "cursor" ? researchFollowupCursor(value)
+              : researchInteger(value, 1) && (value as number) <= DATES_RESEARCH_FOLLOWUP_LIMIT_MAX;
+    if (!valid) return null;
+    result[key] = value;
+  }
+  return result;
 }
 export function normalizeResearchBatchBody(body: Record<string, unknown>): Record<string, unknown> | null {
   if (!keys(body, ["intake_ids", "expected_revisions", "action", "reason", "idempotency_key"], ["confirmations", "reason_code"]) || !audited(body)

@@ -5,6 +5,8 @@ export const DATES_RESEARCH_ACTIONS = [
   "dates_event_research_source_save", "dates_event_research_source_run_now",
   "dates_event_research_area_run_now", "dates_event_research_discovery_resume",
   "dates_event_research_run_list", "dates_event_research_run_detail", "dates_event_intake_batch_decide",
+  // Research follow-ups (owner request 2026-11-03): what the AI could not check, for a manual look-up (lib/datesResearchFollowups.ts).
+  "dates_event_research_followups", "dates_event_research_followup_save",
 ] as const;
 export type DatesResearchAction = typeof DATES_RESEARCH_ACTIONS[number];
 export const DATES_RESEARCH_MODES = ["auto", "on", "off"] as const;
@@ -235,6 +237,8 @@ export function decodeResearchSource(value: unknown): ResearchSource | null {
     next_check_at: value.next_check_at, month_cost_micro_usd: value.month_cost_micro_usd };
 }
 
+/** A served list decoded row by row: a row that cannot be read (or repeats an id) is reported, never dropped silently. */
+export function researchRowList<T>(value: unknown, decode: (value: unknown) => T | null, idKey: string): ResearchRows<T> | null { return rowList(value, decode, idKey); }
 function rowList<T>(value: unknown, decode: (value: unknown) => T | null, idKey: string): ResearchRows<T> | null {
   if (!Array.isArray(value)) return null;
   const ids = value.map((row) => idKey !== "" && researchRecord(row) && researchId(row[idKey]) ? row[idKey] as string : null);

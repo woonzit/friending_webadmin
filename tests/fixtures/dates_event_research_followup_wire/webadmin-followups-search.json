@@ -1,0 +1,84 @@
+{
+    "success": true,
+    "status_code": 200,
+    "followups": [
+        {
+            "key": "rfu_599a0e0b304546d1bdaa1654738f5029",
+            "group": "validation",
+            "reason": "validation_failed",
+            "title": "Art of Noise",
+            "extracted_title": "Art of Noise",
+            "date_text": "Nov 1, 2026 – Apr 4, 2027",
+            "venue_name": "SFMOMA",
+            "found": {
+                "starts_local": "2026-11-01T10:00",
+                "ends_local": "2027-04-04T17:00",
+                "timezone": "America/Los_Angeles",
+                "start_at": 1793556000,
+                "end_at": 1806876000,
+                "all_day": false,
+                "venue_name": "SFMOMA",
+                "venue_address": "151 Third Street",
+                "city": "San Francisco"
+            },
+            "url": "https://www.sfmoma.org/exhibition/art-of-noise/",
+            "url_host": "www.sfmoma.org",
+            "topic": "art exhibitions",
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_22222222222222222222222222222222",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799740800,
+            "seen_count": 2,
+            "intake_id": null,
+            "detail": {
+                "stage": "validation",
+                "http_status": null,
+                "hard_fails": [
+                    "venue_unresolved",
+                    "duration_too_long"
+                ],
+                "gate": "hard-fail",
+                "title_match": "exact",
+                "extraction_result": "event"
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        }
+    ],
+    "next_cursor": null,
+    "limit": 50,
+    "counts": {
+        "states": {
+            "open": 1,
+            "done": 0,
+            "dismissed": 0
+        },
+        "groups": {
+            "fetch": 0,
+            "validation": 1,
+            "gate": 0,
+            "other": 0
+        },
+        "areas": [
+            {
+                "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "label": "Berkeley",
+                "count": 1
+            }
+        ]
+    },
+    "horizon_days": 60,
+    "runs_scanned": 4,
+    "truncated": false,
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

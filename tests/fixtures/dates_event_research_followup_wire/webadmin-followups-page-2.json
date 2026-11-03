@@ -1,0 +1,158 @@
+{
+    "success": true,
+    "status_code": 200,
+    "followups": [
+        {
+            "key": "rfu_3bd510a9c82e2fe9388e85bdef137895",
+            "group": "other",
+            "reason": "blocked_domain",
+            "title": "Club Night",
+            "extracted_title": null,
+            "date_text": "Jan 23",
+            "venue_name": "Somewhere",
+            "found": null,
+            "url": "https://www.blocked.example/club",
+            "url_host": "www.blocked.example",
+            "topic": "concerts and live music",
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_22222222222222222222222222222222",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799740800,
+            "seen_count": 1,
+            "intake_id": null,
+            "detail": {
+                "stage": "locator",
+                "http_status": null,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": null,
+                "extraction_result": null
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        },
+        {
+            "key": "rfu_fff865b59963c8f3a4a4f79287fe1a3b",
+            "group": "other",
+            "reason": "no_event_page",
+            "title": "Pop-up Gallery",
+            "extracted_title": null,
+            "date_text": "This weekend",
+            "venue_name": "A warehouse",
+            "found": null,
+            "url": null,
+            "url_host": "",
+            "topic": "art exhibitions",
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_22222222222222222222222222222222",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799740800,
+            "seen_count": 1,
+            "intake_id": null,
+            "detail": {
+                "stage": "locator",
+                "http_status": null,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": null,
+                "extraction_result": null
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        },
+        {
+            "key": "rfu_0fd207bc4847911b083f17edccbb3b35",
+            "group": "gate",
+            "reason": "research_not_publishable",
+            "title": "Jazz at the Freight",
+            "extracted_title": "Jazz at the Freight: Trio Night",
+            "date_text": "Jan 20, 8 pm",
+            "venue_name": "Freight & Salvage",
+            "found": {
+                "starts_local": "2027-01-20T20:00",
+                "ends_local": null,
+                "timezone": "America/Los_Angeles",
+                "start_at": 1800504000,
+                "end_at": null,
+                "all_day": false,
+                "venue_name": "Freight & Salvage",
+                "venue_address": "2020 Addison St, Berkeley, CA 94704",
+                "city": "Berkeley"
+            },
+            "url": "https://freight.example.org/jazz",
+            "url_host": "freight.example.org",
+            "topic": "concerts and live music",
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_22222222222222222222222222222222",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799740800,
+            "seen_count": 1,
+            "intake_id": "xin_11111111111111111111111111111111",
+            "detail": {
+                "stage": null,
+                "http_status": null,
+                "hard_fails": [],
+                "gate": "venue-unverified",
+                "title_match": null,
+                "extraction_result": null
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        }
+    ],
+    "next_cursor": "1799740800:rru_22222222222222222222222222222222:5",
+    "limit": 3,
+    "counts": {
+        "states": {
+            "open": 9,
+            "done": 0,
+            "dismissed": 0
+        },
+        "groups": {
+            "fetch": 4,
+            "validation": 2,
+            "gate": 1,
+            "other": 2
+        },
+        "areas": [
+            {
+                "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "label": "Berkeley",
+                "count": 8
+            },
+            {
+                "area_id": null,
+                "label": null,
+                "count": 1
+            }
+        ]
+    },
+    "horizon_days": 60,
+    "runs_scanned": 4,
+    "truncated": false,
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

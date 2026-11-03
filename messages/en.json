@@ -3204,6 +3204,44 @@
           }
         }
       },
+      "datesResearchFollowups": {
+        "title": "Needs manual check help",
+        "summary": "This page lists the events the research AI found but could not check: a page that refused the download, robots.txt, the fetch budget, a validation failure or the publication check. Each row shows what the research found and links to the page, so that you can look it up in your browser and add the event by hand.",
+        "steps": {
+          "1": "Start with the Open list; filter by city or problem type, or search by title, venue or link.",
+          "2": "Open the original page or the Google search, and collect the event's facts by hand.",
+          "3": "Mark the row Done when you have added the event, or Dismiss it when it is not worth adding."
+        },
+        "sections": {
+          "filters": {
+            "title": "Filters and search",
+            "purpose": "The state buttons, the city and problem-type lists and the search narrow the list; every count beside them comes from Core.",
+            "guidance": "The list covers the research runs of the last 60 days, one row per page. A page that a later run checks successfully leaves the list by itself.",
+            "actions": {
+              "1": "Choose the city where you are adding events, then the problem type you want to work through.",
+              "2": "Search by a word of the title, the venue or the link; clear the search to see the whole list again."
+            }
+          },
+          "rows": {
+            "title": "What a row shows",
+            "purpose": "The event's title, its date and time as found, the venue, the city, the research topic, why it needs a check and the run that found it.",
+            "guidance": "The date as found is the search result's own text; when the page was read, the time the research read is shown with its time zone. A reason the console does not know is shown as Core's code.",
+            "actions": {
+              "1": "Use Open the original page; it opens in a new tab without telling the site where you came from.",
+              "2": "Use Search on Google when the page refused the download or the link is missing."
+            }
+          },
+          "states": {
+            "title": "Done, Dismiss and Reopen",
+            "purpose": "An administrator marks a row Done after adding the event, Dismisses a row that is not worth adding, or Reopens either, with an optional note.",
+            "guidance": "The state belongs to the page: a page marked Done stays Done when a later run fails on it again. Each change is saved with its revision and recorded in the audit log.",
+            "actions": {
+              "1": "Write a short note (where you added the event, or why you dismissed it) before pressing the button.",
+              "2": "When the save reports a conflict, the list is reread; check the row and try again."
+            }
+          }
+        }
+      },
       "datesResearch": {
         "title": "Event research help",
         "summary": "Research configures automatic event discovery by city and collection source, shows counts and measured costs, and records each run's candidates. Core owns city geometry, safety checks and scheduling; the console never requests individual member locations.",
@@ -8598,6 +8636,113 @@
       }
     },
     "research": {
+      "followups": {
+        "title": "Needs manual check",
+        "subtitle": "Events the research AI could not check. Look them up in your browser and add what you find by hand.",
+        "subnavLabel": "Research pages",
+        "subnavConsole": "Settings and runs",
+        "subnavFollowups": "Needs manual check",
+        "unavailable": "This Core does not serve the manual-check list yet.",
+        "refreshFailed": "The refresh failed; the list shows the last successful read.",
+        "readOnly": "Read-only: an administrator can change the state.",
+        "hint": "From the research runs of the last {days} days, one row per page. When a later run checks the page successfully, the row leaves the list by itself.",
+        "truncated": "Only the latest {runs} runs were read; older ones are not listed.",
+        "empty": "Nothing found.",
+        "emptyOpen": "No events are waiting for a manual check.",
+        "untitled": "(untitled)",
+        "onThePage": "On the page: {title}",
+        "whenFound": "Per the research: {when}",
+        "venueDiscovered": "Per the search: {venue}",
+        "noCity": "No city",
+        "fromSource": "from a registered source",
+        "seenCount": "seen in {count} runs",
+        "noLink": "No link",
+        "openPage": "Open the original page",
+        "searchGoogle": "Search on Google",
+        "openIntake": "Open the intake",
+        "updated": "Last changed by {by}, {at}",
+        "noteHint": "Up to 500 characters. Saved with the button you press.",
+        "noteTooLong": "The note can be at most 500 characters.",
+        "searchPlaceholder": "Title, venue or link",
+        "searchSubmit": "Search",
+        "searchClear": "Clear",
+        "labels": {
+          "when": "Date/time (as found)",
+          "where": "Venue",
+          "city": "City",
+          "topic": "Topic",
+          "reason": "Reason",
+          "found": "Found",
+          "page": "Page",
+          "note": "Note:",
+          "noteInput": "Note (optional)",
+          "state": "State",
+          "group": "Problem type",
+          "search": "Search"
+        },
+        "states": {
+          "open": "Open",
+          "done": "Done",
+          "dismissed": "Dismissed"
+        },
+        "stateFilters": {
+          "open": "Open",
+          "done": "Done",
+          "dismissed": "Dismissed",
+          "all": "All"
+        },
+        "groups": {
+          "fetch": "Download",
+          "validation": "Validation",
+          "gate": "Publication check",
+          "other": "Other"
+        },
+        "actions": {
+          "done": "Done",
+          "dismiss": "Dismiss",
+          "reopen": "Reopen"
+        },
+        "reasons": {
+          "fetchFailed": "The page could not be downloaded",
+          "fetchRefused": "The site refused the download ({status})",
+          "fetchNotFound": "Page not found ({status})",
+          "fetchRateLimited": "The site is limiting requests ({status})",
+          "fetchStatus": "The site answered with an error ({status})",
+          "robots": "robots.txt disallows downloading",
+          "fetchBudget": "Not fetched (fetch budget)",
+          "validationHardFails": "Did not pass validation",
+          "validationEmptyPage": "The page has no readable text",
+          "validationTitle": "The page shows a different event than the search found",
+          "validationExtraction": "The event could not be read from the page",
+          "validationFailed": "Did not pass validation",
+          "noEventPage": "No usable event page link",
+          "blockedDomain": "Blocked website",
+          "gate": "Did not pass the publication check"
+        },
+        "hardFails": {
+          "not_an_event": "Not an event",
+          "prohibited_category": "Category not allowed",
+          "insufficient_information": "Too little information",
+          "title_missing": "Missing title",
+          "start_missing": "Missing start date",
+          "time_missing": "Missing start time",
+          "midnight_unconfirmed": "Unconfirmed midnight start",
+          "relative_date_unconfirmed": "Unclear relative date",
+          "local_time_nonexistent": "Nonexistent local time (clock change)",
+          "local_time_ambiguous": "Ambiguous local time (clock change)",
+          "start_in_past": "Start is in the past",
+          "start_beyond_lookahead": "Start is too far ahead",
+          "end_not_after_start": "End is not after the start",
+          "duration_too_long": "Duration too long",
+          "weekday_mismatch": "Weekday does not match the date",
+          "online_only": "Online only",
+          "venue_not_public": "Venue is not public",
+          "venue_unresolved": "Missing venue",
+          "venue_ambiguous": "Ambiguous venue",
+          "venue_country_unavailable": "Country not supported",
+          "timezone_unknown": "Unknown time zone"
+        }
+      },
       "dropDetail": {
         "labels": {
           "stage": "Stopped at",

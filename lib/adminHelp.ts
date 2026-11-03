@@ -317,6 +317,13 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/dates/research"),
   },
   {
+    // Research follow-ups (owner request 2026-11-03): what the research AI could not check, for a manual look-up.
+    key: "datesResearchFollowups",
+    route: "/dates/research/followups",
+    sections: ["filters", "rows", "states"],
+    matches: exact("/dates/research/followups"),
+  },
+  {
     key: "datesAiUsage",
     route: "/dates/ai-usage",
     sections: ["budget", "breakdown"],

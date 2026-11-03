@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import DatesAdminTabs from "@/components/DatesAdminTabs";
 import DatesResearchRuns from "@/components/DatesResearchRuns";
+import { ResearchSubnav } from "@/components/DatesResearchFollowups";
 import { ResearchAreaRunButtons, ResearchDiscoveryAdmissionPanel, ResearchDomainEditor, ResearchEstimateComponents } from "@/components/DatesResearchDiscovery";
 import { ResearchAreaEditor, ResearchDefaultsEditor, ResearchSourceEditor } from "@/components/DatesResearchEditors";
 import { ResearchCommandFeedback, ResearchHelp, ResearchValue, useResearchCommand } from "@/components/DatesResearchControls";
@@ -74,6 +75,7 @@ export default function DatesResearchPage() {
   return <>
     <PageHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} actions={<button className="button button-secondary" disabled={loading} onClick={() => void load()}>{common("refresh")}</button>} />
     <DatesAdminTabs />
+    <ResearchSubnav current="console" />
     {problem?.kind === "unavailable" && <section className="panel research-panel"><p>{t("unavailable")}</p></section>}
     {loading && !read ? <LoadingPanel /> : problem?.kind !== "unavailable" && (!read || !overview || problem?.kind === "denied")
       ? <ErrorPanel message={t(problem?.kind === "denied" ? "denied" : "unconfirmed")} retry={() => void load()} /> : null}

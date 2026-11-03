@@ -1,0 +1,41 @@
+dates_event_research_followup_wire: bodies Core answers on /v1/webadmin/dates_event_research_followups and
+/v1/webadmin/dates_event_research_followup_save (research follow-ups, owner request 2026-11-03: the research
+candidates the AI could not check, for a manual look-up).
+
+Source: Core tests/fixtures/dates_event_research_followup_wire on branch claude/research-followups-20261103
+        at commit 32a04346d6b924545eaeeadd1461809c0085447d (local, not yet published when copied on 2026-11-03). The corpus was generated
+        at fae3e450a0fff0f6056d597f7957760cea909cd8 (manifest.json, `source_commit`) by tests/dates_event_research_followup_fixture_dump.php:
+        both routes through the real secret middleware, router, controller, services, storage and
+        Response::send, on a declared seed (cities and a source through the real admin services; run and
+        intake documents in the shapes the research workers and the D-149 gate store), captured twice.
+How:    BYTE COPIES of the twenty-four files of that directory, manifest.json included; nothing was edited.
+        tests/datesResearchFollowups.test.mts checks every body against the sha256 the manifest names and pins
+        `fixture_set_sha256` and `source_commit`. In Core's capture the services' clock is pinned to
+        1800000000; `rar_`/`rso_` identifiers are mapped to stable ones and each `audit_id` is aud_ and 32 zeros.
+
+A file's route: `webadmin-followup-save-*` is dates_event_research_followup_save, every other
+`webadmin-followups-*` is dates_event_research_followups (manifest.json names it per file).
+
+webadmin-followups-open.json            the default read (state open): nine rows, newest first
+webadmin-followups-moderator.json       the same read by a moderator (reviewer read, no write)
+webadmin-followups-page-1.json          limit 3
+webadmin-followups-page-2.json          limit 3 with page 1's cursor
+webadmin-followups-group-gate.json      group gate (the D-149 publication check)
+webadmin-followups-area-none.json       area_id none (a registered source without a city)
+webadmin-followups-search.json          q SFMOMA
+webadmin-followups-empty.json           a search that finds nothing (a proven empty list)
+webadmin-followups-done.json            state done, after the save below
+webadmin-followups-all.json             state all
+webadmin-followups-filter-denied.json   group gates (422 dates-research-filter-invalid)
+webadmin-followups-viewer-denied.json   a support viewer (403 dates-admin-capability-required)
+webadmin-followups-selector-denied.json without the research selector (426 dates-research-contract-required)
+webadmin-followup-save-done.json        done with a note, revision 0 -> 1
+webadmin-followup-save-replay.json      the same form again (replayed true)
+webadmin-followup-save-new-key-replay.json  the same payload under a new key (replayed true)
+webadmin-followup-save-key-reuse-denied.json the first key with another note (409 dates-admin-idempotency-conflict)
+webadmin-followup-save-conflict.json    another administrator at revision 0 (409 dates-research-conflict, current)
+webadmin-followup-save-reopen.json      open at revision 1 without a note (revision 2, note cleared)
+webadmin-followup-save-dismiss-no-url.json  dismiss of the row without a usable URL
+webadmin-followup-save-moderator-denied.json a moderator's save (403 dates-admin-capability-required)
+webadmin-followup-save-not-found.json   a page a later run imported (404 dates-research-not-found)
+webadmin-followup-save-note-denied.json a 501-character note (422 dates-research-values-invalid)

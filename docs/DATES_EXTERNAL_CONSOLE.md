@@ -494,6 +494,43 @@ intake vocabularies and the closure blockers. Any code the console does not
 know is shown as Core wrote it. A malformed detail, or a detail on a
 candidate that became an intake, makes that candidate row unreadable.
 
+## Research follow-ups: what the AI could not check (owner request 2026-11-03)
+
+`/dates/research/followups` (HU "Kézi ellenőrzés", EN "Needs manual check") lists
+the research candidates the AI could not check, so that the owner can look them up
+in a browser and add the event by hand. Core decides which candidates they are,
+from the run and intake documents, and stores only the operator's state (Core
+`docs/DATES_EVENT_RESEARCH_ADMIN_V1.md`, "Research follow-ups"). The routes are
+`dates_event_research_followups` (a reviewer's read) and
+`dates_event_research_followup_save` (an administrator's write), behind the
+research selector the bridge adds.
+
+- One card per page: the title (and the extracted title when it differs), the
+  date as found and the time the research read with its time zone, the venue,
+  the city or source, the brief topic, the reason in words, the run that found
+  it, how often it was seen, and the page link.
+- The reason: the fetch answer ("The site refused the download (403)", "Not
+  fetched (fetch budget)"), the validator's hard fails in short words ("Missing
+  venue · Duration too long") or "Did not pass the publication check: <blocker>"
+  (the closure vocabulary). A code the console does not know is shown as written.
+- Links open in a new tab with `rel="noopener noreferrer"`: the original page
+  (only an absolute http(s) URL decodes), a Google search of the title, venue and
+  date, and the intake of a gate row.
+- Filters (state, city, problem type) and the search are Core's; the counts beside
+  them are Core's facets. Pages follow Core's cursor.
+- Done, Dismiss and Reopen, with an optional note (500 characters), run through
+  the research command boundary (`useResearchCommand`): a caller-minted
+  idempotency key, the row's revision, the receipt bound to the key, state, note
+  and next revision; a conflict rereads; an unknown outcome keeps the command and
+  the note draft for the retry.
+- Decoders fail closed per row (`lib/datesResearchFollowups.ts`); the bridge's
+  projection names every served field (`lib/datesResearchProjection.ts`).
+
+Evidence: `tests/datesResearchFollowups.test.mts` (Core's genuine corpus
+`tests/fixtures/dates_event_research_followup_wire`, decoders, receipts, proxy
+shapes, projection, EN/HU renders) and `tests/datesResearchFollowupsPage.test.mts`
+(the page's reads and saves under a controlled hook scheduler).
+
 ## Evidence boundaries
 
 Tests distinguish actual provider bytes, synthetic negative controls, production

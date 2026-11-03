@@ -1,0 +1,76 @@
+{
+    "success": true,
+    "status_code": 200,
+    "followups": [
+        {
+            "key": "rfu_66c8c20a154240623a767256cf12940c",
+            "group": "validation",
+            "reason": "validation_failed",
+            "title": "Őszi Kamarakoncert",
+            "extracted_title": "Téli Kamarakoncert",
+            "date_text": "2027-01-28T19:00:00+01:00",
+            "venue_name": null,
+            "found": null,
+            "url": "https://events.example.com/autumn-chamber",
+            "url_host": "events.example.com",
+            "topic": null,
+            "area_id": null,
+            "area_label": null,
+            "source_id": "rso_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "source_label": "Self-made organiser",
+            "run_id": "rru_33333333333333333333333333333333",
+            "run_kind": "source",
+            "run_dry_run": false,
+            "run_created_at": 1799827200,
+            "seen_count": 1,
+            "intake_id": null,
+            "detail": {
+                "stage": "title",
+                "http_status": null,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": "different",
+                "extraction_result": "event"
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        }
+    ],
+    "next_cursor": null,
+    "limit": 50,
+    "counts": {
+        "states": {
+            "open": 1,
+            "done": 0,
+            "dismissed": 0
+        },
+        "groups": {
+            "fetch": 0,
+            "validation": 1,
+            "gate": 0,
+            "other": 0
+        },
+        "areas": [
+            {
+                "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "label": "Berkeley",
+                "count": 8
+            },
+            {
+                "area_id": null,
+                "label": null,
+                "count": 1
+            }
+        ]
+    },
+    "horizon_days": 60,
+    "runs_scanned": 4,
+    "truncated": false,
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

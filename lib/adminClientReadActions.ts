@@ -19,7 +19,7 @@ export const ADMIN_CLIENT_READ_ACTIONS = [
   "dates_activity_list", "dates_activity_detail", "dates_event_content", "dates_activity_location", "dates_configuration", "dates_event_icons", "dates_external_pins", "dates_moderation_queue",
   "dates_moderation_detail", "dates_moderation_evidence", "dates_moderation_sla", "dates_reason_list", "dates_external_event_list",
   "dates_external_event_detail", "dates_external_correction_list", "dates_event_intake_list", "dates_event_intake_detail", "dates_event_intake_usage",
-  "dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail",
+  "dates_event_research_overview", "dates_event_research_run_list", "dates_event_research_run_detail", "dates_event_research_followups",
 ] as const;
 const reads: ReadonlySet<string> = new Set(ADMIN_CLIENT_READ_ACTIONS);
 // Dedicated URI, not an allow-listed generic Core action. Its existing writer

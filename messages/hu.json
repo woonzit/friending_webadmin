@@ -3204,6 +3204,44 @@
           }
         }
       },
+      "datesResearchFollowups": {
+        "title": "Súgó: Kézi ellenőrzés",
+        "summary": "Ez az oldal azokat az eseményeket mutatja, amelyeket a kutató MI megtalált, de nem tudott ellenőrizni: az oldal letiltotta a letöltést, a robots.txt tiltja, elfogyott a letöltési keret, nem ment át az ellenőrzésen vagy a publikálási ellenőrzésen. Minden sor mutatja, amit a kutatás talált, és linkel az oldalra, hogy böngészőben megnézhesd és kézzel felvihesd az eseményt.",
+        "steps": {
+          "1": "Kezdd a Nyitott listával; szűrj városra vagy hibatípusra, vagy keress címre, helyszínre vagy linkre.",
+          "2": "Nyisd meg az eredeti oldalt vagy a Google-keresést, és gyűjtsd össze kézzel az esemény adatait.",
+          "3": "Jelöld Késznek a sort, ha felvitted az eseményt, vagy vesd el, ha nem érdemes felvinni."
+        },
+        "sections": {
+          "filters": {
+            "title": "Szűrők és keresés",
+            "purpose": "Az állapotgombok, a város- és hibatípus-lista és a keresés szűkíti a listát; minden mellettük lévő számot a Core ad.",
+            "guidance": "A lista az utolsó 60 nap kutatási futásait fedi le, oldalanként egy sorral. Ha egy későbbi futás sikeresen ellenőrzi az oldalt, a sor magától eltűnik.",
+            "actions": {
+              "1": "Válaszd ki a várost, ahová eseményt viszel fel, majd azt a hibatípust, amellyel dolgozni szeretnél.",
+              "2": "Keress a cím, a helyszín vagy a link egy szavára; a keresés törlésével újra a teljes listát látod."
+            }
+          },
+          "rows": {
+            "title": "Mit mutat egy sor",
+            "purpose": "Az esemény címét, a talált dátumot és időpontot, a helyszínt, a várost, a kutatási témát, az ellenőrzés okát és a futást, amely megtalálta.",
+            "guidance": "A talált dátum a keresési találat saját szövege; ha az oldalt sikerült elolvasni, a kutatás által kiolvasott időpont is látszik az időzónával. Az ismeretlen okot a Core kódja mutatja.",
+            "actions": {
+              "1": "Használd az Eredeti oldal megnyitása gombot; új lapon nyílik meg, és nem árulja el az oldalnak, honnan jöttél.",
+              "2": "Használd a Keresés Google-ben gombot, ha az oldal letiltotta a letöltést, vagy nincs link."
+            }
+          },
+          "states": {
+            "title": "Kész, Elvetés és Újranyitás",
+            "purpose": "Adminisztrátor jelöli Késznek a sort az esemény felvitele után, veti el, ha nem érdemes felvinni, vagy nyitja újra bármelyiket, nem kötelező megjegyzéssel.",
+            "guidance": "Az állapot az oldalhoz tartozik: a Késznek jelölt oldal akkor is Kész marad, ha egy későbbi futás újra elakad rajta. Minden változás a revíziójával mentődik, és bekerül az auditnaplóba.",
+            "actions": {
+              "1": "Írj rövid megjegyzést (hová vitted fel az eseményt, vagy miért vetetted el), mielőtt megnyomod a gombot.",
+              "2": "Ha a mentés ütközést jelez, a lista újratöltődik; nézd meg a sort, és próbáld újra."
+            }
+          }
+        }
+      },
       "datesResearch": {
         "title": "Eseménykutatás súgója",
         "summary": "A Kutatás városonként és gyűjtőoldalanként szabályozza az automatikus eseménykeresést, darabszámokat és mért költségeket mutat, valamint megőrzi a futások találatait. A város térképi adatait, a biztonsági ellenőrzéseket és az ütemezést a Core kezeli; a konzol nem kér le egyéni taghelyzeteket.",
@@ -8598,6 +8636,113 @@
       }
     },
     "research": {
+      "followups": {
+        "title": "Kézi ellenőrzés",
+        "subtitle": "Események, amelyeket a kutató MI nem tudott ellenőrizni. Nézd meg őket böngészőben, és vidd fel kézzel, amit találsz.",
+        "subnavLabel": "Kutatás oldalai",
+        "subnavConsole": "Beállítások és futások",
+        "subnavFollowups": "Kézi ellenőrzés",
+        "unavailable": "Ez a Core még nem szolgálja ki a kézi ellenőrzés listáját.",
+        "refreshFailed": "A frissítés nem sikerült; a lista az utolsó sikeres olvasást mutatja.",
+        "readOnly": "Csak olvasás: az állapotot adminisztrátor módosíthatja.",
+        "hint": "Az utolsó {days} nap kutatási futásai alapján, oldalanként egy sor. Ha egy későbbi futás sikeresen ellenőrzi az oldalt, a sor magától eltűnik.",
+        "truncated": "Csak a legutóbbi {runs} futást néztük át; a régebbiek nem szerepelnek.",
+        "empty": "Nincs találat.",
+        "emptyOpen": "Nincs kézi ellenőrzésre váró esemény.",
+        "untitled": "(cím nélkül)",
+        "onThePage": "Az oldalon: {title}",
+        "whenFound": "A kutatás szerint: {when}",
+        "venueDiscovered": "A keresés szerint: {venue}",
+        "noCity": "Nincs város",
+        "fromSource": "regisztrált forrásból",
+        "seenCount": "{count} futásban",
+        "noLink": "Nincs link",
+        "openPage": "Eredeti oldal megnyitása",
+        "searchGoogle": "Keresés Google-ben",
+        "openIntake": "Beküldés megnyitása",
+        "updated": "Utoljára módosította: {by}, {at}",
+        "noteHint": "Legfeljebb 500 karakter. A megnyomott gombbal együtt mentődik.",
+        "noteTooLong": "A megjegyzés legfeljebb 500 karakter lehet.",
+        "searchPlaceholder": "Cím, helyszín vagy link",
+        "searchSubmit": "Keresés",
+        "searchClear": "Törlés",
+        "labels": {
+          "when": "Időpont (ahogy találtuk)",
+          "where": "Helyszín",
+          "city": "Város",
+          "topic": "Téma",
+          "reason": "Ok",
+          "found": "Megtalálva",
+          "page": "Oldal",
+          "note": "Megjegyzés:",
+          "noteInput": "Megjegyzés (nem kötelező)",
+          "state": "Állapot",
+          "group": "Hiba típusa",
+          "search": "Keresés"
+        },
+        "states": {
+          "open": "Nyitott",
+          "done": "Kész",
+          "dismissed": "Elvetve"
+        },
+        "stateFilters": {
+          "open": "Nyitott",
+          "done": "Kész",
+          "dismissed": "Elvetett",
+          "all": "Mind"
+        },
+        "groups": {
+          "fetch": "Letöltés",
+          "validation": "Ellenőrzés",
+          "gate": "Publikálási ellenőrzés",
+          "other": "Egyéb"
+        },
+        "actions": {
+          "done": "Kész",
+          "dismiss": "Elvetés",
+          "reopen": "Újranyitás"
+        },
+        "reasons": {
+          "fetchFailed": "Nem sikerült letölteni az oldalt",
+          "fetchRefused": "Az oldal letiltotta a letöltést ({status})",
+          "fetchNotFound": "Az oldal nem található ({status})",
+          "fetchRateLimited": "Az oldal korlátozza a kéréseket ({status})",
+          "fetchStatus": "Az oldal hibával válaszolt ({status})",
+          "robots": "A robots.txt tiltja a letöltést",
+          "fetchBudget": "Nem töltöttük le (letöltési keret)",
+          "validationHardFails": "Nem ment át az ellenőrzésen",
+          "validationEmptyPage": "Az oldalon nincs olvasható szöveg",
+          "validationTitle": "Az oldalon más esemény szerepel, mint amit a keresés talált",
+          "validationExtraction": "Nem sikerült kiolvasni az eseményt az oldalból",
+          "validationFailed": "Nem ment át az ellenőrzésen",
+          "noEventPage": "Nincs használható eseményoldal-link",
+          "blockedDomain": "Tiltott weboldal",
+          "gate": "Nem ment át a publikálási ellenőrzésen"
+        },
+        "hardFails": {
+          "not_an_event": "Nem esemény",
+          "prohibited_category": "Nem engedélyezett kategória",
+          "insufficient_information": "Túl kevés adat",
+          "title_missing": "Hiányzó cím",
+          "start_missing": "Hiányzó kezdési dátum",
+          "time_missing": "Hiányzó kezdési idő",
+          "midnight_unconfirmed": "Nem igazolt éjféli kezdés",
+          "relative_date_unconfirmed": "Bizonytalan relatív dátum",
+          "local_time_nonexistent": "Nem létező helyi idő (óraátállítás)",
+          "local_time_ambiguous": "Kétértelmű helyi idő (óraátállítás)",
+          "start_in_past": "A kezdés a múltban van",
+          "start_beyond_lookahead": "Túl távoli kezdés",
+          "end_not_after_start": "A befejezés nem a kezdés után van",
+          "duration_too_long": "Túl hosszú időtartam",
+          "weekday_mismatch": "A nap nem egyezik a dátummal",
+          "online_only": "Csak online",
+          "venue_not_public": "Nem nyilvános helyszín",
+          "venue_unresolved": "Hiányzó helyszín",
+          "venue_ambiguous": "Kétértelmű helyszín",
+          "venue_country_unavailable": "Nem támogatott ország",
+          "timezone_unknown": "Ismeretlen időzóna"
+        }
+      },
       "dropDetail": {
         "labels": {
           "stage": "Megállt itt",

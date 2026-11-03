@@ -41,7 +41,7 @@ function harness() {
     useCallback: (callback: any, deps: any[]) => { const slot = index++, old = slots[slot]; if (!old || deps.some((value, i) => value !== old.deps[i])) slots[slot] = { callback, deps }; return slots[slot].callback; },
     useEffect: (effect: any, deps: any[]) => { const slot = index++, old = slots[slot]; slots[slot] = deps; if (!old || deps.some((value, i) => value !== old[i])) effects.push(effect); },
   };
-  for (const name of ["PageHeader", "DatesAdminTabs", "DatesResearchRuns", "ResearchAreaEditor", "ResearchDefaultsEditor", "ResearchSourceEditor", "ResearchCommandFeedback", "ResearchHelp", "ResearchValue", "ErrorPanel", "LoadingPanel",
+  for (const name of ["PageHeader", "DatesAdminTabs", "ResearchSubnav", "DatesResearchRuns", "ResearchAreaEditor", "ResearchDefaultsEditor", "ResearchSourceEditor", "ResearchCommandFeedback", "ResearchHelp", "ResearchValue", "ErrorPanel", "LoadingPanel",
     "ResearchAreaRunButtons", "ResearchDiscoveryAdmissionPanel", "ResearchDomainEditor", "ResearchEstimateComponents"]) context[name] = name;
   vm.runInNewContext(code, context);
   function render() { index = 0; const result = context.exports.default(); for (const effect of effects.splice(0)) effect(); return elements(result); }

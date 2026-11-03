@@ -1,0 +1,148 @@
+{
+    "success": true,
+    "status_code": 200,
+    "followups": [
+        {
+            "key": "rfu_27e80da9d8f8a3ea16ec369924337230",
+            "group": "fetch",
+            "reason": "fetch_failed",
+            "title": "Dekmantel Soundsystem",
+            "extracted_title": null,
+            "date_text": "Fri Jan 22 2027 22:00",
+            "venue_name": "The Midway",
+            "found": null,
+            "url": "https://ra.co/events/2071111",
+            "url_host": "ra.co",
+            "topic": null,
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_44444444444444444444444444444444",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799913600,
+            "seen_count": 2,
+            "intake_id": null,
+            "detail": {
+                "stage": "fetch",
+                "http_status": 403,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": null,
+                "extraction_result": null
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        },
+        {
+            "key": "rfu_66c8c20a154240623a767256cf12940c",
+            "group": "validation",
+            "reason": "validation_failed",
+            "title": "Őszi Kamarakoncert",
+            "extracted_title": "Téli Kamarakoncert",
+            "date_text": "2027-01-28T19:00:00+01:00",
+            "venue_name": null,
+            "found": null,
+            "url": "https://events.example.com/autumn-chamber",
+            "url_host": "events.example.com",
+            "topic": null,
+            "area_id": null,
+            "area_label": null,
+            "source_id": "rso_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "source_label": "Self-made organiser",
+            "run_id": "rru_33333333333333333333333333333333",
+            "run_kind": "source",
+            "run_dry_run": false,
+            "run_created_at": 1799827200,
+            "seen_count": 1,
+            "intake_id": null,
+            "detail": {
+                "stage": "title",
+                "http_status": null,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": "different",
+                "extraction_result": "event"
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        },
+        {
+            "key": "rfu_a8f81ed40dead8c6a0c4c32cddc73986",
+            "group": "fetch",
+            "reason": "over_cap",
+            "title": "Lantern Parade",
+            "extracted_title": null,
+            "date_text": "Jan 30, 6 pm",
+            "venue_name": "Civic Center Park",
+            "found": null,
+            "url": "https://lanterns.example.org/parade",
+            "url_host": "lanterns.example.org",
+            "topic": "art exhibitions",
+            "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "area_label": "Berkeley",
+            "source_id": null,
+            "source_label": null,
+            "run_id": "rru_22222222222222222222222222222222",
+            "run_kind": "area",
+            "run_dry_run": false,
+            "run_created_at": 1799740800,
+            "seen_count": 1,
+            "intake_id": null,
+            "detail": {
+                "stage": "fetch",
+                "http_status": null,
+                "hard_fails": [],
+                "gate": null,
+                "title_match": null,
+                "extraction_result": null
+            },
+            "state": "open",
+            "note": null,
+            "revision": 0,
+            "updated_by": null,
+            "updated_at": null
+        }
+    ],
+    "next_cursor": "1799740800:rru_22222222222222222222222222222222:12",
+    "limit": 3,
+    "counts": {
+        "states": {
+            "open": 9,
+            "done": 0,
+            "dismissed": 0
+        },
+        "groups": {
+            "fetch": 4,
+            "validation": 2,
+            "gate": 1,
+            "other": 2
+        },
+        "areas": [
+            {
+                "area_id": "rar_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "label": "Berkeley",
+                "count": 8
+            },
+            {
+                "area_id": null,
+                "label": null,
+                "count": 1
+            }
+        ]
+    },
+    "horizon_days": 60,
+    "runs_scanned": 4,
+    "truncated": false,
+    "server_now": 1800000000,
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

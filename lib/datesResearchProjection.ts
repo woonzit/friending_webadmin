@@ -26,6 +26,14 @@ const run = {
   ...runSummary, candidates: [{ ...leaf("title date_text url_host outcome reason intake_id"), system_closure: leaf("decision blocker"),
     drop_detail: leaf("stage provider_outcome extraction_result events_extracted title_match extracted_title hard_fails gate http_status") }],
 };
+// Research follow-ups (owner request 2026-11-03): an event's discovered and extracted public facts, why it stopped, and
+// the operator's own state. No member, prompt, page text or provider answer.
+const followupState = leaf("key state note revision updated_by updated_at");
+const followup = {
+  ...leaf("key group reason title extracted_title date_text venue_name url url_host topic area_id area_label source_id source_label run_id run_kind run_dry_run run_created_at seen_count intake_id state note revision updated_by updated_at"),
+  found: leaf("starts_local ends_local timezone start_at end_at all_day venue_name venue_address city"),
+  detail: leaf("stage http_status hard_fails gate title_match extraction_result"),
+};
 /** Counts and public source metadata only. No raw document, member, provider prompt or response is kept. */
 export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_event_research_overview: {
@@ -45,6 +53,9 @@ export const DATES_RESEARCH_NAMED: Readonly<Record<string, DatesNamedTree>> = {
   dates_event_research_run_list: { ...envelope, ...leaf("next_cursor limit"), runs: [run] },
   dates_event_research_run_detail: { ...envelope, run },
   dates_event_intake_batch_decide: { ...envelope, results: [leaf("intake_id outcome refusal external_event_id")] },
+  dates_event_research_followups: { ...envelope, ...leaf("next_cursor limit horizon_days runs_scanned truncated"), followups: [followup],
+    counts: { states: leaf("open done dismissed"), groups: leaf("fetch validation gate other"), areas: [leaf("area_id label count")] } },
+  dates_event_research_followup_save: { ...envelope, followup: followupState },
 };
 /** A selected conflict serves only the same public/counts-only row as the corresponding save. */
 export const DATES_RESEARCH_CONFLICT_NAMED: Readonly<Record<string, DatesNamedTree>> = {
@@ -54,4 +65,5 @@ export const DATES_RESEARCH_CONFLICT_NAMED: Readonly<Record<string, DatesNamedTr
   dates_event_research_source_save: source,
   dates_event_research_source_run_now: source,
   dates_event_research_area_run_now: area,
+  dates_event_research_followup_save: followupState,
 };

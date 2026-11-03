@@ -4,6 +4,7 @@ import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchBatchRows
   decodeResearchSource, researchInteger, researchRecord, researchSuccess, researchString, type DatesResearchAction, type ResearchBatchResult,
   type ResearchOverview, type ResearchRows, type ResearchRunDetail, type ResearchRunList } from "@/lib/datesResearchAdmin";
 import { DATES_RESEARCH_READ_CAPABILITY, DATES_RESEARCH_WRITE_CAPABILITY, normalizeDatesResearchProxyBody, researchSourceCanonicalUrl } from "@/lib/datesResearchProxy";
+import { decodeResearchFollowupList, decodeResearchFollowupState, researchFollowupNote, type ResearchFollowupList } from "@/lib/datesResearchFollowups";
 
 export type ResearchSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
 export type ResearchRead<T> = { kind: "ready"; value: T; operator: DatesAdminPrincipal; manage: boolean }
@@ -16,6 +17,21 @@ export async function readResearchOverview(send: ResearchSend, signal?: AbortSig
   if (operator && !hasDatesCapability(operator, DATES_RESEARCH_READ_CAPABILITY) || refusal.kind !== "unreadable" && refusal.status === 403 && refusal.error === "dates-admin-capability-required") return { kind: "denied" };
   if (refusal.kind !== "unreadable" && (refusal.status === 404 || refusal.status === 426)) return { kind: "unavailable" };
   const value = decodeResearchOverview(response);
+  if (value && operator) return { kind: "ready", value, operator, manage: hasDatesCapability(operator, DATES_RESEARCH_WRITE_CAPABILITY) };
+  return refusal.kind === "core" ? { kind: "refused", error: refusal.error } : { kind: "unconfirmed" };
+}
+/**
+ * Research follow-ups (owner request 2026-11-03), read with the operator's membership like the overview: a capability
+ * refusal hides the page, a Core without the route (404/426) says so, and an unreadable body is never an empty list.
+ */
+export async function readResearchFollowups(send: ResearchSend, filters: Record<string, unknown>, signal?: AbortSignal): Promise<ResearchRead<ResearchFollowupList>> {
+  const replies = await Promise.allSettled([send("dates_event_research_followups", filters, signal), send("admin_me", {}, signal)]);
+  const response = replies[0].status === "fulfilled" ? replies[0].value : null;
+  const identity = replies[1].status === "fulfilled" ? replies[1].value : null;
+  const operator = datesAdminPrincipal(identity), refusal = datesIntakeRefusal(response);
+  if (operator && !hasDatesCapability(operator, DATES_RESEARCH_READ_CAPABILITY) || refusal.kind !== "unreadable" && refusal.status === 403 && refusal.error === "dates-admin-capability-required") return { kind: "denied" };
+  if (refusal.kind !== "unreadable" && (refusal.status === 404 || refusal.status === 426)) return { kind: "unavailable" };
+  const value = decodeResearchFollowupList(response);
   if (value && operator) return { kind: "ready", value, operator, manage: hasDatesCapability(operator, DATES_RESEARCH_WRITE_CAPABILITY) };
   return refusal.kind === "core" ? { kind: "refused", error: refusal.error } : { kind: "unconfirmed" };
 }
@@ -58,6 +74,13 @@ export function decodeResearchCommandReceipt(command: ResearchCommand, response:
   // original administrator audit. Only an explicit replay may carry null.
   const scheduledReplay = ["dates_event_research_source_run_now", "dates_event_research_area_run_now"].includes(action) && response.replayed === true && response.audit_id === null;
   if (!audited && !scheduledReplay) return null;
+  if (action === "dates_event_research_followup_save") {
+    // The receipt names the row, the state asked for, the note as Core stores it (trimmed, or none) and the next revision.
+    const row = decodeResearchFollowupState(response.followup);
+    const note = typeof body.note === "string" ? researchFollowupNote(body.note) : null;
+    return row && row.key === body.key && row.state === body.state && row.note === note && row.revision === Number(body.expected_revision) + 1
+      ? { kind: "success", replayed: response.replayed, receipt: row } : null;
+  }
   if (action === "dates_event_research_defaults_save" || action === "dates_event_research_discovery_resume") {
     const row = decodeResearchDefaults(response.defaults);
     return row && row.revision === Number(body.expected_revision) + 1 ? { kind: "success", replayed: response.replayed, receipt: row } : null;
@@ -121,6 +144,10 @@ function researchConflictCause(command: ResearchCommand, current: unknown): Extr
     if (!row) return undefined;
     if (!body.area_id && row.place_id === body.place_id) return "city_registered";
     return row.area_id === body.area_id && row.revision !== body.expected_revision ? "revision" : undefined;
+  }
+  if (action === "dates_event_research_followup_save") {
+    const state = decodeResearchFollowupState(current);
+    return state && state.key === body.key && state.revision !== body.expected_revision ? "revision" : undefined;
   }
   const row = action === "dates_event_research_defaults_save" || action === "dates_event_research_discovery_resume" ? decodeResearchDefaults(current) : null;
   return row && row.revision !== body.expected_revision ? "revision" : undefined;

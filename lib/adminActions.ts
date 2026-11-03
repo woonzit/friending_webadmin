@@ -621,6 +621,9 @@ export const ADMIN_ACTION_ACCESS = {
   dates_event_research_run_list: "dates_read",
   dates_event_research_run_detail: "dates_read",
   dates_event_intake_batch_decide: "dates_write",
+  // Research follow-ups (owner request 2026-11-03): the list is a reviewer's read, the save an administrator's write.
+  dates_event_research_followups: "dates_read",
+  dates_event_research_followup_save: "dates_write",
 } as Record<AdminAction, AdminActionAccess>;
 
 // A Map, not the record itself: a plain-object lookup would resolve inherited
