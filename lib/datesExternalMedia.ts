@@ -61,13 +61,14 @@ export function decodeExternalMediaPending(value: unknown, actor: string, eventI
 }
 
 /** Only proven no-write refusals allow choosing another file or revision. */
-export function externalMediaNoWrite(body: unknown): "invalidFile" | "conflict" | "duplicate" | null {
+export function externalMediaNoWrite(body: unknown): "invalidFile" | "conflict" | "duplicate" | "publishingDisabled" | null {
   if (!record(body) || body.success !== false) return null;
   // These three names are emitted only by this bridge before forwarding.
   if ((body.status_code === 422 && body.error === "image-invalid") || (body.status_code === 413 && body.error === "image-too-large")
     || (body.status_code === 400 && body.error === "invalid-input")) return "invalidFile";
   const refusal = webadminErrorEnvelope(body);
   if (!refusal) return null;
+  if (refusal.status_code === 403 && refusal.error === "dates-external-publishing-disabled") return "publishingDisabled";
   if (refusal.status_code === 409 && ["dates-external-conflict", "dates-external-media-state-invalid", "dates-external-media-limit",
     "dates-external-media-required", "dates-external-media-duplicate"].includes(refusal.error))
     return refusal.error === "dates-external-media-duplicate" ? "duplicate" : "conflict";

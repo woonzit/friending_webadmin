@@ -9610,6 +9610,7 @@
         "saved": "A képmódosítás mentve és visszaellenőrizve.",
         "loadError": "A képek nem olvashatók. Szerkesztés előtt frissíts.",
         "invalidFile": "A képet csatolás előtt elutasítottuk. Válassz támogatott képet, amelynek mindkét mérete legalább 128 képpont.",
+        "publishingDisabled": "A külső események publikálása ki van kapcsolva. Nem csatoltunk képet. A publikálás engedélyezése után próbáld újra.",
         "fileRequired": "Válassz egy támogatott, legfeljebb 10 MB-os képet.",
         "sameFile": "Az újrapróbáláshoz pontosan az eredeti fájlt válaszd ki.",
         "attestationRequired": "Adj meg indokot, és feltöltés előtt erősítsd meg a publikálási jogot.",

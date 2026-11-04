@@ -46,6 +46,7 @@ test("a rejected image can be replaced, while timeouts and malformed results ret
   assert.equal(externalMediaNoWrite({ success: false, status_code: 422, error: "image-invalid" }), "invalidFile");
   assert.equal(externalMediaNoWrite(membershipRefusal(422, "dates-photo-dimensions-invalid")), "invalidFile");
   assert.equal(externalMediaNoWrite(membershipRefusal(409, "dates-external-media-duplicate")), "duplicate");
+  assert.equal(externalMediaNoWrite(membershipRefusal(403, "dates-external-publishing-disabled")), "publishingDisabled");
   for (const refusal of [membershipRefusal(503, "dates-photo-storage-unavailable"), membershipRefusal(409, "dates-admin-idempotency-conflict"),
     { success: false, status_code: 409, error: "dates-external-conflict" }, { success: true, error: "image-invalid", status_code: 422 }, null])
     assert.equal(externalMediaNoWrite(refusal), null);
