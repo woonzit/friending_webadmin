@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { adminExternalMedia } from "@/lib/adminClient";
-import { decodeExternalMedia, decodeExternalMediaPending, type ExternalMedia, type ExternalMediaPending } from "@/lib/datesExternalMedia";
+import { decodeExternalMedia, decodeExternalMediaPending, externalMediaNoWrite, type ExternalMedia, type ExternalMediaPending } from "@/lib/datesExternalMedia";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function DatesExternalMediaPanel({ externalId, actor, revision, canManage, disabled, onChanged, onLockChange }: {
@@ -82,11 +82,10 @@ export default function DatesExternalMediaPanel({ externalId, actor, revision, c
       } else {
         // Only an explicit, complete no-write input/state refusal ends this
         // request. Timeouts, failed storage and malformed successes retain it.
-        const terminal = answer?.success === false && answer.status_code === 409 && ["dates-external-conflict", "dates-external-media-state-invalid",
-          "dates-external-media-limit", "dates-external-media-duplicate"].includes(String(answer.error));
+        const terminal = externalMediaNoWrite(answer);
         if (terminal) {
           window.localStorage.removeItem(storageKey); setPending(null); setCandidate(null); await load(); await onChanged();
-          setMessage(answer?.error === "dates-external-media-duplicate" ? "duplicate" : "conflict");
+          setMessage(terminal);
         } else setMessage("uncertain");
       }
     } catch { setMessage(dispatched ? "uncertain" : "storageError"); }

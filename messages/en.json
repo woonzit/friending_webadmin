@@ -9609,6 +9609,7 @@
         "commandCopy": "Apply this image change using the reason entered in the image panel.",
         "saved": "Image change saved and read back.",
         "loadError": "Images could not be read. Refresh before editing.",
+        "invalidFile": "The image was rejected before attachment. Choose a supported image with both dimensions at least 128 pixels.",
         "fileRequired": "Choose one supported image of up to 10 MB.",
         "sameFile": "Choose the exact original file to retry this upload.",
         "attestationRequired": "Enter a reason and confirm publication rights before uploading.",

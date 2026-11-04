@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeExternalMedia, decodeExternalMediaPending, normalizeExternalMediaRequest } from "../lib/datesExternalMedia.ts";
+import { decodeExternalMedia, decodeExternalMediaPending, externalMediaNoWrite, normalizeExternalMediaRequest } from "../lib/datesExternalMedia.ts";
 import { serveExternalMedia } from "../lib/datesExternalMediaBridge.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_EMAIL, membershipRefusal } from "./support/adminMembershipCases.mts";
 
@@ -41,6 +41,14 @@ test("reload recovery retains the exact actor, target, revision, request key and
   assert.equal(decodeExternalMediaPending(pending, MEMBERSHIP_EMAIL, ACT), null);
   for (const patch of [{ file_sha256: null }, { version: 2 }, { file_sha256: "short" }, { file: "bytes must not live in localStorage" }])
     assert.equal(decodeExternalMediaPending({ ...pending, ...patch }, MEMBERSHIP_EMAIL, XEV), null);
+});
+test("a rejected image can be replaced, while timeouts and malformed results retain the original request", () => {
+  assert.equal(externalMediaNoWrite({ success: false, status_code: 422, error: "image-invalid" }), "invalidFile");
+  assert.equal(externalMediaNoWrite(membershipRefusal(422, "dates-photo-dimensions-invalid")), "invalidFile");
+  assert.equal(externalMediaNoWrite(membershipRefusal(409, "dates-external-media-duplicate")), "duplicate");
+  for (const refusal of [membershipRefusal(503, "dates-photo-storage-unavailable"), membershipRefusal(409, "dates-admin-idempotency-conflict"),
+    { success: false, status_code: 409, error: "dates-external-conflict" }, { success: true, error: "image-invalid", status_code: 422 }, null])
+    assert.equal(externalMediaNoWrite(refusal), null);
 });
 
 function member(row: typeof MEMBERSHIP_CASES[number], manage = true) {

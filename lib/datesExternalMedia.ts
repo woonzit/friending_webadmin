@@ -1,4 +1,4 @@
-import { webadminEnvelope } from "@/lib/webadminEnvelope";
+import { webadminEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 export type ExternalMediaPhoto = { id: string; url: string; moderation_state: "pending" | "approved" | "rejected" | "removed" | "appealed" };
 export type ExternalMedia = { contract_version: 1; external_event_id: string; activity_id: string; revision: number; activity_revision: number;
@@ -58,4 +58,19 @@ export function decodeExternalMediaPending(value: unknown, actor: string, eventI
   if (!request || request.action === "read" || request.external_event_id !== eventId
     || (request.action === "upload" ? typeof value.file_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(value.file_sha256) : value.file_sha256 !== null)) return null;
   return { version: 1, actor, request, file_sha256: value.file_sha256 as string | null };
+}
+
+/** Only proven no-write refusals allow choosing another file or revision. */
+export function externalMediaNoWrite(body: unknown): "invalidFile" | "conflict" | "duplicate" | null {
+  if (!record(body) || body.success !== false) return null;
+  // These three names are emitted only by this bridge before forwarding.
+  if ((body.status_code === 422 && body.error === "image-invalid") || (body.status_code === 413 && body.error === "image-too-large")
+    || (body.status_code === 400 && body.error === "invalid-input")) return "invalidFile";
+  const refusal = webadminErrorEnvelope(body);
+  if (!refusal) return null;
+  if (refusal.status_code === 409 && ["dates-external-conflict", "dates-external-media-state-invalid", "dates-external-media-limit",
+    "dates-external-media-required", "dates-external-media-duplicate"].includes(refusal.error))
+    return refusal.error === "dates-external-media-duplicate" ? "duplicate" : "conflict";
+  if ([400, 413, 422].includes(refusal.status_code) && /^dates-photo-(missing|too-large|invalid|format-invalid|dimensions-invalid|upload-failed|processing-failed)$/.test(refusal.error)) return "invalidFile";
+  return null;
 }
