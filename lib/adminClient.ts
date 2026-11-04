@@ -296,3 +296,28 @@ export async function adminIntakeCreate(body: FormData, signal?: AbortSignal): P
   }
   return finishUpload(response, signal);
 }
+
+/** Dedicated, fixed-destination external artwork bridge. Reads never become uncertain writes. */
+export async function adminExternalMedia(body: Record<string, unknown> | FormData, signal?: AbortSignal): Promise<AdminResponse | null> {
+  const read = !(body instanceof FormData) && body.action === "read";
+  if (signal?.aborted) return null;
+  if (adminMembershipRecovery.getSnapshot()) return refuseUnconfirmed();
+  let response: Response;
+  try {
+    response = await fetch("/api/admin/dates-external-media", { method: "POST", cache: "no-store", signal,
+      headers: { [ADMIN_REQUEST_HEADER]: ADMIN_REQUEST_HEADER_VALUE, ...(body instanceof FormData ? {} : { "Content-Type": "application/json" }) },
+      body: body instanceof FormData ? body : JSON.stringify(body) });
+  } catch {
+    if (!read) return lostUpload(signal);
+    if (signal?.aborted) return null;
+    adminMembershipRecovery.markUnconfirmed(); return refuseUnconfirmed();
+  }
+  if (!read) return finishUpload(response, signal);
+  const data = await responseData(response, signal);
+  if (signal?.aborted) return null;
+  if (definiteSignedOut(response.status, data)) { redirectToLogin(); return null; }
+  if (response.status === 503 && data?.error === ADMIN_MEMBERSHIP_UNCONFIRMED) {
+    adminMembershipRecovery.markUnconfirmed(); return refuseUnconfirmed();
+  }
+  return data;
+}

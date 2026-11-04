@@ -342,7 +342,8 @@ function assertRecoveryTopology(sources: Source[]) {
     "components/useAdminReadRecovery.ts:@/lib/adminReadRecovery"].sort(), "no unreviewed recovery importer");
   assert.deepEqual(reexports, [], "no unreviewed recovery re-export or barrel");
   assert.deepEqual(observers.sort(), [
-    ...Array<string>(7).fill("lib/adminClient.ts:getSnapshot"),
+    // The eighth gate belongs to the dedicated external artwork transport.
+    ...Array<string>(8).fill("lib/adminClient.ts:getSnapshot"),
     "components/AdminMembershipNotice.tsx:subscribe", "components/AdminMembershipNotice.tsx:getSnapshot", "components/AdminMembershipNotice.tsx:getServerSnapshot",
     "components/AdminManualReload.tsx:subscribe", "components/AdminManualReload.tsx:getRecoveryEpoch", "components/AdminManualReload.tsx:getServerRecoveryEpoch",
     "components/AdminMembershipUnavailable.tsx:subscribe", "components/AdminMembershipUnavailable.tsx:getSnapshot",
@@ -422,4 +423,15 @@ test("DERIVED manual reload presentation: no automatic refresh; a second in-page
   button("reload").props.onClick(); assert.equal(reloads, 0); assert.ok(render().some(node => node.children?.includes("reloadWarning")));
   button("keepPage").props.onClick(); assert.equal(confirmed, false); assert.equal(reloads, 0);
   button("reload").props.onClick(); button("reloadConfirm").props.onClick(); assert.equal(reloads, 1);
+});
+
+test("DERIVED external artwork: an unconfirmed membership stops image reads and writes; recovery never replays either", async () => {
+  const h = client(null);
+  h.api.adminMembershipRecovery.markUnconfirmed();
+  await h.api.adminExternalMedia({ action: "read", external_event_id: externalId });
+  await h.api.adminExternalMedia(new FormData());
+  assert.deepEqual(h.requests, []);
+  await h.time.tick();
+  assert.deepEqual(h.requests, ["admin_me"]);
+  assert.equal(h.api.adminMembershipRecovery.getSnapshot(), false);
 });

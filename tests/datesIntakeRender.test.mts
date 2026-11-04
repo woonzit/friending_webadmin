@@ -133,13 +133,15 @@ test("a flyer is private evidence: fetched only on request through the console's
   assert.match(panels, /visible\s+\/\/[^\n]*\n\s+\? <img src=\{src\} alt=\{t\("detail\.flyerAlt", \{ index: image\.index \}\)\} referrerPolicy="same-origin"/);
   assert.match(panels, /const src = datesIntakeMediaUrl\(intake\.intake_id, image\.index\)/);
   assert.equal((panels.match(/datesIntakeMediaUrl/g) ?? []).length, 2, "one import, one use");
-  // The flyer never reaches the editor, the publish command or the event: the only image policy of an event is category art.
+  // A source flyer remains private evidence. Separately owned public artwork
+  // is attached through the external media panel after publication.
   for (const file of ["../components/DatesIntakeReviewPage.tsx", "../components/DatesIntakeEventPanel.tsx", "../components/DatesExternalEventForm.tsx",
     "../components/DatesIntakeSourcePanel.tsx", "../lib/datesIntakeConsole.ts", "../lib/datesExternalInput.ts"])
     assert.doesNotMatch(readFileSync(new URL(file, import.meta.url), "utf8"), /datesIntakeMediaUrl|dates-intake-media|image_url|data_base64/, file);
   const review = readFileSync(new URL("../components/DatesIntakeReviewPage.tsx", import.meta.url), "utf8");
   assert.match(review, /<DatesExternalEventForm key=\{`\$\{intakeId\}:\$\{openEvent\}`\} initialDraft=\{datesIntakeEditorDraft\(editing\.editor_input\)\}/);
-  for (const locale of LOCALES) assert.match(messagesOf(locale).datesAdmin.external.form.imagePolicy, /flyer/i);
+  for (const locale of LOCALES) assert.match(messagesOf(locale).datesAdmin.external.form.imagePolicy,
+    locale === "en" ? /screenshots.*private/i : /képernyőképek.*privát/i);
 });
 
 test("the review screen says in both languages that the content is AI-extracted, and publishes only through the P1 publisher", () => {

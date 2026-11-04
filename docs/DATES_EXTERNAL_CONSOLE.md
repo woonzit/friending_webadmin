@@ -540,3 +540,28 @@ tests, typecheck, optimized build, locale parity, dependency audit, whole author
 tree brand census and Git-free archive verification are required for the final
 HEAVY handover. Lead review and final provider/consumer provenance remain release
 prerequisites.
+
+## Owner-authorized external artwork gallery
+
+The dedicated `/api/admin/dates-external-media` bridge provides a public artwork
+panel on an existing external event. Publish an intake through its normal review
+flow, open the resulting event, and attach its artwork before treating the
+research item as complete. The first image is featured; the external gallery is
+limited to eight, independently of the member gallery's ten-image contract.
+
+The bridge uses only the fixed Core media read, upload and command routes. Every
+request checks the signed session, active Core membership and the corresponding
+Dates capability; writes require same origin and the write capability. JPEG,
+PNG and WebP uploads up to 10 MiB are normalized by Webadmin and independently
+validated/re-encoded by Core. An operator supplies an audit reason, identifies
+AI-generated or owned artwork, and confirms publication rights and safe content.
+A source flyer or browser screenshot remains private intake evidence and must
+never be reused as a public event image.
+
+Image mutations use the external ledger revision and atomically advance both
+ledger and activity revisions. The browser persists the original request before
+dispatch. After an uncertain upload it requires the original file's SHA-256 and
+reuses the same key and revision; no automatic recovery resends the upload.
+A successful receipt is followed by a fresh gallery and event read. Fact edits
+preserve the gallery. Held, deleted, terminal and ended events are read-only.
+The last image cannot be removed; upload its replacement first.

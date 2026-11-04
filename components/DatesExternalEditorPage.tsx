@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import DatesExternalMediaPanel from "@/components/DatesExternalMediaPanel";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -43,6 +44,7 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mediaLocked, setMediaLocked] = useState(false);
   const [needsReload, setNeedsReload] = useState(false);
   const [completedCreate, setCompletedCreate] = useState(false);
   const [confirmReload, setConfirmReload] = useState(false);
@@ -128,7 +130,7 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
   const prefill = approving && event ? datesExternalCorrectionPrefill(event.editor_input, approving) : null;
   // Rejecting a correction is a moderation decision: the review capability (Core-B 4b58099c), not manage.
   const canReview = principal !== null && hasDatesCapability(principal, "dates_external_event_review") && state === "ready";
-  const writeLocked = busy || candidate !== null || pending.kind !== "empty" || needsReload || completedCreate || state !== "ready" || !canManage;
+  const writeLocked = mediaLocked || busy || candidate !== null || pending.kind !== "empty" || needsReload || completedCreate || state !== "ready" || !canManage;
   const locked = writeLocked || (externalId !== undefined && !event?.can_edit);
   // P2a: a publication begun from an AI intake is resumed where its draft and its hold are.
   const pendingTarget = pending.kind === "pending" ? (pending.pending.action === "dates_event_intake_publish"
@@ -282,6 +284,9 @@ export default function DatesExternalEditorPage({ externalId, correctionId }: { 
       <p>{t("counts", { going: event.going_count, interested: event.interested_count })} · {t("operatorCounts")}</p><p>{t("form.imagePolicy")}</p>
     </section>}
     {event && <DatesExternalProvenance event={event} />}
+    {event && principal && <DatesExternalMediaPanel externalId={event.external_event_id} actor={principal.email} revision={event.revision} canManage={canManage}
+      disabled={busy || candidate !== null || pending.kind !== "empty" || needsReload || formDirty || state !== "ready"}
+      onLockChange={setMediaLocked} onChanged={eventChangedElsewhere} />}
     {event && data && principal && event.rechecks !== undefined && <DatesExternalRecheckPanel key={formGeneration} event={event} serverNow={data.server_now}
       actor={principal.email} canManage={canManage} onFactsChanged={() => void eventChangedElsewhere()} />}
     {event && corrections && <section className="panel dates-external-fields" id="corrections" aria-labelledby="corrections-title">
