@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
+import VerificationGateModeControl, { VerificationGateModeLegend } from "@/components/VerificationGateModeControl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
   WAITING_ROOM_COPY_FIELDS,
@@ -37,6 +38,8 @@ import {
   VERIFICATION_METHOD_UNAVAILABLE_ERROR,
   VERIFICATION_START_METHODS,
   documentUsesMethod,
+  gateModeChoice,
+  gateModeOnlyStorefronts,
   validateVerificationMethodDraft,
   verificationMethodConflictResponse,
   verificationMethodConsoleResponse,
@@ -52,10 +55,13 @@ import {
   verificationMethodPhotoCopyGuidance,
   verificationMethodReason,
   verificationMethodShouldRetainMutation,
+  withGateModeChoice,
   type MandatoryMethod,
+  type VerificationGateMode,
   type VerificationMethodAccess,
   type VerificationMethodAvailabilityMap,
   type VerificationMethodConsoleData,
+  type VerificationMethodContractVersion,
   type VerificationMethodDraft,
   type VerificationMethodImpactData,
   type VerificationMethodPendingMutation,
@@ -139,9 +145,16 @@ function PhoneFrame({
  * revision, and one durable retained command in `sessionStorage` that is
  * replayed byte-for-byte after an uncertain answer — never a second logical
  * action.
+ *
+ * D-151 (contract §8.4/§8.5): when Core advertises console contract v2, every
+ * row also carries a gate mode — Explore mode or Full block — and the table
+ * speaks v2 for every call. An older Core (v1 only, or a v2 read refused with
+ * `verification-method-contract-version`) gets exactly today's table and wire,
+ * with no mode control. The draft's modes change only on an operator choice.
  */
 export default function VerificationMethodScopesTable({ access, locked }: Props) {
   const t = useTranslations("verificationAdmin.methodPolicy");
+  const gt = useTranslations("verificationAdmin.methodPolicy.gateMode");
   const shared = useTranslations("verificationAdmin.forced");
   /** Contract §8.1: the availability reason reuses the existing live vocabulary unchanged. */
   const methodReason = useTranslations("verificationAdmin.live.methodReasons");
@@ -168,6 +181,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const [guardRevision, setGuardRevision] = useState<number | null>(null);
   const [pending, setPending] = useState<VerificationMethodPendingMutation | null>(null);
   const pendingRef = useRef<VerificationMethodPendingMutation | null>(null);
+  /** The console wire: Core's advertised version, dropped to 1 for good if Core refuses v2. */
+  const wireRef = useRef<VerificationMethodContractVersion>(access.contractVersion);
 
   const countries = useMemo(() => localizedForcedStorefronts(locale), [locale]);
   const editable = access.editable && !locked && !busy && pending === null;
@@ -181,19 +196,31 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
 
   const load = useCallback(async (keepDraft: boolean) => {
     setState((current) => (current === "ready" ? current : "loading"));
-    const response = await adminCall("verification_method_console", { contract_version: 1 });
-    const parsed = verificationMethodConsoleResponse(response);
+    let version = wireRef.current;
+    let response = await adminCall("verification_method_console", { contract_version: version });
+    let parsed = verificationMethodConsoleResponse(response, version);
+    if (!parsed && version === 2
+      && verificationMethodErrorResponse(response) === "verification-method-contract-version") {
+      // Contract §8.5: a Core that speaks v1 only keeps today's console; the mode control stays hidden.
+      version = 1;
+      wireRef.current = 1;
+      response = await adminCall("verification_method_console", { contract_version: 1 });
+      parsed = verificationMethodConsoleResponse(response, 1);
+    }
     if (!parsed) {
       const error = verificationMethodErrorResponse(response);
       setState(error === VERIFICATION_METHOD_UNAVAILABLE_ERROR ? "unavailable" : "error");
       return;
     }
-    setData(parsed);
-    setDraft((current) => (keepDraft && current ? current : verificationMethodDraft(parsed.policy.draft.document)));
+    const material = parsed;
+    setData(material);
+    setDraft((current) => (keepDraft && current && (current.gate_mode !== null) === (material.contract_version === 2)
+      ? current
+      : verificationMethodDraft(material.policy.draft.document)));
     setImpact(null);
     setConfirmation("");
     setPhotoRefused(false);
-    setGuardRevision(parsed.policy.revision);
+    setGuardRevision(material.policy.revision);
     setState("ready");
   }, []);
 
@@ -291,7 +318,11 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       response = persisted.response;
     }
     const durable = pendingRef.current ?? next;
-    const success = verificationMethodMutationResponse(response);
+    // The retained command names its own wire; Core answers in that version.
+    const commandVersion: VerificationMethodContractVersion = durable.payload.contract_version === 2 ? 2 : 1;
+    /** A command retained under the other wire (Core changed meanwhile) is answered, then re-read. */
+    const sameWire = data?.contract_version === commandVersion;
+    const success = verificationMethodMutationResponse(response, commandVersion);
     if (success) {
       const cleared = clearPending();
       if (!cleared) {
@@ -299,10 +330,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         setBusy(false);
         return;
       }
-      adopt(success.policy, false);
-      setData((current) => (current
-        ? { ...current, policy: success.policy, method_availability: success.method_availability }
-        : current));
+      if (sameWire) {
+        adopt(success.policy, false);
+        setData((current) => (current
+          ? { ...current, policy: success.policy, method_availability: success.method_availability }
+          : current));
+      } else void load(false);
       setNotice(success.replayed
         ? { tone: "info", text: t("replayed") }
         : durable.action === "verification_method_save"
@@ -311,13 +344,15 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       setBusy(false);
       return;
     }
-    const conflict = verificationMethodConflictResponse(response);
+    const conflict = verificationMethodConflictResponse(response, commandVersion);
     if (conflict) {
       const cleared = clearPending();
-      adopt(conflict.data.policy, false);
-      setData((current) => (current
-        ? { ...current, policy: conflict.data.policy, method_availability: conflict.data.method_availability }
-        : current));
+      if (sameWire) {
+        adopt(conflict.data.policy, false);
+        setData((current) => (current
+          ? { ...current, policy: conflict.data.policy, method_availability: conflict.data.method_availability }
+          : current));
+      } else void load(false);
       setNotice({ tone: "error", text: cleared ? t("conflict") : t("persistenceCleanupFailed") });
       setBusy(false);
       return;
@@ -348,7 +383,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       return;
     }
     startMutation("verification_method_save", {
-      contract_version: 1,
+      contract_version: data.contract_version,
       draft_json: draftDocument,
       expected_revision: data.policy.revision,
       request_id: crypto.randomUUID(),
@@ -360,11 +395,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     setBusy(true);
     setNotice(null);
     const expected = data.policy.revision;
+    const version = data.contract_version;
     const response = await adminCall("verification_method_impact", {
-      contract_version: 1,
+      contract_version: version,
       expected_revision: expected,
     });
-    const parsed = verificationMethodImpactResponse(response);
+    const parsed = verificationMethodImpactResponse(response, version);
     const bound = parsed?.expected_revision === expected ? parsed : null;
     setImpact(bound);
     setConfirmation("");
@@ -373,7 +409,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       setBusy(false);
       return;
     }
-    const conflict = verificationMethodConflictResponse(response);
+    const conflict = verificationMethodConflictResponse(response, version);
     if (conflict) {
       adopt(conflict.data.policy, false);
       setNotice({ tone: "error", text: t("conflict") });
@@ -390,7 +426,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const normalizedReason = verificationMethodReason(reason);
     if (!normalizedReason || confirmation !== VERIFICATION_METHOD_CONFIRMATION_PHRASE) return;
     startMutation("verification_method_apply", {
-      contract_version: 1,
+      contract_version: impact.contract_version,
       expected_revision: impact.expected_revision,
       normalized_fingerprint: impact.normalized_fingerprint,
       confirmation_phrase: impact.confirmation_phrase,
@@ -436,8 +472,13 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
 
   function removeOverride(storefront: string) {
     if (!draft) return;
-    // Contract §7.1: removing a row removes its method AND its copy override together.
-    patch({ overrides: draft.overrides.filter((row) => row.storefront !== storefront) });
+    // Contract §7.1: removing a row removes its method AND its copy override
+    // together — and, on v2, its own gate mode, so the storefront follows Global
+    // in every respect instead of lingering as a mode-only row.
+    patch({
+      overrides: draft.overrides.filter((row) => row.storefront !== storefront),
+      ...(draft.gate_mode ? { gate_mode: withGateModeChoice(draft.gate_mode, storefront, "inherit") } : {}),
+    });
     setExpanded((current) => (current === storefront ? undefined : current));
   }
 
@@ -457,6 +498,14 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   }
 
   const availability: VerificationMethodAvailabilityMap = data.method_availability;
+  /** Contract v2 material with its catalogue: only then does the table show the gate-mode column. */
+  const gate = draft.gate_mode;
+  const recommendedMode = data.gate_mode_catalogue?.recommended ?? null;
+  const columnCount = gate !== null && recommendedMode !== null ? 5 : 4;
+  const modeOnlyRows = [...gateModeOnlyStorefronts(draft)].sort((left, right) => (
+    forcedStorefrontName(left, locale).localeCompare(forcedStorefrontName(right, locale), locale)
+    || left.localeCompare(right)
+  ));
   const usedStorefronts = new Set(draft.overrides.map((row) => row.storefront));
   const sortedRows = [...draft.overrides].sort((left, right) => (
     forcedStorefrontName(left.storefront, locale).localeCompare(forcedStorefrontName(right.storefront, locale), locale)
@@ -492,6 +541,31 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   function methodSelectable(method: MandatoryMethod, current: MandatoryMethod): boolean {
     if (method === "none" || method === current) return true;
     return availability[method].policy_enable_allowed;
+  }
+
+  /** Contract §8.4: a v2 preview names each scope's live and draft mode; a scope whose method is None shows Off. */
+  const impactModes = impact !== null && impact.contract_version === 2;
+
+  function impactModeLabel(method: MandatoryMethod, mode: VerificationGateMode | undefined) {
+    if (mode === undefined) return "";
+    return method === "none" ? gt("modes.off") : gt(`modes.${mode}`);
+  }
+
+  function impactModeCells(row: {
+    live_method: MandatoryMethod;
+    draft_method: MandatoryMethod;
+    live_gate_mode?: VerificationGateMode;
+    draft_gate_mode?: VerificationGateMode;
+  }) {
+    if (!impactModes) return null;
+    const live = impactModeLabel(row.live_method, row.live_gate_mode);
+    const next = impactModeLabel(row.draft_method, row.draft_gate_mode);
+    return (
+      <>
+        <td>{live}</td>
+        <td data-gate-mode-changed={live !== next ? "true" : undefined}>{live !== next ? <strong>{next}</strong> : next}</td>
+      </>
+    );
   }
 
   function photoBlockedAlert() {
@@ -697,6 +771,54 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     );
   }
 
+  /** `method` is the row's effective method: `none` shows Off and locks the control. */
+  function gateModeCell(row: RowKey, method: MandatoryMethod) {
+    if (gate === null || recommendedMode === null) return null;
+    return (
+      <td>
+        <VerificationGateModeControl
+          id={`gate-mode-${row ?? "global"}`}
+          scope={row === null ? "global" : "storefront"}
+          forced={method !== "none"}
+          choice={gateModeChoice(gate, row)}
+          inherited={gate.global}
+          recommended={recommendedMode}
+          disabled={!editable}
+          onChange={(choice) => patch({ gate_mode: withGateModeChoice(gate, row, choice) })}
+        />
+      </td>
+    );
+  }
+
+  /** A storefront Core serves with a mode but no method row (contract §8.1 keeps the maps independent). */
+  function modeOnlyRow(storefront: string) {
+    return (
+      <tr key={`mode-only-${storefront}`} data-gate-mode-only={storefront}>
+        <th scope="row">
+          <span className="method-row-title"><strong>{forcedStorefrontName(storefront, locale)}</strong><small>{storefront}</small></span>
+        </th>
+        <td>
+          <div className="method-cell">
+            <span>{gt("methodInherited", { method: t(`methods.${draft!.global}`) })}</span>
+            <small className="field-hint">{gt("modeOnlyHint")}</small>
+          </div>
+        </td>
+        {gateModeCell(storefront, draft!.global)}
+        <td />
+        <td>
+          <button
+            type="button"
+            className="button button-ghost button-danger button-small"
+            disabled={!editable || gate === null}
+            onClick={() => { if (gate) patch({ gate_mode: withGateModeChoice(gate, storefront, "inherit") }); }}
+          >
+            {shared("removeOverride")}
+          </button>
+        </td>
+      </tr>
+    );
+  }
+
   function methodRow(row: RowKey, method: MandatoryMethod) {
     const key = row ?? "global";
     const open = expanded === row;
@@ -710,6 +832,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           </span>
         </th>
         <td>{methodSelect(row, method)}</td>
+        {gateModeCell(row, method)}
         <td>
           <button
             type="button"
@@ -731,7 +854,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       </tr>,
       open ? (
         <tr key={`${key}-detail`} className="method-row-expanded">
-          <td colSpan={4} id={`method-row-detail-${key}`}>{copyEditor(row)}</td>
+          <td colSpan={columnCount} id={`method-row-detail-${key}`}>{copyEditor(row)}</td>
         </tr>
       ) : null,
     ];
@@ -753,16 +876,18 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           <div><h2>{t("tableTitle")}</h2><p>{t("tableCopy")}</p></div>
           <div className="row-actions">
             <span className="status-badge neutral">{t("draftRevision", { revision: data.policy.revision })}</span>
-            {dirty ? <span className="status-badge status-pending">{t("unsaved")}</span> : null}
+            {dirty ? <span className="status-badge status-pending">{columnCount === 5 ? t("unsavedWithMode") : t("unsaved")}</span> : null}
           </div>
         </div>
         <div className="panel-body form-stack">
+          {columnCount === 5 ? <VerificationGateModeLegend /> : null}
           <div className="table-wrap">
-            <table className="data-table method-policy-table">
+            <table className={`data-table method-policy-table${columnCount === 5 ? " method-policy-table-gate" : ""}`}>
               <thead>
                 <tr>
                   <th>{t("columns.storefront")}</th>
                   <th>{t("columns.method")}</th>
+                  {columnCount === 5 ? <th>{gt("column")}</th> : null}
                   <th>{t("columns.copy")}</th>
                   <th>{t("columns.actions")}</th>
                 </tr>
@@ -770,6 +895,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
               <tbody>
                 {methodRow(null, draft.global)}
                 {sortedRows.map((row) => methodRow(row.storefront, row.method))}
+                {columnCount === 5 ? modeOnlyRows.map((storefront) => modeOnlyRow(storefront)) : null}
               </tbody>
             </table>
           </div>
@@ -836,6 +962,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                       <th>{t("impactColumns.storefront")}</th>
                       <th>{t("impactColumns.liveMethod")}</th>
                       <th>{t("impactColumns.draftMethod")}</th>
+                      {impactModes ? <th>{gt("impactLiveMode")}</th> : null}
+                      {impactModes ? <th>{gt("impactDraftMode")}</th> : null}
                       <th>{t("impactColumns.seen")}</th>
                       <th>{t("impactColumns.currentlyGated")}</th>
                       <th>{t("impactColumns.wouldBeGated")}</th>
@@ -850,6 +978,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                         <th scope="row">{forcedStorefrontName(row.storefront, locale)} · {row.storefront}</th>
                         <td>{t(`methods.${row.live_method}`)}</td>
                         <td>{t(`methods.${row.draft_method}`)}</td>
+                        {impactModeCells(row)}
                         <td>{row.members_seen}</td>
                         <td>{row.currently_gated}</td>
                         <td>{row.would_be_gated}</td>
@@ -862,6 +991,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                       <th scope="row">{t("unknownStorefront")}</th>
                       <td>{t(`methods.${impact.impact.unknown_storefront.live_method}`)}</td>
                       <td>{t(`methods.${impact.impact.unknown_storefront.draft_method}`)}</td>
+                      {impactModeCells(impact.impact.unknown_storefront)}
                       <td>{impact.impact.unknown_storefront.members_seen}</td>
                       <td>{impact.impact.unknown_storefront.currently_gated}</td>
                       <td>{impact.impact.unknown_storefront.would_be_gated}</td>
@@ -872,6 +1002,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                   </tbody>
                 </table>
               </div>
+              {impactModes ? <p className="field-hint" data-gate-mode-impact-note="true">{gt("impactNote")}</p> : null}
               <small className="field-hint">{t("computedAt", { time: new Date(impact.evaluated_at * 1000).toISOString() })}</small>
               {impact.publish_guard.blocking_codes.filter((code) => code !== VERIFICATION_METHOD_PHOTO_UNAVAILABLE).map((code) => (
                 <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>

@@ -1,0 +1,14 @@
+{
+    "contract_version": 1,
+    "contract_ready": true,
+    "actions": [
+        "verification_method_apply",
+        "verification_method_console",
+        "verification_method_impact",
+        "verification_method_save"
+    ],
+    "contract_versions": [
+        1,
+        2
+    ]
+}

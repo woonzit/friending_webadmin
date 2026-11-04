@@ -41,6 +41,16 @@ import { verificationAdminPrincipal, type VerificationAdminPrincipal } from "@/l
  * are shared with `lib/forcedVerification.ts` — Core reuses the same
  * `ForcedVerificationPolicy` normalizers for this document, so the two must not
  * drift apart.
+ *
+ * Contract v2 (D-151 §8, `team/handoffs/verification-explore-contract.md`)
+ * adds the gate mode: `gate_mode: {global, overrides}` inside the same
+ * document, each value `explore | full_block`. The console speaks v2 only when
+ * Core advertises it (`admin_me.verification_method.contract_versions`); an
+ * older Core keeps the v1 wire byte for byte and the mode control stays hidden.
+ * An absent `gate_mode` means Full block. The console never invents a mode:
+ * the draft carries exactly what Core served plus what the operator changed,
+ * and Core stores the key only when it differs from the default (canonical
+ * omission, contract §8.1).
  */
 
 // ---------------------------------------------------------------------------
@@ -74,6 +84,27 @@ export type MandatoryMethod = (typeof MANDATORY_METHODS)[number];
 /** The methods a deployment can actually start; `none` has no availability entry. */
 export const VERIFICATION_START_METHODS = ["video", "persona", "photo"] as const;
 export type VerificationStartMethod = (typeof VERIFICATION_START_METHODS)[number];
+
+/**
+ * The console wire versions this Webadmin speaks. v1 is T-617 (three-key
+ * document); v2 is D-151 §8.4 (the document gains `gate_mode`).
+ */
+export const VERIFICATION_METHOD_CONTRACT_VERSIONS = [1, 2] as const;
+export type VerificationMethodContractVersion = (typeof VERIFICATION_METHOD_CONTRACT_VERSIONS)[number];
+
+/**
+ * D-151 §8.1: what a member who must verify (and has not) gets on a client
+ * that asks for Explore. Closed, in Core's catalogue order. "Off" is not a
+ * mode: it is the method `none`.
+ */
+export const VERIFICATION_GATE_MODES = ["explore", "full_block"] as const;
+export type VerificationGateMode = (typeof VERIFICATION_GATE_MODES)[number];
+/** An absent `gate_mode` (and an absent storefront entry under a Full block global) means Full block. */
+export const VERIFICATION_GATE_MODE_ABSENT: VerificationGateMode = "full_block";
+/** The member-request selector a client sends to opt into Explore (contract §2). */
+export const VERIFICATION_GATE_MODE_CLIENT_SELECTOR = "forced_verification_contract_version";
+/** A storefront row's mode control: its own explicit mode, or no key (it follows the global mode). */
+export type VerificationGateModeChoice = VerificationGateMode | "inherit";
 
 /**
  * Why a method cannot start, per method (Core
@@ -138,6 +169,18 @@ export type VerificationMethodAvailabilityMap = {
   photo: VerificationMethodAvailability & { method: "photo" };
 };
 
+export type VerificationGateModePolicy = {
+  global: VerificationGateMode;
+  /** Ascending ALPHA3, independent of the method overrides: mode(sf) = overrides[sf] ?? global. */
+  overrides: Record<string, VerificationGateMode>;
+};
+
+export type VerificationGateModeCatalogue = {
+  modes: VerificationGateMode[];
+  recommended: VerificationGateMode;
+  client_selector: typeof VERIFICATION_GATE_MODE_CLIENT_SELECTOR;
+};
+
 export type VerificationMethodDocument = {
   global: MandatoryMethod;
   /** Ascending ALPHA3; the key set equals `waiting_room_copy.overrides` exactly. */
@@ -146,6 +189,11 @@ export type VerificationMethodDocument = {
     default: Record<WaitingRoomLocale, WaitingRoomCopy>;
     overrides: Record<string, Record<WaitingRoomLocale, WaitingRoomCopyOverride>>;
   };
+  /**
+   * Contract v2 only, and then always present (an absent stored key is
+   * materialized as Full block). A v1 document never carries it.
+   */
+  gate_mode?: VerificationGateModePolicy;
 };
 
 export type VerificationMethodDraftSnapshot = {
@@ -175,18 +223,24 @@ export type VerificationMethodPublishGuard = {
 };
 
 export type VerificationMethodConsoleData = {
-  contract_version: 1;
+  contract_version: VerificationMethodContractVersion;
   principal: VerificationAdminPrincipal;
   evaluated_at: number;
   policy: VerificationMethodPolicy;
   method_availability: VerificationMethodAvailabilityMap;
   publish_guard: VerificationMethodPublishGuard;
-  compiled_defaults: { waiting_room_copy: Record<WaitingRoomLocale, WaitingRoomCopy> };
+  compiled_defaults: {
+    waiting_room_copy: Record<WaitingRoomLocale, WaitingRoomCopy>;
+    /** v2 only. */
+    gate_mode?: VerificationGateModePolicy;
+  };
   storefront_catalogue_hint: typeof VERIFICATION_METHOD_STOREFRONT_HINT;
+  /** v2 only: the closed mode list and the one Core recommends where a method is forced. */
+  gate_mode_catalogue?: VerificationGateModeCatalogue;
 };
 
 export type VerificationMethodMutationData = {
-  contract_version: 1;
+  contract_version: VerificationMethodContractVersion;
   principal: VerificationAdminPrincipal;
   policy: VerificationMethodPolicy;
   method_availability: VerificationMethodAvailabilityMap;
@@ -202,19 +256,25 @@ export type VerificationMethodImpactCounts = {
   newly_released: number;
 };
 
-export type VerificationMethodImpactRow = VerificationMethodImpactCounts & {
+/** v2 only (contract §8.4): the counts do not depend on the mode; the mode says what a held member gets. */
+export type VerificationMethodImpactGateModes = {
+  live_gate_mode?: VerificationGateMode;
+  draft_gate_mode?: VerificationGateMode;
+};
+
+export type VerificationMethodImpactRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
   storefront: string;
   live_method: MandatoryMethod;
   draft_method: MandatoryMethod;
 };
 
-export type VerificationMethodImpactUnknownRow = VerificationMethodImpactCounts & {
+export type VerificationMethodImpactUnknownRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
   live_method: MandatoryMethod;
   draft_method: MandatoryMethod;
 };
 
 export type VerificationMethodImpactData = {
-  contract_version: 1;
+  contract_version: VerificationMethodContractVersion;
   principal: VerificationAdminPrincipal;
   evaluated_at: number;
   expected_revision: number;
@@ -230,7 +290,7 @@ export type VerificationMethodImpactData = {
 };
 
 export type VerificationMethodConflictData = {
-  contract_version: 1;
+  contract_version: VerificationMethodContractVersion;
   policy: VerificationMethodPolicy;
   method_availability: VerificationMethodAvailabilityMap;
 };
@@ -240,6 +300,11 @@ export type VerificationMethodAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   actions: VerificationMethodAction[];
+  /**
+   * D-151 §8.4: additive, ascending, always including 1. Absent on a Core that
+   * predates contract v2, which therefore speaks v1 only.
+   */
+  contract_versions?: number[];
 };
 
 export type VerificationMethodAccess = {
@@ -251,6 +316,8 @@ export type VerificationMethodAccess = {
   previewable: boolean;
   /** Publish (`verification_method_apply`). */
   publishable: boolean;
+  /** The highest console wire both sides speak; 2 shows the gate-mode control. */
+  contractVersion: VerificationMethodContractVersion;
 };
 
 // ---------------------------------------------------------------------------
@@ -403,18 +470,48 @@ function localizedCopyOverride(
   return raw && en && hu ? { en, hu } : null;
 }
 
+function gateMode(value: unknown): VerificationGateMode | null {
+  return oneOf(value, VERIFICATION_GATE_MODES);
+}
+
+/** The default an absent `gate_mode` stands for (contract §8.1). */
+export function defaultVerificationGateModePolicy(): VerificationGateModePolicy {
+  return { global: VERIFICATION_GATE_MODE_ABSENT, overrides: {} };
+}
+
+/**
+ * `gate_mode` is closed on every key policy: exactly `{global, overrides}`,
+ * values `explore | full_block`, override keys from the storefront catalogue.
+ * The console writes this object back, so a key it does not know could only
+ * be dropped silently; it refuses the material instead.
+ */
+export function verificationGateModePolicy(value: unknown): VerificationGateModePolicy | null {
+  const raw = exactObject(value, ["global", "overrides"]);
+  const global = gateMode(raw?.global);
+  const overrides = sortedStorefrontMap(raw?.overrides, gateMode);
+  return global && overrides ? { global, overrides } : null;
+}
+
+const DOCUMENT_KEYS_V1 = ["global", "overrides", "waiting_room_copy"] as const;
+const DOCUMENT_KEYS_V2 = [...DOCUMENT_KEYS_V1, "gate_mode"] as const;
+
 /**
  * The stored document. Core refuses a document whose `overrides` and
  * `waiting_room_copy.overrides` key sets differ, so the decoder refuses it too
  * rather than rendering half a row model.
+ *
+ * `version` 2 (D-151 §8.4) adds `gate_mode`. On a read ("server") an absent
+ * key is Full block; a save command ("exact") carries exactly the four keys.
+ * A v1 document never yields `gate_mode`.
  */
 export function verificationMethodDocument(
   value: unknown,
   policy: KeyPolicy = "server",
+  version: VerificationMethodContractVersion = 1,
 ): VerificationMethodDocument | null {
   const raw = policy === "exact"
-    ? exactObject(value, ["global", "overrides", "waiting_room_copy"])
-    : requiredObject(value, ["global", "overrides", "waiting_room_copy"]);
+    ? exactObject(value, version === 2 ? DOCUMENT_KEYS_V2 : DOCUMENT_KEYS_V1)
+    : requiredObject(value, DOCUMENT_KEYS_V1);
   const global = mandatoryMethod(raw?.global);
   const overrides = sortedStorefrontMap(raw?.overrides, mandatoryMethod);
   const copy = policy === "exact"
@@ -427,16 +524,24 @@ export function verificationMethodDocument(
   const copyKeys = Object.keys(copyOverrides);
   if (methodKeys.length !== copyKeys.length
     || methodKeys.some((key, index) => key !== copyKeys[index])) return null;
-  return {
+  const document: VerificationMethodDocument = {
     global,
     overrides,
     waiting_room_copy: { default: copyDefault, overrides: copyOverrides },
   };
+  if (version === 1) return document;
+  const gate = raw && Object.hasOwn(raw, "gate_mode")
+    ? verificationGateModePolicy(raw.gate_mode)
+    : defaultVerificationGateModePolicy();
+  return gate ? { ...document, gate_mode: gate } : null;
 }
 
-function draftSnapshot(value: unknown): VerificationMethodDraftSnapshot | null {
+function draftSnapshot(
+  value: unknown,
+  version: VerificationMethodContractVersion,
+): VerificationMethodDraftSnapshot | null {
   const raw = requiredObject(value, ["document", "saved_at", "saved_by"]);
-  const document = verificationMethodDocument(raw?.document);
+  const document = verificationMethodDocument(raw?.document, "server", version);
   const savedAt = integer(raw?.saved_at);
   const savedBy = actor(raw?.saved_by);
   return document && savedAt !== null && savedBy
@@ -444,9 +549,12 @@ function draftSnapshot(value: unknown): VerificationMethodDraftSnapshot | null {
     : null;
 }
 
-function liveSnapshot(value: unknown): VerificationMethodLiveSnapshot | null {
+function liveSnapshot(
+  value: unknown,
+  version: VerificationMethodContractVersion,
+): VerificationMethodLiveSnapshot | null {
   const raw = requiredObject(value, ["document", "published_at", "published_by"]);
-  const document = verificationMethodDocument(raw?.document);
+  const document = verificationMethodDocument(raw?.document, "server", version);
   const publishedAt = integer(raw?.published_at);
   const publishedBy = actor(raw?.published_by);
   return document && publishedAt !== null && publishedBy
@@ -454,13 +562,17 @@ function liveSnapshot(value: unknown): VerificationMethodLiveSnapshot | null {
     : null;
 }
 
-export function verificationMethodPolicy(value: unknown): VerificationMethodPolicy | null {
+/** The policy keeps `schema_version: 1` on both wires; only its documents differ (contract §8.4). */
+export function verificationMethodPolicy(
+  value: unknown,
+  version: VerificationMethodContractVersion = 1,
+): VerificationMethodPolicy | null {
   const raw = requiredObject(value, [
     "schema_version", "revision", "draft", "live", "updated_at", "updated_by",
   ]);
   const parsedRevision = revision(raw?.revision);
-  const draft = draftSnapshot(raw?.draft);
-  const live = liveSnapshot(raw?.live);
+  const draft = draftSnapshot(raw?.draft, version);
+  const live = liveSnapshot(raw?.live, version);
   const updatedAt = integer(raw?.updated_at);
   const updatedBy = actor(raw?.updated_by);
   if (raw?.schema_version !== 1 || parsedRevision === null || !draft || !live
@@ -486,6 +598,21 @@ function publishGuard(value: unknown): VerificationMethodPublishGuard | null {
   if (expected.length !== parsed.length || expected.some((code, index) => code !== parsed[index])) return null;
   // `ready` is exactly "no blocking code"; a disagreeing pair is not a proven state.
   return raw.ready === (parsed.length === 0) ? { ready: raw.ready, blocking_codes: parsed } : null;
+}
+
+/** The closed mode catalogue: exactly Core's list in its order, a recommended member of it, the named selector. */
+function gateModeCatalogue(value: unknown): VerificationGateModeCatalogue | null {
+  const raw = requiredObject(value, ["modes", "recommended", "client_selector"]);
+  if (!raw || !Array.isArray(raw.modes)
+    || raw.modes.length !== VERIFICATION_GATE_MODES.length
+    || raw.modes.some((mode, index) => mode !== VERIFICATION_GATE_MODES[index])) return null;
+  const recommended = gateMode(raw.recommended);
+  if (!recommended || raw.client_selector !== VERIFICATION_GATE_MODE_CLIENT_SELECTOR) return null;
+  return {
+    modes: [...VERIFICATION_GATE_MODES],
+    recommended,
+    client_selector: VERIFICATION_GATE_MODE_CLIENT_SELECTOR,
+  };
 }
 
 function impactCounts(source: Record<string, unknown>): VerificationMethodImpactCounts | null {
@@ -537,7 +664,26 @@ export function verificationMethodAdminMe(value: unknown): VerificationMethodAdm
   const ordered = VERIFICATION_METHOD_ACTIONS.filter((action) => actions.includes(action));
   if (ordered.length !== actions.length || ordered.some((action, index) => action !== actions[index])) return null;
   if (!raw.contract_ready && ordered.length !== 0) return null;
-  return { contract_version: 1, contract_ready: raw.contract_ready, actions: ordered };
+  const block: VerificationMethodAdminMe = { contract_version: 1, contract_ready: raw.contract_ready, actions: ordered };
+  if (!Object.hasOwn(raw, "contract_versions")) return block;
+  // D-151 §8.4: a list Core sorts, with no duplicate, that still names the
+  // `contract_version: 1` this block is. A later version is tolerated; the
+  // console simply never speaks it.
+  if (!Array.isArray(raw.contract_versions) || raw.contract_versions.length === 0) return null;
+  const versions: number[] = [];
+  for (const entry of raw.contract_versions) {
+    const parsedVersion = integer(entry, 1);
+    if (parsedVersion === null || (versions.length > 0 && parsedVersion <= versions[versions.length - 1])) return null;
+    versions.push(parsedVersion);
+  }
+  return versions.includes(1) ? { ...block, contract_versions: versions } : null;
+}
+
+/** The console wire to speak: v2 only when Core advertises it. */
+export function verificationMethodContractVersion(
+  projection: VerificationMethodAdminMe | null,
+): VerificationMethodContractVersion {
+  return projection?.contract_versions?.includes(2) ? 2 : 1;
 }
 
 /**
@@ -549,7 +695,7 @@ export function verificationMethodAccess(
   projection: VerificationMethodAdminMe | null,
 ): VerificationMethodAccess {
   if (!projection?.contract_ready) {
-    return { visible: false, editable: false, previewable: false, publishable: false };
+    return { visible: false, editable: false, previewable: false, publishable: false, contractVersion: 1 };
   }
   const visible = projection.actions.includes("verification_method_console");
   return {
@@ -557,6 +703,7 @@ export function verificationMethodAccess(
     editable: visible && projection.actions.includes("verification_method_save"),
     previewable: visible && projection.actions.includes("verification_method_impact"),
     publishable: visible && projection.actions.includes("verification_method_apply"),
+    contractVersion: verificationMethodContractVersion(projection),
   };
 }
 
@@ -588,6 +735,8 @@ export const VERIFICATION_METHOD_ERROR_STATUSES = {
   "verification-method-copy-default-invalid": 422,
   "verification-method-copy-overrides-invalid": 422,
   "verification-method-document-invalid": 422,
+  // D-151 §8.2: a `gate_mode` that is not exactly `{global, overrides}` with closed values.
+  "verification-method-gate-mode-invalid": 422,
   "verification-method-request-id-invalid": 422,
   "verification-method-conflict": 409,
   "verification-method-video-unavailable": 409,
@@ -645,24 +794,33 @@ function successData<T>(value: unknown, parse: (data: unknown) => T | null): T |
   return envelope ? parse(envelope.data) : null;
 }
 
-export function verificationMethodConsoleResponse(value: unknown): VerificationMethodConsoleData | null {
+/**
+ * `version` is the wire the request asked for; Core answers in that version
+ * or refuses it (`verification-method-contract-version`), so an answer in any
+ * other version is not proven material.
+ */
+export function verificationMethodConsoleResponse(
+  value: unknown,
+  version: VerificationMethodContractVersion = 1,
+): VerificationMethodConsoleData | null {
   return successData(value, (data) => {
     const raw = requiredObject(data, [
       "contract_version", "principal", "evaluated_at", "policy", "method_availability",
       "publish_guard", "compiled_defaults", "storefront_catalogue_hint",
+      ...(version === 2 ? ["gate_mode_catalogue"] : []),
     ]);
     const principal = verificationAdminPrincipal(raw?.principal);
     const evaluatedAt = integer(raw?.evaluated_at);
-    const policy = verificationMethodPolicy(raw?.policy);
+    const policy = verificationMethodPolicy(raw?.policy, version);
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
     const guard = publishGuard(raw?.publish_guard);
-    const compiled = requiredObject(raw?.compiled_defaults, ["waiting_room_copy"]);
+    const compiled = requiredObject(raw?.compiled_defaults, version === 2 ? ["waiting_room_copy", "gate_mode"] : ["waiting_room_copy"]);
     const compiledCopy = localizedCopy(compiled?.waiting_room_copy, "server");
-    if (raw?.contract_version !== 1 || !principal || evaluatedAt === null || !policy
+    if (raw?.contract_version !== version || !principal || evaluatedAt === null || !policy
       || !methodAvailability || !guard || !compiledCopy
       || raw.storefront_catalogue_hint !== VERIFICATION_METHOD_STOREFRONT_HINT) return null;
-    return {
-      contract_version: 1,
+    const material: VerificationMethodConsoleData = {
+      contract_version: version,
       principal,
       evaluated_at: evaluatedAt,
       policy,
@@ -671,21 +829,33 @@ export function verificationMethodConsoleResponse(value: unknown): VerificationM
       compiled_defaults: { waiting_room_copy: compiledCopy },
       storefront_catalogue_hint: VERIFICATION_METHOD_STOREFRONT_HINT,
     };
+    if (version === 1) return material;
+    const compiledGate = verificationGateModePolicy(compiled?.gate_mode);
+    const catalogue = gateModeCatalogue(raw.gate_mode_catalogue);
+    if (!compiledGate || !catalogue) return null;
+    return {
+      ...material,
+      compiled_defaults: { waiting_room_copy: compiledCopy, gate_mode: compiledGate },
+      gate_mode_catalogue: catalogue,
+    };
   });
 }
 
-export function verificationMethodMutationResponse(value: unknown): VerificationMethodMutationData | null {
+export function verificationMethodMutationResponse(
+  value: unknown,
+  version: VerificationMethodContractVersion = 1,
+): VerificationMethodMutationData | null {
   return successData(value, (data) => {
     const raw = requiredObject(data, [
       "contract_version", "principal", "policy", "method_availability", "replayed",
     ]);
     const principal = verificationAdminPrincipal(raw?.principal);
-    const policy = verificationMethodPolicy(raw?.policy);
+    const policy = verificationMethodPolicy(raw?.policy, version);
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
-    if (raw?.contract_version !== 1 || !principal || !policy || !methodAvailability
+    if (raw?.contract_version !== version || !principal || !policy || !methodAvailability
       || typeof raw.replayed !== "boolean") return null;
     return {
-      contract_version: 1,
+      contract_version: version,
       principal,
       policy,
       method_availability: methodAvailability,
@@ -694,7 +864,21 @@ export function verificationMethodMutationResponse(value: unknown): Verification
   });
 }
 
-export function verificationMethodImpactResponse(value: unknown): VerificationMethodImpactData | null {
+/** v2 rows (contract §8.4) also name the live and draft gate mode; v1 rows never do. */
+function impactGateModes(
+  source: Record<string, unknown>,
+  version: VerificationMethodContractVersion,
+): VerificationMethodImpactGateModes | null {
+  if (version === 1) return {};
+  const live = gateMode(source.live_gate_mode);
+  const draft = gateMode(source.draft_gate_mode);
+  return live && draft ? { live_gate_mode: live, draft_gate_mode: draft } : null;
+}
+
+export function verificationMethodImpactResponse(
+  value: unknown,
+  version: VerificationMethodContractVersion = 1,
+): VerificationMethodImpactData | null {
   return successData(value, (data) => {
     const raw = requiredObject(data, [
       "contract_version", "principal", "evaluated_at", "expected_revision", "normalized_fingerprint",
@@ -707,7 +891,7 @@ export function verificationMethodImpactResponse(value: unknown): VerificationMe
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
     const guard = publishGuard(raw?.publish_guard);
     const impact = requiredObject(raw?.impact, ["by_storefront", "unknown_storefront", "totals"]);
-    if (raw?.contract_version !== 1 || !principal || evaluatedAt === null || expectedRevision === null
+    if (raw?.contract_version !== version || !principal || evaluatedAt === null || expectedRevision === null
       || !fingerprint || raw.confirmation_phrase !== VERIFICATION_METHOD_CONFIRMATION_PHRASE
       || !methodAvailability || !guard || !impact
       || !Array.isArray(impact.by_storefront)
@@ -722,8 +906,9 @@ export function verificationMethodImpactResponse(value: unknown): VerificationMe
       const live = mandatoryMethod(row.live_method);
       const draft = mandatoryMethod(row.draft_method);
       const counts = impactCounts(row);
-      if (!live || !draft || !counts) return null;
-      rows.push({ storefront: row.storefront, live_method: live, draft_method: draft, ...counts });
+      const modes = impactGateModes(row, version);
+      if (!live || !draft || !counts || !modes) return null;
+      rows.push({ storefront: row.storefront, live_method: live, draft_method: draft, ...modes, ...counts });
     }
     const keys = rows.map((row) => row.storefront);
     if (new Set(keys).size !== keys.length) return null;
@@ -733,16 +918,17 @@ export function verificationMethodImpactResponse(value: unknown): VerificationMe
     const unknownLive = mandatoryMethod(unknownRaw?.live_method);
     const unknownDraft = mandatoryMethod(unknownRaw?.draft_method);
     const unknownCounts = unknownRaw ? impactCounts(unknownRaw) : null;
+    const unknownModes = unknownRaw ? impactGateModes(unknownRaw, version) : null;
     const totalsRaw = requiredObject(impact.totals, IMPACT_COUNT_KEYS);
     const totals = totalsRaw ? impactCounts(totalsRaw) : null;
-    if (!unknownLive || !unknownDraft || !unknownCounts || !totals) return null;
+    if (!unknownLive || !unknownDraft || !unknownCounts || !unknownModes || !totals) return null;
     // Contract §4.3: `totals` is the exact sum of the storefront rows plus the
     // unknown row. A total that does not add up is not a proven count.
     const expectedTotals = sumCounts([...rows, unknownCounts]);
     if (IMPACT_COUNT_KEYS.some((key) => totals[key] !== expectedTotals[key])) return null;
 
     return {
-      contract_version: 1,
+      contract_version: version,
       principal,
       evaluated_at: evaluatedAt,
       expected_revision: expectedRevision,
@@ -752,7 +938,7 @@ export function verificationMethodImpactResponse(value: unknown): VerificationMe
       publish_guard: guard,
       impact: {
         by_storefront: rows,
-        unknown_storefront: { live_method: unknownLive, draft_method: unknownDraft, ...unknownCounts },
+        unknown_storefront: { live_method: unknownLive, draft_method: unknownDraft, ...unknownModes, ...unknownCounts },
         totals,
       },
     };
@@ -762,16 +948,17 @@ export function verificationMethodImpactResponse(value: unknown): VerificationMe
 /** The two authoritative conflict bodies of contract §5 — every other refusal carries no `data`. */
 export function verificationMethodConflictResponse(
   value: unknown,
+  version: VerificationMethodContractVersion = 1,
 ): { error: "verification-method-conflict" | "verification-method-preview-stale"; data: VerificationMethodConflictData } | null {
   const envelope = webadminErrorEnvelope(value, "required");
   if (!envelope || envelope.status_code !== 409) return null;
   const error = oneOf(envelope.error, ["verification-method-conflict", "verification-method-preview-stale"] as const);
   if (!error) return null;
   const raw = requiredObject(envelope.data, ["contract_version", "policy", "method_availability"]);
-  const policy = verificationMethodPolicy(raw?.policy);
+  const policy = verificationMethodPolicy(raw?.policy, version);
   const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
-  if (raw?.contract_version !== 1 || !policy || !methodAvailability) return null;
-  return { error, data: { contract_version: 1, policy, method_availability: methodAvailability } };
+  if (raw?.contract_version !== version || !policy || !methodAvailability) return null;
+  return { error, data: { contract_version: version, policy, method_availability: methodAvailability } };
 }
 
 // ---------------------------------------------------------------------------
@@ -789,9 +976,16 @@ export type VerificationMethodDraft = {
   global: MandatoryMethod;
   copy_default: Record<WaitingRoomLocale, WaitingRoomCopyDraft>;
   overrides: VerificationMethodOverrideRow[];
+  /**
+   * Contract v2: exactly what Core served plus the operator's own changes —
+   * never a mode the console chose by itself. `null` on the v1 wire, where the
+   * document is the three-key shape and the control is hidden.
+   */
+  gate_mode: VerificationGateModePolicy | null;
 };
 
-export type VerificationMethodDraftIssue = ForcedVerificationDraftIssue;
+/** `gateMode`: a mode entry outside the storefront catalogue or the closed mode list. */
+export type VerificationMethodDraftIssue = ForcedVerificationDraftIssue | "gateMode";
 
 export function verificationMethodDraft(document: VerificationMethodDocument): VerificationMethodDraft {
   const overrides: VerificationMethodOverrideRow[] = [];
@@ -812,6 +1006,9 @@ export function verificationMethodDraft(document: VerificationMethodDocument): V
       hu: waitingRoomCopyDraft(document.waiting_room_copy.default.hu),
     },
     overrides,
+    gate_mode: document.gate_mode
+      ? { global: document.gate_mode.global, overrides: { ...document.gate_mode.overrides } }
+      : null,
   };
 }
 
@@ -825,6 +1022,14 @@ export function validateVerificationMethodDraft(
     if (!isForcedStorefront(row.storefront)) return "storefront";
     if (seen.has(row.storefront)) return "duplicateStorefront";
     seen.add(row.storefront);
+  }
+  if (draft.gate_mode !== null) {
+    const modeKeys = Object.keys(draft.gate_mode.overrides);
+    if (gateMode(draft.gate_mode.global) === null
+      || modeKeys.length > VERIFICATION_METHOD_MAX_OVERRIDES
+      || modeKeys.some((key) => !isForcedStorefront(key) || gateMode(draft.gate_mode!.overrides[key]) === null)) {
+      return "gateMode";
+    }
   }
   for (const locale of WAITING_ROOM_LOCALES) {
     for (const field of WAITING_ROOM_COPY_FIELDS) {
@@ -885,7 +1090,7 @@ export function verificationMethodDocumentFromDraft(
     // Always present on the global default (`null` = no help button), and last.
     help_url: copy.help_url === "" ? null : copy.help_url,
   });
-  return {
+  const document: VerificationMethodDocument = {
     global: draft.global,
     overrides,
     waiting_room_copy: {
@@ -893,6 +1098,15 @@ export function verificationMethodDocumentFromDraft(
       overrides: copyOverrides,
     },
   };
+  if (draft.gate_mode === null) return document;
+  // Fourth and last, `global` before `overrides`, storefronts ascending. An
+  // inheriting storefront has no key; Core drops the whole object again when
+  // it equals the Full block default (canonical omission, contract §8.1).
+  const modeOverrides: Record<string, VerificationGateMode> = {};
+  for (const storefront of Object.keys(draft.gate_mode.overrides).sort()) {
+    modeOverrides[storefront] = draft.gate_mode.overrides[storefront];
+  }
+  return { ...document, gate_mode: { global: draft.gate_mode.global, overrides: modeOverrides } };
 }
 
 function canonicalJson(value: unknown): string {
@@ -925,6 +1139,53 @@ export function resolveMandatoryMethod(
 /** Whether a document mandates `method` anywhere: globally or in one storefront override. */
 export function documentUsesMethod(document: VerificationMethodDocument, method: MandatoryMethod): boolean {
   return document.global === method || Object.values(document.overrides).includes(method);
+}
+
+// ---------------------------------------------------------------------------
+// Gate mode (D-151 §8.1)
+// ---------------------------------------------------------------------------
+
+/** The mode a storefront resolves to (its own entry → global); `null` is the global row / an unknown storefront. */
+export function resolveGateMode(gate: VerificationGateModePolicy, storefront: string | null): VerificationGateMode {
+  return storefront !== null && Object.hasOwn(gate.overrides, storefront) ? gate.overrides[storefront] : gate.global;
+}
+
+/** What a row's control shows: the global mode, or a storefront's own entry, or `inherit` when it has none. */
+export function gateModeChoice(gate: VerificationGateModePolicy, storefront: string | null): VerificationGateModeChoice {
+  if (storefront === null) return gate.global;
+  return Object.hasOwn(gate.overrides, storefront) ? gate.overrides[storefront] : "inherit";
+}
+
+/**
+ * The policy after ONE operator choice on one row. `inherit` removes the
+ * storefront's key; nothing else changes. The global row has no `inherit`.
+ */
+export function withGateModeChoice(
+  gate: VerificationGateModePolicy,
+  storefront: string | null,
+  choice: VerificationGateModeChoice,
+): VerificationGateModePolicy {
+  if (storefront === null) return choice === "inherit" ? gate : { ...gate, global: choice };
+  const overrides = { ...gate.overrides };
+  if (choice === "inherit") delete overrides[storefront];
+  else overrides[storefront] = choice;
+  return { global: gate.global, overrides };
+}
+
+/**
+ * Storefronts that carry a mode but no method row, ascending. Core allows the
+ * two override maps to differ (contract §8.1); this console never creates one,
+ * but it shows and preserves one it is served.
+ */
+export function gateModeOnlyStorefronts(draft: VerificationMethodDraft): string[] {
+  if (draft.gate_mode === null) return [];
+  const methodRows = new Set(draft.overrides.map((row) => row.storefront));
+  return Object.keys(draft.gate_mode.overrides).filter((key) => !methodRows.has(key)).sort();
+}
+
+/** True when a document's mode is the stored default, i.e. Core keeps the three-key shape. */
+export function isDefaultGateModePolicy(gate: VerificationGateModePolicy | undefined): boolean {
+  return gate === undefined || (gate.global === VERIFICATION_GATE_MODE_ABSENT && Object.keys(gate.overrides).length === 0);
 }
 
 /** Every storefront whose method is `photo`, ascending. */
@@ -983,7 +1244,8 @@ export function verificationMethodPhotoCopyGuidance(
     && error !== "verification-method-copy-overrides-invalid") return null;
   const command = verificationMethodPendingFrom(pending);
   if (command?.action !== "verification_method_save") return null;
-  const document = verificationMethodDocument(command.payload.draft_json, "exact");
+  const version = command.payload.contract_version === 2 ? 2 : 1;
+  const document = verificationMethodDocument(command.payload.draft_json, "exact", version);
   if (!document) return null;
   if (error === "verification-method-copy-default-invalid" && document.global === "photo") {
     return "default";
@@ -1021,26 +1283,29 @@ function exactKeys(source: Record<string, unknown>, keys: readonly string[]): bo
 
 /**
  * The browser sends JSON; Core receives a form body where `draft_json` is the
- * canonical JSON string of exactly `{global, overrides, waiting_room_copy}`
- * (`lib/core.ts` serialises nested objects). Anything the strict parsers refuse
- * is answered `invalid-input` here, before Core is called at all.
+ * canonical JSON string of exactly `{global, overrides, waiting_room_copy}` on
+ * contract v1 and of exactly those plus `gate_mode` on contract v2 (`lib/core.ts`
+ * serialises nested objects). Anything the strict parsers refuse is answered
+ * `invalid-input` here, before Core is called at all. Core remains the judge of
+ * whether it speaks the requested version (`verification-method-contract-version`).
  */
 export function normalizeVerificationMethodProxyBody(
   action: string,
   body: Record<string, unknown>,
 ): Record<string, unknown> | null | undefined {
   if (!isVerificationMethodAction(action)) return undefined;
-  if (body.contract_version !== 1) return null;
+  const version = body.contract_version === 1 || body.contract_version === 2 ? body.contract_version : null;
+  if (version === null) return null;
   switch (action) {
     case "verification_method_console":
-      return exactKeys(body, ["contract_version"]) ? { contract_version: 1 } : null;
+      return exactKeys(body, ["contract_version"]) ? { contract_version: version } : null;
     case "verification_method_save": {
       if (!exactKeys(body, ["contract_version", "draft_json", "expected_revision", "request_id"])) return null;
       const expectedRevision = revision(body.expected_revision);
-      const document = verificationMethodDocument(body.draft_json, "exact");
+      const document = verificationMethodDocument(body.draft_json, "exact", version);
       if (expectedRevision === null || !document || !isVerificationMethodRequestId(body.request_id)) return null;
       return {
-        contract_version: 1,
+        contract_version: version,
         draft_json: document,
         expected_revision: expectedRevision,
         request_id: body.request_id,
@@ -1049,7 +1314,7 @@ export function normalizeVerificationMethodProxyBody(
     case "verification_method_impact": {
       if (!exactKeys(body, ["contract_version", "expected_revision"])) return null;
       const expectedRevision = revision(body.expected_revision);
-      return expectedRevision === null ? null : { contract_version: 1, expected_revision: expectedRevision };
+      return expectedRevision === null ? null : { contract_version: version, expected_revision: expectedRevision };
     }
     case "verification_method_apply": {
       if (!exactKeys(body, [
@@ -1063,7 +1328,7 @@ export function normalizeVerificationMethodProxyBody(
         || body.confirmation_phrase !== VERIFICATION_METHOD_CONFIRMATION_PHRASE
         || !isVerificationMethodRequestId(body.request_id)) return null;
       return {
-        contract_version: 1,
+        contract_version: version,
         expected_revision: expectedRevision,
         normalized_fingerprint: fingerprint,
         confirmation_phrase: VERIFICATION_METHOD_CONFIRMATION_PHRASE,

@@ -1,0 +1,45 @@
+{
+    "schema_version": 1,
+    "contract": "verification-method-console-v2",
+    "hand_written": true,
+    "source": "team/handoffs/verification-explore-contract.md section 8.4 (Core lane, PROPOSED at ad4cd6d4, lead rulings 13a)",
+    "note": "HAND-WRITTEN by the Webadmin lane (T-927) from the contract examples: Core had no generated v2 corpus yet. Replace these bodies byte for byte with Core's generated corpus when lane C publishes one, and drop hand_written.",
+    "files": [
+        {
+            "file": "webadmin-admin-me-verification-method-v2.json",
+            "sha256": "ea0b6d9a1da08725abb5ccc593d32acae6e4eaf0e9fa7d91728a5336fd458a7c"
+        },
+        {
+            "file": "webadmin-method-conflict-v2.json",
+            "sha256": "64e72712327d06090ccd2379d0a4a88ae3682b6d0368f769f8ffc2c7a0628297"
+        },
+        {
+            "file": "webadmin-method-console-v2-default.json",
+            "sha256": "ae0587231281585a5eaa00e929b02c962d69f3b431e0587083a7b4645ff4bb3a"
+        },
+        {
+            "file": "webadmin-method-console-v2-explore-draft.json",
+            "sha256": "a26a4ab2bc71f5ce7033773ec89435dd3d2ea24dc4f7efa25982d9ccd87c4946"
+        },
+        {
+            "file": "webadmin-method-impact-v2.json",
+            "sha256": "ab515733934b5fdf1ba32e00c272d2fab2cebdf1747473efc5ab0accba4254f3"
+        },
+        {
+            "file": "webadmin-method-refusal-contract-version.json",
+            "sha256": "69d5261349e3f62bf74ae01f1fac1875ade43a9c13b825b40dd0e07736de2ad1"
+        },
+        {
+            "file": "webadmin-method-refusal-gate-mode-invalid.json",
+            "sha256": "a143a5d291efeb655842b68988c42fe224d5ad05327ec152ee7b0446492bb8a0"
+        },
+        {
+            "file": "webadmin-method-save-v2.json",
+            "sha256": "82b381c6b1364d7c9806e2ec56911127d7ec75d2213a73712f0457ebee7bbea8"
+        },
+        {
+            "file": "webadmin-request-save-v2.json",
+            "sha256": "f941b776aeef7ae9163cdc18813d50370ae585d1a46c24b20102a298111e91e1"
+        }
+    ]
+}

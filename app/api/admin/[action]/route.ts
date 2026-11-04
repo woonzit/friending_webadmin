@@ -281,8 +281,9 @@ export async function POST(
   if (normalizedManagedSettingsBody !== undefined) body = normalizedManagedSettingsBody;
 
   // `draft_json` travels as the canonical JSON string of exactly `{global,
-  // overrides, waiting_room_copy}`; anything the strict parser refuses is
-  // answered here rather than forwarded.
+  // overrides, waiting_room_copy}` (contract v1) or those plus `gate_mode`
+  // (contract v2, D-151); anything the strict parser refuses is answered here
+  // rather than forwarded.
   const normalizedVerificationMethodBody = normalizeVerificationMethodProxyBody(action, body);
   if (normalizedVerificationMethodBody === null) {
     return bridgeError("invalid-input", 400);

@@ -1,0 +1,104 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "verification-method-conflict",
+    "data": {
+        "contract_version": 2,
+        "policy": {
+            "schema_version": 1,
+            "revision": 5,
+            "draft": {
+                "document": {
+                    "global": "persona",
+                    "overrides": {
+                        "USA": "persona"
+                    },
+                    "waiting_room_copy": {
+                        "default": {
+                            "en": {
+                                "title": "One more step before you meet people",
+                                "subtitle": "Verification is required in your region",
+                                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                                "help_url": null
+                            },
+                            "hu": {
+                                "title": "Még egy lépés, mielőtt ismerkedsz",
+                                "subtitle": "A régiódban hitelesítés szükséges",
+                                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                                "help_url": null
+                            }
+                        },
+                        "overrides": {
+                            "USA": {
+                                "en": {},
+                                "hu": {}
+                            }
+                        }
+                    },
+                    "gate_mode": {
+                        "global": "explore",
+                        "overrides": {
+                            "HUN": "full_block"
+                        }
+                    }
+                },
+                "saved_at": 1800000000,
+                "saved_by": "owner@friending.com"
+            },
+            "live": {
+                "document": {
+                    "global": "persona",
+                    "overrides": {},
+                    "waiting_room_copy": {
+                        "default": {
+                            "en": {
+                                "title": "One more step before you meet people",
+                                "subtitle": "Verification is required in your region",
+                                "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                                "help_url": null
+                            },
+                            "hu": {
+                                "title": "Még egy lépés, mielőtt ismerkedsz",
+                                "subtitle": "A régiódban hitelesítés szükséges",
+                                "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                                "help_url": null
+                            }
+                        },
+                        "overrides": {}
+                    },
+                    "gate_mode": {
+                        "global": "full_block",
+                        "overrides": {}
+                    }
+                },
+                "published_at": 1790000000,
+                "published_by": "script:migrate_verification_method_policy"
+            },
+            "updated_at": 1800000000,
+            "updated_by": "owner@friending.com"
+        },
+        "method_availability": {
+            "video": {
+                "method": "video",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "persona": {
+                "method": "persona",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "photo": {
+                "method": "photo",
+                "policy_enable_allowed": false,
+                "new_start_available": false,
+                "reason": "catalogue_insufficient"
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

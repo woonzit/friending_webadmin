@@ -14905,6 +14905,21 @@ fieldset.dates-external-fields {
    for a paragraph inside an expanded editor. */
 .method-row-detail { white-space: normal; }
 .method-row-detail input, .method-row-detail textarea { max-width: 100%; }
+/* D-151 gate mode (contract §8.4): a fifth column on the v2 wire only. */
+.method-policy-table-gate th:nth-child(1) { width: 20%; }
+.method-policy-table-gate th:nth-child(2) { width: 26%; }
+.method-policy-table-gate th:nth-child(3) { width: 22%; }
+.method-policy-table-gate th:nth-child(4) { width: 18%; }
+.method-policy-table-gate th:nth-child(5) { width: 14%; }
+/* Five columns leave no room for the nowrap data-table default: wrap inside each
+   cell so the method select and the mode select never overlap. */
+.method-policy-table-gate td { white-space: normal; overflow-wrap: anywhere; }
+.method-policy-table-gate .method-cell { min-width: 0; }
+.method-policy-table-gate .method-cell > select { width: 100%; min-width: 0; }
+.gate-mode-legend { display: grid; gap: 6px; padding: 12px 14px; font-size: 13px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); }
+.gate-mode-legend ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.gate-mode-legend li, .gate-mode-legend .field-hint { white-space: normal; }
+.gate-mode-rollback { margin: 0; color: var(--muted); font-size: 12px; }
 
 /* Into-tag moderation (T-683, D-107 R10). The queue borrows the reported-content
    receipted-queue shapes; only the tag-specific surfaces are defined here. */

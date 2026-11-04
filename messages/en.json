@@ -4592,6 +4592,7 @@
       "validation": {
         "storefront": "Every override needs a storefront from the catalogue.",
         "duplicateStorefront": "Two overrides name the same storefront.",
+        "gateMode": "A gate mode names a storefront outside the catalogue or a mode other than Explore mode or Full block.",
         "copyRequired": "The global title, subtitle and description are required in both languages.",
         "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
         "copyControl": "A text contains a control character or a line break where none is allowed.",
@@ -5116,6 +5117,33 @@
         "other": "Core reports that {reason}. Publishing stays blocked until the method is available again; the draft stays saved.",
         "refused": "Core refused to publish: the gesture photo selfie cannot start yet. Nothing became live and the draft stays saved.",
         "openCatalogue": "Open the gesture catalogue"
+      },
+      "unsavedWithMode": "Unsaved method, gate mode or Waiting Room copy changes",
+      "gateMode": {
+        "column": "Gate mode",
+        "modes": {
+          "explore": "Explore mode",
+          "full_block": "Full block",
+          "off": "Off"
+        },
+        "recommendedOption": "{mode} (recommended)",
+        "inheritOption": "Same as Global: {mode}",
+        "recommendedHint": "Recommended where verification is required: {mode}",
+        "offHint": "No method is required here, so there is nothing to lock.",
+        "methodInherited": "Same as Global: {method}",
+        "modeOnlyHint": "Gate mode only. The method and Waiting Room copy follow Global.",
+        "legend": {
+          "title": "What members who have not verified yet get",
+          "explore": "They can browse events in the area they signed up in. People, chat and joining stay locked until they verify.",
+          "full_block": "They stay in the Waiting Room until they verify (how it works today).",
+          "off": "Set the method to None: nobody has to verify, so nothing is locked.",
+          "clients": "Explore mode reaches only app versions that support it. Older versions keep showing the Waiting Room and its copy."
+        },
+        "rollbackTitle": "Rollback:",
+        "rollback": "Set every scope back to Full block and publish before downgrading Core.",
+        "impactLiveMode": "Live mode",
+        "impactDraftMode": "Draft mode",
+        "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode."
       },
       "photoRollout": {
         "title": "The new iOS app has to be out first.",

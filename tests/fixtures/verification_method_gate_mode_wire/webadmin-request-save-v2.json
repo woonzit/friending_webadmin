@@ -1,0 +1,39 @@
+{
+    "contract_version": 2,
+    "draft_json": {
+        "global": "persona",
+        "overrides": {
+            "USA": "persona"
+        },
+        "waiting_room_copy": {
+            "default": {
+                "en": {
+                    "title": "One more step before you meet people",
+                    "subtitle": "Verification is required in your region",
+                    "description": "To keep Friending safe, members in your region must verify their identity before using the app. It takes about two minutes and your documents are never shown to other members.",
+                    "help_url": null
+                },
+                "hu": {
+                    "title": "Még egy lépés, mielőtt ismerkedsz",
+                    "subtitle": "A régiódban hitelesítés szükséges",
+                    "description": "A Friending biztonsága érdekében a régiódban minden tagnak igazolnia kell a személyazonosságát, mielőtt használná az appot. Ez körülbelül két percet vesz igénybe, és a dokumentumaidat más tagok soha nem látják.",
+                    "help_url": null
+                }
+            },
+            "overrides": {
+                "USA": {
+                    "en": {},
+                    "hu": {}
+                }
+            }
+        },
+        "gate_mode": {
+            "global": "explore",
+            "overrides": {
+                "HUN": "full_block"
+            }
+        }
+    },
+    "expected_revision": 3,
+    "request_id": "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+}

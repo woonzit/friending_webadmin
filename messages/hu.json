@@ -4592,6 +4592,7 @@
       "validation": {
         "storefront": "Minden felülíráshoz a katalógusból választott storefront kell.",
         "duplicateStorefront": "Két felülírás ugyanazt a storefrontot nevezi meg.",
+        "gateMode": "Egy zárási mód katalóguson kívüli storefrontot vagy a Felfedező módtól és a Teljes zárástól eltérő módot nevez meg.",
         "copyRequired": "A globális cím, alcím és leírás mindkét nyelven kötelező.",
         "copyTooLong": "Egy szöveg túllépi a korlátját (cím 60, alcím 90, leírás 400 karakter).",
         "copyControl": "Egy szöveg vezérlőkaraktert vagy nem megengedett sortörést tartalmaz.",
@@ -5116,6 +5117,33 @@
         "other": "A Core szerint {reason}. Amíg a módszer újra elérhető nem lesz, a közzététel blokkolva marad; a vázlat mentve marad.",
         "refused": "A Core nem engedte a közzétételt: a gesztusos fotós szelfi még nem indítható. Semmi sem lett élő, a vázlat mentve marad.",
         "openCatalogue": "Gesztuskatalógus megnyitása"
+      },
+      "unsavedWithMode": "Nem mentett módszer-, zárásimód- vagy Váróterem-szövegmódosítások",
+      "gateMode": {
+        "column": "Zárási mód",
+        "modes": {
+          "explore": "Felfedező mód",
+          "full_block": "Teljes zárás",
+          "off": "Kikapcsolva"
+        },
+        "recommendedOption": "{mode} (ajánlott)",
+        "inheritOption": "Mint a globális: {mode}",
+        "recommendedHint": "Ajánlott, ahol kötelező a hitelesítés: {mode}",
+        "offHint": "Itt nincs kötelező módszer, így nincs mit zárolni.",
+        "methodInherited": "Mint a globális: {method}",
+        "modeOnlyHint": "Csak zárási mód. A módszer és a Váróterem szövege a globálist követi.",
+        "legend": {
+          "title": "Mit kapnak a még nem hitelesített tagok",
+          "explore": "Böngészhetik a regisztrációs környékük eseményeit. Az emberek, a csevegés és a csatlakozás a hitelesítésig zárolva marad.",
+          "full_block": "A hitelesítésig a Váróteremben maradnak (a mostani működés).",
+          "off": "Állítsd a módszert Nincs értékre: senkinek sem kell hitelesítenie magát, így semmi sincs zárolva.",
+          "clients": "A Felfedező mód csak az azt támogató appverziókban jelenik meg. A régebbi verziók továbbra is a Várótermet és annak szövegét mutatják."
+        },
+        "rollbackTitle": "Visszaállítás:",
+        "rollback": "A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra, és tedd közzé.",
+        "impactLiveMode": "Élő mód",
+        "impactDraftMode": "Draftmód",
+        "impactNote": "A zárási mód nem változtat azon, kinek kell hitelesítenie magát, ezért a számok nem változnak. Azt változtatja meg, mit látnak ezek a tagok a Felfedező módot támogató appverzióban."
       },
       "photoRollout": {
         "title": "Előbb az új iOS-appnak kell megjelennie.",
