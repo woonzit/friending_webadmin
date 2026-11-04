@@ -39,6 +39,7 @@ import {
   documentUsesMethod,
   draftGateModeConflicts,
   gateModeEntriesDropped,
+  gateModeGlobalFollowersAllowExplore,
   gateModeGlobalInheritors,
   gateModeOnlyStorefronts,
   gateModePinsDroppedOnSave,
@@ -56,6 +57,7 @@ import {
   verificationMethodErrorResponse,
   verificationMethodImpactResponse,
   verificationMethodMutationOutcome,
+  verificationMethodOutcomeProvesV2,
   verificationMethodPendingFrom,
   verificationMethodPendingMutation,
   verificationMethodPersistBeforeMutation,
@@ -345,7 +347,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       }
       // Review round 2: `gate_mode_hidden` proves Core speaks v2. Re-read on v2
       // so the operator sees the stored modes instead of staying on v1.
-      const restoreWire = success.gate_mode_hidden === true && commandVersion === 1;
+      const restoreWire = verificationMethodOutcomeProvesV2(outcome, commandVersion);
       if (sameWire && !restoreWire) {
         adopt(success.policy, false);
         setData((current) => (current
@@ -381,10 +383,21 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       // and the named rows are highlighted.
       const cleared = clearPending();
       setRefusedScopes(outcome.conflict.scopes);
+      // Round 3: on a v1 session this refusal (a carried mode conflicts) proves
+      // Core speaks v2. Switch back, keep the banner, and re-read with the modes.
+      const restoreWire = verificationMethodOutcomeProvesV2(outcome, commandVersion);
+      if (restoreWire) {
+        wireRef.current = 2;
+        setGateModeHidden(true);
+        void load(false);
+      }
       setNotice({
         tone: "error",
         text: cleared
-          ? gt("conflictRefused", { scopes: outcome.conflict.scopes.map(scopeLabel).join(", ") })
+          ? [
+            gt("conflictRefused", { scopes: outcome.conflict.scopes.map(scopeLabel).join(", ") }),
+            restoreWire ? gt("hiddenReloaded") : null,
+          ].filter(Boolean).join(" ")
           : t("persistenceCleanupFailed"),
       });
       setBusy(false);
@@ -532,8 +545,19 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     // under a None method is dropped and named.
     const removed = verificationMethodDraftWithoutStorefront(draft, storefront);
     patch({ overrides: removed.draft.overrides, gate_mode: removed.draft.gate_mode });
-    if (removed.dropped_stored) {
-      setNotice({ tone: "info", text: gt("removedStored", { storefront: scopeLabel(storefront), mode: gt(`modes.${removed.dropped_stored}`) }) });
+    const notice = removed.notice;
+    if (notice?.kind === "dropped") {
+      setNotice({
+        tone: "info",
+        text: gt(notice.reason === "none" ? "removedDroppedNone" : "removedDroppedPersona", {
+          storefront: scopeLabel(storefront),
+          mode: gt(`modes.${notice.mode}`),
+          global: gt(`modes.${notice.global}`),
+        }),
+      });
+    } else if (notice?.kind === "follows-global") {
+      // Round 3: its own mode is gone, but it gets the same one from Global; say exactly that.
+      setNotice({ tone: "info", text: gt("removedFollowsGlobal", { storefront: scopeLabel(storefront), mode: gt(`modes.${notice.mode}`) }) });
     }
     setExpanded((current) => (current === storefront ? undefined : current));
   }
@@ -562,6 +586,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const conflictScopes = new Set([...draftGateModeConflicts(draft), ...refusedScopes]);
   /** Forcing storefronts that follow Global's mode, and Full block entries Core would drop on save (review round 2). */
   const globalInheritors = gateModeGlobalInheritors(draft);
+  const followersAllowExplore = gateModeGlobalFollowersAllowExplore(draft);
   const pinsDroppedOnSave = gateModePinsDroppedOnSave(gate);
   const modeOnlyRows = [...gateModeOnlyStorefronts(draft)].sort((left, right) => (
     forcedStorefrontName(left, locale).localeCompare(forcedStorefrontName(right, locale), locale)
@@ -844,6 +869,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           scopeLabel={row === null ? shared("globalRow") : `${forcedStorefrontName(row, locale)} (${row})`}
           method={method}
           inheritedBy={row === null ? globalInheritors.map((code) => `${forcedStorefrontName(code, locale)} (${code})`) : undefined}
+          followersAllowExplore={row === null && followersAllowExplore}
           pinDroppedOnSave={row !== null && pinsDroppedOnSave.includes(row)}
           flagged={refusedScopes.includes(row ?? "global")}
           recommended={recommendedMode}

@@ -45,6 +45,7 @@ function control(props: {
   recommended?: VerificationGateMode;
   disabled?: boolean;
   inheritedBy?: string[];
+  followersAllowExplore?: boolean;
   pinDroppedOnSave?: boolean;
 }, locale: "en" | "hu" = "en"): string {
   const scope = props.scope ?? "global";
@@ -58,6 +59,7 @@ function control(props: {
     scopeLabel: props.scopeLabel ?? (scope === "global" ? "Global default" : "Hungary (HUN)"),
     method: props.method ?? "persona",
     inheritedBy: props.inheritedBy,
+    followersAllowExplore: props.followersAllowExplore,
     pinDroppedOnSave: props.pinDroppedOnSave,
     flagged: props.flagged ?? false,
     recommended: props.recommended ?? "explore",
@@ -204,7 +206,7 @@ test("the legend explains each mode in one line and carries the rollback note, i
 });
 
 test("Global None that forcing storefronts follow: the mode is in effect for them, so it is a real choice (review round 2)", () => {
-  const applies = control({ method: "none", choice: "explore", inheritedBy: ["United States (USA)", "Canada (CAN)"] });
+  const applies = control({ method: "none", choice: "explore", inheritedBy: ["United States (USA)", "Canada (CAN)"], followersAllowExplore: true });
   assert.match(applies, /data-gate-mode="explore"/);
   assert.doesNotMatch(applies, /stored, no effect/, "it has an effect on the followers");
   assert.match(applies, /<option value="explore" selected="">Explore mode \(recommended\)<\/option><option value="full_block">Full block<\/option>/,
@@ -212,25 +214,36 @@ test("Global None that forcing storefronts follow: the mode is in effect for the
   assert.match(applies, /data-gate-mode-applies-to="United States \(USA\),Canada \(CAN\)">Global requires no method itself, but this mode applies to the storefronts that follow it: United States \(USA\), Canada \(CAN\)\./);
   assert.match(applies, /aria-describedby="gate-mode-test-hint"/);
 
-  const fullFollowed = control({ method: "none", choice: "full_block", inheritedBy: ["United States (USA)"] });
+  const fullFollowed = control({ method: "none", choice: "full_block", inheritedBy: ["United States (USA)"], followersAllowExplore: true });
   assert.match(fullFollowed, /<option value="explore">Explore mode \(recommended\)<\/option>/, "Explore can be chosen for the followers");
   assert.match(fullFollowed, /applies to the storefronts that follow it: United States \(USA\)/);
 
   const nobody = control({ method: "none", choice: "explore", inheritedBy: [] });
   assert.match(nobody, /Explore mode \(stored, no effect\)/, "only without followers is it without effect");
-  assert.match(control({ method: "none", choice: "explore", inheritedBy: ["Magyarország (HUN)"] }, "hu"),
+  assert.match(control({ method: "none", choice: "explore", inheritedBy: ["Magyarország (HUN)"], followersAllowExplore: true }, "hu"),
     /de ez a mód érvényes az azt követő storefrontokra: Magyarország \(HUN\)\./);
+});
+
+test("Global None whose followers force no Persona: Explore is not offered, and a stored one is flagged (round 3)", () => {
+  const full = control({ method: "none", choice: "full_block", inheritedBy: ["United States (USA)"], followersAllowExplore: false });
+  assert.match(full, /<option value="explore" disabled="">Explore mode<\/option>/, "a draft that can only ever be refused is not offered");
+  assert.match(full, /applies to the storefronts that follow it: United States \(USA\)\. Explore mode needs Persona as the required method\./);
+  const stored = control({ method: "none", choice: "explore", inheritedBy: ["United States (USA)"], followersAllowExplore: false });
+  assert.match(stored, /data-gate-mode-conflict="true"/);
+  assert.match(stored, /<option value="explore" disabled="" selected="">Explore mode<\/option>/);
+  assert.match(stored, /class="field-error"/);
 });
 
 test("an explicit Full block that Core will drop on save says so (review round 2)", () => {
   const pinned = control({ scope: "storefront", choice: "full_block", inherited: "full_block", pinDroppedOnSave: true });
-  assert.match(pinned, /<small id="gate-mode-test-pin" class="field-hint" data-gate-mode-pin-dropped="true">Kept only once some scope uses Explore mode: while every scope is Full block, Core drops this entry on save\./);
+  assert.match(pinned, /<small id="gate-mode-test-pin" class="field-hint" data-gate-mode-pin-dropped="true">No effect while every scope is Full block; set it in the save that switches a scope to Explore\.<\/small>/,
+    "round 3: the copy does not invite turning Explore on");
   assert.match(pinned, /aria-describedby="gate-mode-test-hint gate-mode-test-pin"/, "both hints describe the select");
   assert.doesNotMatch(control({ scope: "storefront", choice: "full_block", inherited: "explore" }), /data-gate-mode-pin-dropped/);
   assert.doesNotMatch(control({ scope: "storefront", choice: "inherit", pinDroppedOnSave: true }), /data-gate-mode-pin-dropped/,
     "only an explicit Full block entry");
   assert.match(control({ scope: "storefront", choice: "full_block", pinDroppedOnSave: true }, "hu"),
-    /Csak akkor marad meg, ha valamelyik terület Felfedező módot használ/);
+    /Amíg minden terület Teljes záráson van, nincs hatása; abban a mentésben állítsd be, amelyik egy területet Felfedező módra kapcsol\./);
 });
 
 test("the scopes table wiring that remains source-level: probed read, helpers, no hand-built commands", () => {
@@ -246,5 +259,7 @@ test("the scopes table wiring that remains source-level: probed read, helpers, n
   assert.match(table, /verificationMethodDraftWithoutStorefront\(draft, storefront\)/);
   assert.doesNotMatch(table, /contract_version: 1,\n/, "no hard-coded v1 command remains");
   // An explicit reload and gate_mode_hidden both send the session back to v2.
-  assert.equal((table.match(/wireRef\.current = 2;/g) ?? []).length, 3, "reload button, mutation and preview answers");
+  // When a v1 answer proves v2 is decided by `verificationMethodOutcomeProvesV2` (tested).
+  assert.equal((table.match(/wireRef\.current = 2;/g) ?? []).length, 4,
+    "reload button, a v1 success with gate_mode_hidden, a v1 Persona-rule refusal, a v1 preview with gate_mode_hidden");
 });

@@ -15,6 +15,7 @@ import {
   gateModeAfterRowRemoval,
   gateModeChoice,
   gateModeEntriesDropped,
+  gateModeGlobalFollowersAllowExplore,
   gateModeGlobalInheritors,
   gateModePinsDroppedOnSave,
   gateModeExploreAllowed,
@@ -39,6 +40,7 @@ import {
   verificationMethodDraftWithStorefront,
   verificationMethodDraftWithoutStorefront,
   verificationMethodMutationOutcome,
+  verificationMethodOutcomeProvesV2,
   verificationMethodErrorResponse,
   verificationMethodGateModeConflictResponse,
   verificationMethodImpactResponse,
@@ -672,13 +674,13 @@ test("a mode stored under method None stays visible; removing a method row keeps
   assert.equal(isDefaultGateModePolicy({ global: "explore", overrides: {} }), false);
 
   const differs: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "full_block" } };
-  assert.deepEqual(gateModeAfterRowRemoval(differs, "HUN", "persona"), { gate_mode: differs, dropped_stored: null },
+  assert.deepEqual(gateModeAfterRowRemoval(differs, "HUN", "persona", "persona"), { gate_mode: differs, notice: null },
     "HUN keeps Full block: nothing changes behind the operator");
   const same: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "explore" } };
-  assert.deepEqual(gateModeAfterRowRemoval(same, "HUN", "persona"), { gate_mode: { global: "explore", overrides: {} }, dropped_stored: null },
+  assert.deepEqual(gateModeAfterRowRemoval(same, "HUN", "persona", "persona"), { gate_mode: { global: "explore", overrides: {} }, notice: null },
     "a redundant entry is dropped silently: nothing changes");
   const none: VerificationGateModePolicy = { global: "explore", overrides: {} };
-  assert.deepEqual(gateModeAfterRowRemoval(none, "HUN", "persona"), { gate_mode: none, dropped_stored: null });
+  assert.deepEqual(gateModeAfterRowRemoval(none, "HUN", "persona", "persona"), { gate_mode: none, notice: null });
 
   // Through the draft: the removed method row reappears as a mode-only row.
   const draft = verificationMethodDraft(v2Document(differs, {
@@ -687,7 +689,7 @@ test("a mode stored under method None stays visible; removing a method row keeps
   }));
   const removed = verificationMethodDraftWithoutStorefront(draft, "HUN");
   assert.deepEqual(removed.draft.overrides, []);
-  assert.equal(removed.dropped_stored, null);
+  assert.equal(removed.notice, null);
   assert.deepEqual(gateModeOnlyStorefronts(removed.draft), ["HUN"]);
   assert.equal(resolveGateMode(removed.draft.gate_mode!, "HUN"), "full_block");
 });
@@ -738,17 +740,81 @@ test("item 2: explicit Full block entries Core drops while every scope is Full b
 test("item 5: removing a None row drops a stored mode other than Full block and reports it", () => {
   const draft = rowsDraft({ global: "full_block", overrides: { HUN: "explore" } }, "persona", { HUN: "none" });
   const removed = verificationMethodDraftWithoutStorefront(draft, "HUN");
-  assert.equal(removed.dropped_stored, "explore", "named in the notice");
+  assert.deepEqual(removed.notice, { kind: "dropped", reason: "none", mode: "explore", global: "full_block" }, "named in the notice");
   assert.deepEqual(removed.draft.gate_mode, { global: "full_block", overrides: {} },
     "it does not come alive as an Explore mode-only row under Persona");
   assert.deepEqual(gateModeOnlyStorefronts(removed.draft), []);
   assert.deepEqual(draftGateModeConflicts(removed.draft), []);
 
   const pin = verificationMethodDraftWithoutStorefront(rowsDraft({ global: "explore", overrides: { HUN: "full_block" } }, "persona", { HUN: "none" }), "HUN");
-  assert.equal(pin.dropped_stored, null, "a stored Full block is safe and differs from Global: kept as a mode-only row");
+  assert.equal(pin.notice, null, "a stored Full block is safe and differs from Global: kept as a mode-only row");
   assert.deepEqual(gateModeOnlyStorefronts(pin.draft), ["HUN"]);
-  assert.deepEqual(gateModeAfterRowRemoval({ global: "explore", overrides: { HUN: "explore" } }, "HUN", "none"),
-    { gate_mode: { global: "explore", overrides: {} }, dropped_stored: "explore" });
+});
+
+test("round 3, item 1: the removal notice says what the storefront gets afterwards, never the opposite", () => {
+  // The reviewer's case: DEU None with its own Explore, Global Persona + Explore.
+  const deu = verificationMethodDraftWithoutStorefront(
+    rowsDraft({ global: "explore", overrides: { DEU: "explore" } }, "persona", { DEU: "none" }), "DEU");
+  assert.deepEqual(deu.notice, { kind: "follows-global", mode: "explore" },
+    "DEU still gets Explore from Global, so nothing is reported as dropped");
+  assert.deepEqual(deu.draft.gate_mode, { global: "explore", overrides: {} });
+  assert.equal(resolveGateMode(deu.draft.gate_mode!, "DEU"), "explore");
+
+  const hun = verificationMethodDraftWithoutStorefront(
+    rowsDraft({ global: "full_block", overrides: { HUN: "explore" } }, "persona", { HUN: "none" }), "HUN");
+  assert.equal(hun.notice?.kind, "dropped", "HUN goes from its own Explore to Global's Full block: a real drop");
+  assert.equal(resolveGateMode(hun.draft.gate_mode!, "HUN"), "full_block");
+});
+
+test("round 3, item 4: an own Explore that would sit under a non-Persona global method is dropped and reported", () => {
+  for (const globalMethod of ["video", "photo", "none"] as const) {
+    const removed = verificationMethodDraftWithoutStorefront(
+      rowsDraft({ global: "full_block", overrides: { USA: "explore" } }, globalMethod, { USA: "persona" }), "USA");
+    assert.deepEqual(removed.notice, { kind: "dropped", reason: "persona", mode: "explore", global: "full_block" }, globalMethod);
+    assert.deepEqual(removed.draft.gate_mode, { global: "full_block", overrides: {} });
+    assert.deepEqual(draftGateModeConflicts(removed.draft), [], `${globalMethod}: no draft that can only be refused`);
+  }
+  const kept = verificationMethodDraftWithoutStorefront(
+    rowsDraft({ global: "full_block", overrides: { USA: "explore" } }, "persona", { USA: "persona" }), "USA");
+  assert.equal(kept.notice, null, "under a Persona global the Explore entry stands, kept as a mode-only row");
+  assert.deepEqual(gateModeOnlyStorefronts(kept.draft), ["USA"]);
+  const pinUnderVideo = verificationMethodDraftWithoutStorefront(
+    rowsDraft({ global: "explore", overrides: { USA: "full_block" } }, "video", { USA: "persona" }), "USA");
+  assert.equal(pinUnderVideo.notice, null, "a Full block entry is never refused: kept");
+  assert.deepEqual(gateModeOnlyStorefronts(pinUnderVideo.draft), ["USA"]);
+  const sameUnderVideo = gateModeAfterRowRemoval({ global: "explore", overrides: { USA: "explore" } }, "USA", "persona", "video");
+  assert.deepEqual(sameUnderVideo, { gate_mode: { global: "explore", overrides: {} }, notice: { kind: "follows-global", mode: "explore" } });
+});
+
+test("round 3, item 4: Explore stands on a Global None only when a follower forces Persona", () => {
+  assert.equal(gateModeGlobalFollowersAllowExplore(
+    rowsDraft({ global: "explore", overrides: {} }, "none", { USA: "video", CAN: "persona" })), true);
+  assert.equal(gateModeGlobalFollowersAllowExplore(
+    rowsDraft({ global: "explore", overrides: {} }, "none", { USA: "video", BRA: "photo" })), false,
+    "every follower would be refused");
+  assert.equal(gateModeGlobalFollowersAllowExplore(
+    rowsDraft({ global: "explore", overrides: { CAN: "full_block" } }, "none", { USA: "video", CAN: "persona" })), false,
+    "CAN has its own mode, so it does not follow Global");
+  assert.equal(gateModeGlobalFollowersAllowExplore(rowsDraft({ global: "explore", overrides: {} }, "none", {})), false);
+  assert.equal(gateModeGlobalFollowersAllowExplore(verificationMethodDraft(v1Document())), false);
+});
+
+test("round 3, item 2: a v1 answer that only a D-151 Core gives switches the session back to v2", async () => {
+  const conflict = await fixture("webadmin-method-refusal-explore-requires-persona.json");
+  assert.equal(verificationMethodOutcomeProvesV2(verificationMethodMutationOutcome(conflict, 1), 1), true,
+    "a v1 save whose carried mode conflicts");
+  assert.equal(verificationMethodOutcomeProvesV2(verificationMethodMutationOutcome(conflict, 2), 2), false, "already on v2");
+
+  const save = await fixture("webadmin-method-save-v2.json");
+  const v1Policy = structuredClone(save.data.policy);
+  for (const snapshot of [v1Policy.draft, v1Policy.live]) delete snapshot.document.gate_mode;
+  const v1Save = { ...save.data, contract_version: 1, policy: v1Policy };
+  assert.equal(verificationMethodOutcomeProvesV2(verificationMethodMutationOutcome(success({ ...v1Save, gate_mode_hidden: true }), 1), 1), true);
+  assert.equal(verificationMethodOutcomeProvesV2(verificationMethodMutationOutcome(success(v1Save), 1), 1), false);
+  assert.equal(verificationMethodOutcomeProvesV2(
+    verificationMethodMutationOutcome(await fixture("webadmin-method-refusal-gate-mode-invalid.json"), 1), 1), false,
+    "the plain 422 (publish) proves nothing about the wire");
+  assert.equal(verificationMethodOutcomeProvesV2(verificationMethodMutationOutcome(null, 1), 1), false);
 });
 
 test("adding a row writes no mode (D-151a point 4) and the draft operations are exact", () => {
@@ -762,7 +828,7 @@ test("adding a row writes no mode (D-151a point 4) and the draft operations are 
   const withHun = verificationMethodDraftWithStorefront(draft, "HUN");
   assert.deepEqual(withHun?.gate_mode, draft.gate_mode, "a mode-only storefront keeps its entry when it gains a method row");
   assert.deepEqual(gateModeOnlyStorefronts(withHun!), []);
-  assert.deepEqual(verificationMethodDraftWithoutStorefront(draft, "USA"), { draft, dropped_stored: null }, "no such row");
+  assert.deepEqual(verificationMethodDraftWithoutStorefront(draft, "USA"), { draft, notice: null }, "no such row");
 });
 
 test("the mutation outcome order and the apply command binding", async () => {

@@ -1281,27 +1281,49 @@ export function gateModeStoredUnderNone(
   return own !== undefined && own !== VERIFICATION_GATE_MODE_ABSENT ? own : null;
 }
 
+/** What removing a row did to that storefront's own mode, for the operator's notice. */
+export type GateModeRemovalNotice =
+  /** Its own mode is gone and the storefront now gets a different one (Global's). */
+  | { kind: "dropped"; reason: "none" | "persona"; mode: VerificationGateMode; global: VerificationGateMode }
+  /** Its own mode is gone but equals Global's: the storefront still gets `mode`. */
+  | { kind: "follows-global"; mode: VerificationGateMode };
+
 /**
- * The modes after a storefront's method row is removed. Review round 1: its
- * own entry is dropped only when it equals the global mode, so removing the
- * row never changes what that storefront's members get, and a different entry
- * stays as a mode-only row. Review round 2: when the removed row's method was
- * None, a stored mode other than Full block had no effect and would turn into
- * an active one under the global method, so it is dropped and reported.
+ * The modes after a storefront's method row is removed; the storefront then
+ * runs under `globalMethod`.
+ * - Review round 1: an own entry equal to the global mode is dropped silently
+ *   (nothing changes); a different one stays as a mode-only row, so the
+ *   storefront's members get what they got before.
+ * - Review round 2: under a removed None method, an own mode other than Full
+ *   block had no effect and would come alive under Global's method: dropped.
+ * - Review round 3: an own Explore that would sit under a non-Persona global
+ *   method can only ever be refused: dropped too.
+ * The notice says what the storefront gets afterwards, never more (round 3):
+ * a drop is reported only when the resulting mode differs.
  */
 export function gateModeAfterRowRemoval(
   gate: VerificationGateModePolicy,
   storefront: string,
-  method: MandatoryMethod,
-): { gate_mode: VerificationGateModePolicy; dropped_stored: VerificationGateMode | null } {
-  if (!Object.hasOwn(gate.overrides, storefront)) return { gate_mode: gate, dropped_stored: null };
+  removedMethod: MandatoryMethod,
+  globalMethod: MandatoryMethod,
+): { gate_mode: VerificationGateModePolicy; notice: GateModeRemovalNotice | null } {
+  if (!Object.hasOwn(gate.overrides, storefront)) return { gate_mode: gate, notice: null };
   const own = gate.overrides[storefront];
-  if (method === "none" && own !== VERIFICATION_GATE_MODE_ABSENT) {
-    return { gate_mode: withGateModeChoice(gate, storefront, "inherit"), dropped_stored: own };
+  const without = withGateModeChoice(gate, storefront, "inherit");
+  const reason = removedMethod === "none" && own !== VERIFICATION_GATE_MODE_ABSENT
+    ? "none"
+    : own === "explore" && !gateModeExploreAllowed(globalMethod)
+      ? "persona"
+      : null;
+  if (reason !== null) {
+    return {
+      gate_mode: without,
+      notice: own === gate.global
+        ? { kind: "follows-global", mode: gate.global }
+        : { kind: "dropped", reason, mode: own, global: gate.global },
+    };
   }
-  return own === gate.global
-    ? { gate_mode: withGateModeChoice(gate, storefront, "inherit"), dropped_stored: null }
-    : { gate_mode: gate, dropped_stored: null };
+  return own === gate.global ? { gate_mode: without, notice: null } : { gate_mode: gate, notice: null };
 }
 
 /**
@@ -1316,6 +1338,16 @@ export function gateModeGlobalInheritors(draft: VerificationMethodDraft): string
     .filter((row) => row.method !== "none" && !Object.hasOwn(gate.overrides, row.storefront))
     .map((row) => row.storefront)
     .sort();
+}
+
+/**
+ * Whether Explore can stand on a Global row whose method is None (review
+ * round 3): only when at least one storefront that follows it forces Persona.
+ * Otherwise every follower would be refused, so the draft could never save.
+ */
+export function gateModeGlobalFollowersAllowExplore(draft: VerificationMethodDraft): boolean {
+  const followers = new Set(gateModeGlobalInheritors(draft));
+  return draft.overrides.some((row) => followers.has(row.storefront) && gateModeExploreAllowed(row.method));
 }
 
 /**
@@ -1365,13 +1397,13 @@ export function verificationMethodDraftWithStorefront(
 export function verificationMethodDraftWithoutStorefront(
   draft: VerificationMethodDraft,
   storefront: string,
-): { draft: VerificationMethodDraft; dropped_stored: VerificationGateMode | null } {
+): { draft: VerificationMethodDraft; notice: GateModeRemovalNotice | null } {
   const row = draft.overrides.find((entry) => entry.storefront === storefront);
-  if (!row) return { draft, dropped_stored: null };
+  if (!row) return { draft, notice: null };
   const overrides = draft.overrides.filter((entry) => entry.storefront !== storefront);
-  if (draft.gate_mode === null) return { draft: { ...draft, overrides }, dropped_stored: null };
-  const next = gateModeAfterRowRemoval(draft.gate_mode, storefront, row.method);
-  return { draft: { ...draft, overrides, gate_mode: next.gate_mode }, dropped_stored: next.dropped_stored };
+  if (draft.gate_mode === null) return { draft: { ...draft, overrides }, notice: null };
+  const next = gateModeAfterRowRemoval(draft.gate_mode, storefront, row.method, draft.global);
+  return { draft: { ...draft, overrides, gate_mode: next.gate_mode }, notice: next.notice };
 }
 
 /** The publish command, bound to the version, revision and fingerprint of the impact it was previewed with (v1 and v2 fingerprints differ). */
@@ -1388,6 +1420,21 @@ export function verificationMethodApplyCommand(
     reason,
     request_id: requestId,
   };
+}
+
+/**
+ * Whether a v1 command's answer proves that Core speaks v2, so the session
+ * should switch back to v2 and re-read: `gate_mode_hidden` on a success
+ * (round 2), or the Persona-rule refusal of a v1 save whose carried mode
+ * conflicts (round 3) — both exist only on a D-151 Core.
+ */
+export function verificationMethodOutcomeProvesV2(
+  outcome: VerificationMethodMutationOutcome,
+  commandVersion: VerificationMethodContractVersion,
+): boolean {
+  if (commandVersion !== 1) return false;
+  return (outcome.kind === "success" && outcome.data.gate_mode_hidden === true)
+    || outcome.kind === "gate-mode-conflict";
 }
 
 export type VerificationMethodMutationOutcome =

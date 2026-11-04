@@ -35,6 +35,12 @@ type Props = {
    * (review round 2), so the control stays a real choice and names them.
    */
   inheritedBy?: string[];
+  /**
+   * Global row under None: at least one follower forces Persona, so Explore
+   * can stand there (review round 3). Without one, every follower would be
+   * refused and the draft could never save, so Explore is not offered.
+   */
+  followersAllowExplore?: boolean;
   /** A storefront's explicit Full block that Core drops on save while every scope is Full block. */
   pinDroppedOnSave?: boolean;
   /** Core named this scope in an `explore_requires_persona` refusal. */
@@ -62,6 +68,7 @@ export default function VerificationGateModeControl({
   scopeLabel,
   method,
   inheritedBy = [],
+  followersAllowExplore = false,
   pinDroppedOnSave = false,
   flagged = false,
   recommended,
@@ -113,16 +120,22 @@ export default function VerificationGateModeControl({
   }
 
   const effective = choice === "inherit" ? inherited : choice;
-  // A Global None that storefronts follow: the mode is theirs; a video or
-  // photo follower is flagged on its own row, as Core flags that storefront.
-  const exploreAllowed = appliesTo || gateModeExploreAllowed(method);
+  // A Global None that storefronts follow: the mode is theirs, so Explore
+  // stands only if one of them forces Persona; a video or photo follower is
+  // flagged on its own row, as Core flags that storefront.
+  const exploreAllowed = appliesTo ? followersAllowExplore : gateModeExploreAllowed(method);
   /** Explore under video or photo: Core refuses the save, so the row says why and how to fix it. */
   const conflict = flagged || (!exploreAllowed && effective === "explore");
   const allowed = (mode: VerificationGateMode) => mode !== "explore" || exploreAllowed;
   const hint = conflict
     ? <small id={hintId} className="field-error" data-gate-mode-persona-only="true">{t("personaOnlyConflict")}</small>
     : appliesTo
-      ? <small id={hintId} className="field-hint" data-gate-mode-applies-to={inheritedBy.join(",")}>{t("appliesTo", { storefronts: inheritedBy.join(", ") })}</small>
+      ? (
+        <small id={hintId} className="field-hint" data-gate-mode-applies-to={inheritedBy.join(",")}>
+          {t("appliesTo", { storefronts: inheritedBy.join(", ") })}
+          {exploreAllowed ? null : <> {t("personaOnly")}</>}
+        </small>
+      )
       : !exploreAllowed
         ? <small id={hintId} className="field-hint" data-gate-mode-persona-only="true">{t("personaOnly")}</small>
         : effective === recommended
