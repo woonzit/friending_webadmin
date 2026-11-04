@@ -11,7 +11,6 @@ import {
   WAITING_ROOM_COPY_LIMITS,
   WAITING_ROOM_HELP_URL_MAX_BYTES,
   WAITING_ROOM_LOCALES,
-  emptyWaitingRoomCopyOverrideDraft,
   forcedCopyTrim,
   forcedStorefrontName,
   localizedForcedStorefronts,
@@ -39,20 +38,24 @@ import {
   VERIFICATION_START_METHODS,
   documentUsesMethod,
   draftGateModeConflicts,
-  gateModeChoice,
+  gateModeEntriesDropped,
+  gateModeGlobalInheritors,
   gateModeOnlyStorefronts,
-  gateModeAfterRowRemoval,
+  gateModePinsDroppedOnSave,
   loadVerificationMethodConsole,
   verificationMethodPolicyStoresGateMode,
   validateVerificationMethodDraft,
+  verificationMethodApplyCommand,
   verificationMethodConflictResponse,
+  verificationMethodDocument,
   verificationMethodDocumentFromDraft,
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
+  verificationMethodDraftWithStorefront,
+  verificationMethodDraftWithoutStorefront,
   verificationMethodErrorResponse,
-  verificationMethodGateModeConflictResponse,
   verificationMethodImpactResponse,
-  verificationMethodMutationResponse,
+  verificationMethodMutationOutcome,
   verificationMethodPendingFrom,
   verificationMethodPendingMutation,
   verificationMethodPersistBeforeMutation,
@@ -225,7 +228,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     setConfirmation("");
     setPhotoRefused(false);
     setRefusedScopes([]);
-    setGateModeHidden(false);
+    // The v1 warning stays until a v2 read proves the modes are on screen.
+    if (material.contract_version === 2) setGateModeHidden(false);
     setGuardRevision(material.policy.revision);
     setState("ready");
   }, []);
@@ -330,61 +334,77 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const commandVersion: VerificationMethodContractVersion = durable.payload.contract_version === 2 ? 2 : 1;
     /** A command retained under the other wire (Core changed meanwhile) is answered, then re-read. */
     const sameWire = data?.contract_version === commandVersion;
-    const success = verificationMethodMutationResponse(response, commandVersion);
-    if (success) {
+    const outcome = verificationMethodMutationOutcome(response, commandVersion);
+    if (outcome.kind === "success") {
+      const success = outcome.data;
       const cleared = clearPending();
       if (!cleared) {
         setNotice({ tone: "error", text: t("persistenceCleanupFailed") });
         setBusy(false);
         return;
       }
-      if (sameWire) {
+      // Review round 2: `gate_mode_hidden` proves Core speaks v2. Re-read on v2
+      // so the operator sees the stored modes instead of staying on v1.
+      const restoreWire = success.gate_mode_hidden === true && commandVersion === 1;
+      if (sameWire && !restoreWire) {
         adopt(success.policy, false);
         setData((current) => (current
           ? { ...current, policy: success.policy, method_availability: success.method_availability }
           : current));
-        if (success.gate_mode_hidden) setGateModeHidden(true);
-      } else void load(false);
-      setNotice(success.replayed
-        ? { tone: "info", text: t("replayed") }
+      } else {
+        if (restoreWire) {
+          wireRef.current = 2;
+          setGateModeHidden(true);
+        }
+        void load(false);
+      }
+      const base = success.replayed
+        ? t("replayed")
         : durable.action === "verification_method_save"
-          ? { tone: "success", text: t("draftSaved", { revision: success.policy.revision }) }
-          : { tone: "success", text: t("published", { revision: success.policy.revision }) });
+          ? t("draftSaved", { revision: success.policy.revision })
+          : t("published", { revision: success.policy.revision });
+      // Review round 2: name the explicit Full block entries Core did not keep.
+      const sent = durable.action === "verification_method_save" && commandVersion === 2
+        ? verificationMethodDocument(durable.payload.draft_json, "exact", 2)?.gate_mode
+        : undefined;
+      const dropped = gateModeEntriesDropped(sent, success.policy.draft.document.gate_mode);
+      const extra = [
+        dropped.length > 0 ? gt("pinsDropped", { storefronts: dropped.map(scopeLabel).join(", ") }) : null,
+        restoreWire ? gt("hiddenReloaded") : null,
+      ].filter(Boolean).join(" ");
+      setNotice({ tone: success.replayed ? "info" : "success", text: extra ? `${base} ${extra}` : base });
       setBusy(false);
       return;
     }
-    // D-151 review: Explore under video or photo. A 422 with `data`: terminal,
-    // never retained, and the named rows are highlighted.
-    const gateConflict = verificationMethodGateModeConflictResponse(response);
-    if (gateConflict) {
+    if (outcome.kind === "gate-mode-conflict") {
+      // D-151 review: Explore under video or photo. Terminal, never retained,
+      // and the named rows are highlighted.
       const cleared = clearPending();
-      setRefusedScopes(gateConflict.scopes);
+      setRefusedScopes(outcome.conflict.scopes);
       setNotice({
         tone: "error",
         text: cleared
-          ? gt("conflictRefused", { scopes: gateConflict.scopes.map(scopeLabel).join(", ") })
+          ? gt("conflictRefused", { scopes: outcome.conflict.scopes.map(scopeLabel).join(", ") })
           : t("persistenceCleanupFailed"),
       });
       setBusy(false);
       return;
     }
-    const conflict = verificationMethodConflictResponse(response, commandVersion);
-    if (conflict) {
+    if (outcome.kind === "conflict") {
       const cleared = clearPending();
       if (sameWire) {
-        adopt(conflict.data.policy, false);
+        adopt(outcome.data.policy, false);
         setData((current) => (current
-          ? { ...current, policy: conflict.data.policy, method_availability: conflict.data.method_availability }
+          ? { ...current, policy: outcome.data.policy, method_availability: outcome.data.method_availability }
           : current));
       } else void load(false);
       setNotice({ tone: "error", text: cleared ? t("conflict") : t("persistenceCleanupFailed") });
       setBusy(false);
       return;
     }
-    const error = verificationMethodErrorResponse(response);
-    if (!verificationMethodShouldRetainMutation(error)) clearPending();
-    if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) setPhotoRefused(true);
-    setNotice(refusalNotice(error, durable));
+    if (!outcome.retain) clearPending();
+    if (outcome.error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) setPhotoRefused(true);
+    setNotice(refusalNotice(outcome.error, durable));
     setBusy(false);
   }
 
@@ -426,9 +446,18 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     });
     const parsed = verificationMethodImpactResponse(response, version);
     const bound = parsed?.expected_revision === expected ? parsed : null;
+    if (bound?.gate_mode_hidden && version === 1) {
+      // Review round 2: proof that Core speaks v2. A v1 preview would bind a
+      // publish to modes this view never showed; re-read on v2 instead.
+      wireRef.current = 2;
+      setGateModeHidden(true);
+      setNotice({ tone: "info", text: gt("hiddenReloaded") });
+      setBusy(false);
+      void load(false);
+      return;
+    }
     setImpact(bound);
     setConfirmation("");
-    if (bound?.gate_mode_hidden) setGateModeHidden(true);
     if (bound) {
       setNotice({ tone: "info", text: t("impactReady", { revision: expected }) });
       setBusy(false);
@@ -455,14 +484,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     if (!impact || !impactBound || !access.publishable || locked || busy || pending !== null) return;
     const normalizedReason = verificationMethodReason(reason);
     if (!normalizedReason || confirmation !== VERIFICATION_METHOD_CONFIRMATION_PHRASE) return;
-    startMutation("verification_method_apply", {
-      contract_version: impact.contract_version,
-      expected_revision: impact.expected_revision,
-      normalized_fingerprint: impact.normalized_fingerprint,
-      confirmation_phrase: impact.confirmation_phrase,
-      reason: normalizedReason,
-      request_id: crypto.randomUUID(),
-    });
+    startMutation("verification_method_apply", verificationMethodApplyCommand(impact, normalizedReason, crypto.randomUUID()));
   }
 
   function patch(next: Partial<VerificationMethodDraft>) {
@@ -493,29 +515,26 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   }
 
   function addOverride() {
-    if (!draft || !storefrontToAdd || draft.overrides.some((row) => row.storefront === storefrontToAdd)) return;
-    patch({
-      overrides: [...draft.overrides, {
-        storefront: storefrontToAdd,
-        // A new row starts from the value it currently inherits, so adding it changes nothing by itself.
-        method: draft.global,
-        copy: emptyWaitingRoomCopyOverrideDraft(),
-      }],
-    });
+    if (!draft || !storefrontToAdd) return;
+    // A new row starts from the method it inherits and writes no gate mode: it
+    // follows Global until the operator picks one (D-151a point 4).
+    const next = verificationMethodDraftWithStorefront(draft, storefrontToAdd);
+    if (!next) return;
+    patch({ overrides: next.overrides });
     setExpanded(storefrontToAdd);
     setStorefrontToAdd("");
   }
 
   function removeOverride(storefront: string) {
     if (!draft) return;
-    // Contract §7.1: removing a row removes its method AND its copy override
-    // together. Its own gate mode goes too only when it equals the global mode;
-    // a different one stays as a mode-only row, so the storefront's members get
-    // what they got before (review P3).
-    patch({
-      overrides: draft.overrides.filter((row) => row.storefront !== storefront),
-      ...(draft.gate_mode ? { gate_mode: gateModeAfterRowRemoval(draft.gate_mode, storefront) } : {}),
-    });
+    // Contract §7.1 plus the gate-mode rules of `gateModeAfterRowRemoval`:
+    // a mode that differs from Global stays as a mode-only row; a stored mode
+    // under a None method is dropped and named.
+    const removed = verificationMethodDraftWithoutStorefront(draft, storefront);
+    patch({ overrides: removed.draft.overrides, gate_mode: removed.draft.gate_mode });
+    if (removed.dropped_stored) {
+      setNotice({ tone: "info", text: gt("removedStored", { storefront: scopeLabel(storefront), mode: gt(`modes.${removed.dropped_stored}`) }) });
+    }
     setExpanded((current) => (current === storefront ? undefined : current));
   }
 
@@ -541,6 +560,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const columnCount = gate !== null && recommendedMode !== null ? 5 : 4;
   /** Rows to highlight: the draft's own Persona-rule conflicts plus any scope Core named. */
   const conflictScopes = new Set([...draftGateModeConflicts(draft), ...refusedScopes]);
+  /** Forcing storefronts that follow Global's mode, and Full block entries Core would drop on save (review round 2). */
+  const globalInheritors = gateModeGlobalInheritors(draft);
+  const pinsDroppedOnSave = gateModePinsDroppedOnSave(gate);
   const modeOnlyRows = [...gateModeOnlyStorefronts(draft)].sort((left, right) => (
     forcedStorefrontName(left, locale).localeCompare(forcedStorefrontName(right, locale), locale)
     || left.localeCompare(right)
@@ -817,12 +839,13 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       <td>
         <VerificationGateModeControl
           id={`gate-mode-${row ?? "global"}`}
-          scope={row === null ? "global" : "storefront"}
+          gate={gate}
+          storefront={row}
           scopeLabel={row === null ? shared("globalRow") : `${forcedStorefrontName(row, locale)} (${row})`}
           method={method}
+          inheritedBy={row === null ? globalInheritors.map((code) => `${forcedStorefrontName(code, locale)} (${code})`) : undefined}
+          pinDroppedOnSave={row !== null && pinsDroppedOnSave.includes(row)}
           flagged={refusedScopes.includes(row ?? "global")}
-          choice={gateModeChoice(gate, row)}
-          inherited={gate.global}
           recommended={recommendedMode}
           disabled={!editable}
           onChange={(choice) => patch({ gate_mode: withGateModeChoice(gate, row, choice) })}
@@ -986,7 +1009,19 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           ))}
           <div className="forced-save-bar">
             <div className="row-actions">
-              <button type="button" className="button button-secondary" disabled={busy || locked} onClick={() => void load(false)}>{shared("reload")}</button>
+              <button
+                type="button"
+                className="button button-secondary"
+                disabled={busy || locked}
+                onClick={() => {
+                  // Review round 2: an explicit reload asks for v2 again, so a session
+                  // that fell back to v1 picks the gate modes up once Core speaks v2.
+                  wireRef.current = 2;
+                  void load(false);
+                }}
+              >
+                {shared("reload")}
+              </button>
               <button type="button" className="button button-primary" disabled={!editable || !dirty || draftIssue !== null} onClick={saveDraft}>
                 {busy ? t("savingDraft") : t("saveDraft")}
               </button>

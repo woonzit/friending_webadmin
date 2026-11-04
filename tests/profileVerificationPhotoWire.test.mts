@@ -198,7 +198,7 @@ test("the scopes table names the photo blocker, points at the catalogue editor a
     "the console guard over the saved draft shows the blocker before any preview");
   assert.match(table, /draftUsesPhoto && !availability\.photo\.policy_enable_allowed/,
     "an unsaved photo draft learns about the catalogue before pressing anything");
-  assert.match(table, /if \(error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE\) setPhotoRefused\(true\);/);
+  assert.match(table, /if \(outcome\.error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE\) setPhotoRefused\(true\);/);
   assert.match(table, /href=\{VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF\}/);
   assert.match(table, /data-verification-method-photo-rollout="true"/);
   assert.match(table, /photo: shared\("preview\.primaryPhoto"\)/);

@@ -14,6 +14,9 @@ import {
   draftGateModeConflicts,
   gateModeAfterRowRemoval,
   gateModeChoice,
+  gateModeEntriesDropped,
+  gateModeGlobalInheritors,
+  gateModePinsDroppedOnSave,
   gateModeExploreAllowed,
   gateModeMethodConflicts,
   gateModeOnlyStorefronts,
@@ -30,8 +33,12 @@ import {
   verificationMethodConsoleResponse,
   verificationMethodDocument,
   verificationMethodDocumentFromDraft,
+  verificationMethodApplyCommand,
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
+  verificationMethodDraftWithStorefront,
+  verificationMethodDraftWithoutStorefront,
+  verificationMethodMutationOutcome,
   verificationMethodErrorResponse,
   verificationMethodGateModeConflictResponse,
   verificationMethodImpactResponse,
@@ -135,10 +142,9 @@ test("admin_me is unchanged: v2 is never read from it, so the console asks for v
 // Document decoder (strict keys, closed values, the omission rule)
 // ---------------------------------------------------------------------------
 
-test("a v2 read materializes an absent gate_mode as Full block and decodes a present one exactly", () => {
-  const absent = verificationMethodDocument(v1Document(), "server", 2);
-  assert.ok(absent);
-  assert.deepEqual(absent.gate_mode, { global: "full_block", overrides: {} }, "missing field = Full block");
+test("a v2 read refuses a document without gate_mode and decodes a present one exactly", () => {
+  assert.equal(verificationMethodDocument(v1Document(), "server", 2), null,
+    "review round 2: Core always materializes it; a missing key must never read as Full block (fail-open indicator)");
 
   const served = verificationMethodDocument(v2Document({ global: "explore", overrides: { USA: "full_block", HUN: "explore" } }), "server", 2);
   assert.ok(served);
@@ -219,10 +225,12 @@ test("the v2 console decodes the default and the Explore draft corpus, and only 
   for (const [label, variant] of variants) {
     assert.equal(verificationMethodConsoleResponse(success(variant), 2), null, label);
   }
-  // A v2 console tolerates a served document without gate_mode (absent = Full block).
-  const withoutKey = structuredClone(data);
-  delete withoutKey.policy.live.document.gate_mode;
-  assert.deepEqual(verificationMethodConsoleResponse(success(withoutKey), 2)?.policy.live.document.gate_mode, { global: "full_block", overrides: {} });
+  // A v2 console refuses a served document without gate_mode, draft or live.
+  for (const side of ["draft", "live"] as const) {
+    const withoutKey = structuredClone(data);
+    delete withoutKey.policy[side].document.gate_mode;
+    assert.equal(verificationMethodConsoleResponse(success(withoutKey), 2), null, side);
+  }
 });
 
 /**
@@ -664,20 +672,130 @@ test("a mode stored under method None stays visible; removing a method row keeps
   assert.equal(isDefaultGateModePolicy({ global: "explore", overrides: {} }), false);
 
   const differs: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "full_block" } };
-  assert.equal(gateModeAfterRowRemoval(differs, "HUN"), differs, "HUN keeps Full block: nothing changes behind the operator");
+  assert.deepEqual(gateModeAfterRowRemoval(differs, "HUN", "persona"), { gate_mode: differs, dropped_stored: null },
+    "HUN keeps Full block: nothing changes behind the operator");
   const same: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "explore" } };
-  assert.deepEqual(gateModeAfterRowRemoval(same, "HUN"), { global: "explore", overrides: {} }, "a redundant entry is dropped");
+  assert.deepEqual(gateModeAfterRowRemoval(same, "HUN", "persona"), { gate_mode: { global: "explore", overrides: {} }, dropped_stored: null },
+    "a redundant entry is dropped silently: nothing changes");
   const none: VerificationGateModePolicy = { global: "explore", overrides: {} };
-  assert.equal(gateModeAfterRowRemoval(none, "HUN"), none);
+  assert.deepEqual(gateModeAfterRowRemoval(none, "HUN", "persona"), { gate_mode: none, dropped_stored: null });
 
   // Through the draft: the removed method row reappears as a mode-only row.
   const draft = verificationMethodDraft(v2Document(differs, {
     overrides: { HUN: "persona" },
     waiting_room_copy: { default: { en: copy("en"), hu: copy("hu") }, overrides: { HUN: { en: {}, hu: {} } } },
   }));
-  const removed = { ...draft, overrides: [], gate_mode: gateModeAfterRowRemoval(draft.gate_mode!, "HUN") };
-  assert.deepEqual(gateModeOnlyStorefronts(removed), ["HUN"]);
-  assert.equal(resolveGateMode(removed.gate_mode!, "HUN"), "full_block");
+  const removed = verificationMethodDraftWithoutStorefront(draft, "HUN");
+  assert.deepEqual(removed.draft.overrides, []);
+  assert.equal(removed.dropped_stored, null);
+  assert.deepEqual(gateModeOnlyStorefronts(removed.draft), ["HUN"]);
+  assert.equal(resolveGateMode(removed.draft.gate_mode!, "HUN"), "full_block");
+});
+
+// ---------------------------------------------------------------------------
+// Webadmin review round 2
+// ---------------------------------------------------------------------------
+
+function rowsDraft(gate: VerificationGateModePolicy, global: VerificationMethodDocument["global"], rows: Record<string, VerificationMethodDocument["global"]>) {
+  const copyOverrides = Object.fromEntries(Object.keys(rows).map((key) => [key, { en: {}, hu: {} }]));
+  return verificationMethodDraft(v2Document(gate, {
+    global,
+    overrides: rows,
+    waiting_room_copy: { default: { en: copy("en"), hu: copy("hu") }, overrides: copyOverrides as never },
+  }));
+}
+
+test("item 1: under a Global None, forcing storefronts that follow Global are named as the ones the mode applies to", () => {
+  const draft = rowsDraft({ global: "explore", overrides: { DEU: "full_block" } }, "none",
+    { USA: "persona", CAN: "persona", DEU: "persona", AUT: "none" });
+  assert.deepEqual(gateModeGlobalInheritors(draft), ["CAN", "USA"],
+    "DEU has its own mode, AUT forces nothing; storefronts without a row follow Global's None");
+  assert.equal(resolveGateMode(draft.gate_mode!, "USA"), "explore", "in effect for USA although Global itself is None");
+  assert.deepEqual(gateModeGlobalInheritors(rowsDraft({ global: "explore", overrides: {} }, "none", {})), [],
+    "nobody follows it: then and only then is it without effect");
+  assert.deepEqual(gateModeGlobalInheritors(verificationMethodDraft(v1Document())), []);
+});
+
+test("item 2: explicit Full block entries Core drops while every scope is Full block, before and after a save", async () => {
+  assert.deepEqual(gateModePinsDroppedOnSave({ global: "full_block", overrides: { USA: "full_block", HUN: "full_block" } }), ["HUN", "USA"]);
+  assert.deepEqual(gateModePinsDroppedOnSave({ global: "explore", overrides: { HUN: "full_block" } }), [],
+    "kept as soon as some scope uses Explore");
+  assert.deepEqual(gateModePinsDroppedOnSave({ global: "full_block", overrides: { HUN: "full_block", USA: "explore" } }), []);
+  assert.deepEqual(gateModePinsDroppedOnSave(null), []);
+
+  // After the save: what was sent against what Core stored (and the console re-reads).
+  const sent: VerificationGateModePolicy = { global: "full_block", overrides: { HUN: "full_block", USA: "full_block" } };
+  assert.deepEqual(gateModeEntriesDropped(sent, { global: "full_block", overrides: {} }), ["HUN", "USA"]);
+  assert.deepEqual(gateModeEntriesDropped({ global: "explore", overrides: { HUN: "full_block" } }, { global: "explore", overrides: { HUN: "full_block" } }), []);
+  assert.deepEqual(gateModeEntriesDropped(undefined, { global: "full_block", overrides: {} }), [], "a v1 save sends no modes");
+
+  // The corpus save: sent HUN Full block under an Explore global, and Core kept it.
+  const request = await fixture("webadmin-request-save-v2.json");
+  const answer = verificationMethodMutationResponse(await fixture("webadmin-method-save-v2.json"), 2)!;
+  assert.deepEqual(gateModeEntriesDropped(request.draft_json.gate_mode, answer.policy.draft.document.gate_mode), []);
+});
+
+test("item 5: removing a None row drops a stored mode other than Full block and reports it", () => {
+  const draft = rowsDraft({ global: "full_block", overrides: { HUN: "explore" } }, "persona", { HUN: "none" });
+  const removed = verificationMethodDraftWithoutStorefront(draft, "HUN");
+  assert.equal(removed.dropped_stored, "explore", "named in the notice");
+  assert.deepEqual(removed.draft.gate_mode, { global: "full_block", overrides: {} },
+    "it does not come alive as an Explore mode-only row under Persona");
+  assert.deepEqual(gateModeOnlyStorefronts(removed.draft), []);
+  assert.deepEqual(draftGateModeConflicts(removed.draft), []);
+
+  const pin = verificationMethodDraftWithoutStorefront(rowsDraft({ global: "explore", overrides: { HUN: "full_block" } }, "persona", { HUN: "none" }), "HUN");
+  assert.equal(pin.dropped_stored, null, "a stored Full block is safe and differs from Global: kept as a mode-only row");
+  assert.deepEqual(gateModeOnlyStorefronts(pin.draft), ["HUN"]);
+  assert.deepEqual(gateModeAfterRowRemoval({ global: "explore", overrides: { HUN: "explore" } }, "HUN", "none"),
+    { gate_mode: { global: "explore", overrides: {} }, dropped_stored: "explore" });
+});
+
+test("adding a row writes no mode (D-151a point 4) and the draft operations are exact", () => {
+  const draft = rowsDraft({ global: "explore", overrides: { HUN: "full_block" } }, "persona", {});
+  const added = verificationMethodDraftWithStorefront(draft, "USA");
+  assert.ok(added);
+  assert.deepEqual(added.overrides.map((row) => [row.storefront, row.method]), [["USA", "persona"]], "it inherits the global method");
+  assert.deepEqual(added.gate_mode, draft.gate_mode, "no gate mode key is written");
+  assert.equal(verificationMethodDraftWithStorefront(added, "USA"), null, "no duplicate");
+  assert.equal(verificationMethodDraftWithStorefront(draft, "ZZZ"), null, "catalogue only");
+  const withHun = verificationMethodDraftWithStorefront(draft, "HUN");
+  assert.deepEqual(withHun?.gate_mode, draft.gate_mode, "a mode-only storefront keeps its entry when it gains a method row");
+  assert.deepEqual(gateModeOnlyStorefronts(withHun!), []);
+  assert.deepEqual(verificationMethodDraftWithoutStorefront(draft, "USA"), { draft, dropped_stored: null }, "no such row");
+});
+
+test("the mutation outcome order and the apply command binding", async () => {
+  const gateConflict = await fixture("webadmin-method-refusal-explore-requires-persona.json");
+  const outcome = verificationMethodMutationOutcome(gateConflict, 2);
+  assert.equal(outcome.kind, "gate-mode-conflict", "the 422 with data is never an unknown outcome");
+  assert.deepEqual(outcome.kind === "gate-mode-conflict" && outcome.conflict.scopes, ["global", "HUN"]);
+
+  const save = verificationMethodMutationOutcome(await fixture("webadmin-method-save-v2.json"), 2);
+  assert.equal(save.kind, "success");
+  assert.equal(verificationMethodMutationOutcome(await fixture("webadmin-method-save-v2.json"), 1).kind, "refused",
+    "an answer in another version is not proven material");
+  const conflict = verificationMethodMutationOutcome(await fixture("webadmin-method-conflict-v2.json"), 2);
+  assert.equal(conflict.kind, "conflict");
+  assert.deepEqual(verificationMethodMutationOutcome(await fixture("webadmin-method-refusal-gate-mode-invalid.json"), 2),
+    { kind: "refused", error: "verification-method-gate-mode-invalid", retain: false });
+  assert.deepEqual(verificationMethodMutationOutcome(await fixture("webadmin-method-refusal-contract-version.json"), 2),
+    { kind: "refused", error: "verification-method-contract-version", retain: false });
+  assert.deepEqual(verificationMethodMutationOutcome(null, 2), { kind: "refused", error: null, retain: true }, "lost answer: retained");
+  assert.deepEqual(verificationMethodMutationOutcome(refusal("verification-method-write-failed", 503), 2),
+    { kind: "refused", error: "verification-method-write-failed", retain: true });
+
+  const impact = verificationMethodImpactResponse(await fixture("webadmin-method-impact-v2.json"), 2)!;
+  const apply = verificationMethodApplyCommand(impact, "Explore for everyone", REQUEST_ID);
+  assert.deepEqual(apply, {
+    contract_version: 2,
+    expected_revision: impact.expected_revision,
+    normalized_fingerprint: impact.normalized_fingerprint,
+    confirmation_phrase: VERIFICATION_METHOD_CONFIRMATION_PHRASE,
+    reason: "Explore for everyone",
+    request_id: REQUEST_ID,
+  }, "v1 and v2 fingerprints differ: version and fingerprint come from the same impact");
+  assert.ok(normalizeVerificationMethodProxyBody("verification_method_apply", apply), "and the proxy forwards it");
 });
 
 test("the corpus pins Core's console body and marks every hand-written body", async () => {

@@ -505,9 +505,9 @@ const DOCUMENT_KEYS_V2 = [...DOCUMENT_KEYS_V1, "gate_mode"] as const;
  * `waiting_room_copy.overrides` key sets differ, so the decoder refuses it too
  * rather than rendering half a row model.
  *
- * `version` 2 (D-151 §8.4) adds `gate_mode`. On a read ("server") an absent
- * key is Full block; a save command ("exact") carries exactly the four keys.
- * A v1 document never yields `gate_mode`.
+ * `version` 2 (D-151 §8.4) adds `gate_mode`, always present on that wire: Core
+ * materializes the Full block default on a read, and a save command ("exact")
+ * carries exactly the four keys. A v1 document never yields `gate_mode`.
  */
 export function verificationMethodDocument(
   value: unknown,
@@ -535,9 +535,10 @@ export function verificationMethodDocument(
     waiting_room_copy: { default: copyDefault, overrides: copyOverrides },
   };
   if (version === 1) return document;
-  const gate = raw && Object.hasOwn(raw, "gate_mode")
-    ? verificationGateModePolicy(raw.gate_mode)
-    : defaultVerificationGateModePolicy();
+  // Review round 2: Core materializes the mode on every v2 document. A missing
+  // key must never read as Full block here — that would fail open on the
+  // downgrade indicator — so it is not proven material.
+  const gate = raw && Object.hasOwn(raw, "gate_mode") ? verificationGateModePolicy(raw.gate_mode) : null;
   return gate ? { ...document, gate_mode: gate } : null;
 }
 
@@ -1281,17 +1282,138 @@ export function gateModeStoredUnderNone(
 }
 
 /**
- * The modes after a storefront's method row is removed (review ruling): its
+ * The modes after a storefront's method row is removed. Review round 1: its
  * own entry is dropped only when it equals the global mode, so removing the
- * row never changes what that storefront's members get; a different entry
- * stays as a mode-only row.
+ * row never changes what that storefront's members get, and a different entry
+ * stays as a mode-only row. Review round 2: when the removed row's method was
+ * None, a stored mode other than Full block had no effect and would turn into
+ * an active one under the global method, so it is dropped and reported.
  */
 export function gateModeAfterRowRemoval(
   gate: VerificationGateModePolicy,
   storefront: string,
-): VerificationGateModePolicy {
-  if (!Object.hasOwn(gate.overrides, storefront) || gate.overrides[storefront] !== gate.global) return gate;
-  return withGateModeChoice(gate, storefront, "inherit");
+  method: MandatoryMethod,
+): { gate_mode: VerificationGateModePolicy; dropped_stored: VerificationGateMode | null } {
+  if (!Object.hasOwn(gate.overrides, storefront)) return { gate_mode: gate, dropped_stored: null };
+  const own = gate.overrides[storefront];
+  if (method === "none" && own !== VERIFICATION_GATE_MODE_ABSENT) {
+    return { gate_mode: withGateModeChoice(gate, storefront, "inherit"), dropped_stored: own };
+  }
+  return own === gate.global
+    ? { gate_mode: withGateModeChoice(gate, storefront, "inherit"), dropped_stored: null }
+    : { gate_mode: gate, dropped_stored: null };
+}
+
+/**
+ * Storefront method rows that force a method and have no mode of their own:
+ * Global's mode is in effect for them whatever Global's own method is — also
+ * under a Global None (review round 2). Ascending.
+ */
+export function gateModeGlobalInheritors(draft: VerificationMethodDraft): string[] {
+  if (draft.gate_mode === null) return [];
+  const gate = draft.gate_mode;
+  return draft.overrides
+    .filter((row) => row.method !== "none" && !Object.hasOwn(gate.overrides, row.storefront))
+    .map((row) => row.storefront)
+    .sort();
+}
+
+/**
+ * Explicit Full block entries Core drops on save: while every scope is Full
+ * block it stores no gate mode at all (lead ruling, rollback safety). Empty as
+ * soon as some scope uses Explore. Ascending.
+ */
+export function gateModePinsDroppedOnSave(gate: VerificationGateModePolicy | null): string[] {
+  if (gate === null || !isDefaultGateModePolicy(gate)) return [];
+  return Object.keys(gate.overrides).sort();
+}
+
+/** Storefront entries a save sent that Core did not store (canonical form). Ascending. */
+export function gateModeEntriesDropped(
+  sent: VerificationGateModePolicy | undefined,
+  stored: VerificationGateModePolicy | undefined,
+): string[] {
+  if (!sent) return [];
+  return Object.keys(sent.overrides).filter((key) => !stored || !Object.hasOwn(stored.overrides, key)).sort();
+}
+
+// ---------------------------------------------------------------------------
+// Draft operations and commands (the table calls these; they are tested)
+// ---------------------------------------------------------------------------
+
+/**
+ * Adds a storefront row that changes nothing by itself: it starts from the
+ * method it inherits and an empty copy override. It writes no gate mode — a
+ * new row follows Global until the operator picks one (D-151a point 4).
+ * `null` when the storefront already has a row or is not in the catalogue.
+ */
+export function verificationMethodDraftWithStorefront(
+  draft: VerificationMethodDraft,
+  storefront: string,
+): VerificationMethodDraft | null {
+  if (!isForcedStorefront(storefront) || draft.overrides.some((row) => row.storefront === storefront)) return null;
+  return {
+    ...draft,
+    overrides: [...draft.overrides, { storefront, method: draft.global, copy: emptyWaitingRoomCopyOverrideDraft() }],
+  };
+}
+
+/**
+ * Removes a storefront row: its method and copy override together (contract
+ * §7.1), and its own gate mode per `gateModeAfterRowRemoval`.
+ */
+export function verificationMethodDraftWithoutStorefront(
+  draft: VerificationMethodDraft,
+  storefront: string,
+): { draft: VerificationMethodDraft; dropped_stored: VerificationGateMode | null } {
+  const row = draft.overrides.find((entry) => entry.storefront === storefront);
+  if (!row) return { draft, dropped_stored: null };
+  const overrides = draft.overrides.filter((entry) => entry.storefront !== storefront);
+  if (draft.gate_mode === null) return { draft: { ...draft, overrides }, dropped_stored: null };
+  const next = gateModeAfterRowRemoval(draft.gate_mode, storefront, row.method);
+  return { draft: { ...draft, overrides, gate_mode: next.gate_mode }, dropped_stored: next.dropped_stored };
+}
+
+/** The publish command, bound to the version, revision and fingerprint of the impact it was previewed with (v1 and v2 fingerprints differ). */
+export function verificationMethodApplyCommand(
+  impact: VerificationMethodImpactData,
+  reason: string,
+  requestId: string,
+): Record<string, unknown> {
+  return {
+    contract_version: impact.contract_version,
+    expected_revision: impact.expected_revision,
+    normalized_fingerprint: impact.normalized_fingerprint,
+    confirmation_phrase: impact.confirmation_phrase,
+    reason,
+    request_id: requestId,
+  };
+}
+
+export type VerificationMethodMutationOutcome =
+  | { kind: "success"; data: VerificationMethodMutationData }
+  | { kind: "gate-mode-conflict"; conflict: VerificationMethodGateModeConflict }
+  | { kind: "conflict"; error: "verification-method-conflict" | "verification-method-preview-stale"; data: VerificationMethodConflictData }
+  | { kind: "refused"; error: VerificationMethodError | null; retain: boolean };
+
+/**
+ * One mutation answer, classified in the only safe order: success, the
+ * Persona-rule refusal (a 422 with `data`, which the plain parser declines and
+ * would otherwise read as an unknown outcome), the CAS conflict, then every
+ * other refusal — retained only while the outcome is genuinely unknown.
+ */
+export function verificationMethodMutationOutcome(
+  response: unknown,
+  version: VerificationMethodContractVersion,
+): VerificationMethodMutationOutcome {
+  const success = verificationMethodMutationResponse(response, version);
+  if (success) return { kind: "success", data: success };
+  const gateConflict = verificationMethodGateModeConflictResponse(response);
+  if (gateConflict) return { kind: "gate-mode-conflict", conflict: gateConflict };
+  const conflict = verificationMethodConflictResponse(response, version);
+  if (conflict) return { kind: "conflict", error: conflict.error, data: conflict.data };
+  const error = verificationMethodErrorResponse(response);
+  return { kind: "refused", error, retain: verificationMethodShouldRetainMutation(error) };
 }
 
 /** The one method Explore may run under (D-151 review): the T-713 boundary it relaxes is Persona's. */

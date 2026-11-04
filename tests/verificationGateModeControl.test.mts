@@ -5,7 +5,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import VerificationGateModeControl, { VerificationGateModeLegend } from "../components/VerificationGateModeControl.tsx";
-import type { MandatoryMethod, VerificationGateMode, VerificationGateModeChoice } from "../lib/verificationMethod.ts";
+import type {
+  MandatoryMethod,
+  VerificationGateMode,
+  VerificationGateModeChoice,
+  VerificationGateModePolicy,
+} from "../lib/verificationMethod.ts";
 
 /**
  * D-151 (T-927): the gate-mode control of the verification-method table, the
@@ -25,6 +30,11 @@ function render(element: ReturnType<typeof createElement>, locale: "en" | "hu" =
   ));
 }
 
+/**
+ * The control reads its row from the draft's gate modes. `choice` and
+ * `inherited` describe that row: the Global row's own mode, or a storefront
+ * (HUN) row's own entry — or `inherit` — under a Global mode `inherited`.
+ */
 function control(props: {
   scope?: "global" | "storefront";
   scopeLabel?: string;
@@ -34,15 +44,22 @@ function control(props: {
   inherited?: VerificationGateMode;
   recommended?: VerificationGateMode;
   disabled?: boolean;
+  inheritedBy?: string[];
+  pinDroppedOnSave?: boolean;
 }, locale: "en" | "hu" = "en"): string {
+  const scope = props.scope ?? "global";
+  const gate: VerificationGateModePolicy = scope === "global"
+    ? { global: props.choice === "inherit" ? "full_block" : props.choice, overrides: {} }
+    : { global: props.inherited ?? "full_block", overrides: props.choice === "inherit" ? {} : { HUN: props.choice } };
   return render(createElement(VerificationGateModeControl, {
     id: "gate-mode-test",
-    scope: props.scope ?? "global",
-    scopeLabel: props.scopeLabel ?? ((props.scope ?? "global") === "global" ? "Global default" : "Hungary (HUN)"),
+    gate,
+    storefront: scope === "global" ? null : "HUN",
+    scopeLabel: props.scopeLabel ?? (scope === "global" ? "Global default" : "Hungary (HUN)"),
     method: props.method ?? "persona",
+    inheritedBy: props.inheritedBy,
+    pinDroppedOnSave: props.pinDroppedOnSave,
     flagged: props.flagged ?? false,
-    choice: props.choice,
-    inherited: props.inherited ?? "full_block",
     recommended: props.recommended ?? "explore",
     disabled: props.disabled ?? false,
     onChange() {},
@@ -186,35 +203,48 @@ test("the legend explains each mode in one line and carries the rollback note, i
   assert.match(huControl, /Felfedező mód \(ajánlott\)/);
 });
 
-test("the scopes table wiring: the probed read, the proved wire on every call, no mode written on its own", () => {
+test("Global None that forcing storefronts follow: the mode is in effect for them, so it is a real choice (review round 2)", () => {
+  const applies = control({ method: "none", choice: "explore", inheritedBy: ["United States (USA)", "Canada (CAN)"] });
+  assert.match(applies, /data-gate-mode="explore"/);
+  assert.doesNotMatch(applies, /stored, no effect/, "it has an effect on the followers");
+  assert.match(applies, /<option value="explore" selected="">Explore mode \(recommended\)<\/option><option value="full_block">Full block<\/option>/,
+    "Explore stays selectable there");
+  assert.match(applies, /data-gate-mode-applies-to="United States \(USA\),Canada \(CAN\)">Global requires no method itself, but this mode applies to the storefronts that follow it: United States \(USA\), Canada \(CAN\)\./);
+  assert.match(applies, /aria-describedby="gate-mode-test-hint"/);
+
+  const fullFollowed = control({ method: "none", choice: "full_block", inheritedBy: ["United States (USA)"] });
+  assert.match(fullFollowed, /<option value="explore">Explore mode \(recommended\)<\/option>/, "Explore can be chosen for the followers");
+  assert.match(fullFollowed, /applies to the storefronts that follow it: United States \(USA\)/);
+
+  const nobody = control({ method: "none", choice: "explore", inheritedBy: [] });
+  assert.match(nobody, /Explore mode \(stored, no effect\)/, "only without followers is it without effect");
+  assert.match(control({ method: "none", choice: "explore", inheritedBy: ["Magyarország (HUN)"] }, "hu"),
+    /de ez a mód érvényes az azt követő storefrontokra: Magyarország \(HUN\)\./);
+});
+
+test("an explicit Full block that Core will drop on save says so (review round 2)", () => {
+  const pinned = control({ scope: "storefront", choice: "full_block", inherited: "full_block", pinDroppedOnSave: true });
+  assert.match(pinned, /<small id="gate-mode-test-pin" class="field-hint" data-gate-mode-pin-dropped="true">Kept only once some scope uses Explore mode: while every scope is Full block, Core drops this entry on save\./);
+  assert.match(pinned, /aria-describedby="gate-mode-test-hint gate-mode-test-pin"/, "both hints describe the select");
+  assert.doesNotMatch(control({ scope: "storefront", choice: "full_block", inherited: "explore" }), /data-gate-mode-pin-dropped/);
+  assert.doesNotMatch(control({ scope: "storefront", choice: "inherit", pinDroppedOnSave: true }), /data-gate-mode-pin-dropped/,
+    "only an explicit Full block entry");
+  assert.match(control({ scope: "storefront", choice: "full_block", pinDroppedOnSave: true }, "hu"),
+    /Csak akkor marad meg, ha valamelyik terület Felfedező módot használ/);
+});
+
+test("the scopes table wiring that remains source-level: probed read, helpers, no hand-built commands", () => {
   const table = readFileSync(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
-  // The probe's behaviour is tested on `loadVerificationMethodConsole` (verificationMethodGateMode.test.mts);
-  // here only that the table starts at v2 and keeps what the probe proved.
+  // Behaviour lives in tested helpers (verificationMethodGateMode.test.mts): the probe, the
+  // mutation outcome order, the apply command, row add/remove, inheritors and dropped pins.
   assert.match(table, /const wireRef = useRef<VerificationMethodContractVersion>\(2\);/);
   assert.match(table, /const result = await loadVerificationMethodConsole\(adminCall, wireRef\.current\);\n\s+wireRef\.current = result\.version;/);
   assert.doesNotMatch(table, /contractVersion/, "nothing reads a wire version from admin_me");
-  // Every call after the read uses the wire the read proved.
-  assert.match(table, /contract_version: data\.contract_version,\n\s+draft_json: draftDocument,/);
-  assert.match(table, /contract_version: version,\n\s+expected_revision: expected,/);
-  // v1 and v2 fingerprints differ: a publish carries the version AND the fingerprint of the impact it was bound to.
-  assert.match(table, /contract_version: impact\.contract_version,\n\s+expected_revision: impact\.expected_revision,\n\s+normalized_fingerprint: impact\.normalized_fingerprint,/);
-  assert.match(table, /storesModes=\{verificationMethodPolicyStoresGateMode\(data\.policy\)\}/, "draft OR live (behaviour tested on the helper)");
-  // Review P3: a version refusal mid-session says Core changed, on save/publish (refusalNotice) and on preview.
-  assert.equal((table.match(/gt\("coreChanged"\)/g) ?? []).length, 2);
+  assert.match(table, /const outcome = verificationMethodMutationOutcome\(response, commandVersion\);/);
+  assert.match(table, /verificationMethodApplyCommand\(impact, normalizedReason, crypto\.randomUUID\(\)\)/);
+  assert.match(table, /verificationMethodDraftWithStorefront\(draft, storefrontToAdd\)/);
+  assert.match(table, /verificationMethodDraftWithoutStorefront\(draft, storefront\)/);
   assert.doesNotMatch(table, /contract_version: 1,\n/, "no hard-coded v1 command remains");
-  // D-151 review: the 422 with data is decoded before anything else reads the answer, so it is never "uncertain".
-  const mutation = table.slice(table.indexOf("async function executeMutation("), table.indexOf("function startMutation("));
-  assert.ok(mutation.indexOf("verificationMethodGateModeConflictResponse(response)") > 0);
-  assert.ok(mutation.indexOf("verificationMethodGateModeConflictResponse(response)") < mutation.indexOf("verificationMethodErrorResponse(response)"));
-  assert.match(table, /method=\{method\}\n\s+flagged=\{refusedScopes\.includes\(row \?\? "global"\)\}/);
-  assert.match(table, /gateModeHidden && data\?\.contract_version === 1/, "the v1 view warns about a mode it cannot show");
-  // The column exists only on v2 material with its catalogue.
-  assert.match(table, /const columnCount = gate !== null && recommendedMode !== null \? 5 : 4;/);
-  // Modes change only through the control (operator choice) or by removing that storefront's row.
-  const writes = table.match(/gate_mode: withGateModeChoice\(/g) ?? [];
-  assert.equal(writes.length, 2, "control change, mode-only row removal");
-  assert.match(table, /gate_mode: gateModeAfterRowRemoval\(draft\.gate_mode, storefront\)/,
-    "a method row's removal keeps a mode that differs from Global (behaviour tested on the helper)");
-  const addOverride = table.slice(table.indexOf("function addOverride()"), table.indexOf("function removeOverride("));
-  assert.doesNotMatch(addOverride, /gate_mode/, "a new storefront row follows Global until the operator picks a mode");
+  // An explicit reload and gate_mode_hidden both send the session back to v2.
+  assert.equal((table.match(/wireRef\.current = 2;/g) ?? []).length, 3, "reload button, mutation and preview answers");
 });

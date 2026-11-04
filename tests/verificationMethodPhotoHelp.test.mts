@@ -213,7 +213,9 @@ test("both locales explain bilingual HTTPS help and allowed override inheritance
 
 test("the console dispatches notice context captured before clearing a terminal receipt", async () => {
   const source = await readFile(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
-  assert.match(source, /const durable = pendingRef\.current \?\? next;[\s\S]*if \(!verificationMethodShouldRetainMutation\(error\)\) clearPending\(\);[\s\S]*setNotice\(refusalNotice\(error, durable\)\)/u);
+  // The outcome is classified by `verificationMethodMutationOutcome` (its `retain` is
+  // `verificationMethodShouldRetainMutation(error)`, tested in verificationMethodGateMode.test.mts).
+  assert.match(source, /const durable = pendingRef\.current \?\? next;[\s\S]*if \(!outcome\.retain\) clearPending\(\);[\s\S]*setNotice\(refusalNotice\(outcome\.error, durable\)\)/u);
   assert.match(source, /verificationMethodPhotoCopyGuidance\(error, command\)/u);
   assert.ok(source.includes('t(`photoHelp.${photoCopy}`, { code: error })'));
 });

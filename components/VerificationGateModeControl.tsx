@@ -4,31 +4,41 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import {
   VERIFICATION_GATE_MODES,
+  gateModeChoice,
   gateModeExploreAllowed,
+  gateModeStoredUnderNone,
   type MandatoryMethod,
   type VerificationGateMode,
   type VerificationGateModeChoice,
+  type VerificationGateModePolicy,
 } from "@/lib/verificationMethod";
 
 type Props = {
   id: string;
-  /** The global row has no "same as Global" choice; a storefront row does. */
-  scope: "global" | "storefront";
+  /** The draft's gate modes; the control reads its own row from them. */
+  gate: VerificationGateModePolicy;
+  /** `null` is the Global row (no "Same as Global" choice); a code is that storefront's row. */
+  storefront: string | null;
   /** How the operator reads this scope ("Global default", "Hungary (HUN)"); names the select. */
   scopeLabel: string;
   /**
-   * The row's effective method. `none` means nobody is gated here: the control
-   * shows Off (contract §8.1, "Off" is the method `none`, never a stored mode).
-   * Core still keeps a mode stored under None, so a stored Explore stays
-   * visible and can be cleared (review P2). Explore runs only under Persona
-   * (D-151 review), so for video and photo the Explore choices are disabled.
+   * The row's effective method. `none` means nobody in this scope itself is
+   * gated: the control shows Off (contract §8.1, "Off" is the method `none`,
+   * never a stored mode). Core still keeps a mode stored under None (review
+   * round 1). Explore runs only under Persona (D-151 review), so for video and
+   * photo the Explore choices are disabled.
    */
   method: MandatoryMethod;
-  choice: VerificationGateModeChoice;
+  /**
+   * Global row only: the forcing storefronts that follow Global's mode, as the
+   * operator reads them. Under a Global None the mode is in effect for them
+   * (review round 2), so the control stays a real choice and names them.
+   */
+  inheritedBy?: string[];
+  /** A storefront's explicit Full block that Core drops on save while every scope is Full block. */
+  pinDroppedOnSave?: boolean;
   /** Core named this scope in an `explore_requires_persona` refusal. */
   flagged?: boolean;
-  /** The global mode an inheriting storefront row follows. */
-  inherited: VerificationGateMode;
   /** Core's `gate_mode_catalogue.recommended`. */
   recommended: VerificationGateMode;
   disabled: boolean;
@@ -47,27 +57,32 @@ function isChoice(value: string): value is VerificationGateModeChoice {
  */
 export default function VerificationGateModeControl({
   id,
-  scope,
+  gate,
+  storefront,
   scopeLabel,
   method,
-  choice,
+  inheritedBy = [],
+  pinDroppedOnSave = false,
   flagged = false,
-  inherited,
   recommended,
   disabled,
   onChange,
 }: Props) {
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   const modeLabel = (mode: VerificationGateMode) => t(`modes.${mode}`);
+  const scope = storefront === null ? "global" : "storefront";
+  const choice = gateModeChoice(gate, storefront);
+  const inherited = gate.global;
   const hintId = `${id}-hint`;
+  const pinId = `${id}-pin`;
   const name = t("columnFor", { scope: scopeLabel });
   const change = (event: React.ChangeEvent<HTMLSelectElement>) => {
     if (isChoice(event.target.value)) onChange(event.target.value);
   };
+  const appliesTo = storefront === null && method === "none" && inheritedBy.length > 0;
 
-  if (method === "none") {
-    // The row's own stored mode (never an inherited one): Global's mode, or a storefront's own entry.
-    const stored = choice !== "inherit" && choice !== "full_block" ? choice : null;
+  if (method === "none" && !appliesTo) {
+    const stored = gateModeStoredUnderNone(gate, storefront);
     if (stored === null) {
       return (
         <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off">
@@ -78,8 +93,9 @@ export default function VerificationGateModeControl({
         </div>
       );
     }
-    // Off, but a mode is still stored: Core keeps it, it blocks the three-key
-    // rollback form, and it returns if the method changes. Only clearing it is offered.
+    // Off, nobody follows it, and a mode is still stored: Core keeps it, it
+    // blocks the three-key rollback form, and it returns if the method
+    // changes. Only clearing it is offered.
     return (
       <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off" data-gate-mode-stored={stored}>
         <select id={id} className="input" value={choice} disabled={disabled} aria-label={name} aria-describedby={hintId} onChange={change}>
@@ -97,21 +113,29 @@ export default function VerificationGateModeControl({
   }
 
   const effective = choice === "inherit" ? inherited : choice;
-  const exploreAllowed = gateModeExploreAllowed(method);
+  // A Global None that storefronts follow: the mode is theirs; a video or
+  // photo follower is flagged on its own row, as Core flags that storefront.
+  const exploreAllowed = appliesTo || gateModeExploreAllowed(method);
   /** Explore under video or photo: Core refuses the save, so the row says why and how to fix it. */
   const conflict = flagged || (!exploreAllowed && effective === "explore");
   const allowed = (mode: VerificationGateMode) => mode !== "explore" || exploreAllowed;
   const hint = conflict
     ? <small id={hintId} className="field-error" data-gate-mode-persona-only="true">{t("personaOnlyConflict")}</small>
-    : !exploreAllowed
-      ? <small id={hintId} className="field-hint" data-gate-mode-persona-only="true">{t("personaOnly")}</small>
-      : effective === recommended
-        ? null
-        : (
-          <small id={hintId} className="field-hint gate-mode-recommended" data-gate-mode-recommended={recommended}>
-            {t("recommendedHint", { mode: modeLabel(recommended) })}
-          </small>
-        );
+    : appliesTo
+      ? <small id={hintId} className="field-hint" data-gate-mode-applies-to={inheritedBy.join(",")}>{t("appliesTo", { storefronts: inheritedBy.join(", ") })}</small>
+      : !exploreAllowed
+        ? <small id={hintId} className="field-hint" data-gate-mode-persona-only="true">{t("personaOnly")}</small>
+        : effective === recommended
+          ? null
+          : (
+            <small id={hintId} className="field-hint gate-mode-recommended" data-gate-mode-recommended={recommended}>
+              {t("recommendedHint", { mode: modeLabel(recommended) })}
+            </small>
+          );
+  const pin = pinDroppedOnSave && choice === "full_block"
+    ? <small id={pinId} className="field-hint" data-gate-mode-pin-dropped="true">{t("pinDroppedOnSave")}</small>
+    : null;
+  const describedBy = [hint ? hintId : null, pin ? pinId : null].filter(Boolean).join(" ") || undefined;
   return (
     <div
       className={`method-cell gate-mode-cell${conflict ? " is-conflict" : ""}`}
@@ -125,7 +149,7 @@ export default function VerificationGateModeControl({
         value={choice}
         disabled={disabled}
         aria-label={name}
-        aria-describedby={hint ? hintId : undefined}
+        aria-describedby={describedBy}
         aria-invalid={conflict || undefined}
         onChange={change}
       >
@@ -139,6 +163,7 @@ export default function VerificationGateModeControl({
         ))}
       </select>
       {hint}
+      {pin}
     </div>
   );
 }
