@@ -826,6 +826,34 @@ export function verificationMethodConsoleResponse(
   });
 }
 
+export type VerificationMethodConsoleLoad =
+  | { ok: true; version: VerificationMethodContractVersion; data: VerificationMethodConsoleData }
+  | { ok: false; version: VerificationMethodContractVersion; error: VerificationMethodError | null };
+
+/**
+ * The console read with its wire probe (contract §8.4/§15: `admin_me` does not
+ * advertise v2). It asks for `preferred`; only Core's named
+ * `verification-method-contract-version` refusal of a v2 read — what a Core
+ * older than D-151 answers — is followed by exactly one v1 read, and the
+ * result's `version` is then 1 for the rest of the session. Any other failure,
+ * an undecodable success included, is returned as is: it never falls back.
+ */
+export async function loadVerificationMethodConsole(
+  call: (action: "verification_method_console", body: { contract_version: VerificationMethodContractVersion }) => Promise<unknown>,
+  preferred: VerificationMethodContractVersion,
+): Promise<VerificationMethodConsoleLoad> {
+  const response = await call("verification_method_console", { contract_version: preferred });
+  const parsed = verificationMethodConsoleResponse(response, preferred);
+  if (parsed) return { ok: true, version: preferred, data: parsed };
+  const error = verificationMethodErrorResponse(response);
+  if (preferred !== 2 || error !== "verification-method-contract-version") return { ok: false, version: preferred, error };
+  const fallback = await call("verification_method_console", { contract_version: 1 });
+  const legacy = verificationMethodConsoleResponse(fallback, 1);
+  return legacy
+    ? { ok: true, version: 1, data: legacy }
+    : { ok: false, version: 1, error: verificationMethodErrorResponse(fallback) };
+}
+
 export function verificationMethodMutationResponse(
   value: unknown,
   version: VerificationMethodContractVersion = 1,
@@ -1226,6 +1254,44 @@ export function gateModeOnlyStorefronts(draft: VerificationMethodDraft): string[
 export function isDefaultGateModePolicy(gate: VerificationGateModePolicy | undefined): boolean {
   return gate === undefined || (gate.global === VERIFICATION_GATE_MODE_ABSENT
     && Object.values(gate.overrides).every((mode) => mode === VERIFICATION_GATE_MODE_ABSENT));
+}
+
+/**
+ * Whether Core stores `gate_mode` in the saved draft OR the live document.
+ * A Core older than D-151 normalizes both on every gated request, so either
+ * one with modes makes it fail closed for everybody (Core `storesGateMode`).
+ */
+export function verificationMethodPolicyStoresGateMode(policy: VerificationMethodPolicy): boolean {
+  return !isDefaultGateModePolicy(policy.draft.document.gate_mode)
+    || !isDefaultGateModePolicy(policy.live.document.gate_mode);
+}
+
+/**
+ * The mode a row stores although its method is None (`null` when it stores
+ * none, or only Full block). Core keeps it — None may hold any mode — so it
+ * still blocks the three-key rollback form and comes back into force when the
+ * method changes. Global: its own mode; a storefront: its own entry only.
+ */
+export function gateModeStoredUnderNone(
+  gate: VerificationGateModePolicy,
+  storefront: string | null,
+): VerificationGateMode | null {
+  const own = storefront === null ? gate.global : gate.overrides[storefront];
+  return own !== undefined && own !== VERIFICATION_GATE_MODE_ABSENT ? own : null;
+}
+
+/**
+ * The modes after a storefront's method row is removed (review ruling): its
+ * own entry is dropped only when it equals the global mode, so removing the
+ * row never changes what that storefront's members get; a different entry
+ * stays as a mode-only row.
+ */
+export function gateModeAfterRowRemoval(
+  gate: VerificationGateModePolicy,
+  storefront: string,
+): VerificationGateModePolicy {
+  if (!Object.hasOwn(gate.overrides, storefront) || gate.overrides[storefront] !== gate.global) return gate;
+  return withGateModeChoice(gate, storefront, "inherit");
 }
 
 /** The one method Explore may run under (D-151 review): the T-713 boundary it relaxes is Persona's. */

@@ -14,11 +14,14 @@ type Props = {
   id: string;
   /** The global row has no "same as Global" choice; a storefront row does. */
   scope: "global" | "storefront";
+  /** How the operator reads this scope ("Global default", "Hungary (HUN)"); names the select. */
+  scopeLabel: string;
   /**
-   * The row's effective method. `none` means there is nothing to gate: the
-   * control shows Off and cannot change (contract §8.1, "Off" is the method
-   * `none`, never a stored mode). Explore runs only under Persona (D-151
-   * review), so for video and photo the Explore choices are disabled.
+   * The row's effective method. `none` means nobody is gated here: the control
+   * shows Off (contract §8.1, "Off" is the method `none`, never a stored mode).
+   * Core still keeps a mode stored under None, so a stored Explore stays
+   * visible and can be cleared (review P2). Explore runs only under Persona
+   * (D-151 review), so for video and photo the Explore choices are disabled.
    */
   method: MandatoryMethod;
   choice: VerificationGateModeChoice;
@@ -45,6 +48,7 @@ function isChoice(value: string): value is VerificationGateModeChoice {
 export default function VerificationGateModeControl({
   id,
   scope,
+  scopeLabel,
   method,
   choice,
   flagged = false,
@@ -55,14 +59,39 @@ export default function VerificationGateModeControl({
 }: Props) {
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   const modeLabel = (mode: VerificationGateMode) => t(`modes.${mode}`);
+  const hintId = `${id}-hint`;
+  const name = t("columnFor", { scope: scopeLabel });
+  const change = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    if (isChoice(event.target.value)) onChange(event.target.value);
+  };
 
   if (method === "none") {
+    // The row's own stored mode (never an inherited one): Global's mode, or a storefront's own entry.
+    const stored = choice !== "inherit" && choice !== "full_block" ? choice : null;
+    if (stored === null) {
+      return (
+        <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off">
+          <select id={id} className="input" value="off" disabled aria-label={name} aria-describedby={hintId}>
+            <option value="off">{t("modes.off")}</option>
+          </select>
+          <small id={hintId} className="field-hint">{t("offHint")}</small>
+        </div>
+      );
+    }
+    // Off, but a mode is still stored: Core keeps it, it blocks the three-key
+    // rollback form, and it returns if the method changes. Only clearing it is offered.
     return (
-      <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off">
-        <select id={id} className="input" value="off" disabled aria-label={t("column")}>
-          <option value="off">{t("modes.off")}</option>
+      <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off" data-gate-mode-stored={stored}>
+        <select id={id} className="input" value={choice} disabled={disabled} aria-label={name} aria-describedby={hintId} onChange={change}>
+          <option value={stored} disabled>{t("storedOption", { mode: modeLabel(stored) })}</option>
+          <option value="full_block">{modeLabel("full_block")}</option>
+          {scope === "storefront"
+            ? <option value="inherit">{t("inheritOption", { mode: modeLabel(inherited) })}</option>
+            : null}
         </select>
-        <small className="field-hint">{t("offHint")}</small>
+        <small id={hintId} className="field-hint" data-gate-mode-off-stored="true">
+          {t("offStoredHint", { mode: modeLabel(stored) })}
+        </small>
       </div>
     );
   }
@@ -72,6 +101,17 @@ export default function VerificationGateModeControl({
   /** Explore under video or photo: Core refuses the save, so the row says why and how to fix it. */
   const conflict = flagged || (!exploreAllowed && effective === "explore");
   const allowed = (mode: VerificationGateMode) => mode !== "explore" || exploreAllowed;
+  const hint = conflict
+    ? <small id={hintId} className="field-error" data-gate-mode-persona-only="true">{t("personaOnlyConflict")}</small>
+    : !exploreAllowed
+      ? <small id={hintId} className="field-hint" data-gate-mode-persona-only="true">{t("personaOnly")}</small>
+      : effective === recommended
+        ? null
+        : (
+          <small id={hintId} className="field-hint gate-mode-recommended" data-gate-mode-recommended={recommended}>
+            {t("recommendedHint", { mode: modeLabel(recommended) })}
+          </small>
+        );
   return (
     <div
       className={`method-cell gate-mode-cell${conflict ? " is-conflict" : ""}`}
@@ -84,11 +124,10 @@ export default function VerificationGateModeControl({
         className="input"
         value={choice}
         disabled={disabled}
-        aria-label={t("column")}
+        aria-label={name}
+        aria-describedby={hint ? hintId : undefined}
         aria-invalid={conflict || undefined}
-        onChange={(event) => {
-          if (isChoice(event.target.value)) onChange(event.target.value);
-        }}
+        onChange={change}
       >
         {scope === "storefront"
           ? <option value="inherit" disabled={!allowed(inherited)}>{t("inheritOption", { mode: modeLabel(inherited) })}</option>
@@ -99,29 +138,19 @@ export default function VerificationGateModeControl({
           </option>
         ))}
       </select>
-      {!exploreAllowed ? (
-        <small className={conflict ? "field-error" : "field-hint"} data-gate-mode-persona-only="true">
-          {conflict ? t("personaOnlyConflict") : t("personaOnly")}
-        </small>
-      ) : conflict ? (
-        <small className="field-error" data-gate-mode-persona-only="true">{t("personaOnlyConflict")}</small>
-      ) : effective === recommended ? null : (
-        <small className="field-hint gate-mode-recommended" data-gate-mode-recommended={recommended}>
-          {t("recommendedHint", { mode: modeLabel(recommended) })}
-        </small>
-      )}
+      {hint}
     </div>
   );
 }
 
 /**
  * One line per mode, the client note, and the rollback rule, above the table.
- * `liveStoresModes`: the live document differs from the Full block default, so
- * Core stores `gate_mode` and a Core older than D-151 could not read it. Core
- * omits the key only for Global Full block with no storefront entry; a
- * storefront set explicitly to Full block is still stored.
+ * `storesModes`: the saved draft or the live document holds a mode other than
+ * Full block, so Core stores `gate_mode`. A Core older than D-151 normalizes
+ * both documents on every gated request and would fail closed for everybody.
+ * Core drops the whole key only when every scope is Full block.
  */
-export function VerificationGateModeLegend({ liveStoresModes }: { liveStoresModes: boolean }) {
+export function VerificationGateModeLegend({ storesModes }: { storesModes: boolean }) {
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   return (
     <div className="gate-mode-legend" data-gate-mode-legend="true">
@@ -135,8 +164,8 @@ export function VerificationGateModeLegend({ liveStoresModes }: { liveStoresMode
       <p className="gate-mode-rollback" data-gate-mode-rollback="true">
         <strong>{t("rollbackTitle")}</strong> {t("rollback")}
       </p>
-      <p className="gate-mode-rollback" data-gate-mode-live-stored={liveStoresModes ? "true" : "false"}>
-        {liveStoresModes ? t("liveStored") : t("liveNotStored")}
+      <p className="gate-mode-rollback" data-gate-mode-stored={storesModes ? "true" : "false"}>
+        {storesModes ? t("storedModes") : t("noStoredModes")}
       </p>
     </div>
   );

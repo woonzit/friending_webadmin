@@ -5122,6 +5122,7 @@
       "unsavedWithMode": "Unsaved method, gate mode or Waiting Room copy changes",
       "gateMode": {
         "column": "Gate mode",
+        "columnFor": "Gate mode, {scope}",
         "modes": {
           "explore": "Explore mode",
           "full_block": "Full block",
@@ -5131,6 +5132,9 @@
         "inheritOption": "Same as Global: {mode}",
         "recommendedHint": "Recommended where verification is required: {mode}",
         "offHint": "No method is required here, so there is nothing to lock.",
+        "storedOption": "{mode} (stored, no effect)",
+        "offStoredHint": "No method is required here, so nobody is locked, but {mode} is still stored. It applies again if a method is chosen, and it keeps an older Core from reading the policy. Choose Full block to clear it.",
+        "coreChanged": "Core was updated or downgraded — reload from Core.",
         "methodInherited": "Same as Global: {method}",
         "modeOnlyHint": "Gate mode only. The method and Waiting Room copy follow Global.",
         "legend": {
@@ -5141,13 +5145,13 @@
           "clients": "Explore mode reaches only app versions that support it. Older versions keep showing the Waiting Room and its copy."
         },
         "rollbackTitle": "Rollback:",
-        "rollback": "Set every scope back to Full block and publish before downgrading Core. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy.",
+        "rollback": "Set every scope back to Full block and publish before downgrading Core, including Off rows that still show a stored mode. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy.",
         "personaOnly": "Explore mode needs Persona as the required method.",
         "personaOnlyConflict": "Explore mode needs Persona as the required method. Choose Full block here, or make Persona the method.",
         "conflictRefused": "Core refused the draft: Explore mode needs Persona as the required method in {scopes}. Nothing was saved.",
         "hiddenStored": "A gate mode is stored that this view can’t show. Saving here keeps it unchanged.",
-        "liveNotStored": "The live policy stores no gate mode, so an older Core can read it.",
-        "liveStored": "The live policy stores gate modes. An older Core cannot read it, and every member would get an error. Do the rollback above first.",
+        "noStoredModes": "Neither the draft nor the live policy stores a gate mode, so an older Core can read it.",
+        "storedModes": "The draft or the live policy stores a gate mode, so an older Core cannot read it and every member would get an error. Do the rollback above first.",
         "impactLiveMode": "Live mode",
         "impactDraftMode": "Draft mode",
         "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode."

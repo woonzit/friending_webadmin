@@ -8,8 +8,8 @@
         "generator_source_commit": "a67a56652cf74ca1816ff83182e684018e226a28",
         "fixture_commit": "707e0b974604bb00528878b2cc5f05e7c143c226",
         "copied_at_tip": "410130524cd928e167b675e8ec2e8932421cc64f",
-        "note": "Core's corpus holds one Webadmin body (the v2 console), captured at the service level (VerificationMethodAdminService::console, without Webadmin::noStoreReply's message/status/can_send). It is copied byte for byte; its sha256 equals Core's manifest row, unchanged at f0fdb22b.",
-        "reverified_at_tip": "f0fdb22b779ae9688892998eaa6666dcee85643e"
+        "note": "Core's corpus holds one Webadmin body (the v2 console), captured at the service level (VerificationMethodAdminService::console, without Webadmin::noStoreReply's message/status/can_send). It is copied byte for byte; its sha256 equals Core's manifest row, unchanged at f0fdb22b and 12f99b25.",
+        "reverified_at_tip": "12f99b250786203690fe12faa282ef91d7f7be11"
     },
     "hand_written_note": "Rows with origin hand-written were written by the Webadmin lane (T-927) from contract section 8.4 because Core produced no body for that case. Replace any of them with Core bytes when Core captures that case.",
     "files": [
@@ -26,19 +26,19 @@
         },
         {
             "file": "webadmin-method-console-v2-default.json",
-            "sha256": "ae0587231281585a5eaa00e929b02c962d69f3b431e0587083a7b4645ff4bb3a",
+            "sha256": "494d3328d538235cdd472be166cae3a38a8cfe688c98a204b3e8e3a1965867bf",
             "origin": "hand-written",
             "case": "console v2 over today's live document (no stored gate_mode, materialized as Full block)"
         },
         {
             "file": "webadmin-method-console-v2-explore-draft.json",
-            "sha256": "a26a4ab2bc71f5ce7033773ec89435dd3d2ea24dc4f7efa25982d9ccd87c4946",
+            "sha256": "61029a55d9500efcd3179e02b5a0d4255170451089028103b98a41dca6bc4a10",
             "origin": "hand-written",
             "case": "console v2 with a mode-only storefront (HUN) and a method row that follows Global (USA)"
         },
         {
             "file": "webadmin-method-impact-v2.json",
-            "sha256": "ab515733934b5fdf1ba32e00c272d2fab2cebdf1747473efc5ab0accba4254f3",
+            "sha256": "0766272c8a833b2dca7a9ae00e1865e73f6a587b92454834589f51e491a6bd3f",
             "origin": "hand-written",
             "case": "impact v2 rows with live_gate_mode / draft_gate_mode"
         },

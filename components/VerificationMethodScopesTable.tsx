@@ -41,10 +41,11 @@ import {
   draftGateModeConflicts,
   gateModeChoice,
   gateModeOnlyStorefronts,
-  isDefaultGateModePolicy,
+  gateModeAfterRowRemoval,
+  loadVerificationMethodConsole,
+  verificationMethodPolicyStoresGateMode,
   validateVerificationMethodDraft,
   verificationMethodConflictResponse,
-  verificationMethodConsoleResponse,
   verificationMethodDocumentFromDraft,
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
@@ -208,23 +209,14 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
 
   const load = useCallback(async (keepDraft: boolean) => {
     setState((current) => (current === "ready" ? current : "loading"));
-    let version = wireRef.current;
-    let response = await adminCall("verification_method_console", { contract_version: version });
-    let parsed = verificationMethodConsoleResponse(response, version);
-    if (!parsed && version === 2
-      && verificationMethodErrorResponse(response) === "verification-method-contract-version") {
-      // Contract §8.5: a Core that speaks v1 only keeps today's console; the mode control stays hidden.
-      version = 1;
-      wireRef.current = 1;
-      response = await adminCall("verification_method_console", { contract_version: 1 });
-      parsed = verificationMethodConsoleResponse(response, 1);
-    }
-    if (!parsed) {
-      const error = verificationMethodErrorResponse(response);
-      setState(error === VERIFICATION_METHOD_UNAVAILABLE_ERROR ? "unavailable" : "error");
+    // Contract §8.5: a Core that speaks v1 only keeps today's console; the mode control stays hidden.
+    const result = await loadVerificationMethodConsole(adminCall, wireRef.current);
+    wireRef.current = result.version;
+    if (!result.ok) {
+      setState(result.error === VERIFICATION_METHOD_UNAVAILABLE_ERROR ? "unavailable" : "error");
       return;
     }
-    const material = parsed;
+    const material = result.data;
     setData(material);
     setDraft((current) => (keepDraft && current && (current.gate_mode !== null) === (material.contract_version === 2)
       ? current
@@ -291,6 +283,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     command: VerificationMethodPendingMutation,
   ): Notice {
     if (error === null) return { tone: "error", text: t("uncertain") };
+    // Review P3: Core changed version under an open console (v2 → older, or the reverse).
+    if (error === "verification-method-contract-version") return { tone: "error", text: gt("coreChanged") };
     const photoCopy = verificationMethodPhotoCopyGuidance(error, command);
     if (photoCopy) return { tone: "error", text: t(`photoHelp.${photoCopy}`, { code: error }) };
     if (error === VERIFICATION_METHOD_PHOTO_UNAVAILABLE) {
@@ -448,7 +442,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       return;
     }
     const error = verificationMethodErrorResponse(response);
-    setNotice({ tone: "error", text: t("impactFailed", { code: error ?? "invalid-core-response" }) });
+    setNotice({
+      tone: "error",
+      text: error === "verification-method-contract-version"
+        ? gt("coreChanged")
+        : t("impactFailed", { code: error ?? "invalid-core-response" }),
+    });
     setBusy(false);
   }
 
@@ -510,11 +509,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   function removeOverride(storefront: string) {
     if (!draft) return;
     // Contract §7.1: removing a row removes its method AND its copy override
-    // together — and, on v2, its own gate mode, so the storefront follows Global
-    // in every respect instead of lingering as a mode-only row.
+    // together. Its own gate mode goes too only when it equals the global mode;
+    // a different one stays as a mode-only row, so the storefront's members get
+    // what they got before (review P3).
     patch({
       overrides: draft.overrides.filter((row) => row.storefront !== storefront),
-      ...(draft.gate_mode ? { gate_mode: withGateModeChoice(draft.gate_mode, storefront, "inherit") } : {}),
+      ...(draft.gate_mode ? { gate_mode: gateModeAfterRowRemoval(draft.gate_mode, storefront) } : {}),
     });
     setExpanded((current) => (current === storefront ? undefined : current));
   }
@@ -818,6 +818,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         <VerificationGateModeControl
           id={`gate-mode-${row ?? "global"}`}
           scope={row === null ? "global" : "storefront"}
+          scopeLabel={row === null ? shared("globalRow") : `${forcedStorefrontName(row, locale)} (${row})`}
           method={method}
           flagged={refusedScopes.includes(row ?? "global")}
           choice={gateModeChoice(gate, row)}
@@ -934,7 +935,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         </div>
         <div className="panel-body form-stack">
           {columnCount === 5
-            ? <VerificationGateModeLegend liveStoresModes={!isDefaultGateModePolicy(data.policy.live.document.gate_mode)} />
+            ? <VerificationGateModeLegend storesModes={verificationMethodPolicyStoresGateMode(data.policy)} />
             : null}
           <div className="table-wrap">
             <table className={`data-table method-policy-table${columnCount === 5 ? " method-policy-table-gate" : ""}`}>

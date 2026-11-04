@@ -75,16 +75,16 @@
                 }
             ],
             "unknown_storefront": {
-                "live_method": "persona",
-                "draft_method": "persona",
-                "live_gate_mode": "full_block",
-                "draft_gate_mode": "explore",
                 "members_seen": 484,
                 "currently_gated": 484,
                 "would_be_gated": 484,
                 "satisfied": 0,
                 "newly_gated": 0,
-                "newly_released": 0
+                "newly_released": 0,
+                "live_method": "persona",
+                "draft_method": "persona",
+                "live_gate_mode": "full_block",
+                "draft_gate_mode": "explore"
             },
             "totals": {
                 "members_seen": 494,

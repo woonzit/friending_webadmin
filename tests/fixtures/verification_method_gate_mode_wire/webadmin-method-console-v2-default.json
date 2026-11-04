@@ -126,6 +126,7 @@
                 "overrides": {}
             }
         },
+        "storefront_catalogue_hint": "alpha-3",
         "gate_mode_catalogue": {
             "modes": [
                 "explore",
@@ -133,8 +134,7 @@
             ],
             "recommended": "explore",
             "client_selector": "forced_verification_contract_version"
-        },
-        "storefront_catalogue_hint": "alpha-3"
+        }
     },
     "message": 200,
     "status": 200,

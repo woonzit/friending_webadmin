@@ -14906,6 +14906,12 @@ fieldset.dates-external-fields {
 .method-row-detail { white-space: normal; }
 .method-row-detail input, .method-row-detail textarea { max-width: 100%; }
 /* D-151 gate mode (contract §8.4): a fifth column on the v2 wire only. */
+/* Below this the five columns crush; `.table-wrap` scrolls instead (phone width).
+   The enclosing grids must let their items shrink, or the 880px min-content
+   widens the whole panel instead of scrolling the table. */
+.method-policy-table-gate { min-width: 880px; }
+.forced-workspace:has(.method-policy-table-gate) > *,
+.form-stack:has(> .table-wrap > .method-policy-table-gate) > * { min-width: 0; }
 .method-policy-table-gate th:nth-child(1) { width: 20%; }
 .method-policy-table-gate th:nth-child(2) { width: 26%; }
 .method-policy-table-gate th:nth-child(3) { width: 22%; }

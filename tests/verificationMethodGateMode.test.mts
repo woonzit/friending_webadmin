@@ -12,11 +12,14 @@ import {
   VERIFICATION_METHOD_ERROR_STATUSES,
   defaultVerificationGateModePolicy,
   draftGateModeConflicts,
+  gateModeAfterRowRemoval,
   gateModeChoice,
   gateModeExploreAllowed,
   gateModeMethodConflicts,
   gateModeOnlyStorefronts,
+  gateModeStoredUnderNone,
   isDefaultGateModePolicy,
+  loadVerificationMethodConsole,
   normalizeVerificationMethodProxyBody,
   resolveGateMode,
   validateVerificationMethodDraft,
@@ -36,6 +39,8 @@ import {
   verificationMethodPendingFrom,
   verificationMethodPendingMutation,
   verificationMethodPhotoCopyGuidance,
+  verificationMethodPolicy,
+  verificationMethodPolicyStoresGateMode,
   verificationMethodShouldRetainMutation,
   withGateModeChoice,
   type VerificationGateModePolicy,
@@ -561,6 +566,118 @@ test("gate_mode_hidden is an optional boolean on v1 save, impact and apply answe
   assert.equal(verificationMethodImpactResponse(success({ ...v1Impact, gate_mode_hidden: true }))?.gate_mode_hidden, true);
   assert.equal(verificationMethodImpactResponse(success({ ...v1Impact, gate_mode_hidden: 1 })), null);
   assert.equal(verificationMethodImpactResponse(success({ ...impact, gate_mode_hidden: true }), 2), null);
+});
+
+// ---------------------------------------------------------------------------
+// Webadmin review round 1
+// ---------------------------------------------------------------------------
+
+type ConsoleCall = { action: string; body: { contract_version: number } };
+
+function scripted(...answers: unknown[]) {
+  const calls: ConsoleCall[] = [];
+  const call = async (action: "verification_method_console", body: { contract_version: 1 | 2 }) => {
+    calls.push({ action, body: { ...body } });
+    return answers.shift();
+  };
+  return { calls, call };
+}
+
+function v1ConsoleBody(v2: Json): Json {
+  const body = structuredClone(v2);
+  body.data.contract_version = 1;
+  delete body.data.gate_mode_catalogue;
+  delete body.data.compiled_defaults.gate_mode;
+  for (const snapshot of [body.data.policy.draft, body.data.policy.live]) delete snapshot.document.gate_mode;
+  return body;
+}
+
+test("the console probe: v2 when Core speaks it, exactly one v1 read after the named 409, never a fallback otherwise", async () => {
+  const v2 = await fixture("webadmin-method-console-v2-default.json");
+  const refused = await fixture("webadmin-method-refusal-contract-version.json");
+
+  const ok = scripted(v2);
+  const loaded = await loadVerificationMethodConsole(ok.call, 2);
+  assert.equal(loaded.ok, true);
+  assert.equal(loaded.version, 2);
+  assert.deepEqual(ok.calls, [{ action: "verification_method_console", body: { contract_version: 2 } }]);
+
+  const older = scripted(refused, v1ConsoleBody(v2));
+  const fallback = await loadVerificationMethodConsole(older.call, 2);
+  assert.equal(fallback.ok, true);
+  assert.equal(fallback.version, 1, "the session stays on v1 from here");
+  assert.equal(fallback.ok && fallback.data.contract_version, 1);
+  assert.deepEqual(older.calls.map((entry) => entry.body.contract_version), [2, 1], "exactly one v1 read");
+
+  const brokenFallback = scripted(refused, refusal("verification-method-read-failed", 503));
+  assert.deepEqual(await loadVerificationMethodConsole(brokenFallback.call, 2),
+    { ok: false, version: 1, error: "verification-method-read-failed" });
+  assert.equal(brokenFallback.calls.length, 2);
+
+  const unavailable = scripted(refusal("verification-method-unavailable", 503));
+  assert.deepEqual(await loadVerificationMethodConsole(unavailable.call, 2),
+    { ok: false, version: 2, error: "verification-method-unavailable" });
+  assert.equal(unavailable.calls.length, 1, "a 503 is an error, never a reason to speak v1");
+
+  const undecodable = scripted(success({ ...(v2.data as Json), gate_mode_catalogue: { modes: ["explore"] } }));
+  assert.deepEqual(await loadVerificationMethodConsole(undecodable.call, 2), { ok: false, version: 2, error: null });
+  assert.equal(undecodable.calls.length, 1, "a malformed v2 success never falls back");
+
+  const lost = scripted(null);
+  assert.deepEqual(await loadVerificationMethodConsole(lost.call, 2), { ok: false, version: 2, error: null });
+  assert.equal(lost.calls.length, 1);
+
+  const pinned = scripted(v1ConsoleBody(v2));
+  assert.equal((await loadVerificationMethodConsole(pinned.call, 1)).version, 1, "a session already on v1 asks for v1 only");
+  assert.deepEqual(pinned.calls.map((entry) => entry.body.contract_version), [1]);
+  const pinnedRefused = scripted(refused);
+  assert.deepEqual(await loadVerificationMethodConsole(pinnedRefused.call, 1),
+    { ok: false, version: 1, error: "verification-method-contract-version" });
+  assert.equal(pinnedRefused.calls.length, 1);
+});
+
+test("the downgrade indicator reads the saved draft AND the live document", async () => {
+  const body = await fixture("webadmin-method-console-v2-default.json");
+  const policy = (draft: VerificationGateModePolicy, live: VerificationGateModePolicy) => {
+    const raw = structuredClone(body.data.policy);
+    raw.draft.document.gate_mode = draft;
+    raw.live.document.gate_mode = live;
+    return verificationMethodPolicy(raw, 2)!;
+  };
+  const full = { global: "full_block", overrides: {} } as VerificationGateModePolicy;
+  const explore = { global: "explore", overrides: {} } as VerificationGateModePolicy;
+  assert.equal(verificationMethodPolicyStoresGateMode(policy(full, full)), false);
+  assert.equal(verificationMethodPolicyStoresGateMode(policy(explore, full)), true,
+    "a four-key DRAFT alone makes an older Core fail closed (it normalizes both documents)");
+  assert.equal(verificationMethodPolicyStoresGateMode(policy(full, explore)), true);
+  assert.equal(verificationMethodPolicyStoresGateMode(policy({ global: "full_block", overrides: { HUN: "full_block" } }, full)), false,
+    "Full block everywhere is omitted by Core");
+});
+
+test("a mode stored under method None stays visible; removing a method row keeps a mode that differs from Global", () => {
+  assert.equal(gateModeStoredUnderNone({ global: "explore", overrides: {} }, null), "explore");
+  assert.equal(gateModeStoredUnderNone({ global: "full_block", overrides: {} }, null), null);
+  assert.equal(gateModeStoredUnderNone({ global: "explore", overrides: { HUN: "explore" } }, "HUN"), "explore");
+  assert.equal(gateModeStoredUnderNone({ global: "explore", overrides: {} }, "HUN"), null, "an inheriting storefront stores nothing itself");
+  assert.equal(gateModeStoredUnderNone({ global: "explore", overrides: { HUN: "full_block" } }, "HUN"), null);
+  // Core keeps the stored mode under None: it is not Full block everywhere.
+  assert.equal(isDefaultGateModePolicy({ global: "explore", overrides: {} }), false);
+
+  const differs: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "full_block" } };
+  assert.equal(gateModeAfterRowRemoval(differs, "HUN"), differs, "HUN keeps Full block: nothing changes behind the operator");
+  const same: VerificationGateModePolicy = { global: "explore", overrides: { HUN: "explore" } };
+  assert.deepEqual(gateModeAfterRowRemoval(same, "HUN"), { global: "explore", overrides: {} }, "a redundant entry is dropped");
+  const none: VerificationGateModePolicy = { global: "explore", overrides: {} };
+  assert.equal(gateModeAfterRowRemoval(none, "HUN"), none);
+
+  // Through the draft: the removed method row reappears as a mode-only row.
+  const draft = verificationMethodDraft(v2Document(differs, {
+    overrides: { HUN: "persona" },
+    waiting_room_copy: { default: { en: copy("en"), hu: copy("hu") }, overrides: { HUN: { en: {}, hu: {} } } },
+  }));
+  const removed = { ...draft, overrides: [], gate_mode: gateModeAfterRowRemoval(draft.gate_mode!, "HUN") };
+  assert.deepEqual(gateModeOnlyStorefronts(removed), ["HUN"]);
+  assert.equal(resolveGateMode(removed.gate_mode!, "HUN"), "full_block");
 });
 
 test("the corpus pins Core's console body and marks every hand-written body", async () => {
