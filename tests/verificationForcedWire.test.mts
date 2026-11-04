@@ -238,10 +238,10 @@ test("the admin_me fixtures bind the new verification_method sibling beside the 
     contract_ready: true,
     actions: ["verification_method_console", "verification_method_save"],
   }, "an editor may draft but not publish: impact and apply are owner-only");
-  assert.deepEqual(verificationMethodAccess(adminBlock), { visible: true, editable: true, previewable: false, publishable: false, contractVersion: 1 });
+  assert.deepEqual(verificationMethodAccess(adminBlock), { visible: true, editable: true, previewable: false, publishable: false });
   const viewerBlock = verificationMethodAdminMe(viewer.data.verification_method);
   assert.deepEqual(viewerBlock, { contract_version: 1, contract_ready: true, actions: ["verification_method_console"] });
-  assert.deepEqual(verificationMethodAccess(viewerBlock), { visible: true, editable: false, previewable: false, publishable: false, contractVersion: 1 });
+  assert.deepEqual(verificationMethodAccess(viewerBlock), { visible: true, editable: false, previewable: false, publishable: false });
   for (const action of VERIFICATION_METHOD_ACTIONS) {
     assert.equal(
       verificationMethodProxyCapabilityAuthorized(action, admin.data),
@@ -307,7 +307,7 @@ test("pre-T-617 bodies fail the T-617 decoders where the design says they must",
   assert.equal(Object.hasOwn(preAdminMe.data, "verification_method"), false, "the pre-T-617 shape");
   assert.equal(verificationMethodAdminMe(preAdminMe.data.verification_method), null);
   assert.deepEqual(verificationMethodAccess(verificationMethodAdminMe(preAdminMe.data.verification_method)), {
-    visible: false, editable: false, previewable: false, publishable: false, contractVersion: 1,
+    visible: false, editable: false, previewable: false, publishable: false,
   });
   for (const action of VERIFICATION_METHOD_ACTIONS) {
     assert.equal(verificationMethodProxyCapabilityAuthorized(action, preAdminMe.data), false, `${action} is denied without the sibling`);

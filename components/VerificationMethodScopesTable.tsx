@@ -40,6 +40,7 @@ import {
   documentUsesMethod,
   gateModeChoice,
   gateModeOnlyStorefronts,
+  isDefaultGateModePolicy,
   validateVerificationMethodDraft,
   verificationMethodConflictResponse,
   verificationMethodConsoleResponse,
@@ -146,11 +147,12 @@ function PhoneFrame({
  * replayed byte-for-byte after an uncertain answer — never a second logical
  * action.
  *
- * D-151 (contract §8.4/§8.5): when Core advertises console contract v2, every
- * row also carries a gate mode — Explore mode or Full block — and the table
- * speaks v2 for every call. An older Core (v1 only, or a v2 read refused with
- * `verification-method-contract-version`) gets exactly today's table and wire,
- * with no mode control. The draft's modes change only on an operator choice.
+ * D-151 (contract §8.4/§8.5): the table asks Core for console contract v2;
+ * there every row also carries a gate mode — Explore mode or Full block — and
+ * every call speaks v2. An older Core refuses that read with
+ * `verification-method-contract-version` (409); the table then speaks v1 for
+ * the rest of the session: exactly today's table and wire, no mode control.
+ * The draft's modes change only on an operator choice.
  */
 export default function VerificationMethodScopesTable({ access, locked }: Props) {
   const t = useTranslations("verificationAdmin.methodPolicy");
@@ -181,8 +183,11 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const [guardRevision, setGuardRevision] = useState<number | null>(null);
   const [pending, setPending] = useState<VerificationMethodPendingMutation | null>(null);
   const pendingRef = useRef<VerificationMethodPendingMutation | null>(null);
-  /** The console wire: Core's advertised version, dropped to 1 for good if Core refuses v2. */
-  const wireRef = useRef<VerificationMethodContractVersion>(access.contractVersion);
+  /**
+   * The console wire. `admin_me` does not advertise it (contract §8.4/§15), so
+   * the first read asks for v2 and drops to 1 for the session if Core refuses.
+   */
+  const wireRef = useRef<VerificationMethodContractVersion>(2);
 
   const countries = useMemo(() => localizedForcedStorefronts(locale), [locale]);
   const editable = access.editable && !locked && !busy && pending === null;
@@ -880,7 +885,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           </div>
         </div>
         <div className="panel-body form-stack">
-          {columnCount === 5 ? <VerificationGateModeLegend /> : null}
+          {columnCount === 5
+            ? <VerificationGateModeLegend liveStoresModes={!isDefaultGateModePolicy(data.policy.live.document.gate_mode)} />
+            : null}
           <div className="table-wrap">
             <table className={`data-table method-policy-table${columnCount === 5 ? " method-policy-table-gate" : ""}`}>
               <thead>

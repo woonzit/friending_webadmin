@@ -549,15 +549,15 @@ test("the admin_me sibling is the ONLY authority for navigation and every action
   const ready = { contract_version: 1, contract_ready: true, actions: [...VERIFICATION_METHOD_ACTIONS] };
   assert.deepEqual(verificationMethodAdminMe(ready), ready);
   assert.deepEqual(verificationMethodAccess(verificationMethodAdminMe(ready)), {
-    visible: true, editable: true, previewable: true, publishable: true, contractVersion: 1,
+    visible: true, editable: true, previewable: true, publishable: true,
   });
   const viewer = { contract_version: 1, contract_ready: true, actions: ["verification_method_console"] };
   assert.deepEqual(verificationMethodAccess(verificationMethodAdminMe(viewer)), {
-    visible: true, editable: false, previewable: false, publishable: false, contractVersion: 1,
+    visible: true, editable: false, previewable: false, publishable: false,
   });
   const admin = { contract_version: 1, contract_ready: true, actions: ["verification_method_console", "verification_method_save"] };
   assert.deepEqual(verificationMethodAccess(verificationMethodAdminMe(admin)), {
-    visible: true, editable: true, previewable: false, publishable: false, contractVersion: 1,
+    visible: true, editable: true, previewable: false, publishable: false,
   });
 
   assert.equal(verificationMethodAdminMe(undefined), null);
@@ -566,7 +566,7 @@ test("the admin_me sibling is the ONLY authority for navigation and every action
   assert.equal(verificationMethodAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_forced_console"] }), null, "a foreign action name");
   assert.equal(verificationMethodAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_method_console", "verification_method_console"] }), null, "duplicates");
   assert.equal(verificationMethodAdminMe({ contract_version: 1, contract_ready: true, actions: ["verification_method_save", "verification_method_console"] }), null, "Core sorts the list; an unsorted list is not proven material");
-  assert.deepEqual(verificationMethodAccess(null), { visible: false, editable: false, previewable: false, publishable: false, contractVersion: 1 });
+  assert.deepEqual(verificationMethodAccess(null), { visible: false, editable: false, previewable: false, publishable: false });
 
   const membership = { verification_method: ready, verification: { contract_version: 1, contract_ready: true, actions: ["verification_console"] }, role: "owner" };
   for (const action of VERIFICATION_METHOD_ACTIONS) {

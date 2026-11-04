@@ -44,10 +44,11 @@ import { verificationAdminPrincipal, type VerificationAdminPrincipal } from "@/l
  *
  * Contract v2 (D-151 §8, `team/handoffs/verification-explore-contract.md`)
  * adds the gate mode: `gate_mode: {global, overrides}` inside the same
- * document, each value `explore | full_block`. The console speaks v2 only when
- * Core advertises it (`admin_me.verification_method.contract_versions`); an
- * older Core keeps the v1 wire byte for byte and the mode control stays hidden.
- * An absent `gate_mode` means Full block. The console never invents a mode:
+ * document, each value `explore | full_block`. `admin_me` is unchanged: the
+ * console asks for v2, and an older Core refuses it with
+ * `verification-method-contract-version` (409), after which the console speaks
+ * v1 for the session with the mode control hidden. An absent `gate_mode` means
+ * Full block. The console never invents a mode:
  * the draft carries exactly what Core served plus what the operator changed,
  * and Core stores the key only when it differs from the default (canonical
  * omission, contract §8.1).
@@ -300,11 +301,6 @@ export type VerificationMethodAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   actions: VerificationMethodAction[];
-  /**
-   * D-151 §8.4: additive, ascending, always including 1. Absent on a Core that
-   * predates contract v2, which therefore speaks v1 only.
-   */
-  contract_versions?: number[];
 };
 
 export type VerificationMethodAccess = {
@@ -316,8 +312,6 @@ export type VerificationMethodAccess = {
   previewable: boolean;
   /** Publish (`verification_method_apply`). */
   publishable: boolean;
-  /** The highest console wire both sides speak; 2 shows the gate-mode control. */
-  contractVersion: VerificationMethodContractVersion;
 };
 
 // ---------------------------------------------------------------------------
@@ -664,26 +658,7 @@ export function verificationMethodAdminMe(value: unknown): VerificationMethodAdm
   const ordered = VERIFICATION_METHOD_ACTIONS.filter((action) => actions.includes(action));
   if (ordered.length !== actions.length || ordered.some((action, index) => action !== actions[index])) return null;
   if (!raw.contract_ready && ordered.length !== 0) return null;
-  const block: VerificationMethodAdminMe = { contract_version: 1, contract_ready: raw.contract_ready, actions: ordered };
-  if (!Object.hasOwn(raw, "contract_versions")) return block;
-  // D-151 §8.4: a list Core sorts, with no duplicate, that still names the
-  // `contract_version: 1` this block is. A later version is tolerated; the
-  // console simply never speaks it.
-  if (!Array.isArray(raw.contract_versions) || raw.contract_versions.length === 0) return null;
-  const versions: number[] = [];
-  for (const entry of raw.contract_versions) {
-    const parsedVersion = integer(entry, 1);
-    if (parsedVersion === null || (versions.length > 0 && parsedVersion <= versions[versions.length - 1])) return null;
-    versions.push(parsedVersion);
-  }
-  return versions.includes(1) ? { ...block, contract_versions: versions } : null;
-}
-
-/** The console wire to speak: v2 only when Core advertises it. */
-export function verificationMethodContractVersion(
-  projection: VerificationMethodAdminMe | null,
-): VerificationMethodContractVersion {
-  return projection?.contract_versions?.includes(2) ? 2 : 1;
+  return { contract_version: 1, contract_ready: raw.contract_ready, actions: ordered };
 }
 
 /**
@@ -695,7 +670,7 @@ export function verificationMethodAccess(
   projection: VerificationMethodAdminMe | null,
 ): VerificationMethodAccess {
   if (!projection?.contract_ready) {
-    return { visible: false, editable: false, previewable: false, publishable: false, contractVersion: 1 };
+    return { visible: false, editable: false, previewable: false, publishable: false };
   }
   const visible = projection.actions.includes("verification_method_console");
   return {
@@ -703,7 +678,6 @@ export function verificationMethodAccess(
     editable: visible && projection.actions.includes("verification_method_save"),
     previewable: visible && projection.actions.includes("verification_method_impact"),
     publishable: visible && projection.actions.includes("verification_method_apply"),
-    contractVersion: verificationMethodContractVersion(projection),
   };
 }
 

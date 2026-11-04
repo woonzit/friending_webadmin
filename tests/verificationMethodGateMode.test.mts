@@ -22,7 +22,6 @@ import {
   verificationMethodAdminMe,
   verificationMethodConflictResponse,
   verificationMethodConsoleResponse,
-  verificationMethodContractVersion,
   verificationMethodDocument,
   verificationMethodDocumentFromDraft,
   verificationMethodDocumentsEqual,
@@ -41,14 +40,17 @@ import {
 
 /**
  * D-151 (T-927) — the method console's contract v2 (`team/handoffs/
- * verification-explore-contract.md` §8.4–§8.6): the gate mode inside the
- * `verification_method_policy` document, the v1 fallback for an older Core,
- * and the canonical-omission rule (an absent mode is Full block; the console
- * never writes a mode the operator did not choose).
+ * verification-explore-contract.md` §8.4–§8.6, IMPLEMENTED at Core 41013052):
+ * the gate mode inside the `verification_method_policy` document, the v1
+ * fallback for an older Core (detected by asking for v2: `admin_me` is
+ * unchanged), and the canonical-omission rule (an absent mode is Full block;
+ * the console never writes a mode the operator did not choose).
  *
- * The corpus under `fixtures/verification_method_gate_mode_wire/` is
- * HAND-WRITTEN from the contract examples (its manifest says so): Core had no
- * generated v2 corpus yet. Swap it for Core's bytes when lane C publishes them.
+ * `fixtures/verification_method_gate_mode_wire/`: `webadmin-console-v2.json`
+ * is Core's generated body, copied byte for byte from
+ * `tests/fixtures/verification_explore_wire/`. Every other body is
+ * HAND-WRITTEN for a case Core's corpus does not capture; the manifest marks
+ * each row's origin.
  */
 
 type Json = Record<string, any>;
@@ -57,6 +59,9 @@ const LEGACY = { message: 200, status: 200, can_send: 0 } as const;
 const REQUEST_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const FINGERPRINT = "b".repeat(64);
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_method_gate_mode_wire/", import.meta.url);
+/** Core `tests/fixtures/verification_explore_wire/manifest.json`, row `webadmin-console-v2.json`. */
+const CORE_CONSOLE_V2_SHA256 = "704cd4499b7616fa25db18a1ddf3778b7cba21a123dba73cdfeb75bc6b1ed625";
+const CORE_FIXTURE_COMMIT = "707e0b974604bb00528878b2cc5f05e7c143c226";
 
 function success(data: unknown) {
   return { ...LEGACY, success: true, status_code: 200, data };
@@ -108,37 +113,13 @@ test("the gate-mode vocabulary is closed and an absent mode is Full block", () =
   assert.equal(verificationMethodShouldRetainMutation("verification-method-gate-mode-invalid"), false, "a 422 proves nothing was written");
 });
 
-test("admin_me advertises v2 through the additive contract_versions list; anything else stays v1", async () => {
-  const actions = [...VERIFICATION_METHOD_ACTIONS];
-  const base = { contract_version: 1, contract_ready: true, actions };
-  const advertised = await fixture("webadmin-admin-me-verification-method-v2.json");
-  assert.deepEqual(verificationMethodAdminMe(advertised), advertised, "the hand-written corpus block decodes as served");
-  assert.equal(verificationMethodContractVersion(verificationMethodAdminMe(advertised)), 2);
-  assert.equal(verificationMethodAccess(verificationMethodAdminMe(advertised)).contractVersion, 2);
-
-  assert.deepEqual(verificationMethodAdminMe(base), base, "a pre-D-151 Core serves no list and is unchanged");
-  assert.equal(verificationMethodContractVersion(verificationMethodAdminMe(base)), 1);
-  assert.equal(verificationMethodAccess(verificationMethodAdminMe(base)).contractVersion, 1);
-  assert.equal(verificationMethodContractVersion(verificationMethodAdminMe({ ...base, contract_versions: [1] })), 1);
-  assert.equal(verificationMethodContractVersion(verificationMethodAdminMe({ ...base, contract_versions: [1, 2, 3] })), 2,
-    "a later version is tolerated; the console speaks the highest it knows");
-  assert.equal(verificationMethodContractVersion(null), 1);
-  assert.equal(verificationMethodAccess(null).contractVersion, 1);
-
-  for (const [label, versions] of [
-    ["not a list", "1,2"],
-    ["empty", []],
-    ["without 1", [2]],
-    ["unsorted", [2, 1]],
-    ["duplicate", [1, 1, 2]],
-    ["string member", [1, "2"]],
-    ["zero", [0, 1]],
-    ["fraction", [1, 1.5]],
-  ] as const) {
-    assert.equal(verificationMethodAdminMe({ ...base, contract_versions: versions }), null, label);
-  }
-  assert.equal(verificationMethodAdminMe({ ...base, contract_version: 2, contract_versions: [1, 2] }), null,
-    "the block itself stays contract_version 1 (the shipped decoder requires it)");
+test("admin_me is unchanged: v2 is never read from it, so the console asks for v2 itself", () => {
+  const base = { contract_version: 1, contract_ready: true, actions: [...VERIFICATION_METHOD_ACTIONS] };
+  assert.deepEqual(verificationMethodAdminMe(base), base, "Core 41013052 serves the released block byte for byte");
+  assert.deepEqual(verificationMethodAdminMe({ ...base, contract_versions: [1, 2] }), base,
+    "an additive key is tolerated and ignored, never a capability");
+  assert.deepEqual(Object.keys(verificationMethodAccess(verificationMethodAdminMe(base))).sort(),
+    ["editable", "previewable", "publishable", "visible"], "access carries no wire version");
 });
 
 // ---------------------------------------------------------------------------
@@ -233,6 +214,44 @@ test("the v2 console decodes the default and the Explore draft corpus, and only 
   const withoutKey = structuredClone(data);
   delete withoutKey.policy.live.document.gate_mode;
   assert.deepEqual(verificationMethodConsoleResponse(success(withoutKey), 2)?.policy.live.document.gate_mode, { global: "full_block", overrides: {} });
+});
+
+/**
+ * Core's generator (`tests/verification_explore_storage_test.php`) captures
+ * `VerificationMethodAdminService::console()` itself, not the controller's
+ * `Webadmin::noStoreReply()`, whose `encodedReply()` appends the legacy trio
+ * `message: 200` (when unset), `status: 200`, `can_send: 0` to every Webadmin
+ * answer. The test applies exactly that step — nothing else — before decoding.
+ */
+function throughWebadminReply(payload: Json): Json {
+  return { ...payload, message: payload.message ?? 200, status: 200, can_send: 0 };
+}
+
+test("Core's generated v2 console decodes as served and round-trips without inventing a change", async () => {
+  const raw = await fixture("webadmin-console-v2.json");
+  assert.equal(verificationMethodConsoleResponse(raw, 2), null,
+    "the service-level capture has no legacy trio; the strict envelope keeps refusing that");
+  const body = throughWebadminReply(raw);
+  const parsed = verificationMethodConsoleResponse(body, 2);
+  assert.ok(parsed, "Core's bytes, through the wire adapter, decode as v2");
+  assert.equal(parsed.contract_version, 2);
+  assert.deepEqual(parsed.policy.draft.document.gate_mode, { global: "explore", overrides: {} });
+  assert.deepEqual(parsed.policy.live.document.gate_mode, { global: "explore", overrides: {} });
+  assert.deepEqual(parsed.compiled_defaults.gate_mode, { global: "full_block", overrides: {} });
+  assert.equal(parsed.gate_mode_catalogue?.recommended, "explore");
+  assert.equal(isDefaultGateModePolicy(parsed.policy.live.document.gate_mode), false, "Explore is stored: an older Core could not read it");
+  assert.equal(verificationMethodConsoleResponse(body), null, "never v1 material");
+  assert.deepEqual(Object.keys(body.data.policy.draft.document), ["global", "overrides", "waiting_room_copy", "gate_mode"],
+    "Core's key order is the order the console writes back");
+  assert.deepEqual(Object.keys(body.data.policy.draft.document.gate_mode), ["global", "overrides"]);
+
+  const draft = verificationMethodDraft(parsed.policy.draft.document);
+  const rebuilt = verificationMethodDocumentFromDraft(draft);
+  assert.ok(rebuilt);
+  assert.deepEqual(JSON.parse(JSON.stringify(rebuilt)), body.data.policy.draft.document, "byte-equivalent save material");
+  assert.ok(normalizeVerificationMethodProxyBody("verification_method_save", {
+    contract_version: 2, draft_json: rebuilt, expected_revision: parsed.policy.revision, request_id: REQUEST_ID,
+  }));
 });
 
 test("the v1 console keeps today's shape: no catalogue, no gate_mode", () => {
@@ -448,14 +467,29 @@ test("a v2 save is retained and replayed byte for byte, and photo guidance reads
 // The hand-written corpus
 // ---------------------------------------------------------------------------
 
-test("the v2 corpus is hand-written, says so, and every body matches its manifest hash", async () => {
+test("the corpus pins Core's console body and marks every hand-written body", async () => {
   const manifest = JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8")) as Json;
   assert.equal(manifest.contract, "verification-method-console-v2");
-  assert.equal(manifest.hand_written, true, "replace with Core's generated corpus and update this test when lane C publishes one");
-  const files = (manifest.files as Array<{ file: string; sha256: string }>).map((row) => row.file);
+  assert.equal(manifest.core_corpus.path, "tests/fixtures/verification_explore_wire/");
+  assert.equal(manifest.core_corpus.fixture_commit, CORE_FIXTURE_COMMIT);
+  const rows = manifest.files as Array<{ file: string; sha256: string; origin: string; case?: string }>;
+  const files = rows.map((row) => row.file);
   assert.deepEqual(files, [...files].sort());
   assert.deepEqual((await readdir(FIXTURE_DIRECTORY)).sort(), [...files, "manifest.json"].sort());
-  for (const row of manifest.files as Array<{ file: string; sha256: string }>) {
+  assert.deepEqual(rows.filter((row) => row.origin === "core").map((row) => [row.file, row.sha256]),
+    [["webadmin-console-v2.json", CORE_CONSOLE_V2_SHA256]], "Core's bytes, Core's hash");
+  assert.deepEqual(rows.filter((row) => row.origin === "hand-written").map((row) => row.file), [
+    "webadmin-method-conflict-v2.json",
+    "webadmin-method-console-v2-default.json",
+    "webadmin-method-console-v2-explore-draft.json",
+    "webadmin-method-impact-v2.json",
+    "webadmin-method-refusal-contract-version.json",
+    "webadmin-method-refusal-gate-mode-invalid.json",
+    "webadmin-method-save-v2.json",
+    "webadmin-request-save-v2.json",
+  ], "exactly these remain hand-written; replace each with Core bytes once Core captures its case");
+  assert.ok(rows.every((row) => row.origin === "core" || (row.origin === "hand-written" && typeof row.case === "string" && row.case !== "")));
+  for (const row of rows) {
     const bytes = await readFile(new URL(row.file, FIXTURE_DIRECTORY));
     assert.equal(createHash("sha256").update(bytes).digest("hex"), row.sha256, row.file);
   }

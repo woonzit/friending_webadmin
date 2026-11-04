@@ -5140,7 +5140,9 @@
           "clients": "A Felfedező mód csak az azt támogató appverziókban jelenik meg. A régebbi verziók továbbra is a Várótermet és annak szövegét mutatják."
         },
         "rollbackTitle": "Visszaállítás:",
-        "rollback": "A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra, és tedd közzé.",
+        "rollback": "A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra, és tedd közzé: a globálist Teljes zárásra, minden storefrontot pedig „Mint a globális” értékre. A Teljes zárásra állított storefront továbbra is tárol egy módot, amelyet a régebbi Core nem tud olvasni.",
+        "liveNotStored": "Az élő szabályzat nem tárol zárási módot, így a régebbi Core is olvassa.",
+        "liveStored": "Az élő szabályzat zárási módokat tárol. A régebbi Core nem tudja olvasni, és minden tag hibát kapna. Előbb végezd el a fenti visszaállítást.",
         "impactLiveMode": "Élő mód",
         "impactDraftMode": "Draftmód",
         "impactNote": "A zárási mód nem változtat azon, kinek kell hitelesítenie magát, ezért a számok nem változnak. Azt változtatja meg, mit látnak ezek a tagok a Felfedező módot támogató appverzióban."

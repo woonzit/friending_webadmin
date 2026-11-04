@@ -92,8 +92,14 @@ export default function VerificationGateModeControl({
   );
 }
 
-/** One line per mode, the client note, and the rollback rule, above the table. */
-export function VerificationGateModeLegend() {
+/**
+ * One line per mode, the client note, and the rollback rule, above the table.
+ * `liveStoresModes`: the live document differs from the Full block default, so
+ * Core stores `gate_mode` and a Core older than D-151 could not read it. Core
+ * omits the key only for Global Full block with no storefront entry; a
+ * storefront set explicitly to Full block is still stored.
+ */
+export function VerificationGateModeLegend({ liveStoresModes }: { liveStoresModes: boolean }) {
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   return (
     <div className="gate-mode-legend" data-gate-mode-legend="true">
@@ -106,6 +112,9 @@ export function VerificationGateModeLegend() {
       <small className="field-hint">{t("legend.clients")}</small>
       <p className="gate-mode-rollback" data-gate-mode-rollback="true">
         <strong>{t("rollbackTitle")}</strong> {t("rollback")}
+      </p>
+      <p className="gate-mode-rollback" data-gate-mode-live-stored={liveStoresModes ? "true" : "false"}>
+        {liveStoresModes ? t("liveStored") : t("liveNotStored")}
       </p>
     </div>
   );

@@ -5140,7 +5140,9 @@
           "clients": "Explore mode reaches only app versions that support it. Older versions keep showing the Waiting Room and its copy."
         },
         "rollbackTitle": "Rollback:",
-        "rollback": "Set every scope back to Full block and publish before downgrading Core.",
+        "rollback": "Set every scope back to Full block and publish before downgrading Core: Global to Full block, and every storefront to “Same as Global”. A storefront set to Full block still stores a mode that an older Core cannot read.",
+        "liveNotStored": "The live policy stores no gate mode, so an older Core can read it.",
+        "liveStored": "The live policy stores gate modes. An older Core cannot read it, and every member would get an error. Do the rollback above first.",
         "impactLiveMode": "Live mode",
         "impactDraftMode": "Draft mode",
         "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode."

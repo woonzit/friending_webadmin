@@ -93,33 +93,42 @@ test("a row whose method is None shows Off, locked, with no recommendation", () 
 });
 
 test("the legend explains each mode in one line and carries the rollback note, in English and Hungarian", () => {
-  const en = render(createElement(VerificationGateModeLegend));
+  const en = render(createElement(VerificationGateModeLegend, { liveStoresModes: false }));
   assert.match(en, /data-gate-mode-legend="true"/);
   assert.match(en, /<strong>Explore mode<\/strong> · They can browse events in the area they signed up in\. People, chat and joining stay locked until they verify\./);
   assert.match(en, /<strong>Full block<\/strong> · They stay in the Waiting Room until they verify \(how it works today\)\./);
   assert.match(en, /<strong>Off<\/strong> · Set the method to None/);
   assert.match(en, /Older versions keep showing the Waiting Room/);
-  assert.match(en, /data-gate-mode-rollback="true"><strong>Rollback:<\/strong> Set every scope back to Full block and publish before downgrading Core\./);
+  assert.match(en, /data-gate-mode-rollback="true"><strong>Rollback:<\/strong> Set every scope back to Full block and publish before downgrading Core: Global to Full block, and every storefront to “Same as Global”\./);
+  assert.match(en, /A storefront set to Full block still stores a mode that an older Core cannot read\./,
+    "Core omits gate_mode only for Global Full block with no storefront entry");
+  assert.match(en, /data-gate-mode-live-stored="false">The live policy stores no gate mode, so an older Core can read it\./);
+  const stored = render(createElement(VerificationGateModeLegend, { liveStoresModes: true }));
+  assert.match(stored, /data-gate-mode-live-stored="true">The live policy stores gate modes\. An older Core cannot read it/);
 
-  const hu = render(createElement(VerificationGateModeLegend), "hu");
+  const hu = render(createElement(VerificationGateModeLegend, { liveStoresModes: true }), "hu");
   assert.match(hu, /<strong>Felfedező mód<\/strong>/);
   assert.match(hu, /<strong>Teljes zárás<\/strong>/);
   assert.match(hu, /<strong>Kikapcsolva<\/strong>/);
-  assert.match(hu, /Visszaállítás:<\/strong> A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra, és tedd közzé\./);
+  assert.match(hu, /Visszaállítás:<\/strong> A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra, és tedd közzé: a globálist Teljes zárásra, minden storefrontot pedig „Mint a globális” értékre\./);
+  assert.match(hu, /Az élő szabályzat zárási módokat tárol\./);
   const huControl = control({ choice: "full_block" }, "hu");
   assert.match(huControl, /Felfedező mód \(ajánlott\)/);
 });
 
-test("the scopes table speaks Core's advertised wire, falls back to v1, and never writes a mode on its own", () => {
+test("the scopes table asks for v2, falls back to v1 for the session, and never writes a mode on its own", () => {
   const table = readFileSync(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
-  // §8.5: v2 only when Core advertises it; a refused v2 read drops to today's v1 console for good.
-  assert.match(table, /const wireRef = useRef<VerificationMethodContractVersion>\(access\.contractVersion\);/);
+  // §8.4/§15: admin_me does not advertise v2, so the first read asks for it; an older Core's 409 drops to v1.
+  assert.match(table, /const wireRef = useRef<VerificationMethodContractVersion>\(2\);/);
+  assert.doesNotMatch(table, /contractVersion/, "nothing reads a wire version from admin_me");
   assert.match(table, /verificationMethodErrorResponse\(response\) === "verification-method-contract-version"/);
   assert.match(table, /adminCall\("verification_method_console", \{ contract_version: 1 \}\)/);
   // Every call after the read uses the wire the read proved.
   assert.match(table, /contract_version: data\.contract_version,\n\s+draft_json: draftDocument,/);
   assert.match(table, /contract_version: version,\n\s+expected_revision: expected,/);
-  assert.match(table, /contract_version: impact\.contract_version,/);
+  // v1 and v2 fingerprints differ: a publish carries the version AND the fingerprint of the impact it was bound to.
+  assert.match(table, /contract_version: impact\.contract_version,\n\s+expected_revision: impact\.expected_revision,\n\s+normalized_fingerprint: impact\.normalized_fingerprint,/);
+  assert.match(table, /liveStoresModes=\{!isDefaultGateModePolicy\(data\.policy\.live\.document\.gate_mode\)\}/);
   assert.doesNotMatch(table, /contract_version: 1,\n/, "no hard-coded v1 command remains");
   // The column exists only on v2 material with its catalogue.
   assert.match(table, /const columnCount = gate !== null && recommendedMode !== null \? 5 : 4;/);
