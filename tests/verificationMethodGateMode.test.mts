@@ -11,7 +11,10 @@ import {
   VERIFICATION_METHOD_CONFIRMATION_PHRASE,
   VERIFICATION_METHOD_ERROR_STATUSES,
   defaultVerificationGateModePolicy,
+  draftGateModeConflicts,
   gateModeChoice,
+  gateModeExploreAllowed,
+  gateModeMethodConflicts,
   gateModeOnlyStorefronts,
   isDefaultGateModePolicy,
   normalizeVerificationMethodProxyBody,
@@ -27,6 +30,7 @@ import {
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
   verificationMethodErrorResponse,
+  verificationMethodGateModeConflictResponse,
   verificationMethodImpactResponse,
   verificationMethodMutationResponse,
   verificationMethodPendingFrom,
@@ -379,14 +383,17 @@ test("only an operator choice changes a mode, and it changes exactly that scope"
   assert.deepEqual(withGateModeChoice(base, null, "explore"), { global: "explore", overrides: { HUN: "explore" } });
   assert.deepEqual(withGateModeChoice(base, null, "inherit"), base, "the global row has no inherit");
   assert.deepEqual(withGateModeChoice(base, "USA", "full_block"), { global: "full_block", overrides: { HUN: "explore", USA: "full_block" } },
-    "an explicit Full block pins a storefront against a later global flip");
+    "an explicit Full block is the operator's own entry");
   assert.deepEqual(withGateModeChoice(base, "HUN", "inherit"), { global: "full_block", overrides: {} }, "inherit removes the key");
   assert.deepEqual(base, { global: "full_block", overrides: { HUN: "explore" } }, "the input is never mutated");
 
   assert.equal(isDefaultGateModePolicy(undefined), true);
   assert.equal(isDefaultGateModePolicy({ global: "full_block", overrides: {} }), true);
-  assert.equal(isDefaultGateModePolicy({ global: "full_block", overrides: { HUN: "full_block" } }), false, "an explicit pin is stored");
+  assert.equal(isDefaultGateModePolicy({ global: "full_block", overrides: { HUN: "full_block" } }), true,
+    "Core 06cf4f67: Full block everywhere is omitted, explicit storefront entries included");
+  assert.equal(isDefaultGateModePolicy({ global: "full_block", overrides: { HUN: "explore" } }), false);
   assert.equal(isDefaultGateModePolicy({ global: "explore", overrides: {} }), false);
+  assert.equal(isDefaultGateModePolicy({ global: "explore", overrides: { HUN: "full_block" } }), false);
 
   // Adding a method row (what the table's "Add" does) leaves the modes alone.
   const draft = verificationMethodDraft(v2Document());
@@ -394,14 +401,15 @@ test("only an operator choice changes a mode, and it changes exactly that scope"
   assert.deepEqual(verificationMethodDocumentFromDraft(draft)?.gate_mode, { global: "full_block", overrides: {} });
 
   // The rollback the console tells the operator to do: every scope back to Full block.
-  let flipped = withGateModeChoice({ global: "explore", overrides: { HUN: "explore" } }, null, "full_block");
-  flipped = withGateModeChoice(flipped, "HUN", "inherit");
-  assert.equal(isDefaultGateModePolicy(flipped), true, "Core then stores the three-key document again");
+  let flipped = withGateModeChoice({ global: "explore", overrides: { HUN: "explore", USA: "explore" } }, null, "full_block");
+  flipped = withGateModeChoice(flipped, "HUN", "full_block");
+  flipped = withGateModeChoice(flipped, "USA", "inherit");
+  assert.equal(isDefaultGateModePolicy(flipped), true, "Full block or Same as Global: Core stores the three-key document again");
 });
 
 test("a mode-only storefront is shown and preserved, and an invalid mode entry is a draft issue", () => {
   const served = v2Document({ global: "explore", overrides: { HUN: "full_block", USA: "explore" } }, {
-    overrides: { USA: "video" },
+    overrides: { USA: "persona" },
     waiting_room_copy: { default: { en: copy("en"), hu: copy("hu") }, overrides: { USA: { en: {}, hu: {} } } },
   });
   const draft = verificationMethodDraft(served);
@@ -467,6 +475,94 @@ test("a v2 save is retained and replayed byte for byte, and photo guidance reads
 // The hand-written corpus
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// D-151 review: Explore only under Persona
+// ---------------------------------------------------------------------------
+
+test("Explore is allowed only where the effective method is Persona, and conflicts mirror Core's scope list", () => {
+  assert.equal(gateModeExploreAllowed("persona"), true);
+  for (const method of ["video", "photo", "none"] as const) assert.equal(gateModeExploreAllowed(method), false, method);
+
+  const doc = (global: VerificationMethodDocument["global"], overrides: Record<string, VerificationMethodDocument["global"]>, gate: VerificationGateModePolicy) =>
+    ({ global, overrides, gate_mode: gate });
+  assert.deepEqual(gateModeMethodConflicts(doc("video", {}, { global: "explore", overrides: {} })), ["global"]);
+  assert.deepEqual(gateModeMethodConflicts(doc("photo", {}, { global: "explore", overrides: {} })), ["global"]);
+  assert.deepEqual(gateModeMethodConflicts(doc("persona", {}, { global: "explore", overrides: {} })), []);
+  assert.deepEqual(gateModeMethodConflicts(doc("none", {}, { global: "explore", overrides: {} })), [],
+    "a scope with method None may store a mode; it affects nobody");
+  assert.deepEqual(gateModeMethodConflicts(doc("persona", { USA: "video" }, { global: "explore", overrides: {} })), ["USA"],
+    "a storefront that inherits Explore under its own video method conflicts");
+  assert.deepEqual(gateModeMethodConflicts(doc("persona", { USA: "video" }, { global: "explore", overrides: { USA: "full_block" } })), [],
+    "an explicit Full block resolves it");
+  assert.deepEqual(gateModeMethodConflicts(doc("photo", {}, { global: "full_block", overrides: { HUN: "explore" } })), ["HUN"],
+    "a mode-only storefront inherits the global method");
+  assert.deepEqual(gateModeMethodConflicts(doc("video", { USA: "photo", DEU: "persona" }, { global: "explore", overrides: { AUT: "explore" } })),
+    ["global", "AUT", "USA"], "global first, then storefronts of either map ascending");
+  assert.deepEqual(gateModeMethodConflicts({ global: "video", overrides: {} }), [], "a v1 document has no modes");
+
+  const draft = verificationMethodDraft(v2Document({ global: "explore", overrides: {} }, {
+    overrides: { USA: "persona" },
+    waiting_room_copy: { default: { en: copy("en"), hu: copy("hu") }, overrides: { USA: { en: {}, hu: {} } } },
+  }));
+  assert.equal(validateVerificationMethodDraft(draft), null);
+  draft.overrides[0].method = "video";
+  assert.deepEqual(draftGateModeConflicts(draft), ["USA"]);
+  assert.equal(validateVerificationMethodDraft(draft), "exploreRequiresPersona", "the console never sends what Core refuses");
+  assert.equal(verificationMethodDocumentFromDraft(draft), null);
+  draft.gate_mode = withGateModeChoice(draft.gate_mode!, "USA", "full_block");
+  assert.equal(validateVerificationMethodDraft(draft), null);
+});
+
+test("the explore_requires_persona refusal decodes strictly, is terminal, and is never read as an unknown outcome", async () => {
+  const body = await fixture("webadmin-method-refusal-explore-requires-persona.json");
+  assert.deepEqual(verificationMethodGateModeConflictResponse(body), { reason: "explore_requires_persona", scopes: ["global", "HUN"] });
+  assert.equal(verificationMethodErrorResponse(body), null,
+    "the plain parser declines a body with data; the table therefore checks this parser first");
+
+  const withData = (data: unknown, status = 422, error = "verification-method-gate-mode-invalid") =>
+    verificationMethodGateModeConflictResponse(refusal(error, status, data));
+  assert.deepEqual(withData({ reason: "explore_requires_persona", scopes: ["USA"] })?.scopes, ["USA"]);
+  assert.deepEqual(withData({ reason: "explore_requires_persona", scopes: ["global"] })?.scopes, ["global"]);
+  for (const [label, data] of [
+    ["no scopes", { reason: "explore_requires_persona", scopes: [] }],
+    ["another reason", { reason: "invalid", scopes: ["global"] }],
+    ["extra key", { reason: "explore_requires_persona", scopes: ["global"], uid: 1 }],
+    ["global not first", { reason: "explore_requires_persona", scopes: ["HUN", "global"] }],
+    ["unsorted", { reason: "explore_requires_persona", scopes: ["USA", "HUN"] }],
+    ["duplicate", { reason: "explore_requires_persona", scopes: ["HUN", "HUN"] }],
+    ["alpha-2", { reason: "explore_requires_persona", scopes: ["HU"] }],
+    ["not a list", { reason: "explore_requires_persona", scopes: "global" }],
+  ] as const) {
+    assert.equal(withData(data), null, label);
+  }
+  assert.equal(withData({ reason: "explore_requires_persona", scopes: ["global"] }, 409), null, "status-bound");
+  assert.equal(withData({ reason: "explore_requires_persona", scopes: ["global"] }, 422, "verification-method-document-invalid"), null);
+
+  // Publish answers the same code without data: the plain parser, terminal.
+  const publish = await fixture("webadmin-method-refusal-gate-mode-invalid.json");
+  assert.equal(verificationMethodGateModeConflictResponse(publish), null);
+  assert.equal(verificationMethodErrorResponse(publish), "verification-method-gate-mode-invalid");
+  assert.equal(verificationMethodShouldRetainMutation("verification-method-gate-mode-invalid"), false);
+});
+
+test("gate_mode_hidden is an optional boolean on v1 save, impact and apply answers, and never on v2", async () => {
+  const save = await fixture("webadmin-method-save-v2.json");
+  const v1Policy = structuredClone(save.data.policy);
+  for (const snapshot of [v1Policy.draft, v1Policy.live]) delete snapshot.document.gate_mode;
+  const v1Save = { ...save.data, contract_version: 1, policy: v1Policy };
+  assert.equal(verificationMethodMutationResponse(success(v1Save))?.gate_mode_hidden, undefined, "absent before the first Explore choice");
+  assert.equal(verificationMethodMutationResponse(success({ ...v1Save, gate_mode_hidden: true }))?.gate_mode_hidden, true);
+  assert.equal(Object.hasOwn(verificationMethodMutationResponse(success({ ...v1Save, gate_mode_hidden: false }))!, "gate_mode_hidden"), false);
+  assert.equal(verificationMethodMutationResponse(success({ ...v1Save, gate_mode_hidden: "true" })), null, "a boolean or nothing");
+  assert.equal(verificationMethodMutationResponse(success({ ...save.data, gate_mode_hidden: true }), 2), null, "v2 shows the modes and never carries it");
+
+  const impact = (await fixture("webadmin-method-impact-v2.json")).data as Json;
+  const v1Impact = { ...impact, contract_version: 1 };
+  assert.equal(verificationMethodImpactResponse(success({ ...v1Impact, gate_mode_hidden: true }))?.gate_mode_hidden, true);
+  assert.equal(verificationMethodImpactResponse(success({ ...v1Impact, gate_mode_hidden: 1 })), null);
+  assert.equal(verificationMethodImpactResponse(success({ ...impact, gate_mode_hidden: true }), 2), null);
+});
+
 test("the corpus pins Core's console body and marks every hand-written body", async () => {
   const manifest = JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8")) as Json;
   assert.equal(manifest.contract, "verification-method-console-v2");
@@ -484,6 +580,7 @@ test("the corpus pins Core's console body and marks every hand-written body", as
     "webadmin-method-console-v2-explore-draft.json",
     "webadmin-method-impact-v2.json",
     "webadmin-method-refusal-contract-version.json",
+    "webadmin-method-refusal-explore-requires-persona.json",
     "webadmin-method-refusal-gate-mode-invalid.json",
     "webadmin-method-save-v2.json",
     "webadmin-request-save-v2.json",

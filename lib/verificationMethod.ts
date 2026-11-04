@@ -246,6 +246,8 @@ export type VerificationMethodMutationData = {
   policy: VerificationMethodPolicy;
   method_availability: VerificationMethodAvailabilityMap;
   replayed: boolean;
+  /** v1 only, and only while Core stores a mode this wire cannot show (D-151 review). */
+  gate_mode_hidden?: true;
 };
 
 export type VerificationMethodImpactCounts = {
@@ -288,6 +290,15 @@ export type VerificationMethodImpactData = {
     unknown_storefront: VerificationMethodImpactUnknownRow;
     totals: VerificationMethodImpactCounts;
   };
+  /** v1 only, and only while Core stores a mode this wire cannot show (D-151 review). */
+  gate_mode_hidden?: true;
+};
+
+/** Core's 422 `verification-method-gate-mode-invalid` body when a scope in Explore does not force Persona. */
+export type VerificationMethodGateModeConflict = {
+  reason: "explore_requires_persona";
+  /** `global` first when it conflicts, then storefronts ascending (Core `gateModeMethodConflicts`). */
+  scopes: string[];
 };
 
 export type VerificationMethodConflictData = {
@@ -826,16 +837,32 @@ export function verificationMethodMutationResponse(
     const principal = verificationAdminPrincipal(raw?.principal);
     const policy = verificationMethodPolicy(raw?.policy, version);
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
+    const hidden = raw ? gateModeHidden(raw, version) : undefined;
     if (raw?.contract_version !== version || !principal || !policy || !methodAvailability
-      || typeof raw.replayed !== "boolean") return null;
+      || typeof raw.replayed !== "boolean" || !hidden) return null;
     return {
       contract_version: version,
       principal,
       policy,
       method_availability: methodAvailability,
       replayed: raw.replayed,
+      ...hidden,
     };
   });
+}
+
+/**
+ * `gate_mode_hidden` (D-151 review): an optional boolean on v1 save, impact
+ * and apply answers while a mode is stored. v2 shows the modes and never
+ * carries it. `undefined` = refused; `{}` or `{gate_mode_hidden: true}` = material.
+ */
+function gateModeHidden(
+  source: Record<string, unknown>,
+  version: VerificationMethodContractVersion,
+): { gate_mode_hidden?: true } | undefined {
+  if (!Object.hasOwn(source, "gate_mode_hidden")) return {};
+  if (version === 2 || typeof source.gate_mode_hidden !== "boolean") return undefined;
+  return source.gate_mode_hidden ? { gate_mode_hidden: true } : {};
 }
 
 /** v2 rows (contract §8.4) also name the live and draft gate mode; v1 rows never do. */
@@ -865,7 +892,8 @@ export function verificationMethodImpactResponse(
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
     const guard = publishGuard(raw?.publish_guard);
     const impact = requiredObject(raw?.impact, ["by_storefront", "unknown_storefront", "totals"]);
-    if (raw?.contract_version !== version || !principal || evaluatedAt === null || expectedRevision === null
+    const hidden = raw ? gateModeHidden(raw, version) : undefined;
+    if (raw?.contract_version !== version || !hidden || !principal || evaluatedAt === null || expectedRevision === null
       || !fingerprint || raw.confirmation_phrase !== VERIFICATION_METHOD_CONFIRMATION_PHRASE
       || !methodAvailability || !guard || !impact
       || !Array.isArray(impact.by_storefront)
@@ -915,6 +943,7 @@ export function verificationMethodImpactResponse(
         unknown_storefront: { live_method: unknownLive, draft_method: unknownDraft, ...unknownModes, ...unknownCounts },
         totals,
       },
+      ...hidden,
     };
   });
 }
@@ -933,6 +962,32 @@ export function verificationMethodConflictResponse(
   const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
   if (raw?.contract_version !== version || !policy || !methodAvailability) return null;
   return { error, data: { contract_version: version, policy, method_availability: methodAvailability } };
+}
+
+/**
+ * The save refusal of D-151's review: a scope whose effective mode is Explore
+ * while its effective method is video or photo. The body carries `data`, so
+ * the plain error parser declines it; without this parser it would read as an
+ * unknown outcome and be retained. A 422 proves nothing was written. Publish
+ * answers the same code with no `data`, which the plain parser handles.
+ */
+export function verificationMethodGateModeConflictResponse(value: unknown): VerificationMethodGateModeConflict | null {
+  const envelope = webadminErrorEnvelope(value, "required");
+  if (!envelope || envelope.status_code !== 422 || envelope.error !== "verification-method-gate-mode-invalid") return null;
+  const raw = exactObject(envelope.data, ["reason", "scopes"]);
+  if (!raw || raw.reason !== "explore_requires_persona" || !Array.isArray(raw.scopes) || raw.scopes.length === 0) return null;
+  const scopes: string[] = [];
+  for (const [index, scope] of raw.scopes.entries()) {
+    if (scope === "global" && index === 0) {
+      scopes.push(scope);
+      continue;
+    }
+    if (!isForcedStorefront(scope)) return null;
+    const previous = scopes[scopes.length - 1];
+    if (previous !== undefined && previous !== "global" && scope <= previous) return null;
+    scopes.push(scope);
+  }
+  return { reason: "explore_requires_persona", scopes };
 }
 
 // ---------------------------------------------------------------------------
@@ -958,8 +1013,12 @@ export type VerificationMethodDraft = {
   gate_mode: VerificationGateModePolicy | null;
 };
 
-/** `gateMode`: a mode entry outside the storefront catalogue or the closed mode list. */
-export type VerificationMethodDraftIssue = ForcedVerificationDraftIssue | "gateMode";
+/**
+ * `gateMode`: a mode entry outside the storefront catalogue or the closed mode
+ * list. `exploreRequiresPersona`: a scope resolves to Explore while its method
+ * is video or photo, which Core refuses (D-151 review).
+ */
+export type VerificationMethodDraftIssue = ForcedVerificationDraftIssue | "gateMode" | "exploreRequiresPersona";
 
 export function verificationMethodDraft(document: VerificationMethodDocument): VerificationMethodDraft {
   const overrides: VerificationMethodOverrideRow[] = [];
@@ -1004,6 +1063,7 @@ export function validateVerificationMethodDraft(
       || modeKeys.some((key) => !isForcedStorefront(key) || gateMode(draft.gate_mode!.overrides[key]) === null)) {
       return "gateMode";
     }
+    if (draftGateModeConflicts(draft).length > 0) return "exploreRequiresPersona";
   }
   for (const locale of WAITING_ROOM_LOCALES) {
     for (const field of WAITING_ROOM_COPY_FIELDS) {
@@ -1157,9 +1217,57 @@ export function gateModeOnlyStorefronts(draft: VerificationMethodDraft): string[
   return Object.keys(draft.gate_mode.overrides).filter((key) => !methodRows.has(key)).sort();
 }
 
-/** True when a document's mode is the stored default, i.e. Core keeps the three-key shape. */
+/**
+ * True when Core stores no `gate_mode`: every effective mode is Full block —
+ * the global mode and every storefront entry (D-151 review canonical form, Core
+ * `allFullBlock`). Then the document is the released three-key shape an older
+ * Core reads.
+ */
 export function isDefaultGateModePolicy(gate: VerificationGateModePolicy | undefined): boolean {
-  return gate === undefined || (gate.global === VERIFICATION_GATE_MODE_ABSENT && Object.keys(gate.overrides).length === 0);
+  return gate === undefined || (gate.global === VERIFICATION_GATE_MODE_ABSENT
+    && Object.values(gate.overrides).every((mode) => mode === VERIFICATION_GATE_MODE_ABSENT));
+}
+
+/** The one method Explore may run under (D-151 review): the T-713 boundary it relaxes is Persona's. */
+export const VERIFICATION_GATE_MODE_EXPLORE_METHOD = "persona" as const satisfies MandatoryMethod;
+
+/** Whether a row whose effective method is `method` may choose Explore. */
+export function gateModeExploreAllowed(method: MandatoryMethod): boolean {
+  return method === VERIFICATION_GATE_MODE_EXPLORE_METHOD;
+}
+
+type GateModeMaterial = {
+  global: MandatoryMethod;
+  overrides: Record<string, MandatoryMethod>;
+  gate_mode?: VerificationGateModePolicy | null;
+};
+
+/**
+ * Core `VerificationMethodPolicy::gateModeMethodConflicts`: the scopes whose
+ * effective mode is Explore while the effective method is video or photo —
+ * `global` first, then every storefront named by either override map,
+ * ascending. A scope with method `none` may hold any mode; it affects nobody.
+ */
+export function gateModeMethodConflicts(material: GateModeMaterial): string[] {
+  const gate = material.gate_mode;
+  if (!gate) return [];
+  const conflict = (method: MandatoryMethod, mode: VerificationGateMode) =>
+    mode === "explore" && (method === "video" || method === "photo");
+  const scopes: string[] = [];
+  if (conflict(material.global, gate.global)) scopes.push("global");
+  const storefronts = [...new Set([...Object.keys(material.overrides), ...Object.keys(gate.overrides)])].sort();
+  for (const storefront of storefronts) {
+    const method = Object.hasOwn(material.overrides, storefront) ? material.overrides[storefront] : material.global;
+    if (conflict(method, resolveGateMode(gate, storefront))) scopes.push(storefront);
+  }
+  return scopes;
+}
+
+/** The same check over the editor draft, before any document exists. */
+export function draftGateModeConflicts(draft: VerificationMethodDraft): string[] {
+  const overrides: Record<string, MandatoryMethod> = {};
+  for (const row of draft.overrides) overrides[row.storefront] = row.method;
+  return gateModeMethodConflicts({ global: draft.global, overrides, gate_mode: draft.gate_mode });
 }
 
 /** Every storefront whose method is `photo`, ascending. */

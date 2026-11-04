@@ -1,0 +1,15 @@
+{
+    "success": false,
+    "status_code": 422,
+    "error": "verification-method-gate-mode-invalid",
+    "data": {
+        "reason": "explore_requires_persona",
+        "scopes": [
+            "global",
+            "HUN"
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -4,6 +4,8 @@ import React from "react";
 import { useTranslations } from "next-intl";
 import {
   VERIFICATION_GATE_MODES,
+  gateModeExploreAllowed,
+  type MandatoryMethod,
   type VerificationGateMode,
   type VerificationGateModeChoice,
 } from "@/lib/verificationMethod";
@@ -13,12 +15,15 @@ type Props = {
   /** The global row has no "same as Global" choice; a storefront row does. */
   scope: "global" | "storefront";
   /**
-   * False when the row's effective method is `none`. There is then nothing to
-   * gate: the control shows Off and cannot change (contract §8.1, "Off" is the
-   * method `none`, never a stored mode).
+   * The row's effective method. `none` means there is nothing to gate: the
+   * control shows Off and cannot change (contract §8.1, "Off" is the method
+   * `none`, never a stored mode). Explore runs only under Persona (D-151
+   * review), so for video and photo the Explore choices are disabled.
    */
-  forced: boolean;
+  method: MandatoryMethod;
   choice: VerificationGateModeChoice;
+  /** Core named this scope in an `explore_requires_persona` refusal. */
+  flagged?: boolean;
   /** The global mode an inheriting storefront row follows. */
   inherited: VerificationGateMode;
   /** Core's `gate_mode_catalogue.recommended`. */
@@ -40,8 +45,9 @@ function isChoice(value: string): value is VerificationGateModeChoice {
 export default function VerificationGateModeControl({
   id,
   scope,
-  forced,
+  method,
   choice,
+  flagged = false,
   inherited,
   recommended,
   disabled,
@@ -50,7 +56,7 @@ export default function VerificationGateModeControl({
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   const modeLabel = (mode: VerificationGateMode) => t(`modes.${mode}`);
 
-  if (!forced) {
+  if (method === "none") {
     return (
       <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode="off">
         <select id={id} className="input" value="off" disabled aria-label={t("column")}>
@@ -62,28 +68,44 @@ export default function VerificationGateModeControl({
   }
 
   const effective = choice === "inherit" ? inherited : choice;
+  const exploreAllowed = gateModeExploreAllowed(method);
+  /** Explore under video or photo: Core refuses the save, so the row says why and how to fix it. */
+  const conflict = flagged || (!exploreAllowed && effective === "explore");
+  const allowed = (mode: VerificationGateMode) => mode !== "explore" || exploreAllowed;
   return (
-    <div className="method-cell gate-mode-cell" data-gate-mode-control={scope} data-gate-mode={effective}>
+    <div
+      className={`method-cell gate-mode-cell${conflict ? " is-conflict" : ""}`}
+      data-gate-mode-control={scope}
+      data-gate-mode={effective}
+      data-gate-mode-conflict={conflict ? "true" : undefined}
+    >
       <select
         id={id}
         className="input"
         value={choice}
         disabled={disabled}
         aria-label={t("column")}
+        aria-invalid={conflict || undefined}
         onChange={(event) => {
           if (isChoice(event.target.value)) onChange(event.target.value);
         }}
       >
         {scope === "storefront"
-          ? <option value="inherit">{t("inheritOption", { mode: modeLabel(inherited) })}</option>
+          ? <option value="inherit" disabled={!allowed(inherited)}>{t("inheritOption", { mode: modeLabel(inherited) })}</option>
           : null}
         {VERIFICATION_GATE_MODES.map((mode) => (
-          <option key={mode} value={mode}>
-            {mode === recommended ? t("recommendedOption", { mode: modeLabel(mode) }) : modeLabel(mode)}
+          <option key={mode} value={mode} disabled={!allowed(mode)}>
+            {mode === recommended && allowed(mode) ? t("recommendedOption", { mode: modeLabel(mode) }) : modeLabel(mode)}
           </option>
         ))}
       </select>
-      {effective === recommended ? null : (
+      {!exploreAllowed ? (
+        <small className={conflict ? "field-error" : "field-hint"} data-gate-mode-persona-only="true">
+          {conflict ? t("personaOnlyConflict") : t("personaOnly")}
+        </small>
+      ) : conflict ? (
+        <small className="field-error" data-gate-mode-persona-only="true">{t("personaOnlyConflict")}</small>
+      ) : effective === recommended ? null : (
         <small className="field-hint gate-mode-recommended" data-gate-mode-recommended={recommended}>
           {t("recommendedHint", { mode: modeLabel(recommended) })}
         </small>

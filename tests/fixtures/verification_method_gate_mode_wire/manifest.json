@@ -8,7 +8,8 @@
         "generator_source_commit": "a67a56652cf74ca1816ff83182e684018e226a28",
         "fixture_commit": "707e0b974604bb00528878b2cc5f05e7c143c226",
         "copied_at_tip": "410130524cd928e167b675e8ec2e8932421cc64f",
-        "note": "Core's corpus holds one Webadmin body (the v2 console). It is copied byte for byte; its sha256 equals Core's manifest row."
+        "note": "Core's corpus holds one Webadmin body (the v2 console), captured at the service level (VerificationMethodAdminService::console, without Webadmin::noStoreReply's message/status/can_send). It is copied byte for byte; its sha256 equals Core's manifest row, unchanged at f0fdb22b.",
+        "reverified_at_tip": "f0fdb22b779ae9688892998eaa6666dcee85643e"
     },
     "hand_written_note": "Rows with origin hand-written were written by the Webadmin lane (T-927) from contract section 8.4 because Core produced no body for that case. Replace any of them with Core bytes when Core captures that case.",
     "files": [
@@ -48,10 +49,16 @@
             "case": "an older Core refusing contract_version=2 (409)"
         },
         {
+            "file": "webadmin-method-refusal-explore-requires-persona.json",
+            "sha256": "8f2210321784255adba910646f046268d22e1d3e1063134bb26f69ffe577c7cb",
+            "origin": "hand-written",
+            "case": "save refused: Explore where the method is not Persona (422 with data {reason, scopes}; Core 06cf4f67)"
+        },
+        {
             "file": "webadmin-method-refusal-gate-mode-invalid.json",
             "sha256": "a143a5d291efeb655842b68988c42fe224d5ad05327ec152ee7b0446492bb8a0",
             "origin": "hand-written",
-            "case": "verification-method-gate-mode-invalid (422)"
+            "case": "verification-method-gate-mode-invalid without data (422; what publish answers)"
         },
         {
             "file": "webadmin-method-save-v2.json",

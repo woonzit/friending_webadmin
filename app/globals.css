@@ -14920,6 +14920,9 @@ fieldset.dates-external-fields {
 .gate-mode-legend ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .gate-mode-legend li, .gate-mode-legend .field-hint { white-space: normal; }
 .gate-mode-rollback { margin: 0; color: var(--muted); font-size: 12px; }
+.gate-mode-conflict-row > th, .gate-mode-conflict-row > td { background: var(--danger-soft); }
+.gate-mode-cell.is-conflict select { border-color: var(--danger); }
+.gate-mode-cell .field-error { color: #f68a96; font-size: 12px; font-weight: 650; }
 
 /* Into-tag moderation (T-683, D-107 R10). The queue borrows the reported-content
    receipted-queue shapes; only the tag-specific surfaces are defined here. */

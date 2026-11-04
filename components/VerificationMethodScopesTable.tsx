@@ -38,6 +38,7 @@ import {
   VERIFICATION_METHOD_UNAVAILABLE_ERROR,
   VERIFICATION_START_METHODS,
   documentUsesMethod,
+  draftGateModeConflicts,
   gateModeChoice,
   gateModeOnlyStorefronts,
   isDefaultGateModePolicy,
@@ -48,6 +49,7 @@ import {
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
   verificationMethodErrorResponse,
+  verificationMethodGateModeConflictResponse,
   verificationMethodImpactResponse,
   verificationMethodMutationResponse,
   verificationMethodPendingFrom,
@@ -182,6 +184,10 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
    */
   const [guardRevision, setGuardRevision] = useState<number | null>(null);
   const [pending, setPending] = useState<VerificationMethodPendingMutation | null>(null);
+  /** Scopes Core named in its last `explore_requires_persona` refusal; cleared by any edit or authoritative read. */
+  const [refusedScopes, setRefusedScopes] = useState<string[]>([]);
+  /** v1 only: Core said a mode is stored that this wire cannot show (`gate_mode_hidden`). */
+  const [gateModeHidden, setGateModeHidden] = useState(false);
   const pendingRef = useRef<VerificationMethodPendingMutation | null>(null);
   /**
    * The console wire. `admin_me` does not advertise it (contract §8.4/§15), so
@@ -197,6 +203,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     setDraft((current) => (keepDraft && current ? current : verificationMethodDraft(policy.draft.document)));
     setImpact(null);
     setConfirmation("");
+    setRefusedScopes([]);
   }, []);
 
   const load = useCallback(async (keepDraft: boolean) => {
@@ -225,6 +232,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     setImpact(null);
     setConfirmation("");
     setPhotoRefused(false);
+    setRefusedScopes([]);
+    setGateModeHidden(false);
     setGuardRevision(material.policy.revision);
     setState("ready");
   }, []);
@@ -340,12 +349,28 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         setData((current) => (current
           ? { ...current, policy: success.policy, method_availability: success.method_availability }
           : current));
+        if (success.gate_mode_hidden) setGateModeHidden(true);
       } else void load(false);
       setNotice(success.replayed
         ? { tone: "info", text: t("replayed") }
         : durable.action === "verification_method_save"
           ? { tone: "success", text: t("draftSaved", { revision: success.policy.revision }) }
           : { tone: "success", text: t("published", { revision: success.policy.revision }) });
+      setBusy(false);
+      return;
+    }
+    // D-151 review: Explore under video or photo. A 422 with `data`: terminal,
+    // never retained, and the named rows are highlighted.
+    const gateConflict = verificationMethodGateModeConflictResponse(response);
+    if (gateConflict) {
+      const cleared = clearPending();
+      setRefusedScopes(gateConflict.scopes);
+      setNotice({
+        tone: "error",
+        text: cleared
+          ? gt("conflictRefused", { scopes: gateConflict.scopes.map(scopeLabel).join(", ") })
+          : t("persistenceCleanupFailed"),
+      });
       setBusy(false);
       return;
     }
@@ -409,6 +434,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const bound = parsed?.expected_revision === expected ? parsed : null;
     setImpact(bound);
     setConfirmation("");
+    if (bound?.gate_mode_hidden) setGateModeHidden(true);
     if (bound) {
       setNotice({ tone: "info", text: t("impactReady", { revision: expected }) });
       setBusy(false);
@@ -443,6 +469,12 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   function patch(next: Partial<VerificationMethodDraft>) {
     setDraft((current) => (current ? { ...current, ...next } : current));
     setNotice(null);
+    setRefusedScopes([]);
+  }
+
+  /** `global` or a storefront code, as the operator reads it. */
+  function scopeLabel(scope: string): string {
+    return scope === "global" ? shared("globalRow") : `${forcedStorefrontName(scope, locale)} · ${scope}`;
   }
 
   function patchRow(storefront: string, next: Partial<VerificationMethodDraft["overrides"][number]>) {
@@ -507,6 +539,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const gate = draft.gate_mode;
   const recommendedMode = data.gate_mode_catalogue?.recommended ?? null;
   const columnCount = gate !== null && recommendedMode !== null ? 5 : 4;
+  /** Rows to highlight: the draft's own Persona-rule conflicts plus any scope Core named. */
+  const conflictScopes = new Set([...draftGateModeConflicts(draft), ...refusedScopes]);
   const modeOnlyRows = [...gateModeOnlyStorefronts(draft)].sort((left, right) => (
     forcedStorefrontName(left, locale).localeCompare(forcedStorefrontName(right, locale), locale)
     || left.localeCompare(right)
@@ -776,7 +810,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     );
   }
 
-  /** `method` is the row's effective method: `none` shows Off and locks the control. */
+  /** `method` is the row's effective method: `none` shows Off and locks the control; only Persona allows Explore. */
   function gateModeCell(row: RowKey, method: MandatoryMethod) {
     if (gate === null || recommendedMode === null) return null;
     return (
@@ -784,7 +818,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         <VerificationGateModeControl
           id={`gate-mode-${row ?? "global"}`}
           scope={row === null ? "global" : "storefront"}
-          forced={method !== "none"}
+          method={method}
+          flagged={refusedScopes.includes(row ?? "global")}
           choice={gateModeChoice(gate, row)}
           inherited={gate.global}
           recommended={recommendedMode}
@@ -798,7 +833,11 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   /** A storefront Core serves with a mode but no method row (contract §8.1 keeps the maps independent). */
   function modeOnlyRow(storefront: string) {
     return (
-      <tr key={`mode-only-${storefront}`} data-gate-mode-only={storefront}>
+      <tr
+        key={`mode-only-${storefront}`}
+        data-gate-mode-only={storefront}
+        className={conflictScopes.has(storefront) ? "gate-mode-conflict-row" : undefined}
+      >
         <th scope="row">
           <span className="method-row-title"><strong>{forcedStorefrontName(storefront, locale)}</strong><small>{storefront}</small></span>
         </th>
@@ -828,7 +867,13 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const key = row ?? "global";
     const open = expanded === row;
     return [
-      <tr key={key} className={row === null ? "forced-global-row" : undefined}>
+      <tr
+        key={key}
+        className={[
+          row === null ? "forced-global-row" : "",
+          conflictScopes.has(row ?? "global") ? "gate-mode-conflict-row" : "",
+        ].filter(Boolean).join(" ") || undefined}
+      >
         <th scope="row">
           <span className="method-row-title">
             {row === null
@@ -875,6 +920,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         </div>
       ) : null}
       {notice ? <div className={`alert alert-${notice.tone} page-alert`} role="status">{notice.text}</div> : null}
+      {gateModeHidden && data?.contract_version === 1 ? (
+        <div className="alert alert-warning page-alert" data-gate-mode-hidden="true">{gt("hiddenStored")}</div>
+      ) : null}
 
       <section className="panel">
         <div className="panel-header">
