@@ -6,22 +6,24 @@
         "repository": "friending_core",
         "path": "tests/fixtures/verification_explore_mode_wire/",
         "manifest_contract": "verification-explore-mode-v1",
-        "generator_source_commit": "236495e611e2c999564eedcfe9361348492448bc",
-        "fixture_commit": "824093eca0bdf0b67ad38df67fbe46fd214447c6",
-        "copied_at_tip": "7a0f51e291d965e3e04278f37944885b7e77e5b1",
-        "note": "Core's corpus holds two Webadmin bodies (console v3 and impact v3), captured at the service level by tests/verification_explore_mode_storage_test.php, without Webadmin::noStoreReply's message/status/can_send. They are copied byte for byte; each sha256 equals Core's manifest row, unchanged from 824093ec to the lane tip 7a0f51e2."
+        "generator_source_commit": "2e296f90f1702d08f9237ed56a668cb644bdc8ec",
+        "reference_clock": 1794700800,
+        "copied_at_tip": "fc3b83e86419e19018080680240bd99a5a7bc1fb",
+        "note": "Core's corpus holds two Webadmin bodies (console v3 and impact v3), captured at the service level by tests/verification_explore_mode_storage_test.php, without Webadmin::noStoreReply's message/status/can_send. They are copied byte for byte from the lane tip fc3b83e8; each sha256 equals Core's manifest row there, and each row's fixture_commit is the Core commit that last touched that file (git log -1 -- <file>). The impact body was re-captured in 2e37ca9d so that evaluated_at equals reference_clock exactly (the 824093ec capture was one second late, a flake); the console body is unchanged since 824093ec."
     },
     "hand_written_note": "Rows with origin hand-written were written by the Webadmin lane (T-933) from contract section 7 because Core produced no body for that case: the section 7.1 draft/live split (5/3), the save, the all-Full-block save (Q10), the apply answer, the CAS conflict and the save command. Replace any of them with Core bytes when Core captures that case. Refusal bodies are version-independent and stay in verification_method_gate_mode_wire.",
     "files": [
         {
             "file": "webadmin-console-v3.json",
             "sha256": "68dfa9760bc9613a6b272996722576fd80382ecb03ef606f8d2e6c3e88243664",
-            "origin": "core"
+            "origin": "core",
+            "fixture_commit": "824093eca0bdf0b67ad38df67fbe46fd214447c6"
         },
         {
             "file": "webadmin-impact-v3.json",
-            "sha256": "e60b5a7c883a9fbc4cf32383f07aa6600af28375ddc3332dbb12ef160410647f",
-            "origin": "core"
+            "sha256": "59f89c4608e78bf1ed94b3e80419d4e1799267c1c50fc423414e7abe8c0bfd0f",
+            "origin": "core",
+            "fixture_commit": "2e37ca9dd1411079f82732d2706791ee746b89f9"
         },
         {
             "file": "webadmin-method-apply-v3.json",

@@ -57,7 +57,8 @@ import {
  *
  * `fixtures/verification_method_closed_mode_wire/`: `webadmin-console-v3.json`
  * and `webadmin-impact-v3.json` are Core's generated bodies, copied byte for
- * byte from `tests/fixtures/verification_explore_mode_wire/` (Core 824093ec).
+ * byte from `tests/fixtures/verification_explore_mode_wire/` (Core lane tip
+ * fc3b83e8; console from 824093ec, impact re-captured in 2e37ca9d).
  * Every other body is HAND-WRITTEN from contract §7 for a case Core's corpus
  * does not capture; the manifest marks each row's origin. Version-independent
  * refusal bodies are read from the D-151 corpus.
@@ -71,9 +72,14 @@ const FIXTURE_DIRECTORY = new URL("./fixtures/verification_method_closed_mode_wi
 const D151_DIRECTORY = new URL("./fixtures/verification_method_gate_mode_wire/", import.meta.url);
 /** Core `tests/fixtures/verification_explore_mode_wire/manifest.json`, rows `webadmin-console-v3.json` / `webadmin-impact-v3.json`. */
 const CORE_CONSOLE_V3_SHA256 = "68dfa9760bc9613a6b272996722576fd80382ecb03ef606f8d2e6c3e88243664";
-const CORE_IMPACT_V3_SHA256 = "e60b5a7c883a9fbc4cf32383f07aa6600af28375ddc3332dbb12ef160410647f";
-const CORE_FIXTURE_COMMIT = "824093eca0bdf0b67ad38df67fbe46fd214447c6";
-const CORE_GENERATOR_SOURCE_COMMIT = "236495e611e2c999564eedcfe9361348492448bc";
+const CORE_IMPACT_V3_SHA256 = "59f89c4608e78bf1ed94b3e80419d4e1799267c1c50fc423414e7abe8c0bfd0f";
+/** The Core commit that last touched each body (`git log -1 -- <file>` at the lane tip). */
+const CORE_CONSOLE_V3_COMMIT = "824093eca0bdf0b67ad38df67fbe46fd214447c6";
+const CORE_IMPACT_V3_COMMIT = "2e37ca9dd1411079f82732d2706791ee746b89f9";
+const CORE_GENERATOR_SOURCE_COMMIT = "2e296f90f1702d08f9237ed56a668cb644bdc8ec";
+const CORE_COPIED_AT_TIP = "fc3b83e86419e19018080680240bd99a5a7bc1fb";
+/** Core's manifest `reference_clock`: every captured time field is shifted onto it. */
+const CORE_REFERENCE_CLOCK = 1794700800;
 
 function success(data: unknown) {
   return { ...LEGACY, success: true, status_code: 200, data };
@@ -455,10 +461,14 @@ test("Core's generated v3 console and impact decode as served, through the Webad
     expected_revision: parsed.policy.revision, request_id: REQUEST_ID,
   }), "the operator's Never close goes out as the integer 0");
 
+  assert.equal(parsed.evaluated_at, CORE_REFERENCE_CLOCK, "Core's normalized capture clock");
+
   const impactBody = throughWebadminReply(rawImpact);
   const impact = verificationMethodImpactResponse(impactBody, 3);
   assert.ok(impact, "Core's impact, through the wire adapter, decodes as v3");
   assert.equal(impact.contract_version, 3);
+  assert.equal(impact.evaluated_at, CORE_REFERENCE_CLOCK,
+    "Core 2e37ca9d: the re-captured impact sits exactly on the reference clock (the 824093ec capture was one second late)");
   assert.equal(impact.expected_revision, 5);
   assert.deepEqual(impact.impact.closed_below_events, { live: 3, draft: 0 }, "Core's capture: the draft says Never close");
   assert.deepEqual(impact.impact.by_storefront, []);
@@ -602,16 +612,19 @@ test("the corpus pins Core's two v3 bodies and marks every hand-written body", a
   assert.equal(manifest.contract, "verification-method-console-v3");
   assert.equal(manifest.core_corpus.path, "tests/fixtures/verification_explore_mode_wire/");
   assert.equal(manifest.core_corpus.manifest_contract, "verification-explore-mode-v1");
-  assert.equal(manifest.core_corpus.fixture_commit, CORE_FIXTURE_COMMIT);
   assert.equal(manifest.core_corpus.generator_source_commit, CORE_GENERATOR_SOURCE_COMMIT);
-  const rows = manifest.files as Array<{ file: string; sha256: string; origin: string; case?: string }>;
+  assert.equal(manifest.core_corpus.copied_at_tip, CORE_COPIED_AT_TIP);
+  assert.equal(manifest.core_corpus.reference_clock, CORE_REFERENCE_CLOCK);
+  assert.equal(Object.hasOwn(manifest.core_corpus, "fixture_commit"), false, "each Core row names its own commit");
+  const rows = manifest.files as Array<{ file: string; sha256: string; origin: string; case?: string; fixture_commit?: string }>;
   const files = rows.map((row) => row.file);
   assert.deepEqual(files, [...files].sort());
   assert.deepEqual((await readdir(FIXTURE_DIRECTORY)).sort(), [...files, "manifest.json"].sort());
-  assert.deepEqual(rows.filter((row) => row.origin === "core").map((row) => [row.file, row.sha256]), [
-    ["webadmin-console-v3.json", CORE_CONSOLE_V3_SHA256],
-    ["webadmin-impact-v3.json", CORE_IMPACT_V3_SHA256],
-  ], "Core's bytes, Core's hashes");
+  assert.deepEqual(rows.filter((row) => row.origin === "core").map((row) => [row.file, row.sha256, row.fixture_commit]), [
+    ["webadmin-console-v3.json", CORE_CONSOLE_V3_SHA256, CORE_CONSOLE_V3_COMMIT],
+    ["webadmin-impact-v3.json", CORE_IMPACT_V3_SHA256, CORE_IMPACT_V3_COMMIT],
+  ], "Core's bytes, Core's hashes, the commit that last touched each");
+  assert.ok(rows.every((row) => row.origin === "core" || !Object.hasOwn(row, "fixture_commit")), "hand-written rows name no Core commit");
   assert.deepEqual(rows.filter((row) => row.origin === "hand-written").map((row) => row.file), [
     "webadmin-method-apply-v3.json",
     "webadmin-method-conflict-v3.json",
