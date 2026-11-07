@@ -17,7 +17,7 @@
                 "verification_simulate"
             ]
         },
-        "evaluated_at": 1800000000,
+        "evaluated_at": 1794700800,
         "policy": {
             "schema_version": 1,
             "revision": 4,
@@ -48,8 +48,8 @@
                         "closed_below_events": 3
                     }
                 },
-                "saved_at": 1790000000,
-                "saved_by": "owner@friending.com"
+                "saved_at": 1794700800,
+                "saved_by": "script:migrate_verification_method_policy"
             },
             "live": {
                 "document": {
@@ -78,18 +78,18 @@
                         "closed_below_events": 3
                     }
                 },
-                "published_at": 1790000000,
-                "published_by": "owner@friending.com"
+                "published_at": 1794700800,
+                "published_by": "script:migrate_verification_method_policy"
             },
-            "updated_at": 1790000000,
-            "updated_by": "owner@friending.com"
+            "updated_at": 1794700800,
+            "updated_by": "script:migrate_verification_method_policy"
         },
         "method_availability": {
             "video": {
                 "method": "video",
-                "policy_enable_allowed": true,
-                "new_start_available": true,
-                "reason": null
+                "policy_enable_allowed": false,
+                "new_start_available": false,
+                "reason": "deployment_unlock_disabled"
             },
             "persona": {
                 "method": "persona",
@@ -101,7 +101,7 @@
                 "method": "photo",
                 "policy_enable_allowed": false,
                 "new_start_available": false,
-                "reason": "catalogue_insufficient"
+                "reason": "deployment_unlock_disabled"
             }
         },
         "publish_guard": {
@@ -129,6 +129,7 @@
                 "closed_below_events": 3
             }
         },
+        "storefront_catalogue_hint": "alpha-3",
         "gate_mode_catalogue": {
             "modes": [
                 "explore",
@@ -144,10 +145,6 @@
                 "radius_miles": 100,
                 "client_selector": "explore_mode_contract_version"
             }
-        },
-        "storefront_catalogue_hint": "alpha-3"
-    },
-    "message": 200,
-    "status": 200,
-    "can_send": 0
+        }
+    }
 }

@@ -55,9 +55,11 @@ import {
  * (0..50, absent ≡ 3, 0 = never close), the v3 → v2 → v1 probe, the v2
  * byte-identity (v2 never names the key) and the Q10 all-Full-block reset.
  *
- * `fixtures/verification_method_closed_mode_wire/` is HAND-WRITTEN from
- * contract §7: Core had published no v3 body yet. The lead swaps in Core's
- * `webadmin-console-v3.json` at integration (T-935). Version-independent
+ * `fixtures/verification_method_closed_mode_wire/`: `webadmin-console-v3.json`
+ * and `webadmin-impact-v3.json` are Core's generated bodies, copied byte for
+ * byte from `tests/fixtures/verification_explore_mode_wire/` (Core 824093ec).
+ * Every other body is HAND-WRITTEN from contract §7 for a case Core's corpus
+ * does not capture; the manifest marks each row's origin. Version-independent
  * refusal bodies are read from the D-151 corpus.
  */
 
@@ -67,6 +69,11 @@ const LEGACY = { message: 200, status: 200, can_send: 0 } as const;
 const REQUEST_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const FIXTURE_DIRECTORY = new URL("./fixtures/verification_method_closed_mode_wire/", import.meta.url);
 const D151_DIRECTORY = new URL("./fixtures/verification_method_gate_mode_wire/", import.meta.url);
+/** Core `tests/fixtures/verification_explore_mode_wire/manifest.json`, rows `webadmin-console-v3.json` / `webadmin-impact-v3.json`. */
+const CORE_CONSOLE_V3_SHA256 = "68dfa9760bc9613a6b272996722576fd80382ecb03ef606f8d2e6c3e88243664";
+const CORE_IMPACT_V3_SHA256 = "e60b5a7c883a9fbc4cf32383f07aa6600af28375ddc3332dbb12ef160410647f";
+const CORE_FIXTURE_COMMIT = "824093eca0bdf0b67ad38df67fbe46fd214447c6";
+const CORE_GENERATOR_SOURCE_COMMIT = "236495e611e2c999564eedcfe9361348492448bc";
 
 function success(data: unknown) {
   return { ...LEGACY, success: true, status_code: 200, data };
@@ -80,6 +87,27 @@ function refusal(error: string, status_code: number, data?: unknown) {
 
 async function fixture(file: string, directory: URL = FIXTURE_DIRECTORY): Promise<Json> {
   return JSON.parse(await readFile(new URL(file, directory), "utf8")) as Json;
+}
+
+/**
+ * Core's generator (`tests/verification_explore_mode_storage_test.php`)
+ * captures `VerificationMethodAdminService` itself, not the controller's
+ * `Webadmin::noStoreReply()`, whose `encodedReply()` appends the legacy trio
+ * `message: 200` (when unset), `status: 200`, `can_send: 0` to every Webadmin
+ * answer. This applies exactly that step — nothing else — as the D-151 test does.
+ */
+function throughWebadminReply(payload: Json): Json {
+  return { ...payload, message: payload.message ?? 200, status: 200, can_send: 0 };
+}
+
+/** Core's v3 console (revision 4, Explore everywhere, threshold 3 materialized), as the Webadmin bridge receives it. */
+async function coreConsole(): Promise<Json> {
+  return throughWebadminReply(await fixture("webadmin-console-v3.json"));
+}
+
+/** Core's v3 impact (live 3, draft 0), as the Webadmin bridge receives it. */
+async function coreImpact(): Promise<Json> {
+  return throughWebadminReply(await fixture("webadmin-impact-v3.json"));
 }
 
 function gate(global: "explore" | "full_block", threshold: number, overrides: Record<string, "explore" | "full_block"> = {}): VerificationGateModePolicy {
@@ -147,7 +175,7 @@ test("a v3 gate_mode is exactly {global, overrides, closed_below_events}; v2 sta
 });
 
 test("the v3 console decodes the default and the §7.1 corpus; a v2 body is not v3 material and the reverse", async () => {
-  const defaultBody = await fixture("webadmin-method-console-v3-default.json");
+  const defaultBody = await coreConsole();
   const parsed = verificationMethodConsoleResponse(defaultBody, 3);
   assert.ok(parsed);
   assert.equal(parsed.contract_version, 3);
@@ -227,7 +255,7 @@ function v1ConsoleBody(v2: Json): Json {
 }
 
 test("the console probe asks for v3 first and steps down exactly one version per named 409", async () => {
-  const v3 = await fixture("webadmin-method-console-v3-default.json");
+  const v3 = await coreConsole();
   const v2 = await fixture("webadmin-method-console-v2-default.json", D151_DIRECTORY);
   const refused = await fixture("webadmin-method-refusal-contract-version.json", D151_DIRECTORY);
 
@@ -273,8 +301,8 @@ test("the console probe asks for v3 first and steps down exactly one version per
 // ---------------------------------------------------------------------------
 
 test("an untouched v3 draft round-trips to exactly what Core served; the threshold is the third gate_mode key", async () => {
-  for (const file of ["webadmin-method-console-v3-default.json", "webadmin-method-console-v3-closed-draft.json"]) {
-    const body = await fixture(file);
+  for (const file of ["webadmin-console-v3.json", "webadmin-method-console-v3-closed-draft.json"]) {
+    const body = file === "webadmin-console-v3.json" ? await coreConsole() : await fixture(file);
     const parsed = verificationMethodConsoleResponse(body, 3)!;
     const draft = verificationMethodDraft(parsed.policy.draft.document);
     assert.equal(verificationMethodDraftMatchesVersion(draft, 3), true);
@@ -389,27 +417,67 @@ test("the rollback indicator: a threshold other than 3 stored in the saved draft
 // Impact, mutations, conflicts
 // ---------------------------------------------------------------------------
 
-test("the v3 impact names both stored thresholds; its rows and counts are the v2 ones", async () => {
-  const body = await fixture("webadmin-method-impact-v3.json");
-  const parsed = verificationMethodImpactResponse(body, 3);
-  assert.ok(parsed);
-  assert.equal(parsed.contract_version, 3);
-  assert.deepEqual(parsed.impact.closed_below_events, { live: 3, draft: 5 });
-  assert.deepEqual(parsed.impact.by_storefront.map((row) => [row.storefront, row.live_gate_mode, row.draft_gate_mode]), [
-    ["HUN", "full_block", "full_block"],
-    ["USA", "full_block", "explore"],
-  ]);
-  const v2 = verificationMethodImpactResponse(await fixture("webadmin-method-impact-v2.json", D151_DIRECTORY), 2)!;
-  assert.deepEqual(parsed.impact.totals, v2.impact.totals, "counts unchanged: who is held does not depend on the threshold");
-  assert.equal(verificationMethodImpactResponse(body, 2), null, "not v2 material");
+test("Core's generated v3 console and impact decode as served, through the Webadmin reply adapter, and only as v3", async () => {
+  const rawConsole = await fixture("webadmin-console-v3.json");
+  const rawImpact = await fixture("webadmin-impact-v3.json");
+  assert.equal(verificationMethodConsoleResponse(rawConsole, 3), null,
+    "the service-level capture has no legacy trio; the strict envelope keeps refusing that");
+  assert.equal(verificationMethodImpactResponse(rawImpact, 3), null);
 
-  const data = body.data as Json;
+  const consoleBody = throughWebadminReply(rawConsole);
+  const parsed = verificationMethodConsoleResponse(consoleBody, 3);
+  assert.ok(parsed, "Core's bytes, through the wire adapter, decode as v3");
+  assert.equal(parsed.contract_version, 3);
+  assert.equal(parsed.policy.revision, 4);
+  assert.deepEqual(parsed.policy.draft.document.gate_mode, gate("explore", 3));
+  assert.deepEqual(parsed.policy.live.document.gate_mode, gate("explore", 3));
+  assert.deepEqual(parsed.compiled_defaults.gate_mode, gate("full_block", 3));
+  assert.deepEqual(parsed.gate_mode_catalogue?.closed_below_events, {
+    default: 3, minimum: 0, maximum: 50, off: 0, radius_miles: 100, client_selector: "explore_mode_contract_version",
+  });
+  assert.equal(verificationMethodConsoleResponse(consoleBody, 2), null, "never v2 material");
+  assert.equal(verificationMethodConsoleResponse(consoleBody, 1), null, "never v1 material");
+  assert.deepEqual(Object.keys(consoleBody.data.policy.draft.document), ["global", "overrides", "waiting_room_copy", "gate_mode"]);
+  assert.deepEqual(Object.keys(consoleBody.data.policy.draft.document.gate_mode), ["global", "overrides", "closed_below_events"],
+    "Core's key order is the order the console writes back");
+  assert.equal(closedModeThresholdApplies(parsed.policy.draft.document.gate_mode!), true, "Explore is on: the control is enabled");
+  assert.equal(verificationMethodPolicyStoresClosedThreshold(parsed.policy), false, "3 is the canonical omission");
+
+  const draft = verificationMethodDraft(parsed.policy.draft.document);
+  const rebuilt = verificationMethodDocumentFromDraft(draft);
+  assert.ok(rebuilt);
+  assert.deepEqual(JSON.parse(JSON.stringify(rebuilt)), consoleBody.data.policy.draft.document, "byte-equivalent save material");
+  assert.ok(normalizeVerificationMethodProxyBody("verification_method_save", {
+    contract_version: 3, draft_json: rebuilt, expected_revision: parsed.policy.revision, request_id: REQUEST_ID,
+  }));
+  assert.ok(normalizeVerificationMethodProxyBody("verification_method_save", {
+    contract_version: 3, draft_json: verificationMethodDocumentFromDraft({ ...draft, gate_mode: withClosedBelowEvents(draft.gate_mode!, 0) }),
+    expected_revision: parsed.policy.revision, request_id: REQUEST_ID,
+  }), "the operator's Never close goes out as the integer 0");
+
+  const impactBody = throughWebadminReply(rawImpact);
+  const impact = verificationMethodImpactResponse(impactBody, 3);
+  assert.ok(impact, "Core's impact, through the wire adapter, decodes as v3");
+  assert.equal(impact.contract_version, 3);
+  assert.equal(impact.expected_revision, 5);
+  assert.deepEqual(impact.impact.closed_below_events, { live: 3, draft: 0 }, "Core's capture: the draft says Never close");
+  assert.deepEqual(impact.impact.by_storefront, []);
+  assert.equal(impact.impact.unknown_storefront.live_gate_mode, "explore", "v3 rows keep the v2 mode fields");
+  assert.equal(impact.impact.unknown_storefront.draft_gate_mode, "explore");
+  assert.deepEqual(impact.impact.totals, impactBody.data.impact.totals, "the counts are Core's, unchanged");
+  assert.equal(verificationMethodImpactResponse(impactBody, 2), null, "never v2 material");
+  assert.equal(verificationMethodImpactResponse(impactBody, 1), null, "never v1 material");
+});
+
+test("the v3 impact refuses a malformed threshold pair; v1 and v2 never yield one", async () => {
+  const data = (await coreImpact()).data as Json;
   for (const [label, value] of [
     ["missing", undefined],
     ["draft missing", { live: 3 }],
-    ["an extra key", { live: 3, draft: 5, radius_miles: 100 }],
+    ["an extra key", { live: 3, draft: 0, radius_miles: 100 }],
     ["out of range", { live: 3, draft: 51 }],
-    ["a string", { live: "3", draft: 5 }],
+    ["negative", { live: -1, draft: 0 }],
+    ["a string", { live: "3", draft: 0 }],
     ["null", null],
   ] as const) {
     const variant = structuredClone(data);
@@ -417,11 +485,13 @@ test("the v3 impact names both stored thresholds; its rows and counts are the v2
     else variant.impact.closed_below_events = value;
     assert.equal(verificationMethodImpactResponse(success(variant), 3), null, label);
   }
-  const asV2 = structuredClone(data);
-  asV2.contract_version = 2;
-  const v2Parsed = verificationMethodImpactResponse(success(asV2), 2);
-  assert.ok(v2Parsed, "v2 decoding tolerates the additive key");
-  assert.equal(Object.hasOwn(v2Parsed.impact, "closed_below_events"), false, "but never yields it");
+  for (const version of [1, 2] as const) {
+    const older = structuredClone(data);
+    older.contract_version = version;
+    const parsed = verificationMethodImpactResponse(success(older), version);
+    assert.ok(parsed, `v${version} decoding tolerates the additive key`);
+    assert.equal(Object.hasOwn(parsed.impact, "closed_below_events"), false, `but never yields it on v${version}`);
+  }
 });
 
 test("v3 save, apply and conflict bodies decode only as v3, and gate_mode_hidden never rides on v3", async () => {
@@ -494,16 +564,16 @@ test("the proxy forwards exact v3 bodies and refuses what Core would refuse", as
 
   assert.deepEqual(normalizeVerificationMethodProxyBody("verification_method_impact", { contract_version: 3, expected_revision: 5 }),
     { contract_version: 3, expected_revision: 5 });
-  const impact = verificationMethodImpactResponse(await fixture("webadmin-method-impact-v3.json"), 3)!;
-  const apply = verificationMethodApplyCommand(impact, "Closed mode below 5 events", REQUEST_ID);
+  const impact = verificationMethodImpactResponse(await coreImpact(), 3)!;
+  const apply = verificationMethodApplyCommand(impact, "Never close while research fills the areas", REQUEST_ID);
   assert.deepEqual(apply, {
     contract_version: 3,
     expected_revision: 5,
-    normalized_fingerprint: impact.normalized_fingerprint,
+    normalized_fingerprint: "8b8568e19aed152796f8afc665cd6143f43043911024db229427c687e761f8aa",
     confirmation_phrase: VERIFICATION_METHOD_CONFIRMATION_PHRASE,
-    reason: "Closed mode below 5 events",
+    reason: "Never close while research fills the areas",
     request_id: REQUEST_ID,
-  }, "§7.3: the v3 fingerprint binds the threshold; version and fingerprint come from the same impact");
+  }, "§7.3: Core's v3 fingerprint binds the threshold; version and fingerprint come from the same impact");
   assert.deepEqual(normalizeVerificationMethodProxyBody("verification_method_apply", apply), apply);
 });
 
@@ -524,31 +594,33 @@ test("a v3 save is retained and replayed byte for byte, and photo guidance reads
 });
 
 // ---------------------------------------------------------------------------
-// The hand-written corpus
+// The corpus: Core's bytes plus the hand-written cases Core does not capture
 // ---------------------------------------------------------------------------
 
-test("the v3 corpus is hand-written from contract §7, every row marked, until the lead swaps in Core's bytes", async () => {
+test("the corpus pins Core's two v3 bodies and marks every hand-written body", async () => {
   const manifest = JSON.parse(await readFile(new URL("manifest.json", FIXTURE_DIRECTORY), "utf8")) as Json;
   assert.equal(manifest.contract, "verification-method-console-v3");
-  assert.equal(manifest.core_corpus.path, "tests/fixtures/verification_explore_wire/");
-  assert.equal(manifest.core_corpus.expected_file, "webadmin-console-v3.json");
-  assert.equal(manifest.core_corpus.fixture_commit, null, "no Core bytes yet; set at integration (T-935)");
+  assert.equal(manifest.core_corpus.path, "tests/fixtures/verification_explore_mode_wire/");
+  assert.equal(manifest.core_corpus.manifest_contract, "verification-explore-mode-v1");
+  assert.equal(manifest.core_corpus.fixture_commit, CORE_FIXTURE_COMMIT);
+  assert.equal(manifest.core_corpus.generator_source_commit, CORE_GENERATOR_SOURCE_COMMIT);
   const rows = manifest.files as Array<{ file: string; sha256: string; origin: string; case?: string }>;
   const files = rows.map((row) => row.file);
   assert.deepEqual(files, [...files].sort());
   assert.deepEqual((await readdir(FIXTURE_DIRECTORY)).sort(), [...files, "manifest.json"].sort());
-  assert.deepEqual(files, [
+  assert.deepEqual(rows.filter((row) => row.origin === "core").map((row) => [row.file, row.sha256]), [
+    ["webadmin-console-v3.json", CORE_CONSOLE_V3_SHA256],
+    ["webadmin-impact-v3.json", CORE_IMPACT_V3_SHA256],
+  ], "Core's bytes, Core's hashes");
+  assert.deepEqual(rows.filter((row) => row.origin === "hand-written").map((row) => row.file), [
     "webadmin-method-apply-v3.json",
     "webadmin-method-conflict-v3.json",
     "webadmin-method-console-v3-closed-draft.json",
-    "webadmin-method-console-v3-default.json",
-    "webadmin-method-impact-v3.json",
     "webadmin-method-save-v3-all-full-block.json",
     "webadmin-method-save-v3.json",
     "webadmin-request-save-v3.json",
-  ]);
-  assert.ok(rows.every((row) => row.origin === "hand-written" && typeof row.case === "string" && row.case !== ""),
-    "replace a row with an origin core row once Core captures its case");
+  ], "exactly these remain hand-written; replace each with Core bytes once Core captures its case");
+  assert.ok(rows.every((row) => row.origin === "core" || (row.origin === "hand-written" && typeof row.case === "string" && row.case !== "")));
   for (const row of rows) {
     const bytes = await readFile(new URL(row.file, FIXTURE_DIRECTORY));
     assert.equal(createHash("sha256").update(bytes).digest("hex"), row.sha256, row.file);
