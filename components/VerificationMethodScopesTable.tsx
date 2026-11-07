@@ -1024,7 +1024,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         </div>
         <div className="panel-body form-stack">
           {columnCount === 5
-            ? <VerificationGateModeLegend storesModes={verificationMethodPolicyStoresGateMode(data.policy)} />
+            ? <VerificationGateModeLegend storesModes={verificationMethodPolicyStoresGateMode(data.policy)} closedMode={closedMode !== null} />
             : null}
           {closedMode !== null ? (
             <VerificationClosedModeControl

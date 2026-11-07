@@ -5148,12 +5148,13 @@
         "legend": {
           "title": "What members who have not verified yet get",
           "explore": "They can browse events in the area they signed up in. People, chat and joining stay locked until they verify. Only where Persona is the required method.",
+          "exploreClosedMode": "They can browse events in the area they signed up in, unless Closed mode applies (below). People, chat and joining stay locked until they verify. Only where Persona is the required method.",
           "full_block": "They stay in the Waiting Room until they verify (how it works today).",
           "off": "Set the method to None: nobody has to verify, so nothing is locked.",
           "clients": "Explore mode reaches only app versions that support it. Older versions keep showing the Waiting Room and its copy."
         },
         "rollbackTitle": "Rollback:",
-        "rollback": "Set every scope back to Full block and publish before downgrading Core, including Off rows that still show a stored mode. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy.",
+        "rollback": "Set every scope back to Full block and publish before downgrading Core below D-151, including Off rows that still show a stored mode. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy.",
         "personaOnly": "Explore mode needs Persona as the required method.",
         "personaOnlyConflict": "Explore mode needs Persona as the required method. Choose Full block here, or make Persona the method.",
         "conflictRefused": "Core refused the draft: Explore mode needs Persona as the required method in {scopes}. Nothing was saved.",
@@ -5165,7 +5166,7 @@
         "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode.",
         "closedMode": {
           "title": "Closed mode",
-          "what": "In Closed mode only the profile is open. Everything else stays locked, and the app makes no promises about events.",
+          "what": "Only the profile, settings and help are open; shared event links still work. Everything else stays locked, and the app makes no promises about events.",
           "field": "Closed mode below N events within {radius} mi of the sign-up area",
           "never": "Never close (always Explore)",
           "option": "{count, plural, one {# event} other {# events}}",
@@ -5174,14 +5175,14 @@
           "resetAfterSave": "The Closed mode threshold is back to {value} because every scope is Full block.",
           "savePreview": "Saving this draft returns the Closed mode threshold to {value}: with every scope on Full block, Core stores no gate mode, so the threshold goes too.",
           "live": "Live: {value}",
-          "oneWay": "One way only: once a member has had Explore, they keep it, even if the events later go away.",
+          "oneWay": "One way only: once an app version that supports Closed mode has opened Explore for a member (threshold 1 or more), they keep it, even if the events go away or the threshold goes up. Members on older app versions, and anyone who opened while this was set to Never close, are not marked yet.",
           "clients": "Closed mode reaches only app versions that ask for it. Older versions keep today’s Explore mode.",
-          "rollback": "Before rolling Core or Webadmin back, set this to 3 events and publish. At 3, Core stores no threshold, so an older version can read the policy.",
+          "rollback": "Before rolling Core back below D-152 or Webadmin back to the previous console, set this to 3 and publish. At 3, Core stores no threshold, so an older version can read the policy.",
           "stored": "The draft or the live policy stores a threshold other than 3. An older Core cannot read it and an older Webadmin cannot clear it, so do the rollback above first.",
           "impactTitle": "Closed mode threshold",
           "impactLive": "Live: {value}",
           "impactDraft": "Draft: {value}",
-          "impactNote": "The threshold does not change who has to verify either, so the counts stay the same. It decides which of those members get Closed mode."
+          "impactNote": "The threshold does not change who has to verify either, so the counts stay the same. It decides which of those members get Closed mode on an app version that supports it. Members for whom such an app version has already opened Explore (threshold 1 or more) keep it; members on older app versions, and anyone who opened while this was set to Never close, are not marked yet."
         }
       },
       "photoRollout": {

@@ -190,14 +190,18 @@ export default function VerificationGateModeControl({
  * Full block, so Core stores `gate_mode`. A Core older than D-151 normalizes
  * both documents on every gated request and would fail closed for everybody.
  * Core drops the whole key only when every scope is Full block.
+ * `closedMode` (D-152, console v3 only): the Explore line points at the
+ * Closed mode control below it; v1/v2 keep the released line.
  */
-export function VerificationGateModeLegend({ storesModes }: { storesModes: boolean }) {
+export function VerificationGateModeLegend({ storesModes, closedMode = false }: { storesModes: boolean; closedMode?: boolean }) {
   const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
   return (
     <div className="gate-mode-legend" data-gate-mode-legend="true">
       <strong>{t("legend.title")}</strong>
       <ul>
-        <li><strong>{t("modes.explore")}</strong> · {t("legend.explore")}</li>
+        <li data-gate-mode-legend-explore={closedMode ? "closed-mode" : undefined}>
+          <strong>{t("modes.explore")}</strong> · {closedMode ? t("legend.exploreClosedMode") : t("legend.explore")}
+        </li>
         <li><strong>{t("modes.full_block")}</strong> · {t("legend.full_block")}</li>
         <li><strong>{t("modes.off")}</strong> · {t("legend.off")}</li>
       </ul>

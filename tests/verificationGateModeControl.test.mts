@@ -189,10 +189,11 @@ test("the legend explains each mode in one line and carries the rollback note, i
   const en = render(createElement(VerificationGateModeLegend, { storesModes: false }));
   assert.match(en, /data-gate-mode-legend="true"/);
   assert.match(en, /<strong>Explore mode<\/strong> · They can browse events in the area they signed up in\. People, chat and joining stay locked until they verify\./);
+  assert.doesNotMatch(en, /Closed mode/, "the v1/v2 legend keeps the released Explore line");
   assert.match(en, /<strong>Full block<\/strong> · They stay in the Waiting Room until they verify \(how it works today\)\./);
   assert.match(en, /<strong>Off<\/strong> · Set the method to None/);
   assert.match(en, /Older versions keep showing the Waiting Room/);
-  assert.match(en, /data-gate-mode-rollback="true"><strong>Rollback:<\/strong> Set every scope back to Full block and publish before downgrading Core, including Off rows that still show a stored mode\. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy\./,
+  assert.match(en, /data-gate-mode-rollback="true"><strong>Rollback:<\/strong> Set every scope back to Full block and publish before downgrading Core below D-151, including Off rows that still show a stored mode\. With every scope on Full block, Core stores no gate mode, so an older Core can read the policy\./,
     "Core 06cf4f67 omits gate_mode whenever every scope is Full block; None rows keep theirs");
   assert.doesNotMatch(en, /still stores a mode/, "the pre-review caveat is gone");
   assert.match(en, /Only where Persona is the required method\./);
@@ -204,11 +205,23 @@ test("the legend explains each mode in one line and carries the rollback note, i
   assert.match(hu, /<strong>Felfedező mód<\/strong>/);
   assert.match(hu, /<strong>Teljes zárás<\/strong>/);
   assert.match(hu, /<strong>Kikapcsolva<\/strong>/);
-  assert.match(hu, /Visszaállítás:<\/strong> A Core visszaállítása előtt állíts vissza minden területet Teljes zárásra – a tárolt módot mutató Kikapcsolva sorokat is –, és tedd közzé\./);
+  assert.match(hu, /Visszaállítás:<\/strong> A Core D-151 előtti verzióra való visszaállítása előtt állíts vissza minden területet Teljes zárásra – a tárolt módot mutató Kikapcsolva sorokat is –, és tedd közzé\./);
   assert.match(hu, /A draft vagy az élő szabályzat zárási módot tárol/);
   assert.match(render(createElement(VerificationGateModeLegend, { storesModes: false }), "hu"), /Sem a draft, sem az élő szabályzat nem tárol zárási módot/);
   const huControl = control({ choice: "full_block" }, "hu");
   assert.match(huControl, /Felfedező mód \(ajánlott\)/);
+});
+
+test("on the v3 console the Explore line points at Closed mode below it (D-152 review item 4)", () => {
+  const en = render(createElement(VerificationGateModeLegend, { storesModes: true, closedMode: true }));
+  assert.match(en, /<li data-gate-mode-legend-explore="closed-mode"><strong>Explore mode<\/strong> · They can browse events in the area they signed up in, unless Closed mode applies \(below\)\. People, chat and joining stay locked until they verify\. Only where Persona is the required method\.<\/li>/);
+  const hu = render(createElement(VerificationGateModeLegend, { storesModes: true, closedMode: true }), "hu");
+  assert.match(hu, /Böngészhetik a regisztrációs környékük eseményeit, hacsak nem a Zárt mód érvényes \(lásd lent\)\./);
+  assert.doesNotMatch(render(createElement(VerificationGateModeLegend, { storesModes: true })), /data-gate-mode-legend-explore/,
+    "v1/v2 render the released line");
+  const table = readFileSync(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
+  assert.match(table, /<VerificationGateModeLegend storesModes=\{verificationMethodPolicyStoresGateMode\(data\.policy\)\} closedMode=\{closedMode !== null\} \/>/,
+    "only v3 material (closedMode !== null) switches the line");
 });
 
 test("Global None that forcing storefronts follow: the mode is in effect for them, so it is a real choice (review round 2)", () => {
@@ -314,10 +327,12 @@ test("the Closed mode control: the label, 0..50 with 0 as Never close and 3 as t
   assert.equal(options[3][3], "3 events (default)");
   assert.equal(options[50][3], "50 events");
   assert.deepEqual(options.filter((match) => match[2]).map((match) => match[1]), ["5"], "the draft's value is selected");
-  assert.match(html, /data-closed-mode-what="true">In Closed mode only the profile is open\. Everything else stays locked, and the app makes no promises about events\.<\/p>/);
-  assert.match(html, /data-closed-mode-one-way="true">One way only: once a member has had Explore, they keep it, even if the events later go away\.<\/p>/);
+  assert.match(html, /data-closed-mode-what="true">Only the profile, settings and help are open; shared event links still work\. Everything else stays locked, and the app makes no promises about events\.<\/p>/);
+  assert.match(html, /data-closed-mode-one-way="true">One way only: once an app version that supports Closed mode has opened Explore for a member \(threshold 1 or more\), they keep it, even if the events go away or the threshold goes up\. Members on older app versions, and anyone who opened while this was set to Never close, are not marked yet\.<\/p>/,
+    "review P1: Core latches only through a Closed-mode app with a threshold of 1 or more");
+  assert.doesNotMatch(html, /once a member has had Explore/, "the over-promising wording is gone");
   assert.match(html, /Closed mode reaches only app versions that ask for it\. Older versions keep today’s Explore mode\./);
-  assert.match(html, /data-closed-mode-rollback="true"><strong>Rollback:<\/strong> Before rolling Core or Webadmin back, set this to 3 events and publish\./);
+  assert.match(html, /data-closed-mode-rollback="true"><strong>Rollback:<\/strong> Before rolling Core back below D-152 or Webadmin back to the previous console, set this to 3 and publish\. At 3, Core stores no threshold, so an older version can read the policy\.<\/p>/);
   assert.doesNotMatch(html, /data-closed-mode-stored/);
   assert.doesNotMatch(html, /data-closed-mode-not-applicable|data-closed-mode-live/);
   assert.match(closedControl({ value: 0 }), /<option value="0" selected="">Never close \(always Explore\)<\/option>/);
@@ -348,12 +363,14 @@ test("a draft that differs from live names the live value, and a stored non-defa
 test("the Closed mode control in Hungarian", () => {
   const hu = closedControl({ value: 1, live: 3, applies: false, storesThreshold: true }, "hu");
   assert.match(hu, /<strong>Zárt mód<\/strong>/);
-  assert.match(hu, /Zárt mód, ha a regisztrációs terület 100 mérföldes körzetében N-nél kevesebb esemény van/);
+  assert.match(hu, /Zárt mód, ha a regisztrációs környék 100 mérföldes körzetében N-nél kevesebb esemény van/);
+  assert.doesNotMatch(hu, /regisztrációs terület/, "terület means scope in this block");
   assert.match(hu, /<option value="0">Soha ne zárjon \(mindig Felfedező mód\)<\/option>/);
   assert.match(hu, /<option value="3">3 esemény \(alapértelmezett\)<\/option>/);
   assert.match(hu, /<option value="1" selected="">1 esemény<\/option>/);
-  assert.match(hu, /Zárt módban csak a profil érhető el\./);
-  assert.match(hu, /Csak egy irányba működik: aki egyszer Felfedező módot kapott, megtartja/);
+  assert.match(hu, /Csak a profil, a beállítások és a súgó érhető el; a megosztott eseménylinkek továbbra is működnek\. Minden más zárva marad, és az app nem ígér eseményeket\./);
+  assert.match(hu, /Csak egy irányba működik: ha egy Zárt módot támogató appverzió már megnyitotta egy tag számára a Felfedező módot \(1 vagy nagyobb küszöbnél\), a tag megtartja, akkor is, ha elfogynak az események, vagy nő a küszöb\. A régebbi appverziót használó tagok, és akik akkor nyitottak, amikor ez Soha ne zárjon értéken állt, még nincsenek megjelölve\./);
+  assert.match(hu, /A Core D-152 előtti verzióra vagy a Webadmin előző konzolra való visszaállítása előtt állítsd ezt 3-ra, és tedd közzé\./);
   assert.match(hu, /Akkor állítható, ha legalább egy terület Felfedező módot használ\./);
   assert.match(hu, /Élő: 3 esemény/);
   assert.match(hu, /3-tól eltérő küszöböt tárol/);
@@ -365,7 +382,8 @@ test("the impact line shows the stored live and draft threshold, the draft in bo
   assert.match(changed, /<strong>Closed mode threshold<\/strong>/);
   assert.match(changed, /<span data-closed-mode-impact-live="3">Live: 3 events<\/span>/);
   assert.match(changed, /<span data-closed-mode-impact-draft="5"><strong>Draft: 5 events<\/strong><\/span>/);
-  assert.match(changed, /The threshold does not change who has to verify either, so the counts stay the same\./);
+  assert.match(changed, /The threshold does not change who has to verify either, so the counts stay the same\. It decides which of those members get Closed mode on an app version that supports it\. Members for whom such an app version has already opened Explore \(threshold 1 or more\) keep it; members on older app versions, and anyone who opened while this was set to Never close, are not marked yet\./,
+    "review P1: the same latch qualifier as the one-way line");
   const same = render(createElement(VerificationClosedModeImpact, { live: 0, draft: 0 }));
   assert.doesNotMatch(same, /data-closed-mode-changed/);
   assert.match(same, /<span data-closed-mode-impact-draft="0">Draft: Never close \(always Explore\)<\/span>/);
