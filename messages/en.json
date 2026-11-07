@@ -4594,6 +4594,7 @@
         "duplicateStorefront": "Two overrides name the same storefront.",
         "gateMode": "A gate mode names a storefront outside the catalogue or a mode other than Explore mode or Full block.",
         "exploreRequiresPersona": "Explore mode needs Persona as the required method. Choose Full block for the highlighted rows, or make Persona their method.",
+        "closedBelowEvents": "The Closed mode threshold must be a whole number from 0 to 50.",
         "copyRequired": "The global title, subtitle and description are required in both languages.",
         "copyTooLong": "A text exceeds its limit (title 60, subtitle 90, description 400 characters).",
         "copyControl": "A text contains a control character or a line break where none is allowed.",
@@ -5161,7 +5162,27 @@
         "storedModes": "The draft or the live policy stores a gate mode, so an older Core cannot read it and every member would get an error. Do the rollback above first.",
         "impactLiveMode": "Live mode",
         "impactDraftMode": "Draft mode",
-        "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode."
+        "impactNote": "The gate mode does not change who has to verify, so the counts stay the same. It changes what those members see on an app version that supports Explore mode.",
+        "closedMode": {
+          "title": "Closed mode",
+          "what": "In Closed mode only the profile is open. Everything else stays locked, and the app makes no promises about events.",
+          "field": "Closed mode below N events within {radius} mi of the sign-up area",
+          "never": "Never close (always Explore)",
+          "option": "{count, plural, one {# event} other {# events}}",
+          "defaultOption": "{option} (default)",
+          "notApplicable": "Available when at least one scope uses Explore mode.",
+          "resetAfterSave": "The Closed mode threshold is back to {value} because every scope is Full block.",
+          "savePreview": "Saving this draft returns the Closed mode threshold to {value}: with every scope on Full block, Core stores no gate mode, so the threshold goes too.",
+          "live": "Live: {value}",
+          "oneWay": "One way only: once a member has had Explore, they keep it, even if the events later go away.",
+          "clients": "Closed mode reaches only app versions that ask for it. Older versions keep today’s Explore mode.",
+          "rollback": "Before rolling Core or Webadmin back, set this to 3 events and publish. At 3, Core stores no threshold, so an older version can read the policy.",
+          "stored": "The draft or the live policy stores a threshold other than 3. An older Core cannot read it and an older Webadmin cannot clear it, so do the rollback above first.",
+          "impactTitle": "Closed mode threshold",
+          "impactLive": "Live: {value}",
+          "impactDraft": "Draft: {value}",
+          "impactNote": "The threshold does not change who has to verify either, so the counts stay the same. It decides which of those members get Closed mode."
+        }
       },
       "photoRollout": {
         "title": "The new iOS app has to be out first.",

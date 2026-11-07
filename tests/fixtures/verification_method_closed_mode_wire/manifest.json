@@ -1,0 +1,63 @@
+{
+    "schema_version": 1,
+    "contract": "verification-method-console-v3",
+    "contract_source": "team/handoffs/verification-explore-closed-contract.md section 7 (D-152, T-932, ACCEPTED with the lead rulings of 2026-11-07)",
+    "core_corpus": {
+        "repository": "friending_core",
+        "path": "tests/fixtures/verification_explore_wire/",
+        "expected_file": "webadmin-console-v3.json",
+        "fixture_commit": null,
+        "note": "Core had published no v3 body when this corpus was written (lane C, T-932, in progress). At integration (T-935) the lead copies Core's webadmin-console-v3.json here byte for byte as an origin core row and replaces any hand-written body Core captures."
+    },
+    "hand_written_note": "Every row was written by the Webadmin lane (T-933) from contract section 7 because Core produced no v3 body yet. Refusal bodies are version-independent and stay in verification_method_gate_mode_wire.",
+    "files": [
+        {
+            "file": "webadmin-method-apply-v3.json",
+            "sha256": "c7dee966d2ef346124ed198f1b81b193e12958c571775c62871c254c74ccb55e",
+            "origin": "hand-written",
+            "case": "apply answer on the v3 wire: the draft threshold 5 is live"
+        },
+        {
+            "file": "webadmin-method-conflict-v3.json",
+            "sha256": "3a23fd8065456a7b61f6e28e0967fd12aa58f29623ea85872d50c63701ee0f87",
+            "origin": "hand-written",
+            "case": "CAS conflict on the v3 wire (another operator saved threshold 7 at revision 6)"
+        },
+        {
+            "file": "webadmin-method-console-v3-closed-draft.json",
+            "sha256": "6004520ea5cf06b968d00a81a0bd9dab9944035755b10a3bf5a29ef0a13a29a7",
+            "origin": "hand-written",
+            "case": "contract section 7.1 example: draft threshold 5, live threshold 3, revision 5"
+        },
+        {
+            "file": "webadmin-method-console-v3-default.json",
+            "sha256": "d993cf607f75675e407c014f14ba217e9c946ff87b8261e293986cc3c9f3230d",
+            "origin": "hand-written",
+            "case": "console v3 over today's live document (gate_mode explore, no stored threshold, materialized as 3 on draft, live and compiled defaults)"
+        },
+        {
+            "file": "webadmin-method-impact-v3.json",
+            "sha256": "3eed3fb13b4a74dea7621958a8aa6731260f44a624050802b11060266ba385b9",
+            "origin": "hand-written",
+            "case": "impact v3: the v2 rows and counts unchanged, plus impact.closed_below_events {live 3, draft 5}"
+        },
+        {
+            "file": "webadmin-method-save-v3-all-full-block.json",
+            "sha256": "a2ca7646d77d154a0de2069f7ab965822eef4d5d32598d601f7b54f53eb0ed8f",
+            "origin": "hand-written",
+            "case": "Q10: a v3 save whose every scope is Full block (sent threshold 5); Core stores no gate_mode and answers closed_below_events 3"
+        },
+        {
+            "file": "webadmin-method-save-v3.json",
+            "sha256": "bbfe486b9219be5b087efeab74a2e4a9f396931c413e341614234df5e02e3b82",
+            "origin": "hand-written",
+            "case": "save answer on the v3 wire for webadmin-request-save-v3.json (draft 5 stored, live 3)"
+        },
+        {
+            "file": "webadmin-request-save-v3.json",
+            "sha256": "114430d85fdeb595495d48b3cb822a0752578c802c6e59400f9ff56bb61cfe6c",
+            "origin": "hand-written",
+            "case": "the v3 save command the console sends: four keys, gate_mode exactly {global, overrides, closed_below_events}"
+        }
+    ]
+}

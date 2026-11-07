@@ -1,0 +1,106 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 3,
+        "principal": {
+            "role": "owner",
+            "capabilities": [
+                "verification_badge_edit",
+                "verification_copy_edit",
+                "verification_grant_edit",
+                "verification_grant_read",
+                "verification_pending_read",
+                "verification_policy_edit",
+                "verification_policy_publish",
+                "verification_policy_read",
+                "verification_simulate"
+            ]
+        },
+        "evaluated_at": 1800000000,
+        "expected_revision": 5,
+        "normalized_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "confirmation_phrase": "PUBLISH VERIFICATION METHOD",
+        "method_availability": {
+            "video": {
+                "method": "video",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "persona": {
+                "method": "persona",
+                "policy_enable_allowed": true,
+                "new_start_available": true,
+                "reason": null
+            },
+            "photo": {
+                "method": "photo",
+                "policy_enable_allowed": false,
+                "new_start_available": false,
+                "reason": "catalogue_insufficient"
+            }
+        },
+        "publish_guard": {
+            "ready": true,
+            "blocking_codes": []
+        },
+        "impact": {
+            "by_storefront": [
+                {
+                    "storefront": "HUN",
+                    "live_method": "persona",
+                    "draft_method": "persona",
+                    "live_gate_mode": "full_block",
+                    "draft_gate_mode": "full_block",
+                    "members_seen": 4,
+                    "currently_gated": 3,
+                    "would_be_gated": 3,
+                    "satisfied": 1,
+                    "newly_gated": 0,
+                    "newly_released": 0
+                },
+                {
+                    "storefront": "USA",
+                    "live_method": "persona",
+                    "draft_method": "persona",
+                    "live_gate_mode": "full_block",
+                    "draft_gate_mode": "explore",
+                    "members_seen": 6,
+                    "currently_gated": 5,
+                    "would_be_gated": 5,
+                    "satisfied": 1,
+                    "newly_gated": 0,
+                    "newly_released": 0
+                }
+            ],
+            "unknown_storefront": {
+                "members_seen": 484,
+                "currently_gated": 484,
+                "would_be_gated": 484,
+                "satisfied": 0,
+                "newly_gated": 0,
+                "newly_released": 0,
+                "live_method": "persona",
+                "draft_method": "persona",
+                "live_gate_mode": "full_block",
+                "draft_gate_mode": "explore"
+            },
+            "totals": {
+                "members_seen": 494,
+                "currently_gated": 492,
+                "would_be_gated": 492,
+                "satisfied": 2,
+                "newly_gated": 0,
+                "newly_released": 0
+            },
+            "closed_below_events": {
+                "live": 3,
+                "draft": 5
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

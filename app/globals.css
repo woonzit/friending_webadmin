@@ -14929,6 +14929,12 @@ fieldset.dates-external-fields {
 .gate-mode-conflict-row > th, .gate-mode-conflict-row > td { background: var(--danger-soft); }
 .gate-mode-cell.is-conflict select { border-color: var(--danger); }
 .gate-mode-cell .field-error { color: #f68a96; font-size: 12px; font-weight: 650; }
+/* D-152 Closed mode threshold: one global control below the gate-mode legend, and its impact line. */
+.closed-mode-control .closed-mode-line { margin: 0; white-space: normal; }
+.closed-mode-control .closed-mode-field { max-width: 560px; }
+.closed-mode-control .closed-mode-field > span { white-space: normal; }
+.closed-mode-impact { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: 13px; }
+.closed-mode-impact .field-hint { flex-basis: 100%; }
 
 /* Into-tag moderation (T-683, D-107 R10). The queue borrows the reported-content
    receipted-queue shapes; only the tag-specific surfaces are defined here. */

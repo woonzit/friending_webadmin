@@ -4,9 +4,14 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import VerificationGateModeControl, { VerificationGateModeLegend } from "../components/VerificationGateModeControl.tsx";
+import VerificationGateModeControl, {
+  VerificationClosedModeControl,
+  VerificationClosedModeImpact,
+  VerificationGateModeLegend,
+} from "../components/VerificationGateModeControl.tsx";
 import type {
   MandatoryMethod,
+  VerificationClosedModeCatalogue,
   VerificationGateMode,
   VerificationGateModeChoice,
   VerificationGateModePolicy,
@@ -15,6 +20,7 @@ import type {
 /**
  * D-151 (T-927): the gate-mode control of the verification-method table, the
  * one-line legend and the rollback note, rendered in both console languages.
+ * D-152 (T-933): the Closed mode threshold control and its impact line.
  */
 
 const messages = {
@@ -250,7 +256,8 @@ test("the scopes table wiring that remains source-level: probed read, helpers, n
   const table = readFileSync(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
   // Behaviour lives in tested helpers (verificationMethodGateMode.test.mts): the probe, the
   // mutation outcome order, the apply command, row add/remove, inheritors and dropped pins.
-  assert.match(table, /const wireRef = useRef<VerificationMethodContractVersion>\(2\);/);
+  // D-152: the first read asks for v3 (the preferred wire) and steps down per named refusal.
+  assert.match(table, /const wireRef = useRef<VerificationMethodContractVersion>\(VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION\);/);
   assert.match(table, /const result = await loadVerificationMethodConsole\(adminCall, wireRef\.current\);\n\s+wireRef\.current = result\.version;/);
   assert.doesNotMatch(table, /contractVersion/, "nothing reads a wire version from admin_me");
   assert.match(table, /const outcome = verificationMethodMutationOutcome\(response, commandVersion\);/);
@@ -258,8 +265,131 @@ test("the scopes table wiring that remains source-level: probed read, helpers, n
   assert.match(table, /verificationMethodDraftWithStorefront\(draft, storefrontToAdd\)/);
   assert.match(table, /verificationMethodDraftWithoutStorefront\(draft, storefront\)/);
   assert.doesNotMatch(table, /contract_version: 1,\n/, "no hard-coded v1 command remains");
-  // An explicit reload and gate_mode_hidden both send the session back to v2.
-  // When a v1 answer proves v2 is decided by `verificationMethodOutcomeProvesV2` (tested).
-  assert.equal((table.match(/wireRef\.current = 2;/g) ?? []).length, 4,
+  // An explicit reload and gate_mode_hidden both send the session back to the preferred wire
+  // (v3; the probe steps down to v2 on a D-151 Core). When a v1 answer proves v2 or newer is
+  // decided by `verificationMethodOutcomeProvesV2` (tested).
+  assert.equal((table.match(/wireRef\.current = VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION;/g) ?? []).length, 4,
     "reload button, a v1 success with gate_mode_hidden, a v1 Persona-rule refusal, a v1 preview with gate_mode_hidden");
+  assert.doesNotMatch(table, /wireRef\.current = [123];/, "no hard-coded wire version");
+  assert.doesNotMatch(table, /contract_version === 2/, "versions are read through the lib helpers");
+});
+
+// ---------------------------------------------------------------------------
+// D-152 (T-933): the Closed mode threshold
+// ---------------------------------------------------------------------------
+
+const CLOSED_CATALOGUE: VerificationClosedModeCatalogue = {
+  default: 3, minimum: 0, maximum: 50, off: 0, radius_miles: 100, client_selector: "explore_mode_contract_version",
+};
+
+function closedControl(props: {
+  value?: number;
+  live?: number;
+  applies?: boolean;
+  storesThreshold?: boolean;
+  disabled?: boolean;
+} = {}, locale: "en" | "hu" = "en"): string {
+  return render(createElement(VerificationClosedModeControl, {
+    id: "closed-mode-test",
+    value: props.value ?? 3,
+    live: props.live ?? props.value ?? 3,
+    catalogue: CLOSED_CATALOGUE,
+    applies: props.applies ?? true,
+    storesThreshold: props.storesThreshold ?? false,
+    disabled: props.disabled ?? false,
+    onChange() {},
+  }), locale);
+}
+
+test("the Closed mode control: the label, 0..50 with 0 as Never close and 3 as the default, and the two copy lines", () => {
+  const html = closedControl({ value: 5, live: 5 });
+  assert.match(html, /data-closed-mode-control="true" data-closed-mode-value="5" data-closed-mode-applies="true"/);
+  assert.match(html, /<strong>Closed mode<\/strong>/);
+  assert.match(html, /<label class="field closed-mode-field" for="closed-mode-test"><span>Closed mode below N events within 100 mi of the sign-up area<\/span>/);
+  assert.match(html, /<select id="closed-mode-test" class="input">/, "enabled, nothing to describe while it applies and equals live");
+  const options = [...html.matchAll(/<option value="(\d+)"( selected="")?>([^<]+)<\/option>/gu)];
+  assert.deepEqual(options.map((match) => Number(match[1])), Array.from({ length: 51 }, (_, index) => index), "exactly 0..50");
+  assert.equal(options[0][3], "Never close (always Explore)");
+  assert.equal(options[1][3], "1 event");
+  assert.equal(options[3][3], "3 events (default)");
+  assert.equal(options[50][3], "50 events");
+  assert.deepEqual(options.filter((match) => match[2]).map((match) => match[1]), ["5"], "the draft's value is selected");
+  assert.match(html, /data-closed-mode-what="true">In Closed mode only the profile is open\. Everything else stays locked, and the app makes no promises about events\.<\/p>/);
+  assert.match(html, /data-closed-mode-one-way="true">One way only: once a member has had Explore, they keep it, even if the events later go away\.<\/p>/);
+  assert.match(html, /Closed mode reaches only app versions that ask for it\. Older versions keep today’s Explore mode\./);
+  assert.match(html, /data-closed-mode-rollback="true"><strong>Rollback:<\/strong> Before rolling Core or Webadmin back, set this to 3 events and publish\./);
+  assert.doesNotMatch(html, /data-closed-mode-stored/);
+  assert.doesNotMatch(html, /data-closed-mode-not-applicable|data-closed-mode-live/);
+  assert.match(closedControl({ value: 0 }), /<option value="0" selected="">Never close \(always Explore\)<\/option>/);
+});
+
+test("no scope in Explore: the control is disabled and says why; read-only operators cannot change it either", () => {
+  const html = closedControl({ applies: false });
+  assert.match(html, /data-closed-mode-applies="false"/);
+  assert.match(html, /<select id="closed-mode-test" class="input" disabled="" aria-describedby="closed-mode-test-applies">/);
+  assert.match(html, /<small id="closed-mode-test-applies" class="field-hint" data-closed-mode-not-applicable="true">Available when at least one scope uses Explore mode\.<\/small>/);
+  assert.match(closedControl({ disabled: true }), /<select id="closed-mode-test" class="input" disabled="">/);
+  assert.doesNotMatch(closedControl({ disabled: true }), /data-closed-mode-not-applicable/, "read-only is not the Explore rule");
+});
+
+test("a draft that differs from live names the live value, and a stored non-default threshold names the rollback", () => {
+  const disabledDiffering = closedControl({ value: 5, live: 3, applies: false });
+  assert.match(disabledDiffering, /aria-describedby="closed-mode-test-applies closed-mode-test-live"/);
+  assert.doesNotMatch(disabledDiffering, /Saving/, "Q10 is said once, in the table's save preview");
+
+  const changed = closedControl({ value: 5, live: 0 });
+  assert.match(changed, /aria-describedby="closed-mode-test-live"/);
+  assert.match(changed, /<small id="closed-mode-test-live" class="field-hint" data-closed-mode-live="0">Live: Never close \(always Explore\)<\/small>/);
+
+  const stored = closedControl({ value: 5, storesThreshold: true });
+  assert.match(stored, /data-closed-mode-stored="true">The draft or the live policy stores a threshold other than 3\. An older Core cannot read it and an older Webadmin cannot clear it, so do the rollback above first\.<\/p>/);
+});
+
+test("the Closed mode control in Hungarian", () => {
+  const hu = closedControl({ value: 1, live: 3, applies: false, storesThreshold: true }, "hu");
+  assert.match(hu, /<strong>Zárt mód<\/strong>/);
+  assert.match(hu, /Zárt mód, ha a regisztrációs terület 100 mérföldes körzetében N-nél kevesebb esemény van/);
+  assert.match(hu, /<option value="0">Soha ne zárjon \(mindig Felfedező mód\)<\/option>/);
+  assert.match(hu, /<option value="3">3 esemény \(alapértelmezett\)<\/option>/);
+  assert.match(hu, /<option value="1" selected="">1 esemény<\/option>/);
+  assert.match(hu, /Zárt módban csak a profil érhető el\./);
+  assert.match(hu, /Csak egy irányba működik: aki egyszer Felfedező módot kapott, megtartja/);
+  assert.match(hu, /Akkor állítható, ha legalább egy terület Felfedező módot használ\./);
+  assert.match(hu, /Élő: 3 esemény/);
+  assert.match(hu, /3-tól eltérő küszöböt tárol/);
+});
+
+test("the impact line shows the stored live and draft threshold, the draft in bold when it changes", () => {
+  const changed = render(createElement(VerificationClosedModeImpact, { live: 3, draft: 5 }));
+  assert.match(changed, /data-closed-mode-impact="true" data-closed-mode-changed="true"/);
+  assert.match(changed, /<strong>Closed mode threshold<\/strong>/);
+  assert.match(changed, /<span data-closed-mode-impact-live="3">Live: 3 events<\/span>/);
+  assert.match(changed, /<span data-closed-mode-impact-draft="5"><strong>Draft: 5 events<\/strong><\/span>/);
+  assert.match(changed, /The threshold does not change who has to verify either, so the counts stay the same\./);
+  const same = render(createElement(VerificationClosedModeImpact, { live: 0, draft: 0 }));
+  assert.doesNotMatch(same, /data-closed-mode-changed/);
+  assert.match(same, /<span data-closed-mode-impact-draft="0">Draft: Never close \(always Explore\)<\/span>/);
+  assert.match(render(createElement(VerificationClosedModeImpact, { live: 3, draft: 1 }), "hu"), /Élő: 3 esemény[\s\S]*<strong>Draft: 1 esemény<\/strong>/);
+});
+
+test("the scopes table renders the threshold only on v3 material and edits it only through the tested helpers", () => {
+  const table = readFileSync(new URL("../components/VerificationMethodScopesTable.tsx", import.meta.url), "utf8");
+  assert.match(table, /data\.contract_version === 3 && data\.gate_mode_catalogue\?\.closed_below_events/,
+    "v1 and v2 sessions never show the control (Core strips the threshold there)");
+  assert.match(table, /applies=\{closedModeThresholdApplies\(gate\)\}/);
+  assert.match(table, /storesThreshold=\{verificationMethodPolicyStoresClosedThreshold\(data\.policy\)\}/);
+  assert.match(table, /disabled=\{!editable\}\n\s+onChange=\{\(value\) => \{ if \(gate\) patch\(\{ gate_mode: withClosedBelowEvents\(gate, value\) \}\); \}\}/,
+    "saved with the draft: the same patch, save, CAS and receipt path as every other edit");
+  assert.match(table, /closedModeThresholdChangedBySave\(sent, success\.policy\.draft\.document\.gate_mode\)/);
+  assert.match(table, /<VerificationClosedModeImpact live=\{impact\.impact\.closed_below_events\.live\} draft=\{impact\.impact\.closed_below_events\.draft\} \/>/);
+  assert.match(table, /const commandVersion = verificationMethodCommandVersion\(durable\.payload\);/);
+  // Q10 in the save preview: next to the Save button, only when this save resets the threshold.
+  assert.match(table, /closedMode !== null && closedModeThresholdResetOnSave\(gate\) \?[\s\S]*data-closed-mode-save-preview="true"[\s\S]*gt\("closedMode\.savePreview", \{ value: thresholdLabel\(closedMode\.catalogue\.default\) \}\)[\s\S]*<div className="forced-save-bar">/);
+  const en = messages.en.verificationAdmin.methodPolicy.gateMode.closedMode;
+  assert.equal(en.savePreview, "Saving this draft returns the Closed mode threshold to {value}: with every scope on Full block, Core stores no gate mode, so the threshold goes too.");
+  assert.equal(en.resetAfterSave, "The Closed mode threshold is back to {value} because every scope is Full block.");
+  assert.deepEqual(Object.keys(messages.hu.verificationAdmin.methodPolicy.gateMode.closedMode), Object.keys(en), "EN/HU parity");
+  assert.equal(messages.hu.verificationAdmin.methodPolicy.gateMode.closedMode.savePreview,
+    "A draft mentésekor a Zárt mód küszöbe visszaáll erre: {value}. Ha minden terület Teljes záráson van, a Core nem tárol zárási módot, így a küszöböt sem.");
+  assert.equal(messages.en.verificationAdmin.forced.validation.closedBelowEvents, "The Closed mode threshold must be a whole number from 0 to 50.");
 });

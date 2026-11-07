@@ -445,7 +445,8 @@ test("a mode-only storefront is shown and preserved, and an invalid mode entry i
 test("the proxy forwards exact v1 and v2 bodies and nothing else", async () => {
   assert.deepEqual(normalizeVerificationMethodProxyBody("verification_method_console", { contract_version: 2 }), { contract_version: 2 });
   assert.deepEqual(normalizeVerificationMethodProxyBody("verification_method_console", { contract_version: 1 }), { contract_version: 1 });
-  assert.equal(normalizeVerificationMethodProxyBody("verification_method_console", { contract_version: 3 }), null);
+  assert.equal(normalizeVerificationMethodProxyBody("verification_method_console", { contract_version: 4 }), null,
+    "D-152 added v3 (tests/verificationMethodClosedMode.test.mts); anything newer is refused");
   assert.equal(normalizeVerificationMethodProxyBody("verification_method_console", { contract_version: "2" }), null, "the browser sends a number");
 
   const request = await fixture("webadmin-request-save-v2.json");

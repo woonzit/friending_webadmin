@@ -52,6 +52,14 @@ import { verificationAdminPrincipal, type VerificationAdminPrincipal } from "@/l
  * the draft carries exactly what Core served plus what the operator changed,
  * and Core stores the key only when it differs from the default (canonical
  * omission, contract §8.1).
+ *
+ * Contract v3 (D-152 §7, `team/handoffs/verification-explore-closed-contract.md`)
+ * adds the Closed mode threshold: `gate_mode.closed_below_events`, one global
+ * JSON integer 0..50 (0 = never close), always present on that wire (an absent
+ * stored key is materialized as 3). The console asks for v3 first; each named
+ * `verification-method-contract-version` refusal steps down one version
+ * (v3 → v2 → v1). v1 and v2 never see the threshold: Core strips it from
+ * their reads and carries it over on their saves (§7.4).
  */
 
 // ---------------------------------------------------------------------------
@@ -88,10 +96,26 @@ export type VerificationStartMethod = (typeof VERIFICATION_START_METHODS)[number
 
 /**
  * The console wire versions this Webadmin speaks. v1 is T-617 (three-key
- * document); v2 is D-151 §8.4 (the document gains `gate_mode`).
+ * document); v2 is D-151 §8.4 (the document gains `gate_mode`); v3 is D-152
+ * §7 (`gate_mode` gains `closed_below_events`).
  */
-export const VERIFICATION_METHOD_CONTRACT_VERSIONS = [1, 2] as const;
+export const VERIFICATION_METHOD_CONTRACT_VERSIONS = [1, 2, 3] as const;
 export type VerificationMethodContractVersion = (typeof VERIFICATION_METHOD_CONTRACT_VERSIONS)[number];
+/** The wire a console asks for first (and again after a reload or a proof that Core is newer). */
+export const VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION = 3 satisfies VerificationMethodContractVersion;
+
+/** The version a console falls back to after Core's named contract-version refusal; `null` below v1. */
+export function verificationMethodOlderContractVersion(
+  version: VerificationMethodContractVersion,
+): VerificationMethodContractVersion | null {
+  return version === 3 ? 2 : version === 2 ? 1 : null;
+}
+
+/** The wire a retained command names (`contract_version` 1, 2 or 3); anything else reads as v1, as before. */
+export function verificationMethodCommandVersion(payload: Record<string, unknown>): VerificationMethodContractVersion {
+  const version = payload.contract_version;
+  return version === 2 || version === 3 ? version : 1;
+}
 
 /**
  * D-151 §8.1: what a member who must verify (and has not) gets on a client
@@ -106,6 +130,22 @@ export const VERIFICATION_GATE_MODE_ABSENT: VerificationGateMode = "full_block";
 export const VERIFICATION_GATE_MODE_CLIENT_SELECTOR = "forced_verification_contract_version";
 /** A storefront row's mode control: its own explicit mode, or no key (it follows the global mode). */
 export type VerificationGateModeChoice = VerificationGateMode | "inherit";
+
+/**
+ * D-152 §6.1 / §7.1: the Closed mode threshold `gate_mode.closed_below_events`.
+ * A member who explores gets Closed mode (only the profile open) while their
+ * sign-up area holds fewer than N events within 100 mi. One global JSON
+ * integer 0..50; absent ≡ 3 (Core omits it at 3); 0 = never close. These are
+ * exactly the values of Core's `gate_mode_catalogue.closed_below_events`.
+ */
+export const VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT = 3;
+export const VERIFICATION_CLOSED_BELOW_EVENTS_MIN = 0;
+export const VERIFICATION_CLOSED_BELOW_EVENTS_MAX = 50;
+export const VERIFICATION_CLOSED_BELOW_EVENTS_OFF = 0;
+/** The fixed area radius the count uses (the Explore area cap). */
+export const VERIFICATION_CLOSED_MODE_RADIUS_MILES = 100;
+/** The member-request selector a client sends to receive the mode (contract §2). */
+export const VERIFICATION_CLOSED_MODE_CLIENT_SELECTOR = "explore_mode_contract_version";
 
 /**
  * Why a method cannot start, per method (Core
@@ -174,12 +214,29 @@ export type VerificationGateModePolicy = {
   global: VerificationGateMode;
   /** Ascending ALPHA3, independent of the method overrides: mode(sf) = overrides[sf] ?? global. */
   overrides: Record<string, VerificationGateMode>;
+  /**
+   * Contract v3 only, and then always present and third (Core materializes an
+   * absent stored key as 3). A v1/v2 policy never carries it.
+   */
+  closed_below_events?: number;
+};
+
+/** v3 `gate_mode_catalogue.closed_below_events`: exactly Core's bounds (contract §7.1). */
+export type VerificationClosedModeCatalogue = {
+  default: typeof VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT;
+  minimum: typeof VERIFICATION_CLOSED_BELOW_EVENTS_MIN;
+  maximum: typeof VERIFICATION_CLOSED_BELOW_EVENTS_MAX;
+  off: typeof VERIFICATION_CLOSED_BELOW_EVENTS_OFF;
+  radius_miles: typeof VERIFICATION_CLOSED_MODE_RADIUS_MILES;
+  client_selector: typeof VERIFICATION_CLOSED_MODE_CLIENT_SELECTOR;
 };
 
 export type VerificationGateModeCatalogue = {
   modes: VerificationGateMode[];
   recommended: VerificationGateMode;
   client_selector: typeof VERIFICATION_GATE_MODE_CLIENT_SELECTOR;
+  /** v3 only. */
+  closed_below_events?: VerificationClosedModeCatalogue;
 };
 
 export type VerificationMethodDocument = {
@@ -191,8 +248,9 @@ export type VerificationMethodDocument = {
     overrides: Record<string, Record<WaitingRoomLocale, WaitingRoomCopyOverride>>;
   };
   /**
-   * Contract v2 only, and then always present (an absent stored key is
-   * materialized as Full block). A v1 document never carries it.
+   * Contract v2 and v3, and then always present (an absent stored key is
+   * materialized as Full block; on v3 it also carries the threshold). A v1
+   * document never carries it.
    */
   gate_mode?: VerificationGateModePolicy;
 };
@@ -232,11 +290,11 @@ export type VerificationMethodConsoleData = {
   publish_guard: VerificationMethodPublishGuard;
   compiled_defaults: {
     waiting_room_copy: Record<WaitingRoomLocale, WaitingRoomCopy>;
-    /** v2 only. */
+    /** v2 and v3. */
     gate_mode?: VerificationGateModePolicy;
   };
   storefront_catalogue_hint: typeof VERIFICATION_METHOD_STOREFRONT_HINT;
-  /** v2 only: the closed mode list and the one Core recommends where a method is forced. */
+  /** v2 and v3: the closed mode list and the one Core recommends where a method is forced (v3: plus the threshold bounds). */
   gate_mode_catalogue?: VerificationGateModeCatalogue;
 };
 
@@ -259,11 +317,14 @@ export type VerificationMethodImpactCounts = {
   newly_released: number;
 };
 
-/** v2 only (contract §8.4): the counts do not depend on the mode; the mode says what a held member gets. */
+/** v2 and v3 (contract §8.4): the counts do not depend on the mode; the mode says what a held member gets. */
 export type VerificationMethodImpactGateModes = {
   live_gate_mode?: VerificationGateMode;
   draft_gate_mode?: VerificationGateMode;
 };
+
+/** v3 `impact.closed_below_events`: the live and the draft threshold, each 0..50. */
+export type VerificationClosedModeImpact = { live: number; draft: number };
 
 export type VerificationMethodImpactRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
   storefront: string;
@@ -289,6 +350,8 @@ export type VerificationMethodImpactData = {
     by_storefront: VerificationMethodImpactRow[];
     unknown_storefront: VerificationMethodImpactUnknownRow;
     totals: VerificationMethodImpactCounts;
+    /** v3 only (contract §7.3): the stored threshold of each plane; the counts do not depend on it. */
+    closed_below_events?: VerificationClosedModeImpact;
   };
   /** v1 only, and only while Core stores a mode this wire cannot show (D-151 review). */
   gate_mode_hidden?: true;
@@ -485,16 +548,39 @@ export function defaultVerificationGateModePolicy(): VerificationGateModePolicy 
 }
 
 /**
+ * D-152 §6.2 / §7.2: a JSON integer 0..50. A string (`"5"`), a bool, `null`,
+ * a fraction, `-1` and `51` are refused. (`5.0` cannot be told from `5` once
+ * JSON is parsed; the console only ever sends what `JSON.stringify` writes for
+ * an integer, so Core never receives a float from here.)
+ */
+export function verificationClosedBelowEvents(value: unknown): number | null {
+  return integer(value, VERIFICATION_CLOSED_BELOW_EVENTS_MIN, VERIFICATION_CLOSED_BELOW_EVENTS_MAX);
+}
+
+const GATE_MODE_KEYS_V2 = ["global", "overrides"] as const;
+const GATE_MODE_KEYS_V3 = [...GATE_MODE_KEYS_V2, "closed_below_events"] as const;
+
+/**
  * `gate_mode` is closed on every key policy: exactly `{global, overrides}`,
  * values `explore | full_block`, override keys from the storefront catalogue.
  * The console writes this object back, so a key it does not know could only
  * be dropped silently; it refuses the material instead.
+ *
+ * `version` 3 (D-152 §7.1/§7.2) requires exactly `{global, overrides,
+ * closed_below_events}`, the last a JSON integer 0..50. A v2 object that names
+ * the threshold is refused, so v2 stays exactly two keys (§7.4).
  */
-export function verificationGateModePolicy(value: unknown): VerificationGateModePolicy | null {
-  const raw = exactObject(value, ["global", "overrides"]);
+export function verificationGateModePolicy(
+  value: unknown,
+  version: VerificationMethodContractVersion = 2,
+): VerificationGateModePolicy | null {
+  const raw = exactObject(value, version === 3 ? GATE_MODE_KEYS_V3 : GATE_MODE_KEYS_V2);
   const global = gateMode(raw?.global);
   const overrides = sortedStorefrontMap(raw?.overrides, gateMode);
-  return global && overrides ? { global, overrides } : null;
+  if (!raw || !global || !overrides) return null;
+  if (version !== 3) return { global, overrides };
+  const threshold = verificationClosedBelowEvents(raw.closed_below_events);
+  return threshold === null ? null : { global, overrides, closed_below_events: threshold };
 }
 
 const DOCUMENT_KEYS_V1 = ["global", "overrides", "waiting_room_copy"] as const;
@@ -508,6 +594,8 @@ const DOCUMENT_KEYS_V2 = [...DOCUMENT_KEYS_V1, "gate_mode"] as const;
  * `version` 2 (D-151 §8.4) adds `gate_mode`, always present on that wire: Core
  * materializes the Full block default on a read, and a save command ("exact")
  * carries exactly the four keys. A v1 document never yields `gate_mode`.
+ * `version` 3 (D-152 §7.1) keeps the four keys; its `gate_mode` always carries
+ * `closed_below_events` (Core materializes 3).
  */
 export function verificationMethodDocument(
   value: unknown,
@@ -515,7 +603,7 @@ export function verificationMethodDocument(
   version: VerificationMethodContractVersion = 1,
 ): VerificationMethodDocument | null {
   const raw = policy === "exact"
-    ? exactObject(value, version === 2 ? DOCUMENT_KEYS_V2 : DOCUMENT_KEYS_V1)
+    ? exactObject(value, version === 1 ? DOCUMENT_KEYS_V1 : DOCUMENT_KEYS_V2)
     : requiredObject(value, DOCUMENT_KEYS_V1);
   const global = mandatoryMethod(raw?.global);
   const overrides = sortedStorefrontMap(raw?.overrides, mandatoryMethod);
@@ -538,7 +626,7 @@ export function verificationMethodDocument(
   // Review round 2: Core materializes the mode on every v2 document. A missing
   // key must never read as Full block here — that would fail open on the
   // downgrade indicator — so it is not proven material.
-  const gate = raw && Object.hasOwn(raw, "gate_mode") ? verificationGateModePolicy(raw.gate_mode) : null;
+  const gate = raw && Object.hasOwn(raw, "gate_mode") ? verificationGateModePolicy(raw.gate_mode, version) : null;
   return gate ? { ...document, gate_mode: gate } : null;
 }
 
@@ -606,19 +694,55 @@ function publishGuard(value: unknown): VerificationMethodPublishGuard | null {
   return raw.ready === (parsed.length === 0) ? { ready: raw.ready, blocking_codes: parsed } : null;
 }
 
-/** The closed mode catalogue: exactly Core's list in its order, a recommended member of it, the named selector. */
-function gateModeCatalogue(value: unknown): VerificationGateModeCatalogue | null {
-  const raw = requiredObject(value, ["modes", "recommended", "client_selector"]);
+/**
+ * v3 `gate_mode_catalogue.closed_below_events` (contract §7.1): exactly Core's
+ * bounds. The control is built on them (0..50, 3 by default, 0 = never close,
+ * 100 mi), so a catalogue with any other value is not material this console
+ * can represent: it is refused rather than half rendered.
+ */
+function closedModeCatalogue(value: unknown): VerificationClosedModeCatalogue | null {
+  const raw = requiredObject(value, ["default", "minimum", "maximum", "off", "radius_miles", "client_selector"]);
+  if (!raw
+    || raw.default !== VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT
+    || raw.minimum !== VERIFICATION_CLOSED_BELOW_EVENTS_MIN
+    || raw.maximum !== VERIFICATION_CLOSED_BELOW_EVENTS_MAX
+    || raw.off !== VERIFICATION_CLOSED_BELOW_EVENTS_OFF
+    || raw.radius_miles !== VERIFICATION_CLOSED_MODE_RADIUS_MILES
+    || raw.client_selector !== VERIFICATION_CLOSED_MODE_CLIENT_SELECTOR) return null;
+  return {
+    default: VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT,
+    minimum: VERIFICATION_CLOSED_BELOW_EVENTS_MIN,
+    maximum: VERIFICATION_CLOSED_BELOW_EVENTS_MAX,
+    off: VERIFICATION_CLOSED_BELOW_EVENTS_OFF,
+    radius_miles: VERIFICATION_CLOSED_MODE_RADIUS_MILES,
+    client_selector: VERIFICATION_CLOSED_MODE_CLIENT_SELECTOR,
+  };
+}
+
+/**
+ * The closed mode catalogue: exactly Core's list in its order, a recommended
+ * member of it, the named selector; on v3 also the threshold bounds.
+ */
+function gateModeCatalogue(
+  value: unknown,
+  version: VerificationMethodContractVersion,
+): VerificationGateModeCatalogue | null {
+  const raw = requiredObject(value, [
+    "modes", "recommended", "client_selector", ...(version === 3 ? ["closed_below_events"] : []),
+  ]);
   if (!raw || !Array.isArray(raw.modes)
     || raw.modes.length !== VERIFICATION_GATE_MODES.length
     || raw.modes.some((mode, index) => mode !== VERIFICATION_GATE_MODES[index])) return null;
   const recommended = gateMode(raw.recommended);
   if (!recommended || raw.client_selector !== VERIFICATION_GATE_MODE_CLIENT_SELECTOR) return null;
-  return {
+  const catalogue: VerificationGateModeCatalogue = {
     modes: [...VERIFICATION_GATE_MODES],
     recommended,
     client_selector: VERIFICATION_GATE_MODE_CLIENT_SELECTOR,
   };
+  if (version !== 3) return catalogue;
+  const closed = closedModeCatalogue(raw.closed_below_events);
+  return closed ? { ...catalogue, closed_below_events: closed } : null;
 }
 
 function impactCounts(source: Record<string, unknown>): VerificationMethodImpactCounts | null {
@@ -793,14 +917,14 @@ export function verificationMethodConsoleResponse(
     const raw = requiredObject(data, [
       "contract_version", "principal", "evaluated_at", "policy", "method_availability",
       "publish_guard", "compiled_defaults", "storefront_catalogue_hint",
-      ...(version === 2 ? ["gate_mode_catalogue"] : []),
+      ...(version === 1 ? [] : ["gate_mode_catalogue"]),
     ]);
     const principal = verificationAdminPrincipal(raw?.principal);
     const evaluatedAt = integer(raw?.evaluated_at);
     const policy = verificationMethodPolicy(raw?.policy, version);
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
     const guard = publishGuard(raw?.publish_guard);
-    const compiled = requiredObject(raw?.compiled_defaults, version === 2 ? ["waiting_room_copy", "gate_mode"] : ["waiting_room_copy"]);
+    const compiled = requiredObject(raw?.compiled_defaults, version === 1 ? ["waiting_room_copy"] : ["waiting_room_copy", "gate_mode"]);
     const compiledCopy = localizedCopy(compiled?.waiting_room_copy, "server");
     if (raw?.contract_version !== version || !principal || evaluatedAt === null || !policy
       || !methodAvailability || !guard || !compiledCopy
@@ -816,8 +940,8 @@ export function verificationMethodConsoleResponse(
       storefront_catalogue_hint: VERIFICATION_METHOD_STOREFRONT_HINT,
     };
     if (version === 1) return material;
-    const compiledGate = verificationGateModePolicy(compiled?.gate_mode);
-    const catalogue = gateModeCatalogue(raw.gate_mode_catalogue);
+    const compiledGate = verificationGateModePolicy(compiled?.gate_mode, version);
+    const catalogue = gateModeCatalogue(raw.gate_mode_catalogue, version);
     if (!compiledGate || !catalogue) return null;
     return {
       ...material,
@@ -832,27 +956,28 @@ export type VerificationMethodConsoleLoad =
   | { ok: false; version: VerificationMethodContractVersion; error: VerificationMethodError | null };
 
 /**
- * The console read with its wire probe (contract §8.4/§15: `admin_me` does not
- * advertise v2). It asks for `preferred`; only Core's named
- * `verification-method-contract-version` refusal of a v2 read — what a Core
- * older than D-151 answers — is followed by exactly one v1 read, and the
- * result's `version` is then 1 for the rest of the session. Any other failure,
- * an undecodable success included, is returned as is: it never falls back.
+ * The console read with its wire probe (contract §8.4/§15, D-152 §7: `admin_me`
+ * advertises no version). It asks for `preferred`; only Core's named
+ * `verification-method-contract-version` refusal is followed by exactly one
+ * read one version lower — v3 → v2 (a D-151 Core), then v2 → v1 (a Core older
+ * than D-151) — and the result's `version` is the one the session then speaks.
+ * Any other failure, an undecodable success included, is returned as is: it
+ * never falls back.
  */
 export async function loadVerificationMethodConsole(
   call: (action: "verification_method_console", body: { contract_version: VerificationMethodContractVersion }) => Promise<unknown>,
   preferred: VerificationMethodContractVersion,
 ): Promise<VerificationMethodConsoleLoad> {
-  const response = await call("verification_method_console", { contract_version: preferred });
-  const parsed = verificationMethodConsoleResponse(response, preferred);
-  if (parsed) return { ok: true, version: preferred, data: parsed };
-  const error = verificationMethodErrorResponse(response);
-  if (preferred !== 2 || error !== "verification-method-contract-version") return { ok: false, version: preferred, error };
-  const fallback = await call("verification_method_console", { contract_version: 1 });
-  const legacy = verificationMethodConsoleResponse(fallback, 1);
-  return legacy
-    ? { ok: true, version: 1, data: legacy }
-    : { ok: false, version: 1, error: verificationMethodErrorResponse(fallback) };
+  let version = preferred;
+  for (;;) {
+    const response = await call("verification_method_console", { contract_version: version });
+    const parsed = verificationMethodConsoleResponse(response, version);
+    if (parsed) return { ok: true, version, data: parsed };
+    const error = verificationMethodErrorResponse(response);
+    const older = verificationMethodOlderContractVersion(version);
+    if (older === null || error !== "verification-method-contract-version") return { ok: false, version, error };
+    version = older;
+  }
 }
 
 export function verificationMethodMutationResponse(
@@ -882,19 +1007,28 @@ export function verificationMethodMutationResponse(
 
 /**
  * `gate_mode_hidden` (D-151 review): an optional boolean on v1 save, impact
- * and apply answers while a mode is stored. v2 shows the modes and never
- * carries it. `undefined` = refused; `{}` or `{gate_mode_hidden: true}` = material.
+ * and apply answers while a mode is stored. v2 and v3 show the modes and never
+ * carry it (D-152 §7.4: v2 gets no "threshold hidden" flag either).
+ * `undefined` = refused; `{}` or `{gate_mode_hidden: true}` = material.
  */
 function gateModeHidden(
   source: Record<string, unknown>,
   version: VerificationMethodContractVersion,
 ): { gate_mode_hidden?: true } | undefined {
   if (!Object.hasOwn(source, "gate_mode_hidden")) return {};
-  if (version === 2 || typeof source.gate_mode_hidden !== "boolean") return undefined;
+  if (version !== 1 || typeof source.gate_mode_hidden !== "boolean") return undefined;
   return source.gate_mode_hidden ? { gate_mode_hidden: true } : {};
 }
 
-/** v2 rows (contract §8.4) also name the live and draft gate mode; v1 rows never do. */
+/** v3 `impact.closed_below_events`: exactly `{live, draft}`, each a threshold 0..50. */
+function closedModeImpact(value: unknown): VerificationClosedModeImpact | null {
+  const raw = exactObject(value, ["live", "draft"]);
+  const live = verificationClosedBelowEvents(raw?.live);
+  const draft = verificationClosedBelowEvents(raw?.draft);
+  return live !== null && draft !== null ? { live, draft } : null;
+}
+
+/** v2 and v3 rows (contract §8.4) also name the live and draft gate mode; v1 rows never do. */
 function impactGateModes(
   source: Record<string, unknown>,
   version: VerificationMethodContractVersion,
@@ -920,7 +1054,9 @@ export function verificationMethodImpactResponse(
     const fingerprint = sha256Hex(raw?.normalized_fingerprint);
     const methodAvailability = verificationMethodAvailabilityMap(raw?.method_availability);
     const guard = publishGuard(raw?.publish_guard);
-    const impact = requiredObject(raw?.impact, ["by_storefront", "unknown_storefront", "totals"]);
+    const impact = requiredObject(raw?.impact, [
+      "by_storefront", "unknown_storefront", "totals", ...(version === 3 ? ["closed_below_events"] : []),
+    ]);
     const hidden = raw ? gateModeHidden(raw, version) : undefined;
     if (raw?.contract_version !== version || !hidden || !principal || evaluatedAt === null || expectedRevision === null
       || !fingerprint || raw.confirmation_phrase !== VERIFICATION_METHOD_CONFIRMATION_PHRASE
@@ -957,6 +1093,9 @@ export function verificationMethodImpactResponse(
     // unknown row. A total that does not add up is not a proven count.
     const expectedTotals = sumCounts([...rows, unknownCounts]);
     if (IMPACT_COUNT_KEYS.some((key) => totals[key] !== expectedTotals[key])) return null;
+    // D-152 §7.3: v3 names both stored thresholds; v1/v2 never yield them.
+    const threshold = version === 3 ? closedModeImpact(impact.closed_below_events) : undefined;
+    if (threshold === null) return null;
 
     return {
       contract_version: version,
@@ -971,6 +1110,7 @@ export function verificationMethodImpactResponse(
         by_storefront: rows,
         unknown_storefront: { live_method: unknownLive, draft_method: unknownDraft, ...unknownModes, ...unknownCounts },
         totals,
+        ...(threshold ? { closed_below_events: threshold } : {}),
       },
       ...hidden,
     };
@@ -1035,9 +1175,10 @@ export type VerificationMethodDraft = {
   copy_default: Record<WaitingRoomLocale, WaitingRoomCopyDraft>;
   overrides: VerificationMethodOverrideRow[];
   /**
-   * Contract v2: exactly what Core served plus the operator's own changes —
-   * never a mode the console chose by itself. `null` on the v1 wire, where the
-   * document is the three-key shape and the control is hidden.
+   * Contract v2/v3: exactly what Core served plus the operator's own changes —
+   * never a mode (or threshold) the console chose by itself. `null` on the v1
+   * wire, where the document is the three-key shape and the control is hidden.
+   * On v3 it carries `closed_below_events`; on v2 it never does.
    */
   gate_mode: VerificationGateModePolicy | null;
 };
@@ -1045,9 +1186,33 @@ export type VerificationMethodDraft = {
 /**
  * `gateMode`: a mode entry outside the storefront catalogue or the closed mode
  * list. `exploreRequiresPersona`: a scope resolves to Explore while its method
- * is video or photo, which Core refuses (D-151 review).
+ * is video or photo, which Core refuses (D-151 review). `closedBelowEvents`:
+ * the Closed mode threshold is not an integer 0..50 (D-152 §6.2).
  */
-export type VerificationMethodDraftIssue = ForcedVerificationDraftIssue | "gateMode" | "exploreRequiresPersona";
+export type VerificationMethodDraftIssue =
+  | ForcedVerificationDraftIssue | "gateMode" | "exploreRequiresPersona" | "closedBelowEvents";
+
+/**
+ * The same policy with other storefront entries. The threshold travels along
+ * unchanged and stays the third key; a v2 policy gains none.
+ */
+function gateModeWithOverrides(
+  gate: VerificationGateModePolicy,
+  overrides: Record<string, VerificationGateMode>,
+): VerificationGateModePolicy {
+  return gate.closed_below_events === undefined
+    ? { global: gate.global, overrides }
+    : { global: gate.global, overrides, closed_below_events: gate.closed_below_events };
+}
+
+/** Whether a draft has the shape of `version`'s wire: no modes on v1, modes without a threshold on v2, both on v3. */
+export function verificationMethodDraftMatchesVersion(
+  draft: VerificationMethodDraft,
+  version: VerificationMethodContractVersion,
+): boolean {
+  if (version === 1) return draft.gate_mode === null;
+  return draft.gate_mode !== null && (draft.gate_mode.closed_below_events !== undefined) === (version === 3);
+}
 
 export function verificationMethodDraft(document: VerificationMethodDocument): VerificationMethodDraft {
   const overrides: VerificationMethodOverrideRow[] = [];
@@ -1069,7 +1234,7 @@ export function verificationMethodDraft(document: VerificationMethodDocument): V
     },
     overrides,
     gate_mode: document.gate_mode
-      ? { global: document.gate_mode.global, overrides: { ...document.gate_mode.overrides } }
+      ? gateModeWithOverrides(document.gate_mode, { ...document.gate_mode.overrides })
       : null,
   };
 }
@@ -1092,6 +1257,8 @@ export function validateVerificationMethodDraft(
       || modeKeys.some((key) => !isForcedStorefront(key) || gateMode(draft.gate_mode!.overrides[key]) === null)) {
       return "gateMode";
     }
+    if (draft.gate_mode.closed_below_events !== undefined
+      && verificationClosedBelowEvents(draft.gate_mode.closed_below_events) === null) return "closedBelowEvents";
     if (draftGateModeConflicts(draft).length > 0) return "exploreRequiresPersona";
   }
   for (const locale of WAITING_ROOM_LOCALES) {
@@ -1162,14 +1329,15 @@ export function verificationMethodDocumentFromDraft(
     },
   };
   if (draft.gate_mode === null) return document;
-  // Fourth and last, `global` before `overrides`, storefronts ascending. An
-  // inheriting storefront has no key; Core drops the whole object again when
-  // it equals the Full block default (canonical omission, contract §8.1).
+  // Fourth and last, `global` before `overrides`, storefronts ascending; on v3
+  // `closed_below_events` third. An inheriting storefront has no key; Core
+  // drops the whole object again when every scope is Full block (canonical
+  // omission, contract §8.1), the threshold with it (D-152 Q10).
   const modeOverrides: Record<string, VerificationGateMode> = {};
   for (const storefront of Object.keys(draft.gate_mode.overrides).sort()) {
     modeOverrides[storefront] = draft.gate_mode.overrides[storefront];
   }
-  return { ...document, gate_mode: { global: draft.gate_mode.global, overrides: modeOverrides } };
+  return { ...document, gate_mode: gateModeWithOverrides(draft.gate_mode, modeOverrides) };
 }
 
 function canonicalJson(value: unknown): string {
@@ -1221,7 +1389,8 @@ export function gateModeChoice(gate: VerificationGateModePolicy, storefront: str
 
 /**
  * The policy after ONE operator choice on one row. `inherit` removes the
- * storefront's key; nothing else changes. The global row has no `inherit`.
+ * storefront's key; nothing else changes (the v3 threshold included). The
+ * global row has no `inherit`.
  */
 export function withGateModeChoice(
   gate: VerificationGateModePolicy,
@@ -1232,7 +1401,68 @@ export function withGateModeChoice(
   const overrides = { ...gate.overrides };
   if (choice === "inherit") delete overrides[storefront];
   else overrides[storefront] = choice;
-  return { global: gate.global, overrides };
+  return gateModeWithOverrides(gate, overrides);
+}
+
+// ---------------------------------------------------------------------------
+// Closed mode threshold (D-152 §6, §7)
+// ---------------------------------------------------------------------------
+
+/**
+ * The policy after the operator picks a threshold. Only a v3 policy carries
+ * one; a v2 policy is returned unchanged (that wire cannot name it, §7.4).
+ */
+export function withClosedBelowEvents(gate: VerificationGateModePolicy, value: number): VerificationGateModePolicy {
+  return gate.closed_below_events === undefined ? gate : { ...gate, closed_below_events: value };
+}
+
+/**
+ * Whether Core keeps the threshold this draft names: only while some scope is
+ * not Full block. Otherwise Core stores no `gate_mode` at all and the
+ * threshold means nothing, so the control is disabled (spec §4, §7.2).
+ */
+export function closedModeThresholdApplies(gate: VerificationGateModePolicy | null): boolean {
+  return gate !== null && gate.closed_below_events !== undefined && !isDefaultGateModePolicy(gate);
+}
+
+/**
+ * Lead ruling Q10: saving this draft drops a non-default threshold back to 3,
+ * because every scope is Full block and Core omits the whole `gate_mode`
+ * block. The save preview says so before the operator saves.
+ */
+export function closedModeThresholdResetOnSave(gate: VerificationGateModePolicy | null): boolean {
+  return gate !== null
+    && gate.closed_below_events !== undefined
+    && gate.closed_below_events !== VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT
+    && isDefaultGateModePolicy(gate);
+}
+
+/**
+ * After a v3 save: the threshold Core stored when it differs from the one the
+ * command sent (Q10: the all-Full-block save returns it to 3); `null` when it
+ * kept the sent value or the save named none.
+ */
+export function closedModeThresholdChangedBySave(
+  sent: VerificationGateModePolicy | undefined,
+  stored: VerificationGateModePolicy | undefined,
+): number | null {
+  if (sent?.closed_below_events === undefined || stored?.closed_below_events === undefined) return null;
+  return sent.closed_below_events === stored.closed_below_events ? null : stored.closed_below_events;
+}
+
+/**
+ * Whether the saved draft OR the live document stores a threshold other than
+ * 3. Core omits it at 3, so only then does the stored document carry the key
+ * that an older Core reads as malformed (§6.2) and a v2 console cannot clear
+ * (§7.4): the rollback recipe (§10 steps 0a/1a) has to set it back first.
+ */
+export function verificationMethodPolicyStoresClosedThreshold(policy: VerificationMethodPolicy): boolean {
+  return [policy.draft.document.gate_mode, policy.live.document.gate_mode].some((gate) => (
+    gate !== undefined
+    && gate.closed_below_events !== undefined
+    && gate.closed_below_events !== VERIFICATION_CLOSED_BELOW_EVENTS_DEFAULT
+    && !isDefaultGateModePolicy(gate)
+  ));
 }
 
 /**
@@ -1406,7 +1636,7 @@ export function verificationMethodDraftWithoutStorefront(
   return { draft: { ...draft, overrides, gate_mode: next.gate_mode }, notice: next.notice };
 }
 
-/** The publish command, bound to the version, revision and fingerprint of the impact it was previewed with (v1 and v2 fingerprints differ). */
+/** The publish command, bound to the version, revision and fingerprint of the impact it was previewed with (each version's fingerprint differs; v3 binds the threshold). */
 export function verificationMethodApplyCommand(
   impact: VerificationMethodImpactData,
   reason: string,
@@ -1423,10 +1653,12 @@ export function verificationMethodApplyCommand(
 }
 
 /**
- * Whether a v1 command's answer proves that Core speaks v2, so the session
- * should switch back to v2 and re-read: `gate_mode_hidden` on a success
- * (round 2), or the Persona-rule refusal of a v1 save whose carried mode
- * conflicts (round 3) — both exist only on a D-151 Core.
+ * Whether a v1 command's answer proves that Core speaks v2 or newer, so the
+ * session should ask for the preferred wire again and re-read (the probe steps
+ * down to v2 on a D-151 Core): `gate_mode_hidden` on a success (round 2), or
+ * the Persona-rule refusal of a v1 save whose carried mode conflicts (round 3)
+ * — both exist only on a D-151 Core or newer. A v2 answer proves nothing about
+ * v3 (D-152 §7.4: no hidden-threshold flag); only a reload re-probes.
  */
 export function verificationMethodOutcomeProvesV2(
   outcome: VerificationMethodMutationOutcome,
@@ -1561,7 +1793,7 @@ export function verificationMethodPhotoCopyGuidance(
     && error !== "verification-method-copy-overrides-invalid") return null;
   const command = verificationMethodPendingFrom(pending);
   if (command?.action !== "verification_method_save") return null;
-  const version = command.payload.contract_version === 2 ? 2 : 1;
+  const version = verificationMethodCommandVersion(command.payload);
   const document = verificationMethodDocument(command.payload.draft_json, "exact", version);
   if (!document) return null;
   if (error === "verification-method-copy-default-invalid" && document.global === "photo") {
@@ -1601,17 +1833,21 @@ function exactKeys(source: Record<string, unknown>, keys: readonly string[]): bo
 /**
  * The browser sends JSON; Core receives a form body where `draft_json` is the
  * canonical JSON string of exactly `{global, overrides, waiting_room_copy}` on
- * contract v1 and of exactly those plus `gate_mode` on contract v2 (`lib/core.ts`
- * serialises nested objects). Anything the strict parsers refuse is answered
- * `invalid-input` here, before Core is called at all. Core remains the judge of
- * whether it speaks the requested version (`verification-method-contract-version`).
+ * contract v1, of exactly those plus `gate_mode` on contract v2, and on v3 with
+ * `gate_mode` naming exactly `{global, overrides, closed_below_events}`
+ * (`lib/core.ts` serialises nested objects). Anything the strict parsers refuse
+ * is answered `invalid-input` here, before Core is called at all. Core remains
+ * the judge of whether it speaks the requested version
+ * (`verification-method-contract-version`).
  */
 export function normalizeVerificationMethodProxyBody(
   action: string,
   body: Record<string, unknown>,
 ): Record<string, unknown> | null | undefined {
   if (!isVerificationMethodAction(action)) return undefined;
-  const version = body.contract_version === 1 || body.contract_version === 2 ? body.contract_version : null;
+  const version = (VERIFICATION_METHOD_CONTRACT_VERSIONS as readonly unknown[]).includes(body.contract_version)
+    ? body.contract_version as VerificationMethodContractVersion
+    : null;
   if (version === null) return null;
   switch (action) {
     case "verification_method_console":

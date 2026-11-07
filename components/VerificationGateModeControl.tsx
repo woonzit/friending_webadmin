@@ -3,11 +3,14 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import {
+  VERIFICATION_CLOSED_BELOW_EVENTS_OFF,
   VERIFICATION_GATE_MODES,
   gateModeChoice,
   gateModeExploreAllowed,
   gateModeStoredUnderNone,
+  verificationClosedBelowEvents,
   type MandatoryMethod,
+  type VerificationClosedModeCatalogue,
   type VerificationGateMode,
   type VerificationGateModeChoice,
   type VerificationGateModePolicy,
@@ -205,6 +208,131 @@ export function VerificationGateModeLegend({ storesModes }: { storesModes: boole
       <p className="gate-mode-rollback" data-gate-mode-stored={storesModes ? "true" : "false"}>
         {storesModes ? t("storedModes") : t("noStoredModes")}
       </p>
+    </div>
+  );
+}
+
+/** A threshold as the operator reads it: 0 is "Never close (always Explore)", otherwise "N events". */
+export function useClosedModeLabel() {
+  const t = useTranslations("verificationAdmin.methodPolicy.gateMode.closedMode");
+  return (value: number) => (value === VERIFICATION_CLOSED_BELOW_EVENTS_OFF ? t("never") : t("option", { count: value }));
+}
+
+type ClosedModeProps = {
+  id: string;
+  /** The draft's threshold (contract v3 `gate_mode.closed_below_events`). */
+  value: number;
+  /** The live document's threshold. */
+  live: number;
+  /** Core's `gate_mode_catalogue.closed_below_events`: the bounds, the default and the fixed radius. */
+  catalogue: VerificationClosedModeCatalogue;
+  /**
+   * Some scope is not Full block, so Core keeps the threshold. Otherwise Core
+   * stores no gate mode at all and the control is disabled (spec §4).
+   */
+  applies: boolean;
+  /** The saved draft or the live document stores a threshold other than the default (rollback recipe §10). */
+  storesThreshold: boolean;
+  disabled: boolean;
+  onChange: (value: number) => void;
+};
+
+/**
+ * D-152 (contract §6, §7): the one Closed mode threshold of the gate-mode
+ * console. A member who explores gets Closed mode — only the profile open —
+ * while their sign-up area holds fewer than N events within 100 mi. An
+ * integer 0..50, 3 by default; 0 never closes. Presentation only: the table
+ * owns the draft, and the value changes only through `onChange`.
+ */
+export function VerificationClosedModeControl({
+  id,
+  value,
+  live,
+  catalogue,
+  applies,
+  storesThreshold,
+  disabled,
+  onChange,
+}: ClosedModeProps) {
+  const t = useTranslations("verificationAdmin.methodPolicy.gateMode");
+  const label = useClosedModeLabel();
+  const options = Array.from(
+    { length: catalogue.maximum - catalogue.minimum + 1 },
+    (_, index) => catalogue.minimum + index,
+  );
+  const ids = {
+    applies: `${id}-applies`,
+    live: `${id}-live`,
+  };
+  // Lead ruling Q10 (a save that returns the value to 3) is shown once, in
+  // the table's save preview next to the Save button, not here.
+  const notes = [
+    applies ? null : ids.applies,
+    live !== value ? ids.live : null,
+  ].filter(Boolean).join(" ") || undefined;
+  const change = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = verificationClosedBelowEvents(Number(event.target.value));
+    if (next !== null) onChange(next);
+  };
+  return (
+    <div
+      className="gate-mode-legend closed-mode-control"
+      data-closed-mode-control="true"
+      data-closed-mode-value={value}
+      data-closed-mode-applies={applies ? "true" : "false"}
+    >
+      <strong>{t("closedMode.title")}</strong>
+      <p className="closed-mode-line" data-closed-mode-what="true">{t("closedMode.what")}</p>
+      <label className="field closed-mode-field" htmlFor={id}>
+        <span>{t("closedMode.field", { radius: catalogue.radius_miles })}</span>
+        <select
+          id={id}
+          className="input"
+          value={String(value)}
+          disabled={disabled || !applies}
+          aria-describedby={notes}
+          onChange={change}
+        >
+          {options.map((option) => (
+            <option key={option} value={String(option)}>
+              {option === catalogue.default ? t("closedMode.defaultOption", { option: label(option) }) : label(option)}
+            </option>
+          ))}
+        </select>
+      </label>
+      {applies ? null : (
+        <small id={ids.applies} className="field-hint" data-closed-mode-not-applicable="true">{t("closedMode.notApplicable")}</small>
+      )}
+      {live !== value ? (
+        <small id={ids.live} className="field-hint" data-closed-mode-live={live}>{t("closedMode.live", { value: label(live) })}</small>
+      ) : null}
+      <p className="closed-mode-line" data-closed-mode-one-way="true">{t("closedMode.oneWay")}</p>
+      <small className="field-hint">{t("closedMode.clients")}</small>
+      <p className="gate-mode-rollback" data-closed-mode-rollback="true">
+        <strong>{t("rollbackTitle")}</strong> {t("closedMode.rollback")}
+      </p>
+      {storesThreshold ? (
+        <p className="gate-mode-rollback" data-closed-mode-stored="true">{t("closedMode.stored")}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The impact preview's stored thresholds (contract §7.3): live and draft, the
+ * draft in bold when it differs. The counts above it do not depend on it.
+ */
+export function VerificationClosedModeImpact({ live, draft }: { live: number; draft: number }) {
+  const t = useTranslations("verificationAdmin.methodPolicy.gateMode.closedMode");
+  const label = useClosedModeLabel();
+  const changed = live !== draft;
+  const draftText = t("impactDraft", { value: label(draft) });
+  return (
+    <div className="closed-mode-impact" data-closed-mode-impact="true" data-closed-mode-changed={changed ? "true" : undefined}>
+      <strong>{t("impactTitle")}</strong>
+      <span data-closed-mode-impact-live={live}>{t("impactLive", { value: label(live) })}</span>
+      <span data-closed-mode-impact-draft={draft}>{changed ? <strong>{draftText}</strong> : draftText}</span>
+      <small className="field-hint">{t("impactNote")}</small>
     </div>
   );
 }

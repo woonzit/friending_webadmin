@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ErrorPanel, LoadingPanel } from "@/components/StatePanel";
-import VerificationGateModeControl, { VerificationGateModeLegend } from "@/components/VerificationGateModeControl";
+import VerificationGateModeControl, {
+  VerificationClosedModeControl,
+  VerificationClosedModeImpact,
+  VerificationGateModeLegend,
+  useClosedModeLabel,
+} from "@/components/VerificationGateModeControl";
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import {
   WAITING_ROOM_COPY_FIELDS,
@@ -32,10 +37,14 @@ import {
   VERIFICATION_METHOD_PENDING_STORAGE_KEY,
   VERIFICATION_METHOD_PHOTO_CATALOGUE_HREF,
   VERIFICATION_METHOD_PHOTO_UNAVAILABLE,
+  VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION,
   VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES,
   VERIFICATION_METHOD_REASON_MAX,
   VERIFICATION_METHOD_UNAVAILABLE_ERROR,
   VERIFICATION_START_METHODS,
+  closedModeThresholdApplies,
+  closedModeThresholdChangedBySave,
+  closedModeThresholdResetOnSave,
   documentUsesMethod,
   draftGateModeConflicts,
   gateModeEntriesDropped,
@@ -47,11 +56,13 @@ import {
   verificationMethodPolicyStoresGateMode,
   validateVerificationMethodDraft,
   verificationMethodApplyCommand,
+  verificationMethodCommandVersion,
   verificationMethodConflictResponse,
   verificationMethodDocument,
   verificationMethodDocumentFromDraft,
   verificationMethodDocumentsEqual,
   verificationMethodDraft,
+  verificationMethodDraftMatchesVersion,
   verificationMethodDraftWithStorefront,
   verificationMethodDraftWithoutStorefront,
   verificationMethodErrorResponse,
@@ -62,8 +73,10 @@ import {
   verificationMethodPendingMutation,
   verificationMethodPersistBeforeMutation,
   verificationMethodPhotoCopyGuidance,
+  verificationMethodPolicyStoresClosedThreshold,
   verificationMethodReason,
   verificationMethodShouldRetainMutation,
+  withClosedBelowEvents,
   withGateModeChoice,
   type MandatoryMethod,
   type VerificationGateMode,
@@ -161,6 +174,13 @@ function PhoneFrame({
  * `verification-method-contract-version` (409); the table then speaks v1 for
  * the rest of the session: exactly today's table and wire, no mode control.
  * The draft's modes change only on an operator choice.
+ *
+ * D-152 (contract §7): the table asks for console contract v3 first. There
+ * the gate-mode block also carries the one global Closed mode threshold
+ * (`closed_below_events`, 0..50, 3 by default, 0 = never close), saved with
+ * the draft and published through the same CAS, receipt, audit and
+ * confirmation path. A D-151 Core refuses v3 with the same named 409, and the
+ * probe steps down to v2 (then v1) exactly as before.
  */
 export default function VerificationMethodScopesTable({ access, locked }: Props) {
   const t = useTranslations("verificationAdmin.methodPolicy");
@@ -168,6 +188,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const shared = useTranslations("verificationAdmin.forced");
   /** Contract §8.1: the availability reason reuses the existing live vocabulary unchanged. */
   const methodReason = useTranslations("verificationAdmin.live.methodReasons");
+  /** D-152: a threshold as the operator reads it ("Never close (always Explore)" for 0, otherwise "N events"). */
+  const thresholdLabel = useClosedModeLabel();
   const locale = useLocale() === "hu" ? "hu" : "en";
 
   const [state, setState] = useState<LoadState>("loading");
@@ -196,10 +218,11 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const [gateModeHidden, setGateModeHidden] = useState(false);
   const pendingRef = useRef<VerificationMethodPendingMutation | null>(null);
   /**
-   * The console wire. `admin_me` does not advertise it (contract §8.4/§15), so
-   * the first read asks for v2 and drops to 1 for the session if Core refuses.
+   * The console wire. `admin_me` does not advertise it (contract §8.4/§15,
+   * D-152 §7), so the first read asks for v3 and steps down one version per
+   * named refusal (v2, then v1) for the session.
    */
-  const wireRef = useRef<VerificationMethodContractVersion>(2);
+  const wireRef = useRef<VerificationMethodContractVersion>(VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION);
 
   const countries = useMemo(() => localizedForcedStorefronts(locale), [locale]);
   const editable = access.editable && !locked && !busy && pending === null;
@@ -223,15 +246,15 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     }
     const material = result.data;
     setData(material);
-    setDraft((current) => (keepDraft && current && (current.gate_mode !== null) === (material.contract_version === 2)
+    setDraft((current) => (keepDraft && current && verificationMethodDraftMatchesVersion(current, material.contract_version)
       ? current
       : verificationMethodDraft(material.policy.draft.document)));
     setImpact(null);
     setConfirmation("");
     setPhotoRefused(false);
     setRefusedScopes([]);
-    // The v1 warning stays until a v2 read proves the modes are on screen.
-    if (material.contract_version === 2) setGateModeHidden(false);
+    // The v1 warning stays until a v2 or v3 read proves the modes are on screen.
+    if (material.contract_version !== 1) setGateModeHidden(false);
     setGuardRevision(material.policy.revision);
     setState("ready");
   }, []);
@@ -333,7 +356,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     }
     const durable = pendingRef.current ?? next;
     // The retained command names its own wire; Core answers in that version.
-    const commandVersion: VerificationMethodContractVersion = durable.payload.contract_version === 2 ? 2 : 1;
+    const commandVersion = verificationMethodCommandVersion(durable.payload);
     /** A command retained under the other wire (Core changed meanwhile) is answered, then re-read. */
     const sameWire = data?.contract_version === commandVersion;
     const outcome = verificationMethodMutationOutcome(response, commandVersion);
@@ -345,8 +368,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
         setBusy(false);
         return;
       }
-      // Review round 2: `gate_mode_hidden` proves Core speaks v2. Re-read on v2
-      // so the operator sees the stored modes instead of staying on v1.
+      // Review round 2: `gate_mode_hidden` proves Core speaks v2 or newer.
+      // Re-probe from the preferred wire so the operator sees the stored modes
+      // instead of staying on v1.
       const restoreWire = verificationMethodOutcomeProvesV2(outcome, commandVersion);
       if (sameWire && !restoreWire) {
         adopt(success.policy, false);
@@ -355,7 +379,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           : current));
       } else {
         if (restoreWire) {
-          wireRef.current = 2;
+          wireRef.current = VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION;
           setGateModeHidden(true);
         }
         void load(false);
@@ -366,12 +390,15 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           ? t("draftSaved", { revision: success.policy.revision })
           : t("published", { revision: success.policy.revision });
       // Review round 2: name the explicit Full block entries Core did not keep.
-      const sent = durable.action === "verification_method_save" && commandVersion === 2
-        ? verificationMethodDocument(durable.payload.draft_json, "exact", 2)?.gate_mode
+      const sent = durable.action === "verification_method_save" && commandVersion !== 1
+        ? verificationMethodDocument(durable.payload.draft_json, "exact", commandVersion)?.gate_mode
         : undefined;
       const dropped = gateModeEntriesDropped(sent, success.policy.draft.document.gate_mode);
+      // D-152 Q10: an all-Full-block save returns the threshold to 3; say so.
+      const thresholdReset = closedModeThresholdChangedBySave(sent, success.policy.draft.document.gate_mode);
       const extra = [
         dropped.length > 0 ? gt("pinsDropped", { storefronts: dropped.map(scopeLabel).join(", ") }) : null,
+        thresholdReset !== null ? gt("closedMode.resetAfterSave", { value: thresholdLabel(thresholdReset) }) : null,
         restoreWire ? gt("hiddenReloaded") : null,
       ].filter(Boolean).join(" ");
       setNotice({ tone: success.replayed ? "info" : "success", text: extra ? `${base} ${extra}` : base });
@@ -387,7 +414,7 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
       // Core speaks v2. Switch back, keep the banner, and re-read with the modes.
       const restoreWire = verificationMethodOutcomeProvesV2(outcome, commandVersion);
       if (restoreWire) {
-        wireRef.current = 2;
+        wireRef.current = VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION;
         setGateModeHidden(true);
         void load(false);
       }
@@ -460,9 +487,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     const parsed = verificationMethodImpactResponse(response, version);
     const bound = parsed?.expected_revision === expected ? parsed : null;
     if (bound?.gate_mode_hidden && version === 1) {
-      // Review round 2: proof that Core speaks v2. A v1 preview would bind a
-      // publish to modes this view never showed; re-read on v2 instead.
-      wireRef.current = 2;
+      // Review round 2: proof that Core speaks v2 or newer. A v1 preview would
+      // bind a publish to modes this view never showed; re-probe instead.
+      wireRef.current = VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION;
       setGateModeHidden(true);
       setNotice({ tone: "info", text: gt("hiddenReloaded") });
       setBusy(false);
@@ -588,6 +615,19 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
   const globalInheritors = gateModeGlobalInheritors(draft);
   const followersAllowExplore = gateModeGlobalFollowersAllowExplore(draft);
   const pinsDroppedOnSave = gateModePinsDroppedOnSave(gate);
+  /**
+   * D-152: the Closed mode threshold, on v3 material only — the draft's value,
+   * the live value and Core's bounds. `null` on v1/v2, where the control is absent.
+   */
+  const closedMode = gate !== null && gate.closed_below_events !== undefined
+    && data.contract_version === 3 && data.gate_mode_catalogue?.closed_below_events
+    && data.policy.live.document.gate_mode?.closed_below_events !== undefined
+    ? {
+      value: gate.closed_below_events,
+      live: data.policy.live.document.gate_mode.closed_below_events,
+      catalogue: data.gate_mode_catalogue.closed_below_events,
+    }
+    : null;
   const modeOnlyRows = [...gateModeOnlyStorefronts(draft)].sort((left, right) => (
     forcedStorefrontName(left, locale).localeCompare(forcedStorefrontName(right, locale), locale)
     || left.localeCompare(right)
@@ -629,8 +669,8 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
     return availability[method].policy_enable_allowed;
   }
 
-  /** Contract §8.4: a v2 preview names each scope's live and draft mode; a scope whose method is None shows Off. */
-  const impactModes = impact !== null && impact.contract_version === 2;
+  /** Contract §8.4: a v2/v3 preview names each scope's live and draft mode; a scope whose method is None shows Off. */
+  const impactModes = impact !== null && impact.contract_version !== 1;
 
   function impactModeLabel(method: MandatoryMethod, mode: VerificationGateMode | undefined) {
     if (mode === undefined) return "";
@@ -986,6 +1026,18 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           {columnCount === 5
             ? <VerificationGateModeLegend storesModes={verificationMethodPolicyStoresGateMode(data.policy)} />
             : null}
+          {closedMode !== null ? (
+            <VerificationClosedModeControl
+              id="closed-mode-threshold"
+              value={closedMode.value}
+              live={closedMode.live}
+              catalogue={closedMode.catalogue}
+              applies={closedModeThresholdApplies(gate)}
+              storesThreshold={verificationMethodPolicyStoresClosedThreshold(data.policy)}
+              disabled={!editable}
+              onChange={(value) => { if (gate) patch({ gate_mode: withClosedBelowEvents(gate, value) }); }}
+            />
+          ) : null}
           <div className="table-wrap">
             <table className={`data-table method-policy-table${columnCount === 5 ? " method-policy-table-gate" : ""}`}>
               <thead>
@@ -1033,6 +1085,13 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
           {otherConsoleBlockers.map((code) => (
             <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>
           ))}
+          {closedMode !== null && closedModeThresholdResetOnSave(gate) ? (
+            // Lead ruling Q10: every scope is back on Full block, so Core drops
+            // gate_mode on this save and the threshold returns to the default.
+            <div className="alert alert-warning" role="status" data-closed-mode-save-preview="true">
+              {gt("closedMode.savePreview", { value: thresholdLabel(closedMode.catalogue.default) })}
+            </div>
+          ) : null}
           <div className="forced-save-bar">
             <div className="row-actions">
               <button
@@ -1040,9 +1099,10 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                 className="button button-secondary"
                 disabled={busy || locked}
                 onClick={() => {
-                  // Review round 2: an explicit reload asks for v2 again, so a session
-                  // that fell back to v1 picks the gate modes up once Core speaks v2.
-                  wireRef.current = 2;
+                  // Review round 2: an explicit reload asks for the preferred wire
+                  // again, so a session that fell back picks the gate modes (and the
+                  // Closed mode threshold) up once Core speaks them.
+                  wireRef.current = VERIFICATION_METHOD_PREFERRED_CONTRACT_VERSION;
                   void load(false);
                 }}
               >
@@ -1120,6 +1180,9 @@ export default function VerificationMethodScopesTable({ access, locked }: Props)
                 </table>
               </div>
               {impactModes ? <p className="field-hint" data-gate-mode-impact-note="true">{gt("impactNote")}</p> : null}
+              {impact.impact.closed_below_events
+                ? <VerificationClosedModeImpact live={impact.impact.closed_below_events.live} draft={impact.impact.closed_below_events.draft} />
+                : null}
               <small className="field-hint">{t("computedAt", { time: new Date(impact.evaluated_at * 1000).toISOString() })}</small>
               {impact.publish_guard.blocking_codes.filter((code) => code !== VERIFICATION_METHOD_PHOTO_UNAVAILABLE).map((code) => (
                 <div className="alert alert-warning" key={code}>{t("publishBlocked", { code })}</div>

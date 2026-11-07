@@ -4594,6 +4594,7 @@
         "duplicateStorefront": "Két felülírás ugyanazt a storefrontot nevezi meg.",
         "gateMode": "Egy zárási mód katalóguson kívüli storefrontot vagy a Felfedező módtól és a Teljes zárástól eltérő módot nevez meg.",
         "exploreRequiresPersona": "A Felfedező módhoz a Persona igazolvány-ellenőrzésnek kell kötelező módszernek lennie. A kiemelt soroknál válassz Teljes zárást, vagy legyen a módszerük a Persona.",
+        "closedBelowEvents": "A Zárt mód küszöbe 0 és 50 közötti egész szám lehet.",
         "copyRequired": "A globális cím, alcím és leírás mindkét nyelven kötelező.",
         "copyTooLong": "Egy szöveg túllépi a korlátját (cím 60, alcím 90, leírás 400 karakter).",
         "copyControl": "Egy szöveg vezérlőkaraktert vagy nem megengedett sortörést tartalmaz.",
@@ -5161,7 +5162,27 @@
         "storedModes": "A draft vagy az élő szabályzat zárási módot tárol, így a régebbi Core nem tudja olvasni, és minden tag hibát kapna. Előbb végezd el a fenti visszaállítást.",
         "impactLiveMode": "Élő mód",
         "impactDraftMode": "Draftmód",
-        "impactNote": "A zárási mód nem változtat azon, kinek kell hitelesítenie magát, ezért a számok nem változnak. Azt változtatja meg, mit látnak ezek a tagok a Felfedező módot támogató appverzióban."
+        "impactNote": "A zárási mód nem változtat azon, kinek kell hitelesítenie magát, ezért a számok nem változnak. Azt változtatja meg, mit látnak ezek a tagok a Felfedező módot támogató appverzióban.",
+        "closedMode": {
+          "title": "Zárt mód",
+          "what": "Zárt módban csak a profil érhető el. Minden más zárva marad, és az app nem ígér eseményeket.",
+          "field": "Zárt mód, ha a regisztrációs terület {radius} mérföldes körzetében N-nél kevesebb esemény van",
+          "never": "Soha ne zárjon (mindig Felfedező mód)",
+          "option": "{count} esemény",
+          "defaultOption": "{option} (alapértelmezett)",
+          "notApplicable": "Akkor állítható, ha legalább egy terület Felfedező módot használ.",
+          "resetAfterSave": "A Zárt mód küszöbe visszaállt erre: {value}, mert minden terület Teljes záráson van.",
+          "savePreview": "A draft mentésekor a Zárt mód küszöbe visszaáll erre: {value}. Ha minden terület Teljes záráson van, a Core nem tárol zárási módot, így a küszöböt sem.",
+          "live": "Élő: {value}",
+          "oneWay": "Csak egy irányba működik: aki egyszer Felfedező módot kapott, megtartja, akkor is, ha később elfogynak az események.",
+          "clients": "A Zárt módot csak az azt kérő appverziók kapják. A régebbi verziók a mai Felfedező módot mutatják.",
+          "rollback": "A Core vagy a Webadmin visszaállítása előtt állítsd ezt 3 eseményre, és tedd közzé. 3-nál a Core nem tárol küszöböt, így egy régebbi verzió is be tudja olvasni a szabályzatot.",
+          "stored": "A draft vagy az élő szabályzat 3-tól eltérő küszöböt tárol. Egy régebbi Core nem tudja beolvasni, egy régebbi Webadmin pedig nem tudja törölni, ezért előbb végezd el a fenti visszaállítást.",
+          "impactTitle": "Zárt mód küszöbe",
+          "impactLive": "Élő: {value}",
+          "impactDraft": "Draft: {value}",
+          "impactNote": "A küszöb sem változtat azon, kinek kell hitelesítenie magát, ezért a számok nem változnak. Azt dönti el, hogy közülük ki kap Zárt módot."
+        }
       },
       "photoRollout": {
         "title": "Előbb az új iOS-appnak kell megjelennie.",
