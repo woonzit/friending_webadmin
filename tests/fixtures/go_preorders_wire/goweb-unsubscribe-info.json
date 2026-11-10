@@ -1,0 +1,11 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "email_masked": "ev•••@example.com",
+        "status": "active"
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

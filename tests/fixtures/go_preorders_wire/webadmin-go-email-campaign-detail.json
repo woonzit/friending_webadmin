@@ -1,0 +1,84 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "campaign": {
+            "id": "000000000000000000006002",
+            "kind": "newsletter",
+            "state": "sent",
+            "subject": "FriendingGO update",
+            "preheader": "What is new with your cat tag",
+            "audience": {
+                "mode": "selected",
+                "count": 3,
+                "preorder_ids": [
+                    "000000000000000000006001",
+                    "000000000000000000006003",
+                    "000000000000000000006004"
+                ]
+            },
+            "counts": {
+                "selected": 3,
+                "queued": 2,
+                "suppressed": 1
+            },
+            "created_by": "owner@example.test",
+            "sent_by": "owner@example.test",
+            "created_at": 1800000840,
+            "updated_at": 1800000840,
+            "sent_at": 1800000840,
+            "body_html": "<h2>Hi {{first_name}}!</h2><p>FriendingGO news for {{city}}: the first tags are being tested.</p><p><a href=\"https://friending.com/go/\">See the page</a></p>"
+        },
+        "delivery_counts": {
+            "delivered": 1,
+            "pending": 0,
+            "retrying": 0,
+            "failed": 1,
+            "not_sent": 0,
+            "purged": 0
+        },
+        "page": 1,
+        "page_size": 50,
+        "has_more": false,
+        "can_see_addresses": true,
+        "recipients": [
+            {
+                "preorder_id": "000000000000000000006001",
+                "name": "Ava Stone",
+                "email": "ava.stone@example.com",
+                "state": "queued",
+                "suppressed_reason": null,
+                "outbound_id": "000000000000000000006005",
+                "delivery_state": "delivered",
+                "delivered_at": 1800001102,
+                "created_at": 1800000840
+            },
+            {
+                "preorder_id": "000000000000000000006003",
+                "name": "Ben Carter",
+                "email": "ben.carter@example.net",
+                "state": "queued",
+                "suppressed_reason": null,
+                "outbound_id": "000000000000000000006006",
+                "delivery_state": "failed",
+                "delivered_at": null,
+                "created_at": 1800000840
+            },
+            {
+                "preorder_id": "000000000000000000006004",
+                "name": "Eve Moss",
+                "email": "eve.moss@example.com",
+                "state": "suppressed",
+                "suppressed_reason": "unsubscribed",
+                "outbound_id": null,
+                "delivery_state": null,
+                "delivered_at": null,
+                "created_at": 1800000840
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

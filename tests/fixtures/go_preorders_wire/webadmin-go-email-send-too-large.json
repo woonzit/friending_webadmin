@@ -1,0 +1,21 @@
+{
+    "success": false,
+    "status_code": 422,
+    "error": "go-email-audience-too-large",
+    "data": {
+        "counts": {
+            "selected": 101,
+            "sendable": 101,
+            "suppressed": 0
+        },
+        "cap": 100,
+        "receipt": {
+            "request_id": "0000001a-0000-4000-8000-00000000001a",
+            "audit_id": "wai:49eb77993ab1f76c4f745b7c50a9ed268712dbde5ce29cb2fdcd0a54bf59a955",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

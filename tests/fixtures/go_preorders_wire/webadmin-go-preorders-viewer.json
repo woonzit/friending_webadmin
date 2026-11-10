@@ -1,0 +1,150 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "filters": {
+            "q": "",
+            "status": "",
+            "page": 1
+        },
+        "totals": {
+            "all": 5,
+            "active": 3,
+            "unsubscribed": 1,
+            "bounced": 1,
+            "complained": 0
+        },
+        "matching": 5,
+        "page": 1,
+        "page_size": 50,
+        "has_more": false,
+        "can_see_addresses": false,
+        "can_write": false,
+        "rows": [
+            {
+                "id": "000000000000000000006004",
+                "name": "Eve Moss",
+                "first_name": "Eve",
+                "email": "ev•••@example.com",
+                "phone": null,
+                "city_label": "Boise, ID",
+                "city_id": "c-boise",
+                "city_from_list": true,
+                "status": "unsubscribed",
+                "status_changed_at": 1800000060,
+                "status_source": "unsubscribe_link",
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994400
+                },
+                "confirmation": {
+                    "outbound_id": "000000000000000000006010",
+                    "state": "pending"
+                },
+                "created_at": 1799994400,
+                "updated_at": 1800000060
+            },
+            {
+                "id": "000000000000000000006011",
+                "name": "Dan Ruiz",
+                "first_name": "Dan",
+                "email": "da•••@example.com",
+                "phone": null,
+                "city_label": "Austin, TX",
+                "city_id": "c-austin",
+                "city_from_list": true,
+                "status": "bounced",
+                "status_changed_at": 1800000175,
+                "status_source": "mailgun_failed",
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994300
+                },
+                "confirmation": {
+                    "outbound_id": "000000000000000000006012",
+                    "state": "pending"
+                },
+                "created_at": 1799994300,
+                "updated_at": 1800000180
+            },
+            {
+                "id": "00000000000000000000600c",
+                "name": "Cleo Park",
+                "first_name": "Cleo",
+                "email": "cl•••@example.org",
+                "phone": "+1•••••••103",
+                "city_label": "Cary, NC",
+                "city_id": null,
+                "city_from_list": false,
+                "status": "active",
+                "status_changed_at": 1799994200,
+                "status_source": null,
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994200
+                },
+                "confirmation": {
+                    "outbound_id": "00000000000000000000600d",
+                    "state": "pending"
+                },
+                "created_at": 1799994200,
+                "updated_at": 1800000000
+            },
+            {
+                "id": "000000000000000000006003",
+                "name": "Ben Carter",
+                "first_name": "Ben",
+                "email": "be•••@example.net",
+                "phone": null,
+                "city_label": "Durham, NC",
+                "city_id": "c-durham",
+                "city_from_list": true,
+                "status": "active",
+                "status_changed_at": 1799994100,
+                "status_source": null,
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994100
+                },
+                "confirmation": {
+                    "outbound_id": "00000000000000000000600e",
+                    "state": "pending"
+                },
+                "created_at": 1799994100,
+                "updated_at": 1800000000
+            },
+            {
+                "id": "000000000000000000006001",
+                "name": "Ava Stone",
+                "first_name": "Ava",
+                "email": "av•••@example.com",
+                "phone": "+1•••••••101",
+                "city_label": "Raleigh, NC",
+                "city_id": "c-raleigh",
+                "city_from_list": true,
+                "status": "active",
+                "status_changed_at": 1799994000,
+                "status_source": null,
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994000
+                },
+                "confirmation": {
+                    "outbound_id": "00000000000000000000600f",
+                    "state": "delivered"
+                },
+                "created_at": 1799994000,
+                "updated_at": 1800000000
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

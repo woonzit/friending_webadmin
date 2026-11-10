@@ -1,0 +1,17 @@
+{
+    "success": false,
+    "status_code": 429,
+    "error": "go-email-rate-limited",
+    "data": {
+        "limit": 3,
+        "window_seconds": 3600,
+        "receipt": {
+            "request_id": "00000016-0000-4000-8000-000000000016",
+            "audit_id": "wai:16a3d8e1a611529005236cc0c719e69e943602c50c965bcced27e7625916daa7",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

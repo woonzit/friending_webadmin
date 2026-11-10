@@ -1,0 +1,8 @@
+{
+    "success": false,
+    "status_code": 503,
+    "error": "go-preorder-unavailable",
+    "message": 503,
+    "status": 503,
+    "can_send": 0
+}

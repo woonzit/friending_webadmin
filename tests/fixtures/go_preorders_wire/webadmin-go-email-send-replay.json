@@ -1,0 +1,37 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "mode": "send",
+        "campaign": {
+            "id": "000000000000000000006002",
+            "kind": "newsletter",
+            "state": "sent",
+            "subject": "FriendingGO update",
+            "preheader": "What is new with your cat tag",
+            "audience": {
+                "mode": "selected",
+                "count": 3
+            },
+            "counts": {
+                "selected": 3,
+                "queued": 2,
+                "suppressed": 1
+            },
+            "created_by": "owner@example.test",
+            "sent_by": "owner@example.test",
+            "created_at": 1800000840,
+            "updated_at": 1800000840,
+            "sent_at": 1800000840
+        },
+        "receipt": {
+            "request_id": "00000011-0000-4000-8000-000000000011",
+            "audit_id": "wai:ce51062759f9df63b233354fc0030947e64f2d2bbb5d4e8252c38fcd900b7a20",
+            "replayed": true
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -1,0 +1,648 @@
+{
+    "schema_version": 1,
+    "contract": "go-preorders-v1",
+    "source_commit": "7274489adf46396dde5b9c83ceedf21bf5efe2dc",
+    "fixture_set_sha256": "17b28944bae440104bd9798aced2ed73347f370401e01d57283a32f1709f29f2",
+    "selectors": {
+        "webadmin": {
+            "contract_version": 1
+        }
+    },
+    "provenance": {
+        "generator": "tests/go_preorders_storage_test.php",
+        "generator_sha256": "966e6ecf88298f0c4100b169dbf1ef396372fe4aa74cbc2bfca6cd57ef520678",
+        "wire_adapters": {
+            "goweb": "GoWebSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Core\\Response::ok/error -> Friending\\Core\\Response::send",
+            "webadmin": "WebadminSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::noStoreReply -> Friending\\Core\\Response::send"
+        },
+        "declared_orchestration": "tests/go_preorders_storage_test.php goScenario(): an owned replica set; administrators owner, admin, viewer, a row from before roles, an unrecognised role and an inactive owner; five sign-ups through POST /v1/goweb/preorder, one unsubscribe through the link, a confirmation bounce through the Mailgun event sync, then every Webadmin route as the console posts it (form bodies), in one fixed order, with a newsletter bounce through the event sync before the campaign reads.",
+        "evaluated_at": 1800000000,
+        "normalized_clock_fields": "none: the services' clock is pinned to 1800000000 (2027-01-15 08:00 UTC) and advanced by fixed steps",
+        "normalized_identifier_fields": "every 24-hex identifier (preorder, campaign, outbox and export audit ids) is mapped to a stable one in first-seen order",
+        "source_paths": [
+            "config/routes.php",
+            "src/Core/Config.php",
+            "src/Core/Mongo.php",
+            "src/Core/Request.php",
+            "src/Core/Response.php",
+            "src/Core/Router.php",
+            "src/Http/Controllers/AccountController.php",
+            "src/Http/Controllers/AlbumController.php",
+            "src/Http/Controllers/AppController.php",
+            "src/Http/Controllers/AppStoreNotificationController.php",
+            "src/Http/Controllers/AppearanceController.php",
+            "src/Http/Controllers/BrowseController.php",
+            "src/Http/Controllers/ChatController.php",
+            "src/Http/Controllers/ChatRequestController.php",
+            "src/Http/Controllers/DatesChatController.php",
+            "src/Http/Controllers/DatesController.php",
+            "src/Http/Controllers/DatesEventSuggestionController.php",
+            "src/Http/Controllers/DatesExternalCorrectionController.php",
+            "src/Http/Controllers/DatesExternalMembershipController.php",
+            "src/Http/Controllers/DatesHostTransferController.php",
+            "src/Http/Controllers/DatesLiveController.php",
+            "src/Http/Controllers/DatesModerationController.php",
+            "src/Http/Controllers/DatesNotificationController.php",
+            "src/Http/Controllers/DatesReviewController.php",
+            "src/Http/Controllers/DatesSafetyController.php",
+            "src/Http/Controllers/DatesWallController.php",
+            "src/Http/Controllers/EmailVerificationController.php",
+            "src/Http/Controllers/FeedController.php",
+            "src/Http/Controllers/FootprintController.php",
+            "src/Http/Controllers/ForcedVerificationAdminController.php",
+            "src/Http/Controllers/FriendingStartController.php",
+            "src/Http/Controllers/GiveawayController.php",
+            "src/Http/Controllers/GoWebController.php",
+            "src/Http/Controllers/GoogleRtdnController.php",
+            "src/Http/Controllers/HealthController.php",
+            "src/Http/Controllers/HelpSupportController.php",
+            "src/Http/Controllers/IcebreakerController.php",
+            "src/Http/Controllers/IntoTagController.php",
+            "src/Http/Controllers/InvitesController.php",
+            "src/Http/Controllers/IosadminController.php",
+            "src/Http/Controllers/JoinController.php",
+            "src/Http/Controllers/LocationController.php",
+            "src/Http/Controllers/MeetController.php",
+            "src/Http/Controllers/MembershipController.php",
+            "src/Http/Controllers/MembershipStoreController.php",
+            "src/Http/Controllers/ModerationController.php",
+            "src/Http/Controllers/NotificationController.php",
+            "src/Http/Controllers/PasskeyController.php",
+            "src/Http/Controllers/PeopleController.php",
+            "src/Http/Controllers/PersonaController.php",
+            "src/Http/Controllers/PersonaScreensAdminController.php",
+            "src/Http/Controllers/PingerAdminController.php",
+            "src/Http/Controllers/PingerController.php",
+            "src/Http/Controllers/ProfileAlbumController.php",
+            "src/Http/Controllers/ProfileController.php",
+            "src/Http/Controllers/ProfileFieldController.php",
+            "src/Http/Controllers/ProfileHubController.php",
+            "src/Http/Controllers/ProfileIntentsController.php",
+            "src/Http/Controllers/ProfileMediaController.php",
+            "src/Http/Controllers/ProfileTagController.php",
+            "src/Http/Controllers/ProfileUsernameController.php",
+            "src/Http/Controllers/ProfileVerificationController.php",
+            "src/Http/Controllers/ProfileVisibilityController.php",
+            "src/Http/Controllers/QuickPhraseController.php",
+            "src/Http/Controllers/RealtimeController.php",
+            "src/Http/Controllers/RefDataController.php",
+            "src/Http/Controllers/RelationController.php",
+            "src/Http/Controllers/RelationListController.php",
+            "src/Http/Controllers/RetiredFeatureController.php",
+            "src/Http/Controllers/SessionActivityController.php",
+            "src/Http/Controllers/SettingsController.php",
+            "src/Http/Controllers/SharingController.php",
+            "src/Http/Controllers/SportInterestController.php",
+            "src/Http/Controllers/SubscriptionController.php",
+            "src/Http/Controllers/UserController.php",
+            "src/Http/Controllers/VerificationAdminController.php",
+            "src/Http/Controllers/VerificationMethodAdminController.php",
+            "src/Http/Controllers/WebadminAppReviewController.php",
+            "src/Http/Controllers/WebadminAppearanceController.php",
+            "src/Http/Controllers/WebadminAudienceVisibilityController.php",
+            "src/Http/Controllers/WebadminController.php",
+            "src/Http/Controllers/WebadminDatesController.php",
+            "src/Http/Controllers/WebadminDatesExternalController.php",
+            "src/Http/Controllers/WebadminDatesIntakeController.php",
+            "src/Http/Controllers/WebadminDatesResearchController.php",
+            "src/Http/Controllers/WebadminFeatureSwitchesController.php",
+            "src/Http/Controllers/WebadminFriendingStartPolicyController.php",
+            "src/Http/Controllers/WebadminGoPreordersController.php",
+            "src/Http/Controllers/WebadminIntoTagModerationController.php",
+            "src/Http/Controllers/WebadminInviteConfigurationController.php",
+            "src/Http/Controllers/WebadminLayer2Controller.php",
+            "src/Http/Controllers/WebadminLocationAccessPolicyController.php",
+            "src/Http/Controllers/WebadminMailDeliveryController.php",
+            "src/Http/Controllers/WebadminMemberBirthdayLockController.php",
+            "src/Http/Controllers/WebadminMembershipController.php",
+            "src/Http/Controllers/WebadminModeCardsController.php",
+            "src/Http/Controllers/WebadminModerationController.php",
+            "src/Http/Controllers/WebadminProfilePresenceConfigurationController.php",
+            "src/Http/Controllers/WebadminProfilePresentationController.php",
+            "src/Http/Controllers/WebadminProfileTextModerationController.php",
+            "src/Http/Controllers/WebadminProfileVerificationController.php",
+            "src/Http/Controllers/WebadminSectionTeasersController.php",
+            "src/Http/Middleware/AuthMiddleware.php",
+            "src/Http/Middleware/DatesApiVersionMiddleware.php",
+            "src/Http/Middleware/DatesRestrictionMiddleware.php",
+            "src/Http/Middleware/ForcedVerificationExploreRedactionFilter.php",
+            "src/Http/Middleware/ForcedVerificationGateMiddleware.php",
+            "src/Http/Middleware/GoWebSecretMiddleware.php",
+            "src/Http/Middleware/JoinWebSecretMiddleware.php",
+            "src/Http/Middleware/SessionBoundaryMiddleware.php",
+            "src/Http/Middleware/StorefrontCountryMiddleware.php",
+            "src/Http/Middleware/VerificationGateMiddleware.php",
+            "src/Http/Middleware/WebadminSecretMiddleware.php",
+            "src/Services/AdministrativeMessageConsentService.php",
+            "src/Services/AdministrativeMessageConsentStore.php",
+            "src/Services/AppleOidcVerifier.php",
+            "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/ForcedVerificationService.php",
+            "src/Services/GoPreorderAdminService.php",
+            "src/Services/GoPreorderException.php",
+            "src/Services/GoPreorderService.php",
+            "src/Services/MailDeliveryEventSync.php",
+            "src/Services/MailDeliveryReadService.php",
+            "src/Services/MailDeliveryResult.php",
+            "src/Services/MailQueueWorker.php",
+            "src/Services/MailService.php",
+            "src/Services/MailgunTransport.php",
+            "src/Services/MongoAdministrativeMessageConsentStore.php",
+            "src/Services/OutboundMessageDeliveryStateService.php",
+            "src/Services/OutboundMessageTransportFenceService.php",
+            "src/Services/PhoneVerificationAttemptService.php",
+            "src/Services/ProfileIntentsService.php",
+            "src/Services/WebadminMutationCommand.php",
+            "src/Services/WebadminMutationException.php",
+            "src/Services/WebadminMutationService.php",
+            "src/Support/AppAppearancePolicy.php",
+            "src/Support/AuthMethodPolicy.php",
+            "src/Support/CannedTemplateHtmlSanitizer.php",
+            "src/Support/EmailAddressPolicy.php",
+            "src/Support/EmailLanguage.php",
+            "src/Support/EventAi/EventImageNormalizer.php",
+            "src/Support/ForcedVerificationExplorePolicy.php",
+            "src/Support/ForcedVerificationPolicy.php",
+            "src/Support/GoPreorderPolicy.php",
+            "src/Support/GoPreorderSchema.php",
+            "src/Support/GoWeb.php",
+            "src/Support/IpGeo.php",
+            "src/Support/MailDeliverySchema.php",
+            "src/Support/MailTemplates.php",
+            "src/Support/MongoNamespacePolicy.php",
+            "src/Support/MongoSchemaManifest.php",
+            "src/Support/OutboundMessagePolicy.php",
+            "src/Support/PublicProfileLinkPolicy.php",
+            "src/Support/PublicWebBasePolicy.php",
+            "src/Support/PushDeliveryModePolicy.php",
+            "src/Support/SectionAvailabilityPolicy.php",
+            "src/Support/SessionExpiryPolicy.php",
+            "src/Support/VerificationCode.php",
+            "src/Support/VerificationPolicy.php",
+            "src/Support/Webadmin.php",
+            "src/Support/WebadminMutationPolicy.php",
+            "src/Support/WebadminRolePolicy.php",
+            "src/Support/WelcomeMessage.php",
+            "tests/go_preorders_storage_test.php",
+            "tests/support/go_preorders_wire_contract.php"
+        ]
+    },
+    "fixtures": [
+        {
+            "file": "goweb-preorder-already.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f8d96d53f19cda8dba17df664331398ded764185f8513e73a71f9379af7b3189"
+        },
+        {
+            "file": "goweb-preorder-invalid.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 400,
+            "status_code": 400,
+            "sha256": "40945de92bb602bbb0a642da42c0514955ba9e34b4e304afb03e56e19900c0a7"
+        },
+        {
+            "file": "goweb-preorder-new.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2ab5437183014846a9d8f05c41df7b85ec6225fd521bddad3c736798e3acb9ee"
+        },
+        {
+            "file": "goweb-preorder-unauthorized.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 401,
+            "status_code": 401,
+            "sha256": "cc2eb920f50e85321f5b01a6c02d7bbab86ca9665121bd059c3981adc66354bf"
+        },
+        {
+            "file": "goweb-preorder-unavailable.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 503,
+            "status_code": 503,
+            "sha256": "4465b7dc06a9b950fa49cbc9a22fc5a43515ccc15ffc0beabe33ba935c0f7433"
+        },
+        {
+            "file": "goweb-unsubscribe-apply.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "902ed8728fc414ec535621e1d967e0c13dda7bb9bd8dd7fb841585bf4b4d0125"
+        },
+        {
+            "file": "goweb-unsubscribe-info.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1effb02f42b82eabd7c0cae6a0cc0186cff3c8aa949c59b8eee4d9b5c0b48e6d"
+        },
+        {
+            "file": "goweb-unsubscribe-invalid.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 400,
+            "status_code": 400,
+            "sha256": "e1f79d5d9727d0f7f095ff83a6986ae52e381170aa444b862434bfb09ddf7d1b"
+        },
+        {
+            "file": "goweb-unsubscribe-unknown.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 404,
+            "status_code": 404,
+            "sha256": "e64687a814465ad77deaf08ee72ed26fd066ff92f97074e6dcbd5a9140ba5984"
+        },
+        {
+            "file": "webadmin-go-email-campaign-detail-viewer.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "2c026321f05a68776061136c9879b93e5a1cca271e29a325e106064ba37daefa"
+        },
+        {
+            "file": "webadmin-go-email-campaign-detail.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "63caad9919023a0f8e095c87626a6a238b4d16ced27e98c00f1708581f4380d3"
+        },
+        {
+            "file": "webadmin-go-email-campaign-not-found.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "96536cdc97c3734f7a71b3c25797a1d3a59c68244d7e5fef2504b7dc733d232c"
+        },
+        {
+            "file": "webadmin-go-email-campaigns-filter-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "f6a40cf335cc4854f01a0612fdd70fe1820f757ab97343f702528179f81327ce"
+        },
+        {
+            "file": "webadmin-go-email-campaigns.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "fd4df91aa3b6fc1a89f4982914d37da26c026693881910edf51219bb887b930b"
+        },
+        {
+            "file": "webadmin-go-email-preview-all-active.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "cfc33157853ce70b7a44b0a6e3339850d33ac732f65e90129cf81091a029d762"
+        },
+        {
+            "file": "webadmin-go-email-preview-audience-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "4b038398aece6350057615a62a9077eb8ebda6182744984c4e08af64277fa54b"
+        },
+        {
+            "file": "webadmin-go-email-preview-body-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "90ebc0672e11ec142d235c3942fad05f5c7268b5b26872b7e5ed433057ad0632"
+        },
+        {
+            "file": "webadmin-go-email-preview-content-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "f23f8532dbed6639b67b63ede4ebeb771cd92a3b3dc09880dcafbad8e9cc5f38"
+        },
+        {
+            "file": "webadmin-go-email-preview-kind-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "a8a8afcd23346d1cebe203d7141403948b09f777fae49d32ec306c0412966612"
+        },
+        {
+            "file": "webadmin-go-email-preview.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1f976821c73b033f33e6f1387c65129d9cf233fa169440d559afdf5c929b7f24"
+        },
+        {
+            "file": "webadmin-go-email-send-all-active.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "04b85ea6c58334c715a5051226a61b1a6f16e05438ea73c9e6053985fcdddd0c"
+        },
+        {
+            "file": "webadmin-go-email-send-audience-changed.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "59e4e356b0a4290d8d061adb851b3b712ee26b255b346f54960574d870fe5384"
+        },
+        {
+            "file": "webadmin-go-email-send-audience-empty.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "f63eb180fd373e4710e374c064fd03d351af7860b8be8e07be6eb9b77c1ed13b"
+        },
+        {
+            "file": "webadmin-go-email-send-campaign-not-draft.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "cbea3e40547474da03948b5e7c4d35e7587b4b5103356d19b88b61b0ab6884e4"
+        },
+        {
+            "file": "webadmin-go-email-send-campaign-not-found.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "12f62159a5972b96ebc4cacd2066a47f15410162aa5492e7d5919360f1251d38"
+        },
+        {
+            "file": "webadmin-go-email-send-direct.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "91a8e310e9fb2c651ea831fd14801c0ec1d73900d89b411024520696d0b42979"
+        },
+        {
+            "file": "webadmin-go-email-send-draft-update.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "d3ba983afd24ce7477c2be89aa816220e8ad21e0c89590222da4f63714c40ce6"
+        },
+        {
+            "file": "webadmin-go-email-send-draft.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "1d63ce965a1c76d0d5d5caeb66cb0d4ceb8bd2e2eb8dc0c7db3d7af31acb1949"
+        },
+        {
+            "file": "webadmin-go-email-send-mode-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "611acee5970e46af2f583180c453bdca334d0af67ebe3eb2d1ab73348861e930"
+        },
+        {
+            "file": "webadmin-go-email-send-rate-limited.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 429,
+            "sha256": "b16f5cb65f2a42796d2c66e736932d20bc38304909664e8dccc3f15bff928f33"
+        },
+        {
+            "file": "webadmin-go-email-send-replay.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a7d8a290b62a3ca85c5a7d37438da1e5c287acf47a63c579aed11df5d59dd429"
+        },
+        {
+            "file": "webadmin-go-email-send-request-id-conflict.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f22ecca08e10b2474b0aaaa24fe08109ed491180e80eedf8b727cb3bc9f41dfc"
+        },
+        {
+            "file": "webadmin-go-email-send-request-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "cbc682aade386fe5ddd38b0eae4250356099a3d48db6df802f0483f7783ef506"
+        },
+        {
+            "file": "webadmin-go-email-send-test.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "22486470792005345034cc7d3980fb5046fa5bbe217bfa643b62233cdb224c11"
+        },
+        {
+            "file": "webadmin-go-email-send-too-large.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "fba6075a2213fa78f5e40f161836cf7ae9c6045693a8350d8398b1d12fa451f6"
+        },
+        {
+            "file": "webadmin-go-email-send-viewer-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "d20bd0d612e7267a4b3f5f97e31fb7ca284fb76fb59ac5f088cc96c684aa3174"
+        },
+        {
+            "file": "webadmin-go-email-send.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "12cd09b2ab1ee1058c448dff7be56daaaf3d6ff9dd3d7308308494ffa2a9ecc1"
+        },
+        {
+            "file": "webadmin-go-preorders-export-viewer-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "d20bd0d612e7267a4b3f5f97e31fb7ca284fb76fb59ac5f088cc96c684aa3174"
+        },
+        {
+            "file": "webadmin-go-preorders-export.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "98e6434c3773ea031cf405079a0a02a5aa3be75649d6d18a470f19a4f82e406b"
+        },
+        {
+            "file": "webadmin-go-preorders-filter-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "f6a40cf335cc4854f01a0612fdd70fe1820f757ab97343f702528179f81327ce"
+        },
+        {
+            "file": "webadmin-go-preorders-owner.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "41291816553814e39a1c7fd4f33c56f2c3ad4ebc4d5f6b72cb8a8c42a3b134d9"
+        },
+        {
+            "file": "webadmin-go-preorders-request-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "cbc682aade386fe5ddd38b0eae4250356099a3d48db6df802f0483f7783ef506"
+        },
+        {
+            "file": "webadmin-go-preorders-revoked.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "7ca14279ec3e818347b77f76b3b2c68550e2977556e39510f0b89c138cfafa9b"
+        },
+        {
+            "file": "webadmin-go-preorders-search.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "6df4357e277ad24306d960bac53529aa6552a2ba80c2d4408197de1e506b02cc"
+        },
+        {
+            "file": "webadmin-go-preorders-session-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 401,
+            "sha256": "40972c7f616df32648d2df4eebaf02ea4510e9eb357e2248b18fe2f69769561e"
+        },
+        {
+            "file": "webadmin-go-preorders-unauthorized.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 401,
+            "sha256": "92a1f1484a7aae426dbcce31512c40eb078ddeb28fa893a4c7354c1303499c29"
+        },
+        {
+            "file": "webadmin-go-preorders-viewer.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorders",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "b92de67a7068db96bea84a95abe7c5f574a3c83556087c20172b03f6e30f8132"
+        },
+        {
+            "file": "webadmin-go-set-status-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "f05828913b28aca7aade1903c334c50b9d218ce1133000d4ce0c0da724d81a24"
+        },
+        {
+            "file": "webadmin-go-set-status-locked.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "482c5f79e2a273e45ec69ebdf807ca9439b657a44e16dc8fb27dc708ebc35c58"
+        },
+        {
+            "file": "webadmin-go-set-status-not-found.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 404,
+            "sha256": "be9f04a7b50da30c34dc752a65057dcfd876a791abcce851146f67e42acd6c94"
+        },
+        {
+            "file": "webadmin-go-set-status-replay.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "9fa3465d887dd2e926b8ad4df4a5da7e102970aa8037dcd420282998cf86d773"
+        },
+        {
+            "file": "webadmin-go-set-status-request-id-conflict.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f22ecca08e10b2474b0aaaa24fe08109ed491180e80eedf8b727cb3bc9f41dfc"
+        },
+        {
+            "file": "webadmin-go-set-status-request-id-invalid.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "683131ef440d288353d934e425a42b9c2febdc8acc23c31dfab4050efa1d6831"
+        },
+        {
+            "file": "webadmin-go-set-status-resubscribe.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "a1affd2846be5ddebcfa2724e8414c90265e2a6c84ee8e81956fb052b0ae39b1"
+        },
+        {
+            "file": "webadmin-go-set-status-unchanged.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "f699189232d747a9d2bd4d327c78dbfbb1728c86878cca5e22421286f87d9842"
+        },
+        {
+            "file": "webadmin-go-set-status-unsubscribe.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3557fc899c87fc93c8593b2b548f68ce55febc8ead9bfd977bb027c1b621180b"
+        },
+        {
+            "file": "webadmin-go-set-status-viewer-denied.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 403,
+            "sha256": "d20bd0d612e7267a4b3f5f97e31fb7ca284fb76fb59ac5f088cc96c684aa3174"
+        }
+    ]
+}

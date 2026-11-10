@@ -1,0 +1,78 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "filters": {
+            "q": "ca",
+            "status": "active",
+            "page": 1
+        },
+        "totals": {
+            "all": 5,
+            "active": 3,
+            "unsubscribed": 1,
+            "bounced": 1,
+            "complained": 0
+        },
+        "matching": 2,
+        "page": 1,
+        "page_size": 50,
+        "has_more": false,
+        "can_see_addresses": true,
+        "can_write": true,
+        "rows": [
+            {
+                "id": "00000000000000000000600c",
+                "name": "Cleo Park",
+                "first_name": "Cleo",
+                "email": "cleo@example.org",
+                "phone": "+19195550103",
+                "city_label": "Cary, NC",
+                "city_id": null,
+                "city_from_list": false,
+                "status": "active",
+                "status_changed_at": 1799994200,
+                "status_source": null,
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994200
+                },
+                "confirmation": {
+                    "outbound_id": "00000000000000000000600d",
+                    "state": "pending"
+                },
+                "created_at": 1799994200,
+                "updated_at": 1800000000
+            },
+            {
+                "id": "000000000000000000006003",
+                "name": "Ben Carter",
+                "first_name": "Ben",
+                "email": "ben.carter@example.net",
+                "phone": null,
+                "city_label": "Durham, NC",
+                "city_id": "c-durham",
+                "city_from_list": true,
+                "status": "active",
+                "status_changed_at": 1799994100,
+                "status_source": null,
+                "source": "friending.com/go",
+                "consent": {
+                    "text_version": "2026-11-10",
+                    "captured_at": 1799994100
+                },
+                "confirmation": {
+                    "outbound_id": "00000000000000000000600e",
+                    "state": "pending"
+                },
+                "created_at": 1799994100,
+                "updated_at": 1800000000
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

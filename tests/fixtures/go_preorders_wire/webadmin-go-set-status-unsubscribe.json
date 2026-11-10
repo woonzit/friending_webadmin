@@ -1,0 +1,40 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "changed": true,
+        "preorder": {
+            "id": "00000000000000000000600c",
+            "name": "Cleo Park",
+            "first_name": "Cleo",
+            "email": "cleo@example.org",
+            "phone": "+19195550103",
+            "city_label": "Cary, NC",
+            "city_id": null,
+            "city_from_list": false,
+            "status": "unsubscribed",
+            "status_changed_at": 1800000360,
+            "status_source": "webadmin",
+            "source": "friending.com/go",
+            "consent": {
+                "text_version": "2026-11-10",
+                "captured_at": 1799994200
+            },
+            "confirmation": {
+                "outbound_id": "00000000000000000000600d",
+                "state": "pending"
+            },
+            "created_at": 1799994200,
+            "updated_at": 1800000360
+        },
+        "receipt": {
+            "request_id": "00000001-0000-4000-8000-000000000001",
+            "audit_id": "wai:c2187ddbfa029b5649336533f9b725eb9c6515b24cf6a49434c667cbc18948f3",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

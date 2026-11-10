@@ -1,0 +1,20 @@
+{
+    "success": false,
+    "status_code": 422,
+    "error": "go-email-audience-empty",
+    "data": {
+        "counts": {
+            "selected": 2,
+            "sendable": 0,
+            "suppressed": 2
+        },
+        "receipt": {
+            "request_id": "00000013-0000-4000-8000-000000000013",
+            "audit_id": "wai:58f7a2de86c51f81d9f60b50e3cb076659f0725bb561805348c186ed3207abb6",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

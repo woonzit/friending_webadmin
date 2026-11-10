@@ -1,0 +1,37 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "mode": "send",
+        "campaign": {
+            "id": "000000000000000000006009",
+            "kind": "direct",
+            "state": "sent",
+            "subject": "A short note for you",
+            "preheader": "",
+            "audience": {
+                "mode": "selected",
+                "count": 1
+            },
+            "counts": {
+                "selected": 1,
+                "queued": 1,
+                "suppressed": 0
+            },
+            "created_by": "owner@example.test",
+            "sent_by": "owner@example.test",
+            "created_at": 1800000660,
+            "updated_at": 1800000780,
+            "sent_at": 1800000780
+        },
+        "receipt": {
+            "request_id": "0000000e-0000-4000-8000-00000000000e",
+            "audit_id": "wai:c3970314eaabea3f80c3a8c85bd8e07a4735be5f3170251ca931f0008b634e1a",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

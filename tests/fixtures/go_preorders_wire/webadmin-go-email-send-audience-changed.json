@@ -1,0 +1,20 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "go-email-audience-changed",
+    "data": {
+        "counts": {
+            "selected": 3,
+            "sendable": 2,
+            "suppressed": 1
+        },
+        "receipt": {
+            "request_id": "00000012-0000-4000-8000-000000000012",
+            "audit_id": "wai:d89ba30fa29aef17954ef504301e9e7446ba2cd8f99f92721caba73f287f30ad",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

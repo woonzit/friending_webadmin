@@ -1,0 +1,33 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "mode": "save_draft",
+        "campaign": {
+            "id": "000000000000000000006009",
+            "kind": "direct",
+            "state": "draft",
+            "subject": "A note for you",
+            "preheader": "",
+            "audience": {
+                "mode": "selected",
+                "count": 1
+            },
+            "counts": null,
+            "created_by": "owner@example.test",
+            "sent_by": null,
+            "created_at": 1800000660,
+            "updated_at": 1800000660,
+            "sent_at": null
+        },
+        "receipt": {
+            "request_id": "0000000c-0000-4000-8000-00000000000c",
+            "audit_id": "wai:2cbc4454e258ca42b334408b7fd49395e2b130b0682728c20d3d6b8866bd3d70",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
