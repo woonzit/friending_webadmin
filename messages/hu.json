@@ -2701,8 +2701,8 @@
           },
           "statusChanges": {
             "title": "Leiratkoztatás és visszairatkoztatás",
-            "purpose": "A Leiratkoztatás azonnal leállít minden FriendingGO-levelet egy címre. A Visszairatkoztatás újra bekapcsolja, és csak ott jelenik meg, ahol a Core ezt a konzolnak megengedi.",
-            "guidance": "Csak az illető saját kérésére iratkoztass vissza. A visszapattant és a spamnek jelölő cím zárolva van, és az is, amelyik maga iratkozott le: ilyenkor gomb helyett a sor megmondja, miért.",
+            "purpose": "A Leiratkoztatás azonnal leállít minden FriendingGO-levelet egy címre. A Visszairatkoztatás újra bekapcsolja; a Core csak az ebben a konzolban végzett leiratkoztatás visszavonására kínálja fel.",
+            "guidance": "Zárolva van a cím, ha az illető maga iratkozott le, ha kézbesítési visszajelzés iratkoztatta le, vagy ha visszapattant vagy spamnek jelölte a levelet: ilyenkor gomb helyett a sor megmondja, miért. Az illető maga visszairatkozhat a leiratkozó oldalon.",
             "actions": {
               "1": "Nyomd meg a sorban a Leiratkoztatás vagy a Visszairatkoztatás gombot, és erősítsd meg a párbeszédablakban.",
               "2": "Ha a kimenetel ismeretlen, nyomd meg az értesítésben az Ugyanannak a kérésnek az újraküldése gombot; ez sosem végez második módosítást."
@@ -2730,7 +2730,7 @@
         "sections": {
           "composer": {
             "title": "Megírás",
-            "purpose": "A tárgy (legfeljebb 150 karakter), az előnézeti sor (legfeljebb 200) és a HTML-szöveg (legfeljebb 60 000 karakter, csak az üzenetsablonok tagjeivel). A {{first_name}} és a {{city}} mezőkód helyére mindenkinél a saját adata kerül.",
+            "purpose": "A tárgy (legfeljebb 150 karakter), az előnézeti sor (legfeljebb 200) és a HTML-szöveg (legfeljebb 50 000 karakter, csak az üzenetsablonok tagjeivel). A {{first_name}} és a {{city}} mezőkód helyére mindenkinél a saját adata kerül.",
             "guidance": "A FriendingGO-levelek angolul mennek ki. A fejlécet, a cég postai címét és a leiratkozó linket a rendszer automatikusan hozzáadja; ezeket ne írd bele a szövegbe.",
             "actions": {
               "1": "A mezőkód-gombokkal a kurzor helyére szúrod be a {{first_name}} vagy a {{city}} kódot.",
@@ -2748,7 +2748,7 @@
           },
           "preview": {
             "title": "Előnézet",
-            "purpose": "Az Előnézet a valódi FriendingGO-elrendezésben mutatja a levelet Alex keresztnévvel és Raleigh, NC várossal, és megmutatja, hányan vannak kiválasztva, hányan kapják meg, és hányan maradnak ki.",
+            "purpose": "Az Előnézet a valódi FriendingGO-elrendezésben mutatja a levelet Alex keresztnévvel és Raleigh, NC várossal, és megmutatja, hányan vannak kiválasztva, hányan kapják meg, és okonként hányan maradnak ki.",
             "guidance": "Egy előnézet pontosan ahhoz a szöveghez és címzettkörhöz tartozik, amelyhez készült. Bármilyen változás után elavultként jelöljük, és a Küldés addig nem érhető el, amíg nem kérsz új előnézetet.",
             "actions": {
               "1": "Küldés előtt olvasd el a számokat; ha valaki kimarad, az teljesen rendben van.",
@@ -2757,7 +2757,7 @@
           },
           "testDrafts": {
             "title": "Teszt és piszkozatok",
-            "purpose": "A Teszt nekem egy példányt küld a saját admin címedre, a tárgy elején [Test] jelöléssel és a mintaadatokkal. A Piszkozat mentése elküldés nélkül tárolja a levelet a Core-ban; a piszkozatok a szerkesztő mellett és az Elküldött lapon látszanak.",
+            "purpose": "A Teszt nekem egy példányt küld a saját admin címedre, a tárgy elején [Test] jelöléssel és a mintaadatokkal. A Piszkozat mentése elküldés nélkül tárolja a levelet a Core-ban; minden piszkozat látszik a szerkesztő mellett és az Elküldött lapon.",
             "guidance": "A teszt senki máshoz nem jut el, a piszkozat pedig senkinek sem ír. Egy megnyitott piszkozat mentése felülírja azt; a közben elküldött piszkozat már nem módosítható.",
             "actions": {
               "1": "Piszkozatot a Piszkozatok listából vagy az Elküldött lap Piszkozat szerkesztése gombjával nyithatsz meg.",
@@ -2766,8 +2766,8 @@
           },
           "send": {
             "title": "Küldés",
-            "purpose": "A Küldés… gomb megerősítő ablakot nyit, amely megmondja, pontosan hány fő kapja meg a levelet, és hányan maradnak ki. A megerősítés pontosan az előnézetben látott levelet küldi el.",
-            "guidance": "A küldés nem vonható vissza. Ha az előnézet óta megváltoztak a címzettek, a Core elutasítja a küldést, az előnézet frissül, és az új számot kell megerősítened.",
+            "purpose": "A Küldés… gomb megerősítő ablakot nyit, amely megmondja, pontosan hány fő kapja meg a levelet, és okonként hányan maradnak ki. A Core egy nagy küldést részletekben ír; a konzol ugyanazzal a kéréssel viszi tovább, és mutatja, hol tart.",
+            "guidance": "A küldés nem vonható vissza; hagyd nyitva az oldalt, amíg ki nem írja, hogy a levél elment. Ha az előnézet óta megváltoztak a címzettek, a Core elutasítja a küldést, az előnézet frissül, és az új számot kell megerősítened.",
             "actions": {
               "1": "Csak akkor erősítsd meg, ha az ablakban látható szám az, amire számítasz.",
               "2": "Utána az Elküldött lapon nézd meg a kézbesítést."
@@ -2776,7 +2776,7 @@
           "uncertain": {
             "title": "Ismeretlen kimenetel",
             "purpose": "Minden teszt, piszkozat és küldés egy kérésazonosítót visz magával, amelyet ez a böngészőlap addig őriz, amíg a Core válasza ismertté nem válik. Ha a válasz elveszik, az oldal megtartja a kérést, és felajánlja az újraküldését.",
-            "guidance": "Ugyanannak a kérésnek az újraküldése senkinek sem ír kétszer; a félbemaradt küldést a Core befejezi. Ha elveted a kérést, és ugyanazt a levelet újra megírod, mindenki kétszer kaphatja meg, ezért előbb nézd meg az Elküldött lapot.",
+            "guidance": "Ugyanannak a kérésnek az újraküldése senkinek sem ír kétszer; a félbemaradt küldést a Core befejezi, és ha egy korábbi próbálkozás még fut, a konzol annyit vár, amennyit a Core kér. Ha elveted a kérést, és ugyanazt a levelet újra megírod, mindenki kétszer kaphatja meg, ezért előbb nézd meg az Elküldött lapot.",
             "actions": {
               "1": "Nyomd meg az Ugyanannak a kérésnek az újraküldése gombot, amíg a kimenetel ismertté nem válik.",
               "2": "Az Elvetés gombot csak akkor használd, ha az Elküldött lap már megmutatta, mi történt."
@@ -2795,7 +2795,7 @@
         "sections": {
           "campaigns": {
             "title": "Kampányok",
-            "purpose": "Minden sor egy kampány: tárgy, típus és állapot, címzettkör, ki küldte, mikor, és hány főnek ment ki, illetve hányan maradtak ki.",
+            "purpose": "Minden sor egy kampány: tárgy, típus és állapot, címzettkör, ki küldte, mikor, és hány főnek ment ki, illetve hányan maradtak ki. A Megjelenítés szűrővel csak a piszkozatok, a folyamatban lévő vagy az elküldött kampányok látszanak.",
             "guidance": "A Küldés alatt jelölésű kampányt a Core még írja; frissíts egy kicsit később. A piszkozatoknál nincs szám, mert még senkinek sem írtunk.",
             "actions": {
               "1": "A Megnyitás gombbal egy kampányt részletesen látsz.",
@@ -13082,13 +13082,9 @@
       "complained": "Spamnek jelölte"
     },
     "statusSource": {
-      "unsubscribe_link": "Leiratkozó link",
-      "webadmin": "Ebben a konzolban módosítva",
-      "signup": "Újra feliratkozott",
-      "mailgun_failed": "A kézbesítés véglegesen meghiúsult",
-      "mailgun_rejected": "A Mailgun elutasította",
-      "mailgun_complained": "Spambejelentés",
-      "mailgun_unsubscribed": "Leiratkozás a Mailgunon át"
+      "self": "Az illető maga (leiratkozó oldal)",
+      "admin": "Ebben a konzolban",
+      "feedback": "Kézbesítési visszajelzés (visszapattanás, spambejelentés vagy Mailgun)"
     },
     "kind": {
       "direct": "Közvetlen e-mail",
@@ -13130,6 +13126,7 @@
       "statusLocked": "Ez a cím zárolva van, itt nem módosítható.",
       "kindInvalid": "A Core elutasította az e-mail típusát.",
       "contentInvalid": "A Core elutasította a tárgyat vagy az előnézeti sort. Ellenőrizd a hosszukat, és vedd ki belőlük a sortörést.",
+      "bodyTooLarge": "A szöveg hosszabb 50 000 karakternél. Rövidítsd le.",
       "bodyInvalid": "A Core elutasította a szöveget. Csak az engedélyezett tageket használd, és csak https:// vagy mailto: kezdetű linkeket.",
       "audienceInvalid": "A Core elutasította a címzetteket: valaki a kiválasztottak közül már nem létezik, vagy a közvetlen e-mail mindenkinek szólna. Válaszd ki újra a címzetteket.",
       "audienceEmpty": "Ebből a körből senkinek sem küldhető e-mail: mindenki leiratkozott, visszapattant vagy spamnek jelölte.",
@@ -13208,7 +13205,9 @@
         "resubscribed": "{name} újra kap FriendingGO-leveleket.",
         "unchanged": "{name} már ebben az állapotban volt. Nem változott semmi.",
         "locked": {
-          "unsubscribed": "Zárolva: az illető maga iratkozott le. Csak ő iratkozhat vissza, a leiratkozó oldalon.",
+          "self": "Zárolva: az illető maga iratkozott le. Csak ő iratkozhat vissza, a leiratkozó oldalon.",
+          "feedback": "Zárolva: kézbesítési visszajelzés iratkoztatta le (spambejelentés vagy Mailgun-leiratkozás). Itt nem kapcsolható vissza.",
+          "unsubscribed": "Zárolva: ez a leiratkozás a konzolból nem vonható vissza.",
           "bounced": "Zárolva: az erre a címre küldött levél visszapattant.",
           "complained": "Zárolva: az illető spamnek jelölte a FriendingGO-levelet. Soha többé nem kap tőlünk e-mailt."
         }
@@ -13251,7 +13250,8 @@
         "none": "Még nincs kiválasztva senki.",
         "choose": "Címzettek kiválasztása az Előrendelések lapon",
         "more": "{count, plural, one {és még # fő} other {és még # fő}}",
-        "clear": "Törlés"
+        "clear": "Törlés",
+        "allActiveCount": "Minden aktív feliratkozó ({count})"
       },
       "problems": {
         "subject": "Írj 1–{subjectMax} karakteres, egysoros tárgyat.",
@@ -13292,13 +13292,13 @@
       },
       "drafts": {
         "title": "Piszkozatok",
-        "copy": "Mentett piszkozatok a legújabb kampányok között. Nyiss meg egyet, és folytasd az írást.",
+        "copy": "Minden mentett piszkozat, a legújabbal kezdve. Nyiss meg egyet, és folytasd az írást.",
         "reload": "Frissítés",
         "loading": "Piszkozatok betöltése…",
         "error": "Nem sikerült betölteni a piszkozatokat.",
         "empty": "Nincs mentett piszkozat.",
         "open": "Megnyitás",
-        "more": "A régebbi piszkozatok az Elküldött lapon vannak.",
+        "more": "Ötvennél több piszkozat van: a régebbiek az Elküldött lapon érhetők el (Megjelenítés: Piszkozat).",
         "opened": "Megnyitottad a(z) „{subject}” piszkozatot.",
         "notDraft": "Ez a kampány már nem piszkozat, ezért nem szerkeszthető."
       },
@@ -13307,7 +13307,8 @@
         "save_draft": "Nem tudjuk, elmentődött-e a(z) „{subject}” piszkozat.",
         "send": "Nem tudjuk, elment-e a(z) „{subject}”.",
         "copy": "Az újraküldés pontosan ugyanazt a kérést küldi el: ha már elkezdődött, a Core befejezi, és senkinek sem ír kétszer.",
-        "stillSending": "A Core még nem fejezte be ezt a kérést (egy nagy küldés eltarthat egy ideig, vagy egy korábbi próbálkozás félbemaradt). Küldd el újra ugyanazt a kérést, hogy befejeződjön; senki sem kap kétszer levelet."
+        "stillSending": "A Core még nem fejezte be ezt a kérést (egy nagy küldés eltarthat egy ideig, vagy egy korábbi próbálkozás félbemaradt). Küldd el újra ugyanazt a kérést, hogy befejeződjön; senki sem kap kétszer levelet.",
+        "paused": "A küldés {processed} / {total} főnél megállt. Az újraküldéssel ugyanaz a kérés folytatja; senki sem kap kétszer levelet."
       },
       "notices": {
         "test": "Tesztpéldányt küldtünk ide: {to}.",
@@ -13339,6 +13340,11 @@
         "copy": "Amit most írsz, felülíródik. Ha meg akarod tartani, előbb mentsd el piszkozatként.",
         "open": "Piszkozat megnyitása",
         "clear": "Új e-mail kezdése"
+      },
+      "accessError": "A Core nem erősítette meg, hogy küldhetsz-e. Tesztküldéshez, piszkozatmentéshez vagy küldéshez töltsd újra az oldalt.",
+      "progress": {
+        "sending": "Küldés részletekben: {processed} / {total} fő kész. Hagyd nyitva az oldalt; a konzol ugyanazzal a kéréssel viszi tovább a küldést.",
+        "waiting": "A Core még a küldés egy korábbi próbálkozásán dolgozik. A konzol {seconds} mp múlva újra elküldi ugyanazt a kérést."
       }
     },
     "sent": {
@@ -13360,7 +13366,8 @@
         "when": "Időpont",
         "counts": "Kiküldve / kimaradt",
         "countsValue": "{queued} / {suppressed}",
-        "editDraft": "Piszkozat szerkesztése"
+        "editDraft": "Piszkozat szerkesztése",
+        "emptyFiltered": "Egy kampány sincs ebben az állapotban."
       },
       "audience": {
         "allActive": "Minden aktív feliratkozó",
@@ -13394,6 +13401,10 @@
         "deliveredAt": "Kézbesítve",
         "queued": "Kiküldve",
         "suppressed": "Kimaradt"
+      },
+      "filters": {
+        "state": "Megjelenítés",
+        "all": "Minden kampány"
       }
     }
   }

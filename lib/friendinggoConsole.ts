@@ -7,16 +7,22 @@ import {
   FRIENDINGGO_STATUSES,
   FRIENDINGGO_SUBJECT_MAX,
   friendingGoBody,
+  friendingGoError,
+  friendingGoOutcomeUnknown,
   friendingGoPreheader,
+  friendingGoRetryAfter,
   friendingGoSendBody,
+  friendingGoSendResult,
   friendingGoStatusBody,
   friendingGoSubject,
   isFriendingGoObjectId,
   type FriendingGoAudience,
-  type FriendingGoCounts,
   type FriendingGoEmailContent,
+  type FriendingGoError,
   type FriendingGoKind,
+  type FriendingGoProgress,
   type FriendingGoSendBody,
+  type FriendingGoSendResult,
   type FriendingGoStatus,
   type FriendingGoStatusBody,
 } from "@/lib/friendinggo";
@@ -100,22 +106,6 @@ export function friendingGoSelection(value: unknown): FriendingGoSelected[] | nu
 /** Ids as the wire carries them: unique, sorted. */
 export function friendingGoSelectionIds(selection: readonly FriendingGoSelected[]): string[] {
   return [...new Set(selection.map((person) => person.id))].sort();
-}
-
-/**
- * Who of the selection will be left out, by status, but only when it agrees with Core's preview: the
- * statuses are the list's as it was read, so a breakdown that does not add up to Core's count is not shown.
- */
-export function friendingGoLeftOut(
-  selection: readonly FriendingGoSelected[],
-  counts: FriendingGoCounts,
-): Array<{ status: Exclude<FriendingGoStatus, "active">; count: number }> | null {
-  if (selection.some((person) => person.status === null)) return null;
-  const leftOut = (["unsubscribed", "bounced", "complained"] as const)
-    .map((status) => ({ status, count: selection.filter((person) => person.status === status).length }))
-    .filter((entry) => entry.count > 0);
-  return leftOut.reduce((sum, entry) => sum + entry.count, 0) === counts.suppressed
-    && selection.length === counts.selected ? leftOut : null;
 }
 
 // ------------------------------------------------------------------ composer
@@ -250,4 +240,64 @@ export function friendingGoPendingStatus(value: unknown): FriendingGoPendingStat
   if (typeof entry.name !== "string" || entry.name.length > 200) return null;
   const command = friendingGoStatusBody(raw);
   return command ? { version: 1, command, name: entry.name } : null;
+}
+
+// ------------------------------------------------------------------ a sliced send (Core round 2)
+
+/**
+ * How far the console carries one email command on its own before it hands the decision back to the
+ * operator (the manual "Retry the same request"). Core writes at least one batch of 50 per call, so a
+ * 5,000-recipient send needs at most 100 calls; three answers without progress, or three waits on an
+ * earlier attempt still running, mean something is wrong. A wait is what Core asks
+ * (`retry_after_seconds`, 120 s for a send that died), capped.
+ */
+export const FRIENDINGGO_SEND_LIMITS = { rounds: 120, stalls: 3, waits: 3, waitCapSeconds: 150, continueDelayMs: 300 } as const;
+
+export type FriendingGoSendLoop = { rounds: number; stalls: number; waits: number; processed: number };
+export const FRIENDINGGO_SEND_LOOP_START: FriendingGoSendLoop = { rounds: 0, stalls: 0, waits: 0, processed: -1 };
+
+export type FriendingGoSendStep =
+  /** A test, a draft, or a send Core answered `sent`: the command is settled. */
+  | { kind: "done"; result: FriendingGoSendResult }
+  /** Core answered `sending`: call again with the SAME command. */
+  | { kind: "continue"; progress: FriendingGoProgress; delayMs: number }
+  /** The same request is still running (`go-request-in-progress`): wait as Core asks, then call again. */
+  | { kind: "wait"; seconds: number }
+  /** The limits are reached while Core still answers `sending`: keep the command, the operator retries. */
+  | { kind: "paused"; progress: FriendingGoProgress }
+  /** The outcome is not known (timeout, 503, a lost answer, or waits used up): keep the command. */
+  | { kind: "unknown"; error: FriendingGoError | null }
+  /** A named refusal: final for this request id. */
+  | { kind: "refused"; error: FriendingGoError | null };
+
+/** One answer to an email command, and what the console does next. Pure. */
+export function friendingGoSendStep(
+  response: unknown,
+  command: FriendingGoSendBody,
+  loop: FriendingGoSendLoop,
+): { step: FriendingGoSendStep; loop: FriendingGoSendLoop } {
+  const rounds = loop.rounds + 1;
+  const result = friendingGoSendResult(response, command);
+  if (result) {
+    if (result.mode === "send" && result.campaign.state === "sending") {
+      const progress = result.progress;
+      const stalls = progress.processed > loop.processed ? 0 : loop.stalls + 1;
+      const next = { rounds, stalls, waits: loop.waits, processed: Math.max(loop.processed, progress.processed) };
+      return rounds >= FRIENDINGGO_SEND_LIMITS.rounds || stalls >= FRIENDINGGO_SEND_LIMITS.stalls
+        ? { step: { kind: "paused", progress }, loop: next }
+        : { step: { kind: "continue", progress, delayMs: FRIENDINGGO_SEND_LIMITS.continueDelayMs }, loop: next };
+    }
+    return { step: { kind: "done", result }, loop: { ...loop, rounds } };
+  }
+  const retryAfter = friendingGoRetryAfter(response);
+  if (retryAfter !== null && loop.waits < FRIENDINGGO_SEND_LIMITS.waits && rounds < FRIENDINGGO_SEND_LIMITS.rounds) {
+    return {
+      step: { kind: "wait", seconds: Math.min(retryAfter, FRIENDINGGO_SEND_LIMITS.waitCapSeconds) },
+      loop: { ...loop, rounds, waits: loop.waits + 1 },
+    };
+  }
+  const error = response === null ? null : friendingGoError(response);
+  return friendingGoOutcomeUnknown(response)
+    ? { step: { kind: "unknown", error }, loop: { ...loop, rounds } }
+    : { step: { kind: "refused", error }, loop: { ...loop, rounds } };
 }

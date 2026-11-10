@@ -16,7 +16,8 @@ import {
   FRIENDINGGO_STATUSES,
   friendingGoError,
   friendingGoErrorKey,
-  friendingGoLockedStatus,
+  friendingGoLock,
+  friendingGoLockReason,
   friendingGoNextStatus,
   friendingGoOutcomeUnknown,
   friendingGoPreorders,
@@ -296,7 +297,7 @@ export function FriendingGoPreordersView({
                                   {next === "unsubscribed" ? t("preorders.status.unsubscribe") : t("preorders.status.resubscribe")}
                                 </button>
                               ) : (
-                                <small className="friendinggo-locked">{t(`preorders.status.locked.${row.status as Exclude<FriendingGoStatus, "active">}`)}</small>
+                                <small className="friendinggo-locked">{t(`preorders.status.locked.${friendingGoLockReason(row.status, row.status_source)}`)}</small>
                               )}
                             </td>
                           ) : null}
@@ -420,10 +421,10 @@ export default function FriendingGoPreordersConsole() {
       friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.pendingStatus, null);
       setPending(null);
       const error = friendingGoError(response);
-      const lockedStatus = error === "go-preorder-status-locked" ? friendingGoLockedStatus(response) : null;
+      const lock = friendingGoLock(response);
       setNotice({
         tone: "error",
-        text: lockedStatus ? t(`preorders.status.locked.${lockedStatus}`) : t(`errors.${friendingGoErrorKey(error)}`),
+        text: lock ? t(`preorders.status.locked.${lock}`) : t(`errors.${friendingGoErrorKey(error)}`),
       });
       if (error === "go-preorder-status-locked" || error === "go-preorder-not-found") reload();
     }

@@ -2701,8 +2701,8 @@
           },
           "statusChanges": {
             "title": "Unsubscribe and resubscribe",
-            "purpose": "Unsubscribe stops all FriendingGO email to an address at once. Resubscribe turns it back on, and is offered only where Core allows the console to do so.",
-            "guidance": "Resubscribe only at the person's own request. Bounced and spam-reported addresses are locked, and so is an address the person unsubscribed themselves: the row says why instead of showing a button.",
+            "purpose": "Unsubscribe stops all FriendingGO email to an address at once. Resubscribe turns it back on, and Core offers it only to undo an unsubscribe made in this console.",
+            "guidance": "An address the person unsubscribed themselves, one unsubscribed by delivery feedback, and bounced or spam-reporting addresses are locked: the row says why instead of showing a button. The person can come back themselves from the unsubscribe page.",
             "actions": {
               "1": "Press Unsubscribe or Resubscribe on a row and confirm in the dialog.",
               "2": "If the outcome is unknown, press Retry the same request in the notice; it never makes a second change."
@@ -2730,7 +2730,7 @@
         "sections": {
           "composer": {
             "title": "Compose",
-            "purpose": "The subject (at most 150 characters), the preheader (at most 200) and the HTML body (at most 60,000 characters, with the message-template tags only). The merge tags {{first_name}} and {{city}} are replaced for each person.",
+            "purpose": "The subject (at most 150 characters), the preheader (at most 200) and the HTML body (at most 50,000 characters, with the message-template tags only). The merge tags {{first_name}} and {{city}} are replaced for each person.",
             "guidance": "FriendingGO email is in English. The header, the company's postal address and the unsubscribe link are added automatically; do not write them into the body.",
             "actions": {
               "1": "Use the merge-tag buttons to insert {{first_name}} or {{city}} where the cursor is.",
@@ -2748,7 +2748,7 @@
           },
           "preview": {
             "title": "Preview",
-            "purpose": "Preview renders the email in the real FriendingGO layout with the sample first name Alex and the city Raleigh, NC, and shows how many are selected, how many will receive it and how many are left out.",
+            "purpose": "Preview renders the email in the real FriendingGO layout with the sample first name Alex and the city Raleigh, NC, and shows how many are selected, how many will receive it, and how many are left out for each reason.",
             "guidance": "A preview belongs to exactly the text and audience it was made for. After any change it is marked out of date, and Send stays unavailable until you preview again.",
             "actions": {
               "1": "Read the counts before you send; a left-out count above zero is normal.",
@@ -2757,7 +2757,7 @@
           },
           "testDrafts": {
             "title": "Test and drafts",
-            "purpose": "Send test to me sends one copy, with [Test] before the subject and the sample values, to your own admin address. Save draft keeps the email in Core without sending it; drafts are listed beside the composer and on the Sent tab.",
+            "purpose": "Send test to me sends one copy, with [Test] before the subject and the sample values, to your own admin address. Save draft keeps the email in Core without sending it; every draft is listed beside the composer and on the Sent tab.",
             "guidance": "A test never reaches anyone else, and a draft emails nobody. Saving an opened draft updates it; a draft that was sent meanwhile cannot be changed.",
             "actions": {
               "1": "Open a draft from the Drafts list, or with Edit draft on the Sent tab.",
@@ -2766,8 +2766,8 @@
           },
           "send": {
             "title": "Sending",
-            "purpose": "Send… opens a confirmation that states the exact number of people who will receive the email and how many are left out. Confirming sends exactly the previewed email.",
-            "guidance": "Sending cannot be undone. If the audience changed since the preview, Core refuses the send, the preview is updated, and you confirm the new number.",
+            "purpose": "Send… opens a confirmation that states the exact number of people who will receive the email and how many are left out, by reason. Core writes a large send in parts; the console carries it on with the same request and shows how far it is.",
+            "guidance": "Sending cannot be undone; keep the page open until it says the email was sent. If the audience changed since the preview, Core refuses the send, the preview is updated, and you confirm the new number.",
             "actions": {
               "1": "Confirm only when the number in the dialog is what you expect.",
               "2": "Check the Sent tab afterwards to see delivery."
@@ -2776,7 +2776,7 @@
           "uncertain": {
             "title": "Unknown outcomes",
             "purpose": "Every test, draft and send carries a request identity that this browser tab keeps until Core's answer is known. When the answer is lost, the page keeps the request and offers Retry the same request.",
-            "guidance": "Retrying the same request never emails anyone twice; Core finishes a send that stopped midway. Forgetting the request and writing the same email again can email everyone twice, so check the Sent tab first.",
+            "guidance": "Retrying the same request never emails anyone twice; Core finishes a send that stopped midway, and the console waits as long as Core asks when an earlier attempt is still running. Forgetting the request and writing the same email again can email everyone twice, so check the Sent tab first.",
             "actions": {
               "1": "Press Retry the same request until the outcome is known.",
               "2": "Use Forget it only after the Sent tab shows what happened."
@@ -2795,7 +2795,7 @@
         "sections": {
           "campaigns": {
             "title": "Campaigns",
-            "purpose": "Each row is one campaign: subject, type and state, audience, who sent it, when, and how many people were emailed and left out.",
+            "purpose": "Each row is one campaign: subject, type and state, audience, who sent it, when, and how many people were emailed and left out. The Show filter lists only drafts, sends in progress or sent campaigns.",
             "guidance": "A campaign marked Sending is still being written by Core; refresh after a moment. Drafts show no counts because nobody was emailed.",
             "actions": {
               "1": "Press Open to see one campaign in detail.",
@@ -13082,13 +13082,9 @@
       "complained": "Reported spam"
     },
     "statusSource": {
-      "unsubscribe_link": "Unsubscribe link",
-      "webadmin": "Changed in this console",
-      "signup": "Signed up again",
-      "mailgun_failed": "Delivery failed permanently",
-      "mailgun_rejected": "Rejected by Mailgun",
-      "mailgun_complained": "Spam report",
-      "mailgun_unsubscribed": "Unsubscribed through Mailgun"
+      "self": "By the person (unsubscribe page)",
+      "admin": "In this console",
+      "feedback": "Delivery feedback (bounce, spam report or Mailgun)"
     },
     "kind": {
       "direct": "Direct email",
@@ -13130,6 +13126,7 @@
       "statusLocked": "This address is locked and cannot be changed here.",
       "kindInvalid": "Core refused the email type.",
       "contentInvalid": "Core refused the subject or the preheader. Check their length and remove line breaks.",
+      "bodyTooLarge": "The body is longer than 50,000 characters. Shorten it.",
       "bodyInvalid": "Core refused the body. Use only the allowed tags, and links that start with https:// or mailto:.",
       "audienceInvalid": "Core refused the audience: someone selected no longer exists, or a direct email was addressed to everyone. Choose the people again.",
       "audienceEmpty": "Nobody in this audience can receive email: everyone selected has unsubscribed, bounced, or reported spam.",
@@ -13208,7 +13205,9 @@
         "resubscribed": "{name} receives FriendingGO email again.",
         "unchanged": "{name} already had this status. Nothing changed.",
         "locked": {
-          "unsubscribed": "Locked: the person unsubscribed. Only they can resubscribe, from the unsubscribe page.",
+          "self": "Locked: the person unsubscribed themselves. Only they can resubscribe, from the unsubscribe page.",
+          "feedback": "Locked: unsubscribed by delivery feedback (a spam report or a Mailgun unsubscribe). It cannot be turned back on here.",
+          "unsubscribed": "Locked: this unsubscribe cannot be undone from the console.",
           "bounced": "Locked: email to this address bounced.",
           "complained": "Locked: the person reported FriendingGO email as spam. They are never emailed again."
         }
@@ -13251,7 +13250,8 @@
         "none": "Nobody is selected yet.",
         "choose": "Choose people on the Preorders tab",
         "more": "{count, plural, one {and # more} other {and # more}}",
-        "clear": "Clear"
+        "clear": "Clear",
+        "allActiveCount": "Everyone active ({count})"
       },
       "problems": {
         "subject": "Write a subject of 1 to {subjectMax} characters, on one line.",
@@ -13292,13 +13292,13 @@
       },
       "drafts": {
         "title": "Drafts",
-        "copy": "Saved drafts among the newest campaigns. Open one to continue writing.",
+        "copy": "Every saved draft, newest first. Open one to continue writing.",
         "reload": "Reload",
         "loading": "Loading drafts…",
         "error": "The drafts could not be loaded.",
         "empty": "No saved drafts.",
         "open": "Open",
-        "more": "Older drafts are listed on the Sent tab.",
+        "more": "More than fifty drafts: the older ones are on the Sent tab (Show: Draft).",
         "opened": "Opened the draft “{subject}”.",
         "notDraft": "This campaign is no longer a draft, so it cannot be edited."
       },
@@ -13307,7 +13307,8 @@
         "save_draft": "We don't know whether the draft “{subject}” was saved.",
         "send": "We don't know whether “{subject}” was sent.",
         "copy": "Retry sends exactly the same request: Core finishes it if it started and never emails anyone twice.",
-        "stillSending": "Core has not finished this request yet (a large send can take a while, or an earlier attempt stopped midway). Retry the same request to finish it; nobody is emailed twice."
+        "stillSending": "Core has not finished this request yet (a large send can take a while, or an earlier attempt stopped midway). Retry the same request to finish it; nobody is emailed twice.",
+        "paused": "The send stopped at {processed} of {total} people. Retry the same request to carry it on; nobody is emailed twice."
       },
       "notices": {
         "test": "A test copy was sent to {to}.",
@@ -13339,6 +13340,11 @@
         "copy": "What you are writing now will be replaced. Save it as a draft first if you want to keep it.",
         "open": "Open the draft",
         "clear": "Start a new email"
+      },
+      "accessError": "Core did not confirm whether you may send. Reload the page to send a test, save a draft or send.",
+      "progress": {
+        "sending": "Sending in parts: {processed} of {total} people done. Keep this page open; the console carries the send on with the same request.",
+        "waiting": "Core is still busy with an earlier attempt of this send. The console tries the same request again in {seconds} s."
       }
     },
     "sent": {
@@ -13360,7 +13366,8 @@
         "when": "When",
         "counts": "Emailed / left out",
         "countsValue": "{queued} / {suppressed}",
-        "editDraft": "Edit draft"
+        "editDraft": "Edit draft",
+        "emptyFiltered": "No campaign is in this state."
       },
       "audience": {
         "allActive": "Everyone active",
@@ -13394,6 +13401,10 @@
         "deliveredAt": "Delivered",
         "queued": "Emailed",
         "suppressed": "Left out"
+      },
+      "filters": {
+        "state": "Show",
+        "all": "All campaigns"
       }
     }
   }

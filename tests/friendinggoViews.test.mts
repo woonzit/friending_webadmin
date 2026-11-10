@@ -33,6 +33,7 @@ const CONTENT: go.FriendingGoEmailContent = { kind: "newsletter", subject: "Frie
   body_html: PREVIEW_BODY.data.body_html, audience: "selected", preorder_ids: THREE };
 const PREVIEW = go.friendingGoPreview(PREVIEW_BODY, CONTENT)!;
 const CAMPAIGNS = go.friendingGoCampaigns(fixture("webadmin-go-email-campaigns"), 1)!;
+const DRAFTS = go.friendingGoCampaigns(fixture("webadmin-go-email-campaigns-drafts"), 1, "draft")!;
 const DETAIL = go.friendingGoCampaignDetail(fixture("webadmin-go-email-campaign-detail"), "000000000000000000006002", 1)!;
 const DETAIL_VIEWER = go.friendingGoCampaignDetail(fixture("webadmin-go-email-campaign-detail-viewer"), "000000000000000000006002", 1)!;
 const noop = () => undefined;
@@ -61,7 +62,7 @@ test("Preorders renders Core's owner capture in both locales: tabs, cards, rows,
     const html = preorders(locale);
     for (const text of [copy.tabs.preorders, copy.tabs.email, copy.tabs.sent, copy.preorders.title, copy.preorders.cards.all, copy.preorders.export.button,
       copy.status.active, copy.status.unsubscribed, copy.status.bounced, copy.status.complained, copy.preorders.status.unsubscribe,
-      copy.preorders.status.resubscribe, copy.preorders.status.locked.bounced, copy.statusSource.unsubscribe_link, copy.statusSource.mailgun_failed,
+      copy.preorders.status.locked.self, copy.preorders.status.locked.bounced, copy.statusSource.self, copy.statusSource.feedback,
       copy.preorders.list.cityTyped, copy.preorders.selection.clear]) {
       assert.ok(html.includes(escaped(text)), `${locale}: ${text}`);
     }
@@ -73,9 +74,9 @@ test("Preorders renders Core's owner capture in both locales: tabs, cards, rows,
     assert.equal([...html.matchAll(/type="checkbox"/g)].length, OWNER.rows.length + 1, "a box per row and one for the page");
     assert.doesNotMatch(html, new RegExp(escaped(copy.readOnly)));
     assert.doesNotMatch(html, new RegExp(escaped(copy.preorders.filters.viewerSearch)));
-    // Three active rows can be unsubscribed, one unsubscribed row resubscribed; the bounced row is locked.
+    // Three active rows can be unsubscribed; Eve unsubscribed herself and Dan bounced, so both rows say why instead.
     assert.equal(html.split(`>${escaped(copy.preorders.status.unsubscribe)}<`).length - 1, 3, "Cleo, Ben and Ava are active");
-    assert.equal(html.split(`>${escaped(copy.preorders.status.resubscribe)}<`).length - 1, 1);
+    assert.equal(html.includes(`>${escaped(copy.preorders.status.resubscribe)}<`), false, "Core's can_resubscribe is false on every row");
   }
 });
 
@@ -94,13 +95,17 @@ test("a viewer sees masked rows, the read-only notice and the search hint, and n
   }
 });
 
-test("Core's round-2 can_resubscribe locks a self unsubscribe with its reason instead of a button (DERIVED)", () => {
-  const rows = OWNER.rows.map((row) => row.status === "unsubscribed" ? { ...row, can_resubscribe: false } : row);
+test("the console's own unsubscribe can be undone: Resubscribe shows exactly where Core says can_resubscribe", () => {
+  // Core's genuine row after the console unsubscribed Cleo (source admin, can_resubscribe true).
+  const cleo = go.friendingGoStatusResult(fixture("webadmin-go-set-status-unsubscribe"))!.preorder;
+  const rows = OWNER.rows.map((row) => row.id === cleo.id ? cleo : row);
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].friendinggo;
     const html = preorders(locale, { data: { ...OWNER, rows } });
-    assert.ok(html.includes(escaped(copy.preorders.status.locked.unsubscribed)));
-    assert.equal(html.includes(`>${escaped(copy.preorders.status.resubscribe)}<`), false);
+    assert.equal(html.split(`>${escaped(copy.preorders.status.resubscribe)}<`).length - 1, 1);
+    assert.equal(html.split(`>${escaped(copy.preorders.status.unsubscribe)}<`).length - 1, 2);
+    assert.ok(html.includes(escaped(copy.statusSource.admin)));
+    assert.ok(html.includes(escaped(copy.preorders.status.locked.self)), "Eve stays locked");
   }
 });
 
@@ -152,10 +157,11 @@ const PEOPLE: FriendingGoSelected[] = [
 ];
 const KEY = JSON.stringify([CONTENT.kind, CONTENT.subject, CONTENT.preheader, CONTENT.body_html, CONTENT.audience, THREE.join(",")]);
 
+const WRITER = { load: "ready", canWrite: true, active: 3 } as const;
 function email(locale: Locale, props: Partial<Parameters<typeof FriendingGoEmailView>[0]> = {}): string {
   return render(locale, "/friendinggo/email", createElement(FriendingGoEmailView, {
-    canWrite: true, hydrated: true, composer: COMPOSER, selection: PEOPLE, preview: { kind: "idle" }, currentKey: KEY, problems: [],
-    drafts: { load: "ready", drafts: [], more: false }, pending: null, busy: false, notice: null, confirm: null,
+    access: WRITER, hydrated: true, composer: COMPOSER, selection: PEOPLE, preview: { kind: "idle" }, currentKey: KEY, problems: [],
+    drafts: { load: "ready", drafts: [], more: false }, pending: null, busy: false, sending: null, notice: null, confirm: null,
     onChange: noop, onClearAudience: noop, onPreview: noop, onStart: noop, onAskSend: noop, onCancelConfirm: noop, onConfirm: noop,
     onRetryPending: noop, onAskDiscard: noop, onOpenDraft: noop, onAskNew: noop, onReloadDrafts: noop, ...props,
   }));
@@ -172,7 +178,8 @@ test("Email: the composer with counters, merge-tag hints, the audience and the w
     }
     for (const tag of go.FRIENDINGGO_MERGE_TAGS) assert.ok(html.includes(`<code>${escaped(tag)}</code>`), tag);
     assert.ok(html.includes("18 / 150"), "the subject counter");
-    assert.ok(html.includes(locale === "en" ? "/ 60,000" : "/ 60 000"), "the body counter at Core's cap");
+    assert.ok(html.includes(locale === "en" ? "/ 50,000" : "/ 50\u00a0000"), "the body counter at Core's one body limit");
+    assert.ok(html.includes(locale === "en" ? "Everyone active (3)" : "Minden aktív feliratkozó (3)"), "the active count from Core's answer");
     assert.ok(html.includes("Ava Stone, Ben Carter, Eve Moss"));
     assert.ok(html.includes(locale === "en" ? "Selected people (3)" : "Kiválasztott címzettek (3)"));
     assert.match(html, new RegExp(`disabled="">${escaped(copy.email.actions.send)}<`), "no send without a preview of this content");
@@ -184,7 +191,7 @@ test("Email: a fresh preview shows the counts, who is left out and why, and the 
     const copy = MESSAGES[locale].friendinggo;
     const html = email(locale, { preview: { kind: "ready", key: KEY, data: PREVIEW } });
     for (const text of [copy.email.preview.counts.selected, copy.email.preview.counts.sendable, copy.email.preview.counts.suppressed]) assert.ok(html.includes(escaped(text)));
-    assert.ok(html.includes(locale === "en" ? "Left out: Unsubscribed (1)." : "Kimarad: Leiratkozott (1 fő)."));
+    assert.ok(html.includes(locale === "en" ? "Left out: Unsubscribed (1)." : "Kimarad: Leiratkozott (1 fő)."), "Core's reasons");
     assert.match(html, /<iframe class="friendinggo-email-frame" sandbox="" srcDoc="/);
     assert.ok(html.includes(escaped("<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src https://friending.com;")), "the frame's own policy");
     assert.ok(html.includes("Hi Alex!"));
@@ -197,6 +204,7 @@ test("Email: a fresh preview shows the counts, who is left out and why, and the 
     const confirm = email(locale, { preview: { kind: "ready", key: KEY, data: PREVIEW }, confirm: { kind: "send" } });
     assert.ok(confirm.includes(locale === "en" ? "Send to 2 people?" : "Elküldöd 2 főnek?"));
     assert.ok(confirm.includes(locale === "en" ? "1 selected person is left out" : "A kiválasztottak közül 1 fő kimarad"));
+    assert.equal(confirm.split(locale === "en" ? "Left out: Unsubscribed (1)." : "Kimarad: Leiratkozott (1 fő).").length - 1, 2, "the panel and the dialog both name the reasons");
     assert.ok(confirm.includes(escaped(copy.email.confirm.final)));
   }
 });
@@ -204,7 +212,8 @@ test("Email: a fresh preview shows the counts, who is left out and why, and the 
 test("Email: a read-only operator may preview, but sees no test, draft or send; problems and unknown outcomes are said plainly", () => {
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].friendinggo;
-    const viewer = email(locale, { canWrite: false });
+    // Core's answer said can_write false (a viewer, or an unrecognised stored role Core treats as read-only).
+    const viewer = email(locale, { access: { load: "ready", canWrite: false, active: 3 } });
     assert.ok(viewer.includes(escaped(copy.email.readOnly)));
     assert.ok(viewer.includes(`>${escaped(copy.email.actions.preview)}<`));
     for (const text of [copy.email.actions.test, copy.email.actions.saveDraft, copy.email.actions.send]) assert.equal(viewer.includes(`>${escaped(text)}<`), false, text);
@@ -218,36 +227,53 @@ test("Email: a read-only operator may preview, but sees no test, draft or send; 
     assert.match(pending, /<fieldset class="friendinggo-fieldset" disabled="">/, "the composer is locked while a request is pending");
     const discard = email(locale, { pending: { version: 1, command: { ...CONTENT, mode: "send", campaign_id: "", request_id: "00000011-0000-4000-8000-000000000011", expected_sendable: 2 } }, confirm: { kind: "discard" } });
     assert.ok(discard.includes(escaped(copy.email.discard.copySend)), "forgetting a send warns about a double send");
-    const drafts = email(locale, { drafts: { load: "ready", drafts: [{ ...CAMPAIGNS.campaigns[0]!, id: "000000000000000000006009", state: "draft", counts: null, sent_by: null, sent_at: null }], more: true } });
-    assert.ok(drafts.includes(escaped(copy.email.drafts.open)) && drafts.includes(escaped(copy.email.drafts.more)));
+    const drafts = email(locale, { drafts: { load: "ready", drafts: DRAFTS.campaigns, more: true } });
+    assert.ok(drafts.includes("Spring update (draft)") && drafts.includes(escaped(copy.email.drafts.open)) && drafts.includes(escaped(copy.email.drafts.more)));
+    // Until Core answers, the write controls are there but disabled; when it cannot be read, nothing is offered as writable.
+    const loading = email(locale, { access: { load: "loading", canWrite: false, active: null } });
+    assert.match(loading, new RegExp(`disabled="">${escaped(copy.email.actions.test)}<`));
+    const failed = email(locale, { access: { load: "error", canWrite: false, active: null } });
+    assert.ok(failed.includes(escaped(copy.email.accessError)));
+    assert.equal(failed.includes(`>${escaped(copy.email.actions.test)}<`), false);
+    // A sliced send shows how far it is, and a wait on an earlier attempt says so.
+    const command = { ...CONTENT, mode: "send" as const, campaign_id: "", request_id: "0000001f-0000-4000-8000-00000000001f", expected_sendable: 2 };
+    const progress = email(locale, { busy: true, pending: { version: 1, command }, sending: { progress: { processed: 50, total: 101 }, waitSeconds: null } });
+    assert.ok(progress.includes(locale === "en" ? "Sending in parts: 50 of 101 people done." : "Küldés részletekben: 50 / 101 fő kész."));
+    assert.match(progress, /<progress max="101" value="50">/);
+    const waiting = email(locale, { busy: true, pending: { version: 1, command }, sending: { progress: { processed: 50, total: 101 }, waitSeconds: 120 } });
+    assert.ok(waiting.includes(locale === "en" ? "again in 120 s" : "120 mp múlva"));
   }
 });
 
 test("Sent: the campaign list and one campaign's recipients, in both locales; a viewer sees masked addresses", () => {
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].friendinggo;
-    const list = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: CAMPAIGNS, load: "ready", page: 1, onPage: noop, onReload: noop, onOpen: noop }));
-    for (const text of [copy.sent.title, copy.sent.list.subject, copy.kind.newsletter, copy.kind.direct, copy.campaignState.sent, copy.sent.audience.allActiveCount.replace("{count}", "3")]) {
+    const list = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: CAMPAIGNS, load: "ready", page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    for (const text of [copy.sent.title, copy.sent.list.subject, copy.kind.newsletter, copy.kind.direct, copy.campaignState.sent, copy.campaignState.draft,
+      copy.sent.audience.allActiveCount.replace("{count}", "3"), copy.sent.filters.state, copy.sent.filters.all, copy.sent.list.editDraft]) {
       assert.ok(list.includes(escaped(text)), `${locale}: ${text}`);
     }
     assert.ok(list.includes("owner@example.test"));
     assert.ok(list.includes(">2 / 1<"), "emailed / left out");
-    const withDraft = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, {
-      data: { ...CAMPAIGNS, campaigns: [{ ...CAMPAIGNS.campaigns[3]!, state: "draft", counts: null, sent_by: null, sent_at: null }] }, load: "ready", page: 1, onPage: noop, onReload: noop, onOpen: noop,
-    }));
-    assert.ok(withDraft.includes(`href="/friendinggo/email?draft=000000000000000000006009"`) && withDraft.includes(escaped(copy.sent.list.editDraft)));
+    // Core's genuine draft (the drafts filter's answer) is opened in the composer.
+    const drafts = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: DRAFTS, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    assert.ok(drafts.includes(`href="/friendinggo/email?draft=000000000000000000006007"`));
+    assert.match(drafts, /<option value="draft" selected="">/);
+    const none = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: { ...DRAFTS, campaigns: [] }, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    assert.ok(none.includes(escaped(copy.sent.list.emptyFiltered)));
     const detail = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop }));
     for (const text of [copy.sent.recipients.title, copy.delivery.delivered, copy.delivery.failed, copy.delivery.purged, copy.sent.recipients.suppressed, copy.status.unsubscribed, copy.sent.detail.back]) {
       assert.ok(detail.includes(escaped(text)), `${locale}: ${text}`);
     }
     assert.ok(detail.includes("ava.stone@example.com"));
+    assert.ok(detail.includes(locale === "en" ? "Left out: Unsubscribed (1)." : "Kimarad: Leiratkozott (1 fő)."), "Core's reasons on the campaign");
     assert.match(detail, /<iframe class="friendinggo-email-frame is-content" sandbox="" srcDoc="/);
     assert.doesNotMatch(detail, new RegExp(escaped(copy.maskedNote)));
     const masked = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL_VIEWER, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop }));
     assert.ok(masked.includes(escaped(copy.maskedNote)) && masked.includes("av•••@example.com"));
     assert.equal(masked.includes("ava.stone@example.com"), false);
     for (const load of ["invalid", "unavailable", "error"] as const) {
-      const failed = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: null, load, page: 1, onPage: noop, onReload: noop, onOpen: noop }));
+      const failed = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: null, load, page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
       assert.ok(failed.includes(escaped(copy.sent.failures[load])));
       assert.doesNotMatch(failed, /<table/u);
     }

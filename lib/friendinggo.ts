@@ -30,19 +30,18 @@ export type FriendingGoStatus = (typeof FRIENDINGGO_STATUSES)[number];
 /** The two statuses an operator may set; `bounced` and `complained` come only from delivery. */
 export const FRIENDINGGO_SETTABLE_STATUSES = ["active", "unsubscribed"] as const;
 export type FriendingGoSettableStatus = (typeof FRIENDINGGO_SETTABLE_STATUSES)[number];
-export const FRIENDINGGO_STATUS_SOURCES = [
-  "unsubscribe_link",
-  "webadmin",
-  "signup",
-  "mailgun_failed",
-  "mailgun_rejected",
-  "mailgun_complained",
-  "mailgun_unsubscribed",
-] as const;
+/**
+ * Who made the last status change (Core round 2, contract §10.2): the person (`self`: the unsubscribe
+ * link, one-click, or resubscribing there), an administrator in this console (`admin`), or delivery
+ * feedback (`feedback`: a bounce, a spam report, a Mailgun unsubscribe). `null` until the first change.
+ */
+export const FRIENDINGGO_STATUS_SOURCES = ["self", "admin", "feedback"] as const;
 export type FriendingGoStatusSource = (typeof FRIENDINGGO_STATUS_SOURCES)[number];
 /** The Email delivery log's states, which Core joins onto a confirmation and a recipient. */
 export const FRIENDINGGO_DELIVERY_STATES = ["delivered", "pending", "retrying", "failed", "not_sent"] as const;
 export type FriendingGoDeliveryState = (typeof FRIENDINGGO_DELIVERY_STATES)[number];
+/** A confirmation may also be `skipped` (round 2: at most three a day per base mailbox); it has no outbox row then. */
+export type FriendingGoConfirmationState = FriendingGoDeliveryState | "skipped";
 /** A campaign's delivery counts add `purged`: a queued message whose outbox row is gone (30 days). */
 export const FRIENDINGGO_DELIVERY_COUNT_KEYS = [...FRIENDINGGO_DELIVERY_STATES, "purged"] as const;
 export type FriendingGoDeliveryCountKey = (typeof FRIENDINGGO_DELIVERY_COUNT_KEYS)[number];
@@ -64,11 +63,11 @@ export const FRIENDINGGO_EXPORT_LIMIT = 5000;
 export const FRIENDINGGO_SUBJECT_MAX = 150;
 export const FRIENDINGGO_PREHEADER_MAX = 200;
 /**
- * The body's cap, in characters: the lead's ruling after the Core review (contract §10.3) sets 60,000.
- * The tag set is the canned templates' (`CannedTemplateHtmlSanitizer`); Core stays the authority and
- * answers `go-email-body-invalid` for a body it refuses.
+ * One body limit, 50,000 characters (Core round 2, `GoPreorderPolicy::BODY_MAX`): Core checks it on the
+ * body as submitted (`go-email-body-too-large`) and its sanitizer applies the same limit to its output.
+ * The tag set is the canned templates' (`CannedTemplateHtmlSanitizer`), whose validator caps at 50,000 too.
  */
-export const FRIENDINGGO_BODY_MAX = 60_000;
+export const FRIENDINGGO_BODY_MAX = 50_000;
 export const FRIENDINGGO_QUERY_MAX = 100;
 export const FRIENDINGGO_MERGE_TAGS = ["{{first_name}}", "{{city}}"] as const;
 export const FRIENDINGGO_SAMPLE = {
@@ -100,14 +99,11 @@ export type FriendingGoPreorder = {
   status_source: FriendingGoStatusSource | null;
   source: string;
   consent: { text_version: string; captured_at: number };
-  confirmation: { outbound_id: string | null; state: FriendingGoDeliveryState | null };
+  /** Whether the console may turn this address back on: only an unsubscribe an administrator made (contract §10.2). */
+  can_resubscribe: boolean;
+  confirmation: { outbound_id: string | null; state: FriendingGoConfirmationState | null };
   created_at: number;
   updated_at: number;
-  /**
-   * Round 2 of Core (contract §10.2): whether the console may turn this address back on (only an
-   * unsubscribe an administrator made). Absent from Core `aa6ce6e4`'s rows; kept only when sent.
-   */
-  can_resubscribe?: boolean;
 };
 export type FriendingGoTotals = Record<"all" | FriendingGoStatus, number>;
 export type FriendingGoPreorderList = {
@@ -139,7 +135,11 @@ export type FriendingGoStatusResult = {
   preorder: FriendingGoPreorder;
   receipt: FriendingGoReceipt;
 };
-export type FriendingGoCounts = { selected: number; sendable: number; suppressed: number };
+export const FRIENDINGGO_SUPPRESSION_REASONS = ["unsubscribed", "bounced", "complained"] as const;
+export type FriendingGoSuppressionReason = (typeof FRIENDINGGO_SUPPRESSION_REASONS)[number];
+/** Who is left out, by reason; the reasons add up to `suppressed` (review P3-9, every count since Core round 2). */
+export type FriendingGoReasons = Record<FriendingGoSuppressionReason, number>;
+export type FriendingGoCounts = { selected: number; sendable: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
 export type FriendingGoPreview = {
   contract_version: 1;
   kind: FriendingGoKind;
@@ -152,18 +152,7 @@ export type FriendingGoPreview = {
   counts: FriendingGoCounts;
   cap: number;
 };
-export const FRIENDINGGO_SUPPRESSION_REASONS = ["unsubscribed", "bounced", "complained"] as const;
-export type FriendingGoSuppressionReason = (typeof FRIENDINGGO_SUPPRESSION_REASONS)[number];
-export type FriendingGoCampaignCounts = {
-  selected: number;
-  queued: number;
-  suppressed: number;
-  /**
-   * Round 2 of Core (review P3-9): who was left out, by reason. Absent from Core `aa6ce6e4`'s campaigns;
-   * kept only when sent, and then it must add up to `suppressed`.
-   */
-  suppressed_by_reason?: Record<FriendingGoSuppressionReason, number>;
-};
+export type FriendingGoCampaignCounts = { selected: number; queued: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
 export type FriendingGoCampaign = {
   id: string;
   kind: FriendingGoKind;
@@ -193,8 +182,11 @@ export type FriendingGoRecipient = {
   delivered_at: number | null;
   created_at: number;
 };
+export const FRIENDINGGO_CAMPAIGN_FILTERS = ["", ...FRIENDINGGO_CAMPAIGN_STATES] as const;
+export type FriendingGoCampaignFilter = (typeof FRIENDINGGO_CAMPAIGN_FILTERS)[number];
 export type FriendingGoCampaignList = {
   contract_version: 1;
+  filters: { state: FriendingGoCampaignFilter };
   page: number;
   page_size: number;
   has_more: boolean;
@@ -210,9 +202,13 @@ export type FriendingGoCampaignDetail = {
   can_see_addresses: boolean;
   recipients: FriendingGoRecipient[];
 };
+/** How far a send is: preorders processed (queued or left out) of the audience. */
+export type FriendingGoProgress = { processed: number; total: number };
 export type FriendingGoSendResult =
   | { contract_version: 1; mode: "test"; to: string; outbound_id: string; receipt: FriendingGoReceipt }
-  | { contract_version: 1; mode: "save_draft" | "send"; campaign: FriendingGoCampaign; receipt: FriendingGoReceipt };
+  | { contract_version: 1; mode: "save_draft"; campaign: FriendingGoCampaign; receipt: FriendingGoReceipt }
+  /** Core round 2 slices a send: `campaign.state` is `sending` until the last call answers `sent`. */
+  | { contract_version: 1; mode: "send"; campaign: FriendingGoCampaign; progress: FriendingGoProgress; receipt: FriendingGoReceipt };
 
 /** What the browser sends for a preview (and, with the send fields, for a send). Canonical. */
 export type FriendingGoEmailContent = {
@@ -320,7 +316,7 @@ export function friendingGoLine(value: unknown): string | null {
 export function friendingGoBody(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const body = value.trim().normalize("NFC");
-  return isCanonicalCannedEmailHtml(body, FRIENDINGGO_BODY_MAX) ? body : null;
+  return codePoints(body) <= FRIENDINGGO_BODY_MAX && isCanonicalCannedEmailHtml(body) ? body : null;
 }
 
 export function friendingGoSubject(value: unknown): string | null {
@@ -417,13 +413,17 @@ export function friendingGoStatusBody(body: Record<string, unknown>): FriendingG
   return { preorder_id: body.preorder_id, status: body.status, request_id: body.request_id };
 }
 
-/** A campaigns read from the browser: the list (a page) or one campaign (an id and a page of recipients). */
-export function friendingGoCampaignsRequest(body: Record<string, unknown>): { campaign_id: string; page: number } | null {
-  if (!onlyKeys(body, ["campaign_id", "page"])) return null;
-  const { campaign_id: id = "", page = 1 } = body;
+/**
+ * A campaigns read from the browser: the list (a page, optionally of one state) or one campaign (an id
+ * and a page of recipients). Core refuses a state filter together with an id.
+ */
+export function friendingGoCampaignsRequest(body: Record<string, unknown>): { campaign_id: string; page: number; state: FriendingGoCampaignFilter } | null {
+  if (!onlyKeys(body, ["campaign_id", "page", "state"])) return null;
+  const { campaign_id: id = "", page = 1, state = "" } = body;
   if (id !== "" && !isFriendingGoObjectId(id)) return null;
+  if (!oneOf(FRIENDINGGO_CAMPAIGN_FILTERS, state) || (state !== "" && id !== "")) return null;
   if (!Number.isSafeInteger(page) || (page as number) < 1 || (page as number) > MAX_PAGE) return null;
-  return { campaign_id: id as string, page: page as number };
+  return { campaign_id: id as string, page: page as number, state };
 }
 
 /** Core's form body (`coreCall` stringifies numbers): the contract version and exactly the route's fields. */
@@ -464,7 +464,12 @@ export function normalizeFriendingGoProxyBody(
       }
       case "go_email_campaigns": {
         const request = friendingGoCampaignsRequest(body);
-        return request ? { ...version, page: request.page, ...(request.campaign_id ? { campaign_id: request.campaign_id } : {}) } : null;
+        return request ? {
+          ...version,
+          page: request.page,
+          ...(request.campaign_id ? { campaign_id: request.campaign_id } : {}),
+          ...(request.state ? { state: request.state } : {}),
+        } : null;
       }
     }
   })();
@@ -507,15 +512,15 @@ function preorder(value: unknown, masked: boolean): FriendingGoPreorder | null {
   const confirmation = record(row.confirmation);
   if (!confirmation || !exactKeys(confirmation, ["outbound_id", "state"])) return null;
   if (!(confirmation.outbound_id === null || isFriendingGoObjectId(confirmation.outbound_id))) return null;
-  if (!(confirmation.state === null || oneOf(FRIENDINGGO_DELIVERY_STATES, confirmation.state))) return null;
-  // A state is read from an outbox row; no outbox row, no state.
-  if (confirmation.outbound_id === null && confirmation.state !== null) return null;
+  // A delivery state is read from an outbox row; `skipped` (the mailbox limit) means there is none.
+  if (confirmation.outbound_id === null
+    ? !(confirmation.state === null || confirmation.state === "skipped")
+    : !(confirmation.state === null || oneOf(FRIENDINGGO_DELIVERY_STATES, confirmation.state))) return null;
   if (!epoch(row.created_at) || !epoch(row.updated_at) || row.updated_at < row.created_at) return null;
-  // Optional until Core's round 2 is pinned: when present, a boolean, and only an unsubscribed row may be turned back on.
-  if (Object.hasOwn(row, "can_resubscribe")
-    && (typeof row.can_resubscribe !== "boolean" || (row.can_resubscribe && row.status !== "unsubscribed"))) return null;
+  // Core's rule, held to: only an unsubscribe an administrator made can be undone from the console.
+  if (typeof row.can_resubscribe !== "boolean"
+    || row.can_resubscribe !== (row.status === "unsubscribed" && row.status_source === "admin")) return null;
   return {
-    ...(typeof row.can_resubscribe === "boolean" ? { can_resubscribe: row.can_resubscribe } : {}),
     id: row.id,
     name: row.name,
     first_name: row.first_name,
@@ -527,9 +532,10 @@ function preorder(value: unknown, masked: boolean): FriendingGoPreorder | null {
     status: row.status,
     status_changed_at: row.status_changed_at,
     status_source: row.status_source as FriendingGoStatusSource | null,
+    can_resubscribe: row.can_resubscribe,
     source: row.source,
     consent: { text_version: consent.text_version, captured_at: consent.captured_at },
-    confirmation: { outbound_id: confirmation.outbound_id as string | null, state: confirmation.state as FriendingGoDeliveryState | null },
+    confirmation: { outbound_id: confirmation.outbound_id as string | null, state: confirmation.state as FriendingGoConfirmationState | null },
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -644,12 +650,22 @@ export function friendingGoStatusConverged(result: FriendingGoStatusResult, pend
     && result.preorder.status === pending.status;
 }
 
+/** `{unsubscribed, bounced, complained}`, adding up to the left-out count. */
+function reasons(value: unknown, suppressed: number): FriendingGoReasons | null {
+  const entry = record(value);
+  if (!entry || !exactKeys(entry, FRIENDINGGO_SUPPRESSION_REASONS)
+    || !FRIENDINGGO_SUPPRESSION_REASONS.every((reason) => count(entry[reason]))) return null;
+  const parsed = Object.fromEntries(FRIENDINGGO_SUPPRESSION_REASONS.map((reason) => [reason, entry[reason] as number])) as FriendingGoReasons;
+  return FRIENDINGGO_SUPPRESSION_REASONS.reduce((sum, reason) => sum + parsed[reason], 0) === suppressed ? parsed : null;
+}
+
 function previewCounts(value: unknown): FriendingGoCounts | null {
   const entry = record(value);
-  if (!entry || !exactKeys(entry, ["selected", "sendable", "suppressed"])) return null;
+  if (!entry || !exactKeys(entry, ["selected", "sendable", "suppressed", "suppressed_by_reason"])) return null;
   if (!count(entry.selected) || !count(entry.sendable) || !count(entry.suppressed)) return null;
   if (entry.selected !== entry.sendable + entry.suppressed) return null;
-  return { selected: entry.selected, sendable: entry.sendable, suppressed: entry.suppressed };
+  const byReason = reasons(entry.suppressed_by_reason, entry.suppressed);
+  return byReason ? { selected: entry.selected, sendable: entry.sendable, suppressed: entry.suppressed, suppressed_by_reason: byReason } : null;
 }
 
 /**
@@ -675,7 +691,7 @@ export function friendingGoPreview(response: unknown, request: FriendingGoEmailC
   const data = successData(response);
   if (!data || !exactKeys(data, ["contract_version", "kind", "subject", "preheader", "body_html", "html", "sample", "merge_tags", "counts", "cap"])) return null;
   if (data.kind !== request.kind || data.subject !== request.subject || data.preheader !== request.preheader) return null;
-  if (!isCanonicalCannedEmailHtml(data.body_html, FRIENDINGGO_BODY_MAX) || friendingGoPreviewDocument(data.html) === null) return null;
+  if (!isCanonicalCannedEmailHtml(data.body_html) || friendingGoPreviewDocument(data.html) === null) return null;
   const sample = record(data.sample);
   if (!sample || !exactKeys(sample, ["first_name", "city", "unsubscribe_url"]) || sample.first_name !== FRIENDINGGO_SAMPLE.first_name
     || sample.city !== FRIENDINGGO_SAMPLE.city || sample.unsubscribe_url !== FRIENDINGGO_SAMPLE.unsubscribe_url) return null;
@@ -699,24 +715,12 @@ export function friendingGoPreview(response: unknown, request: FriendingGoEmailC
   };
 }
 
-const BY_REASON = "suppressed_by_reason";
-
 function campaignCounts(value: unknown): FriendingGoCampaignCounts | null {
   const entry = record(value);
-  const keys = ["selected", "queued", "suppressed"];
-  if (!entry || !exactKeys(entry, Object.hasOwn(entry, BY_REASON) ? [...keys, BY_REASON] : keys)) return null;
+  if (!entry || !exactKeys(entry, ["selected", "queued", "suppressed", "suppressed_by_reason"])) return null;
   if (!count(entry.selected) || !count(entry.queued) || !count(entry.suppressed)) return null;
-  const counts: FriendingGoCampaignCounts = { selected: entry.selected, queued: entry.queued, suppressed: entry.suppressed };
-  if (Object.hasOwn(entry, BY_REASON)) {
-    const reasons = record(entry[BY_REASON]);
-    if (!reasons || !exactKeys(reasons, FRIENDINGGO_SUPPRESSION_REASONS)
-      || !FRIENDINGGO_SUPPRESSION_REASONS.every((reason) => count(reasons[reason]))) return null;
-    const byReason = Object.fromEntries(FRIENDINGGO_SUPPRESSION_REASONS.map((reason) => [reason, reasons[reason] as number])) as
-      Record<FriendingGoSuppressionReason, number>;
-    if (FRIENDINGGO_SUPPRESSION_REASONS.reduce((sum, reason) => sum + byReason[reason], 0) !== counts.suppressed) return null;
-    counts.suppressed_by_reason = byReason;
-  }
-  return counts;
+  const byReason = reasons(entry.suppressed_by_reason, entry.suppressed);
+  return byReason ? { selected: entry.selected, queued: entry.queued, suppressed: entry.suppressed, suppressed_by_reason: byReason } : null;
 }
 
 const SUMMARY_KEYS = ["id", "kind", "state", "subject", "preheader", "audience", "counts", "created_by", "sent_by", "created_at", "updated_at", "sent_at"] as const;
@@ -735,7 +739,7 @@ function campaignWithBody(value: unknown): FriendingGoCampaignDetailCampaign | n
   const ids = audience.preorder_ids;
   if (!Array.isArray(ids) || !ids.every(isFriendingGoObjectId) || new Set(ids).size !== ids.length
     || ids.length !== (summary.audience.count ?? 0)) return null;
-  if (typeof entry.body_html !== "string" || !isCanonicalCannedEmailHtml(entry.body_html, FRIENDINGGO_BODY_MAX)) return null;
+  if (typeof entry.body_html !== "string" || !isCanonicalCannedEmailHtml(entry.body_html)) return null;
   return { ...summary, audience: { ...summary.audience, preorder_ids: [...ids] }, body_html: entry.body_html };
 }
 
@@ -758,7 +762,9 @@ function campaignOf(value: unknown, detail: boolean): FriendingGoCampaign | null
   } else {
     if (!counts || !address(entry.sent_by) || !epoch(entry.sent_at) || entry.sent_at < entry.created_at) return null;
     if (counts.selected !== audience.count) return null;
-    if (entry.state === "sent" && counts.selected !== counts.queued + counts.suppressed) return null;
+    // Sent: everyone is accounted for. Sending (a sliced send, Core round 2): the counts so far.
+    if (entry.state === "sent" ? counts.selected !== counts.queued + counts.suppressed
+      : counts.queued + counts.suppressed > counts.selected) return null;
   }
   return {
     id: entry.id,
@@ -787,32 +793,54 @@ export function friendingGoSendResult(response: unknown, command: FriendingGoSen
       || !isFriendingGoObjectId(data.outbound_id)) return null;
     return { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "test", to: data.to, outbound_id: data.outbound_id, receipt: parsedReceipt };
   }
-  if (!exactKeys(data, ["contract_version", "mode", "campaign", "receipt"])) return null;
+  if (!exactKeys(data, ["contract_version", "mode", "campaign", ...(command.mode === "send" ? ["progress"] : []), "receipt"])) return null;
   const parsed = campaign(data.campaign);
   if (!parsed) return null;
   // The campaign is the one this command wrote: its kind and wording, its draft when it named one, its state.
   if (parsed.kind !== command.kind || parsed.subject !== command.subject || parsed.preheader !== command.preheader
     || parsed.audience.mode !== command.audience) return null;
   if (command.campaign_id !== "" && parsed.id !== command.campaign_id) return null;
-  if (command.mode === "save_draft" ? parsed.state !== "draft" : parsed.state === "draft") return null;
-  return { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: command.mode, campaign: parsed, receipt: parsedReceipt };
+  if (command.mode === "save_draft") {
+    return parsed.state === "draft"
+      ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "save_draft", campaign: parsed, receipt: parsedReceipt }
+      : null;
+  }
+  const progress = sendProgress(data.progress, parsed);
+  return parsed.state !== "draft" && progress
+    ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "send", campaign: parsed, progress, receipt: parsedReceipt }
+    : null;
 }
 
-/** Core's campaign list for this page: newest first, drafts included. */
-export function friendingGoCampaigns(response: unknown, page: number): FriendingGoCampaignList | null {
+/**
+ * A send's progress (Core round 2): the preorders processed (queued or left out) of the audience. The
+ * last call answers `sent` with everyone processed; a `sending` answer has some left to do.
+ */
+function sendProgress(value: unknown, sent: FriendingGoCampaign): FriendingGoProgress | null {
+  const entry = record(value);
+  if (!entry || !exactKeys(entry, ["processed", "total"]) || !count(entry.processed) || !count(entry.total)) return null;
+  const counts = sent.counts;
+  if (!counts || entry.total !== counts.selected || entry.processed !== counts.queued + counts.suppressed) return null;
+  if (sent.state === "sent" ? entry.processed !== entry.total : entry.processed >= entry.total) return null;
+  return { processed: entry.processed, total: entry.total };
+}
+
+/** Core's campaign list for this page and state filter: newest first, every state unless filtered. */
+export function friendingGoCampaigns(response: unknown, page: number, state: FriendingGoCampaignFilter = ""): FriendingGoCampaignList | null {
   const data = successData(response);
-  if (!data || !exactKeys(data, ["contract_version", "page", "page_size", "has_more", "campaigns"])) return null;
+  if (!data || !exactKeys(data, ["contract_version", "filters", "page", "page_size", "has_more", "campaigns"])) return null;
+  const echo = record(data.filters);
+  if (!echo || !exactKeys(echo, ["state"]) || echo.state !== state) return null;
   if (data.page !== page || data.page_size !== FRIENDINGGO_PAGE_SIZE || typeof data.has_more !== "boolean") return null;
   if (!Array.isArray(data.campaigns) || data.campaigns.length > FRIENDINGGO_PAGE_SIZE) return null;
   if (data.has_more && data.campaigns.length !== FRIENDINGGO_PAGE_SIZE) return null;
   const campaigns: FriendingGoCampaign[] = [];
   for (const item of data.campaigns) {
     const parsed = campaign(item);
-    if (!parsed || campaigns.some((seen) => seen.id === parsed.id)) return null;
+    if (!parsed || campaigns.some((seen) => seen.id === parsed.id) || (state !== "" && parsed.state !== state)) return null;
     if (campaigns.length > 0 && campaigns[campaigns.length - 1]!.created_at < parsed.created_at) return null;
     campaigns.push(parsed);
   }
-  return { contract_version: FRIENDINGGO_CONTRACT_VERSION, page, page_size: FRIENDINGGO_PAGE_SIZE, has_more: data.has_more, campaigns };
+  return { contract_version: FRIENDINGGO_CONTRACT_VERSION, filters: { state }, page, page_size: FRIENDINGGO_PAGE_SIZE, has_more: data.has_more, campaigns };
 }
 
 function recipient(value: unknown, masked: boolean): FriendingGoRecipient | null {
@@ -935,7 +963,7 @@ export function normalizeFriendingGoResponse(
       const request = friendingGoCampaignsRequest(rest);
       if (!request) return null;
       return wrap(request.campaign_id === ""
-        ? friendingGoCampaigns(response, request.page)
+        ? friendingGoCampaigns(response, request.page, request.state)
         : friendingGoCampaignDetail(response, request.campaign_id, request.page, options));
     }
     default:
@@ -966,6 +994,7 @@ export const FRIENDINGGO_ERRORS = {
   "go-email-mode-invalid": { status: 422, key: "requestInvalid" },
   "go-email-kind-invalid": { status: 422, key: "kindInvalid" },
   "go-email-content-invalid": { status: 422, key: "contentInvalid" },
+  "go-email-body-too-large": { status: 422, key: "bodyTooLarge" },
   "go-email-body-invalid": { status: 422, key: "bodyInvalid" },
   "go-email-audience-invalid": { status: 422, key: "audienceInvalid" },
   "go-email-audience-empty": { status: 422, key: "audienceEmpty" },
@@ -1045,24 +1074,42 @@ export function friendingGoRateLimit(response: unknown): { limit: number; window
     : null;
 }
 
+/** Why the console may not turn an address back on; the message key under `preorders.status.locked`. */
+export type FriendingGoLockReason = "self" | "feedback" | "bounced" | "complained" | "unsubscribed";
+
+/** The reason for a status and the source that set it (contract §10.2). */
+export function friendingGoLockReason(status: FriendingGoStatus, source: FriendingGoStatusSource | null): FriendingGoLockReason {
+  if (status === "bounced" || status === "complained") return status;
+  return source === "self" || source === "feedback" ? source : "unsubscribed";
+}
+
 /**
- * The status that locks a row, from Core's refusal: `bounced` / `complained`, and since Core's round 2
- * (contract §10.2) an `unsubscribed` the person or delivery feedback made.
+ * The lock of Core's `go-preorder-status-locked` refusal (`data.status`, `data.status_source`): a bounced
+ * or complained row, or an unsubscribe the person or delivery feedback made. `null` for anything else.
  */
-export function friendingGoLockedStatus(response: unknown): Exclude<FriendingGoStatus, "active"> | null {
+export function friendingGoLock(response: unknown): FriendingGoLockReason | null {
   const envelope = webadminErrorEnvelope(response, "required");
-  const status = record(envelope?.data)?.status;
-  return status === "bounced" || status === "complained" || status === "unsubscribed" ? status : null;
+  const data = record(envelope?.data);
+  if (envelope?.error !== "go-preorder-status-locked" || !data || !oneOf(FRIENDINGGO_STATUSES, data.status)
+    || !(data.status_source === null || oneOf(FRIENDINGGO_STATUS_SOURCES, data.status_source))) return null;
+  return friendingGoLockReason(data.status, data.status_source as FriendingGoStatusSource | null);
+}
+
+/** How long Core asks to wait before the same request id is tried again (`go-request-in-progress`). */
+export function friendingGoRetryAfter(response: unknown): number | null {
+  const envelope = webadminErrorEnvelope(response, "required");
+  const seconds = record(envelope?.data)?.retry_after_seconds;
+  return envelope?.error === "go-request-in-progress" && count(seconds) && seconds > 0 ? seconds : null;
 }
 
 /**
  * Whether a row's status may be changed from the console, and to what: an active row may always be
- * unsubscribed; an unsubscribed one turned back on unless Core says it may not (`can_resubscribe:
- * false`, round 2); bounced and complained rows never.
+ * unsubscribed; an unsubscribed one turned back on only when Core says so (`can_resubscribe`, true for
+ * an administrator's unsubscribe only); bounced and complained rows never.
  */
 export function friendingGoNextStatus(row: Pick<FriendingGoPreorder, "status" | "can_resubscribe">): FriendingGoSettableStatus | null {
   if (row.status === "active") return "unsubscribed";
-  return row.status === "unsubscribed" && row.can_resubscribe !== false ? "active" : null;
+  return row.status === "unsubscribed" && row.can_resubscribe ? "active" : null;
 }
 
 export { MASK as FRIENDINGGO_MASK };

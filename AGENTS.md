@@ -70,8 +70,10 @@ direct email and newsletters through Core's five `go_*` Webadmin routes. It exis
 serves `admin_me.friendinggo` `{ready: true, contract_version: 1}`. The bridge forwards each route's
 closed fields with `contract_version=1` and only the parsed answer back; a viewer never receives an
 unmasked address or phone number. Every status change and send carries a caller-minted request id kept
-in `sessionStorage` until its outcome is known, and an unknown outcome is retried with the same id. The
-CSV export is its own write route (`/api/admin/go-preorders-export`) with a formula-injection guard.
+in `sessionStorage` until its outcome is known, and an unknown outcome is retried with the same id; a send
+Core answers in slices (`sending`) is carried on with the same id until it is `sent`. Write controls follow
+the answers' `can_write` / `can_see_addresses`, never the role alone. The CSV export is its own write route
+(`/api/admin/go-preorders-export`) with a formula-injection guard.
 
 Do not reintroduce AYI/Are You In, Deplug, curated activities/events, event creation/joining,
 waiting room, mandatory walkthrough, or other retired Friending surfaces. Persona verification is

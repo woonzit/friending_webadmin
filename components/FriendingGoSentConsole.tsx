@@ -10,12 +10,14 @@ import { adminCall } from "@/lib/adminClient";
 import { cannedTemplateEmailPreviewDocument } from "@/lib/cannedTemplates";
 import { formatDate, formatNumber } from "@/lib/format";
 import {
+  FRIENDINGGO_CAMPAIGN_STATES,
   FRIENDINGGO_DELIVERY_COUNT_KEYS,
   FRIENDINGGO_SUPPRESSION_REASONS,
   friendingGoCampaignDetail,
   friendingGoCampaigns,
   type FriendingGoCampaign,
   type FriendingGoCampaignDetail,
+  type FriendingGoCampaignFilter,
   type FriendingGoCampaignList,
   type FriendingGoCampaignState,
   type FriendingGoDeliveryState,
@@ -41,14 +43,19 @@ export function FriendingGoCampaignListView({
   data,
   load,
   page,
+  state,
   onPage,
+  onState,
   onReload,
   onOpen,
 }: {
   data: FriendingGoCampaignList | null;
   load: FriendingGoListLoad;
   page: number;
+  /** Core's state filter (round 2): every campaign, or only drafts, sending or sent ones. */
+  state: FriendingGoCampaignFilter;
   onPage: (page: number) => void;
+  onState: (state: FriendingGoCampaignFilter) => void;
   onReload: () => void;
   onOpen: (campaign: FriendingGoCampaign) => void;
 }) {
@@ -65,10 +72,19 @@ export function FriendingGoCampaignListView({
         subtitle={t("sent.subtitle")}
         actions={<button className="button button-secondary" type="button" disabled={load === "loading"} onClick={onReload}>{common("refresh")}</button>}
       />
+      <div className="filter-bar friendinggo-sent-filter">
+        <label className="field">
+          <span>{t("sent.filters.state")}</span>
+          <select value={state} onChange={(event) => onState(event.target.value as FriendingGoCampaignFilter)}>
+            <option value="">{t("sent.filters.all")}</option>
+            {FRIENDINGGO_CAMPAIGN_STATES.map((value) => <option key={value} value={value}>{t(`campaignState.${value}`)}</option>)}
+          </select>
+        </label>
+      </div>
       {failure ? <ErrorPanel message={t(`sent.failures.${failure}`)} retry={onReload} /> : !data ? <LoadingPanel /> : (
         <section className={load === "loading" ? "panel friendinggo-panel is-refreshing" : "panel friendinggo-panel"}>
           <div className="panel-header"><div><h2>{t("sent.list.title")}</h2><p>{t("sent.list.copy")}</p></div></div>
-          {data.campaigns.length === 0 ? <EmptyPanel title={t("sent.list.empty")} /> : (
+          {data.campaigns.length === 0 ? <EmptyPanel title={state ? t("sent.list.emptyFiltered") : t("sent.list.empty")} /> : (
             <div className="table-wrap friendinggo-table">
               <table className="data-table">
                 <thead>
@@ -189,10 +205,10 @@ export function FriendingGoCampaignDetailView({
                   </article>
                 ))}
               </section>
-              {campaign.counts.suppressed_by_reason ? (
-                <p className="field-hint">{t("email.preview.leftOutBy", {
-                  reasons: FRIENDINGGO_SUPPRESSION_REASONS.filter((reason) => campaign.counts!.suppressed_by_reason![reason] > 0)
-                    .map((reason) => t("email.preview.leftOutReason", { count: campaign.counts!.suppressed_by_reason![reason], status: t(`status.${reason}`) })).join(", "),
+              {campaign.counts.suppressed > 0 ? (
+                <p className="field-hint friendinggo-left-out">{t("email.preview.leftOutBy", {
+                  reasons: FRIENDINGGO_SUPPRESSION_REASONS.filter((reason) => campaign.counts!.suppressed_by_reason[reason] > 0)
+                    .map((reason) => t("email.preview.leftOutReason", { count: campaign.counts!.suppressed_by_reason[reason], status: t(`status.${reason}`) })).join(", "),
                 })}</p>
               ) : null}
               <section className="stat-grid friendinggo-delivery-stats" aria-label={t("sent.detail.deliveryLabel")}>
@@ -274,6 +290,7 @@ export function FriendingGoCampaignDetailView({
 /** Sent: the campaign list, and one campaign's recipients page by page. Reads only. */
 export default function FriendingGoSentConsole() {
   const [page, setPage] = useState(1);
+  const [state, setState] = useState<FriendingGoCampaignFilter>("");
   const [revision, setRevision] = useState(0);
   const [list, setList] = useState<FriendingGoCampaignList | null>(null);
   const [listLoad, setListLoad] = useState<FriendingGoListLoad>("loading");
@@ -286,14 +303,14 @@ export default function FriendingGoSentConsole() {
     if (openId !== null) return;
     const controller = new AbortController();
     setListLoad("loading");
-    void adminCall("go_email_campaigns", { page }, controller.signal).then((response) => {
+    void adminCall("go_email_campaigns", { page, ...(state ? { state } : {}) }, controller.signal).then((response) => {
       if (controller.signal.aborted) return;
-      const parsed = friendingGoCampaigns(response, page);
+      const parsed = friendingGoCampaigns(response, page, state);
       setList(parsed);
       setListLoad(parsed ? "ready" : friendingGoReadFailure(response));
     });
     return () => controller.abort();
-  }, [page, revision, openId]);
+  }, [page, state, revision, openId]);
 
   useEffect(() => {
     if (openId === null) return;
@@ -316,7 +333,10 @@ export default function FriendingGoSentConsole() {
           data={list}
           load={listLoad}
           page={page}
+          state={state}
           onPage={(next) => { setList(null); setPage(next); }}
+          // An answer belongs to its filter: the previous list is cleared, never shown under another one.
+          onState={(next) => { setList(null); setPage(1); setState(next); }}
           onReload={() => setRevision((value) => value + 1)}
           onOpen={(campaign) => { setDetail(null); setDetailPage(1); setOpenId(campaign.id); }}
         />
