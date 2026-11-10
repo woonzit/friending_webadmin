@@ -81,12 +81,14 @@ test("DERIVED production Logout warns before its POST/router transition and Stay
   let logout: ts.FunctionDeclaration | undefined;
   const visit = (node: ts.Node) => { if (ts.isFunctionDeclaration(node) && node.name?.text === "logout") logout = node; ts.forEachChild(node, visit); }; visit(tree); assert.ok(logout);
   const h = harness(), release = h.guard.retain("leave-confirmation", "history-warning"), calls: unknown[] = [];
+  // D-153 (T-937 R3-2): a successful sign-out also forgets the tab's FriendingGO values, before the route changes.
   const context: any = { exports: {}, confirmResearchNavigation: () => h.guard.request(), fetch: async (...args: unknown[]) => { calls.push(args); return { ok: true }; },
+    friendingGoSessionStorage: () => "tab-storage", clearFriendingGoSession: (storage: unknown) => calls.push(`cleared:${String(storage)}`),
     router: { replace: (url: string) => calls.push(url), refresh: () => calls.push("refresh") } };
   vm.runInNewContext(compile(`${logout.getText(tree)}\nexports.logout=logout;`), context);
   let pending = context.exports.logout(); assert.equal(calls.length, 0); h.guard.choose(false); await pending; assert.equal(calls.length, 0);
   pending = context.exports.logout(); h.guard.choose(true); await pending;
-  assert.equal(calls.length, 3); assert.equal((calls[0] as any[])[0], "/api/auth/logout"); assert.deepEqual(calls.slice(1), ["/login", "refresh"]);
+  assert.equal(calls.length, 4); assert.equal((calls[0] as any[])[0], "/api/auth/logout"); assert.deepEqual(calls.slice(1), ["cleared:tab-storage", "/login", "refresh"]);
   release(); h.unsubscribe();
 });
 test("DERIVED production Draft-from-source navigation warns without losing a retained batch; Stay reloads the queue", async () => {

@@ -37,6 +37,7 @@ import {
   friendingGoPendingEmail,
   friendingGoPendingStatus,
   friendingGoSelection,
+  friendingGoStamp,
   friendingGoStore,
   friendingGoStored,
   type FriendingGoPendingStatus,
@@ -364,7 +365,7 @@ async function sendStatus(command: FriendingGoPendingStatus["command"]): Promise
 }
 
 /** Preorders: one read per filter change or refresh, never a recovery-loader registration. */
-export default function FriendingGoPreordersConsole() {
+export default function FriendingGoPreordersConsole({ operator }: { operator: string }) {
   const t = useTranslations("friendinggo");
   const locale = useLocale();
   const router = useRouter();
@@ -390,15 +391,15 @@ export default function FriendingGoPreordersConsole() {
       setPending(restored);
       setNotice({ tone: "info", text: t("pending.restored") });
     }
-    // The selection is the Email tab's audience: it survives tab switches (review P3-7).
-    setSelection(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.audience, friendingGoSelection) ?? []);
+    // The ticks survive tab switches (review P3-7); they become the Email audience only through "Email selected" (R3-4).
+    setSelection(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.preordersSelection, friendingGoSelection) ?? []);
     // While an email command waits or runs, a new hand-over could be wiped by its end: "Email selected" waits too.
     setEmailPending(Boolean(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, friendingGoPendingEmail)));
     setHydrated(true);
   }, [t]);
 
   useEffect(() => {
-    if (hydrated) friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.audience, selection.length > 0 ? selection : null);
+    if (hydrated) friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.preordersSelection, selection.length > 0 ? selection : null);
   }, [hydrated, selection]);
 
   useEffect(() => {
@@ -454,11 +455,11 @@ export default function FriendingGoPreordersConsole() {
 
   function confirmStatus() {
     if (!confirm || pending) return;
-    const command: FriendingGoPendingStatus = {
+    const command = friendingGoStamp<FriendingGoPendingStatus>({
       version: 1,
       command: { preorder_id: confirm.row.id, status: confirm.next, request_id: crypto.randomUUID() },
       name: confirm.row.name,
-    };
+    }, operator, Math.floor(Date.now() / 1000));
     setConfirm(null);
     // The request id is stored before the request leaves, so a lost answer is retried, never re-minted.
     if (!friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingStatus, command)) {

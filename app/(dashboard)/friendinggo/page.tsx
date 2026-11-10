@@ -11,5 +11,5 @@ export default async function FriendingGoPreordersPage() {
     throw error;
   }
   if (!me?.friendingGoConsoleReady) notFound();
-  return <FriendingGoPreordersConsole />;
+  return <FriendingGoPreordersConsole operator={me.email} />;
 }

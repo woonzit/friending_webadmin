@@ -43,7 +43,19 @@ export const FRIENDINGGO_STORAGE_KEYS = {
   pendingEmail: "friending.friendinggo.pending-email.v1",
   /** A status change whose outcome is unknown: retried with the same request id. */
   pendingStatus: "friending.friendinggo.pending-status.v1",
+  /** The people ticked on the Preorders tab; they become the Email audience only through "Email selected". */
+  preordersSelection: "friending.friendinggo.preorders-selection.v1",
 } as const;
+
+/** This browser tab's session storage, or null where it cannot be used. */
+export function friendingGoSessionStorage(): FriendingGoStorage | null {
+  try { return typeof window === "undefined" ? null : window.sessionStorage; } catch { return null; }
+}
+
+/** Sign-out forgets every FriendingGO value of this browser tab: commands, audience, ticks and the text (review R3-2). */
+export function clearFriendingGoSession(storage: FriendingGoStorage | null): void {
+  for (const key of Object.values(FRIENDINGGO_STORAGE_KEYS)) friendingGoStore(storage, key, null);
+}
 
 export type FriendingGoStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -217,12 +229,21 @@ export function friendingGoInsert(text: string, start: number, end: number, inse
 // ------------------------------------------------------------------ pending writes
 
 /**
- * A stored email command. `running`: the console was carrying a sliced send (or a resume) on when the page
- * went away (a tab switch, a reload); the next console that mounts in this tab continues it with the same
- * request id. Otherwise the outcome is unknown and the operator decides (Retry or Forget it).
+ * A stored email command, with who stored it and when (epoch seconds). `running`: the console was carrying
+ * a sliced send (or a resume) on when the page went away (a tab switch, a reload); the next console that
+ * mounts in this tab continues it with the same request id, but only for the same operator and within a
+ * day (`friendingGoMayContinue`, review R3-2). Otherwise the outcome is unknown and the operator decides.
  */
-export type FriendingGoPendingEmail = { version: 1; command: FriendingGoSendBody; running: boolean };
-export type FriendingGoPendingStatus = { version: 1; command: FriendingGoStatusBody; name: string };
+export type FriendingGoPendingEmail = { version: 1; command: FriendingGoSendBody; running: boolean; operator: string; stored_at: number };
+export type FriendingGoPendingStatus = { version: 1; command: FriendingGoStatusBody; name: string; operator: string; stored_at: number };
+
+/** How long a stored running command is continued by itself: a day; after that the operator decides. */
+export const FRIENDINGGO_CONTINUE_SECONDS = 86_400;
+/** A stored time this far in the future is the browser's clock, not a fresh command: never continued by itself. */
+const CLOCK_SKEW_SECONDS = 300;
+
+const operatorOf = (value: unknown): value is string => typeof value === "string" && value.length >= 3 && value.length <= 320 && value.includes("@");
+const storedAt = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
 
 function sameCommand(left: Record<string, unknown>, right: Record<string, unknown>): boolean {
   return JSON.stringify(Object.keys(left).sort().map((key) => [key, left[key]]))
@@ -233,20 +254,35 @@ function sameCommand(left: Record<string, unknown>, right: Record<string, unknow
 export function friendingGoPendingEmail(value: unknown): FriendingGoPendingEmail | null {
   const entry = record(value);
   const raw = record(entry?.command);
-  if (!entry || !raw || !exactKeys(entry, ["version", "command", "running"]) || entry.version !== 1 || typeof entry.running !== "boolean") return null;
+  if (!entry || !raw || !exactKeys(entry, ["version", "command", "running", "operator", "stored_at"]) || entry.version !== 1
+    || typeof entry.running !== "boolean" || !operatorOf(entry.operator) || !storedAt(entry.stored_at)) return null;
   const command = friendingGoSendBody(raw);
   // Only a send or a resume is ever carried on by itself.
   if (!command || !sameCommand(command, raw) || (entry.running && command.mode !== "send" && command.mode !== "resume")) return null;
-  return { version: 1, command, running: entry.running };
+  return { version: 1, command, running: entry.running, operator: entry.operator, stored_at: entry.stored_at };
+}
+
+/**
+ * Whether a stored command is continued without asking: it was running, it is this operator's, and it is
+ * less than a day old (review R3-2). Anything else is shown as a pending command to Retry or Forget.
+ */
+export function friendingGoMayContinue(pending: FriendingGoPendingEmail, operator: string, nowSeconds: number): boolean {
+  return pending.running && pending.operator === operator.trim().toLowerCase()
+    && pending.stored_at <= nowSeconds + CLOCK_SKEW_SECONDS && nowSeconds - pending.stored_at <= FRIENDINGGO_CONTINUE_SECONDS;
+}
+
+/** A command as this operator stores it now. */
+export function friendingGoStamp<T extends { operator: string; stored_at: number }>(value: Omit<T, "operator" | "stored_at">, operator: string, nowSeconds: number): T {
+  return { ...value, operator: operator.trim().toLowerCase(), stored_at: Math.floor(nowSeconds) } as T;
 }
 
 export function friendingGoPendingStatus(value: unknown): FriendingGoPendingStatus | null {
   const entry = record(value);
   const raw = record(entry?.command);
-  if (!entry || !raw || !exactKeys(entry, ["version", "command", "name"]) || entry.version !== 1) return null;
-  if (typeof entry.name !== "string" || entry.name.length > 200) return null;
+  if (!entry || !raw || !exactKeys(entry, ["version", "command", "name", "operator", "stored_at"]) || entry.version !== 1) return null;
+  if (typeof entry.name !== "string" || entry.name.length > 200 || !operatorOf(entry.operator) || !storedAt(entry.stored_at)) return null;
   const command = friendingGoStatusBody(raw);
-  return command ? { version: 1, command, name: entry.name } : null;
+  return command ? { version: 1, command, name: entry.name, operator: entry.operator, stored_at: entry.stored_at } : null;
 }
 
 // ------------------------------------------------------------------ a sliced send (Core rounds 2 and 3)
@@ -419,12 +455,19 @@ export type FriendingGoHydration =
   | { kind: "none" };
 
 /**
- * What the Email tab does when it mounts: a stored command comes first (a running send or resume is
- * continued with the same request id; any other waits for the operator); otherwise a `?draft=` link
- * opens that draft, asking first when the composer holds something that would be lost.
+ * What the Email tab does when it mounts: a stored command comes first (a running send or resume of this
+ * operator, less than a day old, is continued with the same request id; any other waits for the
+ * operator); otherwise a `?draft=` link opens that draft, asking first when the composer holds something
+ * that would be lost.
  */
-export function friendingGoHydration(pending: FriendingGoPendingEmail | null, draftId: string | null, composer: FriendingGoComposer): FriendingGoHydration {
-  if (pending) return pending.running ? { kind: "continue", pending } : { kind: "pending", pending };
+export function friendingGoHydration(
+  pending: FriendingGoPendingEmail | null,
+  draftId: string | null,
+  composer: FriendingGoComposer,
+  operator: string,
+  nowSeconds: number,
+): FriendingGoHydration {
+  if (pending) return friendingGoMayContinue(pending, operator, nowSeconds) ? { kind: "continue", pending } : { kind: "pending", pending };
   if (!draftId || composer.campaignId === draftId) return { kind: "none" };
   return composer.subject.trim() !== "" || composer.preheader.trim() !== "" || composer.body.trim() !== ""
     ? { kind: "askDraft", id: draftId }
@@ -439,4 +482,15 @@ export function friendingGoSelectionAfterSend(selection: readonly FriendingGoSel
   if (command.mode !== "send" || command.audience !== "selected") return [...selection];
   const sent = command.preorder_ids.join(",");
   return friendingGoSelectionIds(selection).join(",") === sent ? [] : [...selection];
+}
+
+/**
+ * Whether the composer still holds the email a send carried (its type, wording and audience mode): after
+ * that send is finished, by any tab, the composer is cleared; a different text is kept (review R3-3).
+ */
+export function friendingGoComposerSent(composer: FriendingGoComposer, command: FriendingGoSendBody): boolean {
+  if (command.mode !== "send") return false;
+  const words = friendingGoComposerWording(composer);
+  return words.ok && composer.audience === command.audience && words.value.kind === command.kind
+    && words.value.subject === command.subject && words.value.preheader === command.preheader && words.value.body_html === command.body_html;
 }

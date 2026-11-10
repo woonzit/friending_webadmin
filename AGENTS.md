@@ -72,7 +72,8 @@ closed fields with `contract_version=1` and only the parsed answer back; a viewe
 unmasked address or phone number. Every status change and send carries a caller-minted request id kept
 in `sessionStorage` until its outcome is known, and an unknown outcome is retried with the same id; a send
 Core answers in slices (`sending`) is carried on with the same id until it is `sent`, leaving the page while
-it runs asks first, and the next Email or Sent tab of the browser tab continues it. A stalled send is finished
+it runs asks first, and the next Email or Sent tab of the browser tab continues it (only for the operator who
+stored it, within a day; sign-out clears the tab's FriendingGO values). A stalled send is finished
 with "Finish sending" (`mode=resume`, a fresh id, then repeated). Write controls follow the answers'
 `can_write` / `can_see_addresses`, never the role alone. Successes and refusals reach the browser only as
 parsed, closed shapes. The CSV export is its own write route (`/api/admin/go-preorders-export`) with a

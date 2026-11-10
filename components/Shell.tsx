@@ -12,6 +12,7 @@ import AdminLogoutButton from "@/components/AdminLogoutButton";
 import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
+import { clearFriendingGoSession, friendingGoSessionStorage } from "@/lib/friendinggoConsole";
 
 type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail" | "friendingGo";
 
@@ -140,6 +141,8 @@ export default function Shell({
     if (!await confirmResearchNavigation()) return;
     const response = await fetch("/api/auth/logout", { method: "POST" });
     if (!response.ok) throw new Error("admin-logout-failed");
+    // D-153: the next operator in this browser tab inherits no FriendingGO command, audience or text (review R3-2).
+    clearFriendingGoSession(friendingGoSessionStorage());
     router.replace("/login");
     router.refresh();
   }

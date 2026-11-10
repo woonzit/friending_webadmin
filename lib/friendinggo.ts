@@ -859,16 +859,29 @@ export function friendingGoSendResult(response: unknown, command: FriendingGoSen
 }
 
 /**
- * A campaign's progress: the preorders processed (queued or left out) of the audience. A send or resume
- * answer that says `sending` has some left to do (`strict`); a listed `sending` campaign may have written
- * its last batch before it was marked `sent`.
+ * A campaign's progress: the preorders processed (queued or left out) of the audience; `total` is always the
+ * audience (`counts.selected`).
+ *
+ * - A send or resume ANSWER (`strict`) takes both from the same recipient count: `processed` equals
+ *   `queued + suppressed`, and a `sending` answer has some left to do.
+ * - A LISTED campaign (Core round 3, `campaignProgress`) reads `processed` from `progress_index`, which moves
+ *   after every batch of 50 and never back, while the stored `counts` move only at the end of a slice (a send
+ *   starts at 0 / 0): so `queued + suppressed <= processed <= total` while it is `sending` (review R3-1); a
+ *   `sent` campaign is whole, `processed = total = queued + suppressed`.
  */
 function progressOf(value: unknown, sent: FriendingGoCampaign, strict: boolean): FriendingGoProgress | null {
   const entry = record(value);
   if (!entry || !exactKeys(entry, ["processed", "total"]) || !count(entry.processed) || !count(entry.total)) return null;
   const counts = sent.counts;
-  if (!counts || entry.total !== counts.selected || entry.processed !== counts.queued + counts.suppressed) return null;
-  if (sent.state === "sent" ? entry.processed !== entry.total : strict ? entry.processed >= entry.total : entry.processed > entry.total) return null;
+  if (!counts || entry.total !== counts.selected) return null;
+  const written = counts.queued + counts.suppressed;
+  if (sent.state === "sent") {
+    if (entry.processed !== entry.total || entry.processed !== written) return null;
+  } else if (strict) {
+    if (entry.processed !== written || entry.processed >= entry.total) return null;
+  } else if (entry.processed < written || entry.processed > entry.total) {
+    return null;
+  }
   return { processed: entry.processed, total: entry.total };
 }
 

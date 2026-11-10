@@ -46,6 +46,7 @@ import {
   friendingGoBuildCommand,
   friendingGoComposer,
   friendingGoComposerContent,
+  friendingGoComposerSent,
   friendingGoContentKey,
   friendingGoHydration,
   friendingGoInsert,
@@ -424,7 +425,7 @@ export function FriendingGoEmailView({
  * the receipted writes (test, draft, send) through the tab's one email command. Never a recovery-loader
  * registration.
  */
-export default function FriendingGoEmailConsole({ initialDraftId }: { initialDraftId: string | null }) {
+export default function FriendingGoEmailConsole({ initialDraftId, operator }: { initialDraftId: string | null; operator: string }) {
   const t = useTranslations("friendinggo");
   const locale = useLocale();
   const reasonList = useFriendingGoReasonList();
@@ -474,8 +475,8 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
         setNotice({ tone: "success", text: t("email.notices.resumed", { subject: result.campaign.subject, total: formatNumber(result.progress.total, locale) }) });
       } else {
         const counts = result.campaign.counts;
-        setComposer(EMPTY_FRIENDINGGO_COMPOSER);
-        // The audience is cleared only when it is still the one that was sent (review P3-7).
+        // The text and the audience are cleared only when they are still the ones that were sent (P3-7, R3-3).
+        setComposer((current) => friendingGoComposerSent(current, command) ? EMPTY_FRIENDINGGO_COMPOSER : current);
         setSelection((current) => friendingGoSelectionAfterSend(current, command));
         setPreview({ kind: "idle" });
         setShowProblems(false);
@@ -531,7 +532,7 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
     }
   };
 
-  const command = useFriendingGoEmailCommand(onOutcome, {
+  const command = useFriendingGoEmailCommand(operator, onOutcome, {
     confirm: t("navigation.confirm"), history: t("navigation.history"), title: t("navigation.title"), leave: t("navigation.leave"),
   });
 
@@ -567,12 +568,12 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
     if (!hydrated || command.restored === undefined || decided.current) return;
     decided.current = true;
     if (!command.storageAvailable) setNotice({ tone: "error", text: t("errors.storageUnavailable") });
-    const decision = friendingGoHydration(command.restored, initialDraftId, storedComposer.current);
+    const decision = friendingGoHydration(command.restored, initialDraftId, storedComposer.current, operator, Math.floor(Date.now() / 1000));
     if (decision.kind === "continue") setNotice({ tone: "info", text: t("email.notices.continuing") });
     else if (decision.kind === "pending") setNotice({ tone: "info", text: t("pending.restored") });
     else if (decision.kind === "askDraft") setConfirm({ kind: "replace", draft: { id: decision.id, subject: null } });
     else if (decision.kind === "openDraft") void openDraft(decision.id);
-  }, [command.restored, command.storageAvailable, hydrated, initialDraftId, openDraft, t]);
+  }, [command.restored, command.storageAvailable, hydrated, initialDraftId, openDraft, operator, t]);
 
   useEffect(() => {
     if (hydrated) friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.composer, composer);

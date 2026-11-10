@@ -5,8 +5,16 @@ import { adminCall } from "@/lib/adminClient";
 import { retainResearchCommandNavigation } from "@/lib/datesResearchNavigation";
 import { friendingGoPreorders, type FriendingGoListFilters, type FriendingGoSendBody } from "@/lib/friendinggo";
 import {
+  EMPTY_FRIENDINGGO_COMPOSER,
   FRIENDINGGO_STORAGE_KEYS,
+  friendingGoComposer,
+  friendingGoComposerSent,
+  friendingGoMayContinue,
   friendingGoPendingEmail,
+  friendingGoSelection,
+  friendingGoSelectionAfterSend,
+  friendingGoSessionStorage,
+  friendingGoStamp,
   friendingGoStore,
   friendingGoStored,
   runFriendingGoEmailCommand,
@@ -17,10 +25,27 @@ import {
 } from "@/lib/friendinggoConsole";
 
 export function friendingGoBrowserStorage(): FriendingGoStorage | null {
-  try { return window.sessionStorage; } catch { return null; }
+  return friendingGoSessionStorage();
 }
 
 const sleep = (milliseconds: number) => new Promise<void>((resolve) => { window.setTimeout(resolve, milliseconds); });
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+/**
+ * After a send is finished, by whichever tab finished it, the composer and the audience that belonged to it
+ * are cleared from the tab's storage; a different text or a newer selection is kept (review R3-3).
+ */
+function forgetSentEmail(command: FriendingGoSendBody): void {
+  if (command.mode !== "send") return;
+  const storage = friendingGoBrowserStorage();
+  const composer = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.composer, friendingGoComposer);
+  if (composer && friendingGoComposerSent(composer, command)) friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.composer, EMPTY_FRIENDINGGO_COMPOSER);
+  const audience = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.audience, friendingGoSelection);
+  if (audience) {
+    const left = friendingGoSelectionAfterSend(audience, command);
+    friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.audience, left.length > 0 ? left : null);
+  }
+}
 
 export type FriendingGoNavigationCopy = { confirm: string; history: string; title: string; leave: string };
 
@@ -32,6 +57,8 @@ export type FriendingGoNavigationCopy = { confirm: string; history: string; titl
  * first (the console's shared navigation guard and the browser's unload prompt).
  */
 export function useFriendingGoEmailCommand(
+  /** The signed-in operator's email: a stored command is continued by itself only for them (review R3-2). */
+  operator: string,
   onOutcome: (outcome: Exclude<FriendingGoRunOutcome, { kind: "left" }>, stored: FriendingGoPendingEmail) => void,
   navigation: FriendingGoNavigationCopy,
 ) {
@@ -70,6 +97,7 @@ export function useFriendingGoEmailCommand(
     });
     // The page went away: the command stays stored as running, and the next Email or Sent tab continues it.
     if (outcome.kind === "left") return;
+    if (outcome.kind === "done") forgetSentEmail(stored.command);
     busyRef.current = false;
     setBusy(false);
     setProgress(null);
@@ -82,23 +110,33 @@ export function useFriendingGoEmailCommand(
     const stored = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, friendingGoPendingEmail);
     setStorageAvailable(storage !== null && stored !== undefined);
     setRestored(stored ?? null);
-    if (stored?.running) void execute(stored);
+    // Continued by itself only for the operator who stored it, within a day; otherwise it waits for a decision.
+    if (stored && friendingGoMayContinue(stored, operator, nowSeconds())) void execute(stored);
     else if (stored) setPending(stored);
-  }, [execute]);
+  }, [execute, operator]);
 
   /** Store the command before it leaves, then carry it to an outcome; `false` when the browser refused to store it. */
   const start = useCallback((command: FriendingGoSendBody): boolean => {
     if (busyRef.current) return false;
-    const stored: FriendingGoPendingEmail = { version: 1, command, running: false };
+    const stored = friendingGoStamp<FriendingGoPendingEmail>({ version: 1, command, running: false }, operator, nowSeconds());
     if (!friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingEmail, stored)) {
       setStorageAvailable(false);
       return false;
     }
     void execute(stored);
     return true;
-  }, [execute]);
+  }, [execute, operator]);
 
-  const retry = useCallback(() => { if (pending && !busyRef.current) void execute(pending); }, [execute, pending]);
+  /** The operator's explicit Retry: the same command, stored again as theirs and now. */
+  const retry = useCallback(() => {
+    if (!pending || busyRef.current) return;
+    const restamped = friendingGoStamp<FriendingGoPendingEmail>({ version: 1, command: pending.command, running: pending.running }, operator, nowSeconds());
+    if (!friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingEmail, restamped)) {
+      setStorageAvailable(false);
+      return;
+    }
+    void execute(restamped);
+  }, [execute, operator, pending]);
 
   const discard = useCallback(() => {
     friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingEmail, null);

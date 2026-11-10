@@ -328,3 +328,20 @@ test("round 3 and the review fixes: over-cap send is off, a stalled send can be 
   }
   assert.equal(MESSAGES.hu.friendinggo.preorders.status.unsubscribed, "{name} leiratkoztatva.");
 });
+
+test("review R3-1: a stalled send whose progress ran ahead of its counts is listed with Finish sending, in both locales", () => {
+  // DERIVED from Core's genuine stalled campaign: it died after two more batches, so progress is ahead of the stored counts.
+  const body = JSON.parse(JSON.stringify(fixture("webadmin-go-email-campaigns-sending")));
+  body.data.campaigns[0].counts.queued = 0;
+  body.data.campaigns[0].progress.processed = 100;
+  const list = go.friendingGoCampaigns(body, 1, "sending");
+  assert.ok(list, "the list parses");
+  for (const locale of ["en", "hu"] as const) {
+    const copy = MESSAGES[locale].friendinggo;
+    const html = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: list!, load: "ready", page: 1, state: "sending",
+      onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
+    assert.ok(html.includes(escaped(copy.sent.stalled)) && html.includes(`>${escaped(copy.sent.resume.button)}<`));
+    assert.ok(html.includes(locale === "en" ? "100 / 101 done" : "100 / 101 kész"));
+    assert.doesNotMatch(html, /error-state/u);
+  }
+});

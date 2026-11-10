@@ -21,5 +21,5 @@ export default async function FriendingGoEmailPage({
   if (!me?.friendingGoConsoleReady) notFound();
   const query = await searchParams;
   const draft = Array.isArray(query.draft) ? query.draft[0] : query.draft;
-  return <FriendingGoEmailConsole initialDraftId={isFriendingGoObjectId(draft) ? draft : null} />;
+  return <FriendingGoEmailConsole initialDraftId={isFriendingGoObjectId(draft) ? draft : null} operator={me.email} />;
 }

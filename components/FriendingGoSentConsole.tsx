@@ -379,7 +379,7 @@ export function FriendingGoResumeDialog({ campaign, onCancel, onConfirm }: {
  * (Core round 3 `mode=resume`): a fresh request id, then the same id repeated until the campaign is `sent`,
  * through the tab's one email command (the Email tab's runner, guard and storage).
  */
-export default function FriendingGoSentConsole() {
+export default function FriendingGoSentConsole({ operator }: { operator: string }) {
   const t = useTranslations("friendinggo");
   const locale = useLocale();
   const access: FriendingGoAccess = useFriendingGoAccess();
@@ -418,7 +418,7 @@ export default function FriendingGoSentConsole() {
       setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(outcome.error)}`) });
     }
   };
-  const command = useFriendingGoEmailCommand(onOutcome, {
+  const command = useFriendingGoEmailCommand(operator, onOutcome, {
     confirm: t("navigation.confirm"), history: t("navigation.history"), title: t("navigation.title"), leave: t("navigation.leave"),
   });
   const canWrite = access.load === "ready" && access.canWrite;

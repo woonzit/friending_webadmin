@@ -11,5 +11,5 @@ export default async function FriendingGoSentPage() {
     throw error;
   }
   if (!me?.friendingGoConsoleReady) notFound();
-  return <FriendingGoSentConsole />;
+  return <FriendingGoSentConsole operator={me.email} />;
 }
