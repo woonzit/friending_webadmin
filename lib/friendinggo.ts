@@ -51,7 +51,8 @@ export const FRIENDINGGO_CAMPAIGN_STATES = ["draft", "sending", "sent"] as const
 export type FriendingGoCampaignState = (typeof FRIENDINGGO_CAMPAIGN_STATES)[number];
 export const FRIENDINGGO_AUDIENCES = ["selected", "all_active"] as const;
 export type FriendingGoAudience = (typeof FRIENDINGGO_AUDIENCES)[number];
-export const FRIENDINGGO_SEND_MODES = ["test", "send", "save_draft"] as const;
+/** `resume` (Core round 3) finishes a `sending` campaign whose own request is gone, under a fresh request id. */
+export const FRIENDINGGO_SEND_MODES = ["test", "send", "save_draft", "resume"] as const;
 export type FriendingGoSendMode = (typeof FRIENDINGGO_SEND_MODES)[number];
 export const FRIENDINGGO_RECIPIENT_STATES = ["queued", "suppressed"] as const;
 export type FriendingGoRecipientState = (typeof FRIENDINGGO_RECIPIENT_STATES)[number];
@@ -167,7 +168,14 @@ export type FriendingGoCampaign = {
   updated_at: number;
   sent_at: number | null;
 };
-export type FriendingGoCampaignDetailCampaign = Omit<FriendingGoCampaign, "audience"> & {
+/** How far a send is: preorders processed (queued or left out) of the audience. */
+export type FriendingGoProgress = { processed: number; total: number };
+/**
+ * A campaign as the list and the detail read it (Core round 3): `resumable` (a `sending` campaign with no
+ * progress for 120 s, which `mode=resume` may finish) and its `progress` (`null` for a draft).
+ */
+export type FriendingGoListedCampaign = FriendingGoCampaign & { resumable: boolean; progress: FriendingGoProgress | null };
+export type FriendingGoCampaignDetailCampaign = Omit<FriendingGoListedCampaign, "audience"> & {
   audience: { mode: FriendingGoAudience; count: number | null; preorder_ids: string[] };
   body_html: string;
 };
@@ -190,7 +198,7 @@ export type FriendingGoCampaignList = {
   page: number;
   page_size: number;
   has_more: boolean;
-  campaigns: FriendingGoCampaign[];
+  campaigns: FriendingGoListedCampaign[];
 };
 export type FriendingGoCampaignDetail = {
   contract_version: 1;
@@ -202,13 +210,11 @@ export type FriendingGoCampaignDetail = {
   can_see_addresses: boolean;
   recipients: FriendingGoRecipient[];
 };
-/** How far a send is: preorders processed (queued or left out) of the audience. */
-export type FriendingGoProgress = { processed: number; total: number };
 export type FriendingGoSendResult =
   | { contract_version: 1; mode: "test"; to: string; outbound_id: string; receipt: FriendingGoReceipt }
   | { contract_version: 1; mode: "save_draft"; campaign: FriendingGoCampaign; receipt: FriendingGoReceipt }
-  /** Core round 2 slices a send: `campaign.state` is `sending` until the last call answers `sent`. */
-  | { contract_version: 1; mode: "send"; campaign: FriendingGoCampaign; progress: FriendingGoProgress; receipt: FriendingGoReceipt };
+  /** Core slices a send (and a resume): `campaign.state` is `sending` until the last call answers `sent`. */
+  | { contract_version: 1; mode: "send" | "resume"; campaign: FriendingGoCampaign; progress: FriendingGoProgress; receipt: FriendingGoReceipt };
 
 /** What the browser sends for a preview (and, with the send fields, for a send). Canonical. */
 export type FriendingGoEmailContent = {
@@ -222,7 +228,9 @@ export type FriendingGoEmailContent = {
 export type FriendingGoSendBody =
   | { mode: "test"; kind: FriendingGoKind; subject: string; preheader: string; body_html: string; request_id: string }
   | (FriendingGoEmailContent & { mode: "save_draft"; campaign_id: string; request_id: string })
-  | (FriendingGoEmailContent & { mode: "send"; campaign_id: string; request_id: string; expected_sendable: number });
+  | (FriendingGoEmailContent & { mode: "send"; campaign_id: string; request_id: string; expected_sendable: number })
+  /** Finish a stalled send: the campaign and a fresh request id, nothing else (Core round 3). */
+  | { mode: "resume"; campaign_id: string; request_id: string };
 export type FriendingGoStatusBody = { preorder_id: string; status: FriendingGoSettableStatus; request_id: string };
 
 // ------------------------------------------------------------------ primitives
@@ -391,6 +399,11 @@ export function friendingGoSendBody(body: Record<string, unknown>): FriendingGoS
     const words = wording(body);
     return words ? { mode, ...words, request_id: body.request_id as string } : null;
   }
+  if (mode === "resume") {
+    return exactKeys(body, ["mode", "campaign_id", "request_id"]) && isFriendingGoObjectId(body.campaign_id)
+      ? { mode, campaign_id: body.campaign_id, request_id: body.request_id as string }
+      : null;
+  }
   if (mode !== "save_draft" && mode !== "send") return null;
   const keys = [...CONTENT_KEYS, "mode", "campaign_id", "request_id", ...(mode === "send" ? ["expected_sendable"] : [])];
   if (!exactKeys(body, keys)) return null;
@@ -458,7 +471,7 @@ export function normalizeFriendingGoProxyBody(
       case "go_email_send": {
         const command = friendingGoSendBody(body);
         if (!command) return null;
-        if (command.mode === "test") return { ...version, ...command };
+        if (command.mode === "test" || command.mode === "resume") return { ...version, ...command };
         const { campaign_id: campaignId, ...rest } = command;
         return { ...version, ...rest, preorder_ids: command.preorder_ids.join(","), ...(campaignId ? { campaign_id: campaignId } : {}) };
       }
@@ -495,9 +508,15 @@ function receipt(value: unknown): FriendingGoReceipt | null {
 }
 
 /** One preorder row; `masked` is the view's own `can_see_addresses === false`. */
+/** The closed key set of a preorder row (Core round 2); an unknown or missing key fails the row (review P3-4). */
+const PREORDER_KEYS = [
+  "id", "name", "first_name", "email", "phone", "city_label", "city_id", "city_from_list", "status", "status_changed_at",
+  "status_source", "can_resubscribe", "source", "consent", "confirmation", "created_at", "updated_at",
+] as const;
+
 function preorder(value: unknown, masked: boolean): FriendingGoPreorder | null {
   const row = record(value);
-  if (!row || !isFriendingGoObjectId(row.id) || !boundedText(row.name, 1, 200) || !boundedText(row.first_name, 0, 40)) return null;
+  if (!row || !exactKeys(row, PREORDER_KEYS) || !isFriendingGoObjectId(row.id) || !boundedText(row.name, 1, 200) || !boundedText(row.first_name, 0, 40)) return null;
   // A masked view carries only masked addresses and phones; an unmasked one never carries the mask.
   if (typeof row.email !== "string" || !(masked ? MASKED_EMAIL.test(row.email) : address(row.email))) return null;
   if (!(row.phone === null || (typeof row.phone === "string" && (masked ? MASKED_PHONE : PHONE).test(row.phone)))) return null;
@@ -582,7 +601,7 @@ export function friendingGoPreorders(
   options: { viewer?: boolean } = {},
 ): FriendingGoPreorderList | null {
   const data = successData(response);
-  if (!data) return null;
+  if (!data || !exactKeys(data, ["contract_version", "filters", "totals", "matching", "page", "page_size", "has_more", "can_see_addresses", "can_write", "rows"])) return null;
   // The answer is for the view that asked: a late answer for other filters is never shown.
   const echo = record(data.filters);
   if (!echo || !exactKeys(echo, ["q", "status", "page"]) || echo.q !== filters.q || echo.status !== filters.status
@@ -613,7 +632,7 @@ export function friendingGoPreorders(
 /** Core's export (`go_preorders` with `export=1`) for exactly these filters: every row unmasked, or null. */
 export function friendingGoExport(response: unknown, filters: { q: string; status: FriendingGoStatus | "" }): FriendingGoExport | null {
   const data = successData(response);
-  if (!data || data.export !== true) return null;
+  if (!data || !exactKeys(data, ["contract_version", "export", "filters", "limit", "row_count", "truncated", "audit_id", "rows"]) || data.export !== true) return null;
   const echo = record(data.filters);
   if (!echo || !exactKeys(echo, ["q", "status"]) || echo.q !== filters.q || echo.status !== filters.status) return null;
   if (data.limit !== FRIENDINGGO_EXPORT_LIMIT || !count(data.row_count) || typeof data.truncated !== "boolean") return null;
@@ -725,27 +744,48 @@ function campaignCounts(value: unknown): FriendingGoCampaignCounts | null {
 
 const SUMMARY_KEYS = ["id", "kind", "state", "subject", "preheader", "audience", "counts", "created_by", "sent_by", "created_at", "updated_at", "sent_at"] as const;
 
-/** One campaign summary, as the list, a draft save and a send answer it. */
+/** One campaign summary, as a draft save, a send and a resume answer it. */
 function campaign(value: unknown): FriendingGoCampaign | null {
-  return campaignOf(value, false);
+  return campaignOf(value, "answer");
 }
 
-/** One campaign as its detail read answers it: the summary, its body and the audience's ids. */
+/**
+ * Whether the campaign may be finished by `mode=resume` and how far it is, as the list and the detail read
+ * it (Core round 3): only a `sending` campaign is resumable; a draft has no progress; a sent one is whole.
+ */
+function listedState(entry: Record<string, unknown>, summary: FriendingGoCampaign): { resumable: boolean; progress: FriendingGoProgress | null } | null {
+  if (typeof entry.resumable !== "boolean" || (entry.resumable && summary.state !== "sending")) return null;
+  if (summary.state === "draft") return entry.progress === null ? { resumable: false, progress: null } : null;
+  const progress = progressOf(entry.progress, summary, false);
+  return progress ? { resumable: entry.resumable, progress } : null;
+}
+
+/** One campaign as the list reads it: the summary, `resumable` and `progress`. */
+function listedCampaign(value: unknown): FriendingGoListedCampaign | null {
+  const summary = campaignOf(value, "list");
+  const extra = summary ? listedState(value as Record<string, unknown>, summary) : null;
+  return summary && extra ? { ...summary, ...extra } : null;
+}
+
+/** One campaign as its detail read answers it: the listed campaign, its body and the audience's ids. */
 function campaignWithBody(value: unknown): FriendingGoCampaignDetailCampaign | null {
-  const summary = campaignOf(value, true);
+  const summary = campaignOf(value, "detail");
   const entry = record(value);
   const audience = record(entry?.audience);
   if (!summary || !entry || !audience) return null;
+  const extra = listedState(entry, summary);
   const ids = audience.preorder_ids;
-  if (!Array.isArray(ids) || !ids.every(isFriendingGoObjectId) || new Set(ids).size !== ids.length
+  if (!extra || !Array.isArray(ids) || !ids.every(isFriendingGoObjectId) || new Set(ids).size !== ids.length
     || ids.length !== (summary.audience.count ?? 0)) return null;
   if (typeof entry.body_html !== "string" || !isCanonicalCannedEmailHtml(entry.body_html)) return null;
-  return { ...summary, audience: { ...summary.audience, preorder_ids: [...ids] }, body_html: entry.body_html };
+  return { ...summary, ...extra, audience: { ...summary.audience, preorder_ids: [...ids] }, body_html: entry.body_html };
 }
 
-function campaignOf(value: unknown, detail: boolean): FriendingGoCampaign | null {
+function campaignOf(value: unknown, variant: "answer" | "list" | "detail"): FriendingGoCampaign | null {
   const entry = record(value);
-  if (!entry || !exactKeys(entry, detail ? [...SUMMARY_KEYS, "body_html"] : SUMMARY_KEYS)) return null;
+  const keys = [...SUMMARY_KEYS, ...(variant === "answer" ? [] : ["resumable", "progress"]), ...(variant === "detail" ? ["body_html"] : [])];
+  const detail = variant === "detail";
+  if (!entry || !exactKeys(entry, keys)) return null;
   if (!isFriendingGoObjectId(entry.id) || !oneOf(FRIENDINGGO_KINDS, entry.kind) || !oneOf(FRIENDINGGO_CAMPAIGN_STATES, entry.state)) return null;
   if (!boundedText(entry.subject, 1, FRIENDINGGO_SUBJECT_MAX) || !boundedText(entry.preheader, 0, FRIENDINGGO_PREHEADER_MAX)) return null;
   const audience = record(entry.audience);
@@ -793,9 +833,16 @@ export function friendingGoSendResult(response: unknown, command: FriendingGoSen
       || !isFriendingGoObjectId(data.outbound_id)) return null;
     return { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "test", to: data.to, outbound_id: data.outbound_id, receipt: parsedReceipt };
   }
-  if (!exactKeys(data, ["contract_version", "mode", "campaign", ...(command.mode === "send" ? ["progress"] : []), "receipt"])) return null;
+  if (!exactKeys(data, ["contract_version", "mode", "campaign", ...(command.mode === "save_draft" ? [] : ["progress"]), "receipt"])) return null;
   const parsed = campaign(data.campaign);
   if (!parsed) return null;
+  if (command.mode === "resume") {
+    // A resume names only its campaign; the content is the campaign's own.
+    const progress = progressOf(data.progress, parsed, true);
+    return parsed.id === command.campaign_id && parsed.state !== "draft" && progress
+      ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "resume", campaign: parsed, progress, receipt: parsedReceipt }
+      : null;
+  }
   // The campaign is the one this command wrote: its kind and wording, its draft when it named one, its state.
   if (parsed.kind !== command.kind || parsed.subject !== command.subject || parsed.preheader !== command.preheader
     || parsed.audience.mode !== command.audience) return null;
@@ -805,22 +852,23 @@ export function friendingGoSendResult(response: unknown, command: FriendingGoSen
       ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "save_draft", campaign: parsed, receipt: parsedReceipt }
       : null;
   }
-  const progress = sendProgress(data.progress, parsed);
+  const progress = progressOf(data.progress, parsed, true);
   return parsed.state !== "draft" && progress
-    ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: "send", campaign: parsed, progress, receipt: parsedReceipt }
+    ? { contract_version: FRIENDINGGO_CONTRACT_VERSION, mode: command.mode, campaign: parsed, progress, receipt: parsedReceipt }
     : null;
 }
 
 /**
- * A send's progress (Core round 2): the preorders processed (queued or left out) of the audience. The
- * last call answers `sent` with everyone processed; a `sending` answer has some left to do.
+ * A campaign's progress: the preorders processed (queued or left out) of the audience. A send or resume
+ * answer that says `sending` has some left to do (`strict`); a listed `sending` campaign may have written
+ * its last batch before it was marked `sent`.
  */
-function sendProgress(value: unknown, sent: FriendingGoCampaign): FriendingGoProgress | null {
+function progressOf(value: unknown, sent: FriendingGoCampaign, strict: boolean): FriendingGoProgress | null {
   const entry = record(value);
   if (!entry || !exactKeys(entry, ["processed", "total"]) || !count(entry.processed) || !count(entry.total)) return null;
   const counts = sent.counts;
   if (!counts || entry.total !== counts.selected || entry.processed !== counts.queued + counts.suppressed) return null;
-  if (sent.state === "sent" ? entry.processed !== entry.total : entry.processed >= entry.total) return null;
+  if (sent.state === "sent" ? entry.processed !== entry.total : strict ? entry.processed >= entry.total : entry.processed > entry.total) return null;
   return { processed: entry.processed, total: entry.total };
 }
 
@@ -833,9 +881,9 @@ export function friendingGoCampaigns(response: unknown, page: number, state: Fri
   if (data.page !== page || data.page_size !== FRIENDINGGO_PAGE_SIZE || typeof data.has_more !== "boolean") return null;
   if (!Array.isArray(data.campaigns) || data.campaigns.length > FRIENDINGGO_PAGE_SIZE) return null;
   if (data.has_more && data.campaigns.length !== FRIENDINGGO_PAGE_SIZE) return null;
-  const campaigns: FriendingGoCampaign[] = [];
+  const campaigns: FriendingGoListedCampaign[] = [];
   for (const item of data.campaigns) {
-    const parsed = campaign(item);
+    const parsed = listedCampaign(item);
     if (!parsed || campaigns.some((seen) => seen.id === parsed.id) || (state !== "" && parsed.state !== state)) return null;
     if (campaigns.length > 0 && campaigns[campaigns.length - 1]!.created_at < parsed.created_at) return null;
     campaigns.push(parsed);
@@ -952,7 +1000,7 @@ export function normalizeFriendingGoResponse(
     }
     case "go_email_send": {
       const body: Record<string, unknown> = { ...rest };
-      if (body.mode !== "test") {
+      if (body.mode === "save_draft" || body.mode === "send") {
         body.preorder_ids = ids(body.preorder_ids);
         body.campaign_id ??= "";
       }
@@ -1003,6 +1051,7 @@ export const FRIENDINGGO_ERRORS = {
   "go-email-rate-limited": { status: 429, key: "rateLimited" },
   "go-campaign-not-found": { status: 404, key: "campaignNotFound" },
   "go-campaign-not-draft": { status: 409, key: "campaignNotDraft" },
+  "go-campaign-not-resumable": { status: 409, key: "campaignNotResumable" },
   "go-preorders-unavailable": { status: 503, key: "unavailable" },
   // The same-origin bridge's refusals.
   "invalid-input": { status: 400, key: "requestInvalid" },
@@ -1093,6 +1142,55 @@ export function friendingGoLock(response: unknown): FriendingGoLockReason | null
   if (envelope?.error !== "go-preorder-status-locked" || !data || !oneOf(FRIENDINGGO_STATUSES, data.status)
     || !(data.status_source === null || oneOf(FRIENDINGGO_STATUS_SOURCES, data.status_source))) return null;
   return friendingGoLockReason(data.status, data.status_source as FriendingGoStatusSource | null);
+}
+
+/**
+ * Core's `go-campaign-not-resumable` (round 3): the campaign is no longer `sending` (`state`), or it is
+ * still making progress and becomes resumable after `retry_after_seconds`. Final for its request id.
+ */
+export function friendingGoNotResumable(response: unknown): { state: FriendingGoCampaignState | null; retry_after_seconds: number | null } | null {
+  const envelope = webadminErrorEnvelope(response, "required");
+  const data = record(envelope?.data);
+  if (envelope?.error !== "go-campaign-not-resumable" || !data) return null;
+  const state = oneOf(FRIENDINGGO_CAMPAIGN_STATES, data.state) ? data.state : null;
+  const seconds = count(data.retry_after_seconds) && data.retry_after_seconds > 0 ? data.retry_after_seconds : null;
+  return { state, retry_after_seconds: seconds };
+}
+
+/**
+ * The documented `data` fields of Core's refusals (counts and cap, receipt, rate limit, lock, wait,
+ * campaign state). A refusal carrying anything else is not forwarded (review P3-5).
+ */
+const REFUSAL_DATA_KEYS = ["counts", "cap", "receipt", "limit", "window_seconds", "status", "status_source", "retry_after_seconds", "state"] as const;
+
+/**
+ * What the bridge sends the browser for Core's refusal of a FriendingGO action: the canonical Webadmin
+ * envelope with a known error name at its own status and only the documented data fields, each parsed.
+ * `null` (an unknown Core response) for anything else, so nothing unparsed reaches the page.
+ */
+export function normalizeFriendingGoRefusal(response: unknown, status: number): Record<string, unknown> | null {
+  const envelope = webadminErrorEnvelope(response, "required") ?? webadminErrorEnvelope(response);
+  if (!envelope || envelope.status_code !== status || !Object.hasOwn(FRIENDINGGO_ERRORS, envelope.error)) return null;
+  const error = envelope.error as FriendingGoError;
+  if (FRIENDINGGO_ERRORS[error].status !== status) return null;
+  const base = { success: false, status_code: status, error, message: 200, status: 200, can_send: 0 };
+  if (!Object.hasOwn(envelope, "data")) return base;
+  const raw = record(envelope.data);
+  if (!raw || !onlyKeys(raw, REFUSAL_DATA_KEYS)) return null;
+  const data: Record<string, unknown> = {};
+  for (const key of Object.keys(raw)) {
+    const value = raw[key];
+    const parsed = key === "counts" ? previewCounts(value)
+      : key === "receipt" ? receipt(value)
+        : key === "cap" ? (value === FRIENDINGGO_CAPS.direct || value === FRIENDINGGO_CAPS.newsletter ? value : null)
+          : key === "status" ? (oneOf(FRIENDINGGO_STATUSES, value) ? value : null)
+            : key === "status_source" ? (value === null || oneOf(FRIENDINGGO_STATUS_SOURCES, value) ? value ?? "null" : null)
+              : key === "state" ? (oneOf(FRIENDINGGO_CAMPAIGN_STATES, value) ? value : null)
+                : count(value) && value > 0 ? value : null;
+    if (parsed === null) return null;
+    data[key] = key === "status_source" && parsed === "null" ? null : parsed;
+  }
+  return { ...base, data };
 }
 
 /** How long Core asks to wait before the same request id is tried again (`go-request-in-progress`). */

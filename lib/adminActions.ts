@@ -811,7 +811,16 @@ const BULK_CATALOG_TIMEOUT_MS = 30_000;
  */
 const REPLACE_IMAGE_TIMEOUT_MS = 30_000;
 
+/**
+ * D-153 FriendingGO send. Core works on one send call for about 6 s (`GO_EMAIL_SEND_SLICE_SECONDS`), checks
+ * that deadline only between batches of 50, and measured a first call of 6.07 s with a maximal body on a local
+ * database (Core T-936 hand-over, round 2); production adds Atlas round trips (about six per batch). 20 s
+ * keeps a slow slice from surfacing as a timeout; a timeout is still retried with the same request id.
+ */
+const FRIENDINGGO_SEND_TIMEOUT_MS = 20_000;
+
 const ADMIN_ACTION_TIMEOUT_MS: Partial<Record<AdminAction, number>> = {
+  go_email_send: FRIENDINGGO_SEND_TIMEOUT_MS,
   admin_replace_image: REPLACE_IMAGE_TIMEOUT_MS,
   profile_tag_catalogs: BULK_CATALOG_TIMEOUT_MS,
   profile_tag_catalog_preview: BULK_CATALOG_TIMEOUT_MS,

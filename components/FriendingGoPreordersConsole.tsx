@@ -34,7 +34,9 @@ import {
   EMPTY_FRIENDINGGO_COMPOSER,
   FRIENDINGGO_STORAGE_KEYS,
   friendingGoComposer,
+  friendingGoPendingEmail,
   friendingGoPendingStatus,
+  friendingGoSelection,
   friendingGoStore,
   friendingGoStored,
   type FriendingGoPendingStatus,
@@ -77,6 +79,7 @@ export function FriendingGoPreordersView({
   exporting,
   confirm,
   exportConfirm,
+  emailPending = false,
   onFilters,
   onReload,
   onSelect,
@@ -101,6 +104,8 @@ export function FriendingGoPreordersView({
   exporting: boolean;
   confirm: StatusConfirm | null;
   exportConfirm: boolean;
+  /** An email command of this tab waits or runs: a new hand-over to the Email tab waits for it (review P3-7). */
+  emailPending?: boolean;
   onFilters: (next: FriendingGoListFilters) => void;
   onReload: () => void;
   onSelect: (rows: FriendingGoPreorder[], selected: boolean) => void;
@@ -224,9 +229,10 @@ export function FriendingGoPreordersView({
                 <span>
                   {t("preorders.selection.count", { count: selection.length })}
                   {notActive > 0 ? ` ${t("preorders.selection.notActive", { count: notActive })}` : ""}
+                  {emailPending ? <small className="friendinggo-email-pending">{t("preorders.selection.emailPending")}</small> : null}
                 </span>
                 <div className="row-actions">
-                  <button className="button button-primary button-small" type="button" disabled={selection.length === 0 || locked} onClick={onEmailSelected}>
+                  <button className="button button-primary button-small" type="button" disabled={selection.length === 0 || locked || emailPending} onClick={onEmailSelected}>
                     {t("preorders.selection.emailSelected", { count: selection.length })}
                   </button>
                   <button className="button button-secondary button-small" type="button" disabled={selection.length === 0} onClick={onClearSelection}>
@@ -373,15 +379,27 @@ export default function FriendingGoPreordersConsole() {
   const [exporting, setExporting] = useState(false);
   const [confirm, setConfirm] = useState<StatusConfirm | null>(null);
   const [exportConfirm, setExportConfirm] = useState(false);
+  const [emailPending, setEmailPending] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const busyRef = useRef(false);
 
   useEffect(() => {
-    const restored = friendingGoStored(browserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingStatus, friendingGoPendingStatus);
+    const storage = browserStorage();
+    const restored = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.pendingStatus, friendingGoPendingStatus);
     if (restored) {
       setPending(restored);
       setNotice({ tone: "info", text: t("pending.restored") });
     }
+    // The selection is the Email tab's audience: it survives tab switches (review P3-7).
+    setSelection(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.audience, friendingGoSelection) ?? []);
+    // While an email command waits or runs, a new hand-over could be wiped by its end: "Email selected" waits too.
+    setEmailPending(Boolean(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, friendingGoPendingEmail)));
+    setHydrated(true);
   }, [t]);
+
+  useEffect(() => {
+    if (hydrated) friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.audience, selection.length > 0 ? selection : null);
+  }, [hydrated, selection]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -407,6 +425,8 @@ export default function FriendingGoPreordersConsole() {
     if (settled) {
       friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.pendingStatus, null);
       setPending(null);
+      // The row as Core now answers it (its status, source and can_resubscribe), before the list is read again.
+      setData((current) => current ? { ...current, rows: current.rows.map((row) => row.id === settled.preorder.id ? settled.preorder : row) } : current);
       setNotice({
         tone: "success",
         text: !settled.changed ? t("preorders.status.unchanged", { name: command.name })
@@ -464,6 +484,7 @@ export default function FriendingGoPreordersConsole() {
   }
 
   function emailSelected() {
+    if (emailPending) return;
     const storage = browserStorage();
     // The Email tab keeps what was being written; only the audience changes to these people.
     const composer = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.composer, friendingGoComposer) ?? EMPTY_FRIENDINGGO_COMPOSER;
@@ -519,7 +540,9 @@ export default function FriendingGoPreordersConsole() {
       if (response?.status === 503 && (body as { error?: unknown } | null)?.error === "admin-membership-unconfirmed") {
         adminMembershipRecovery.markUnconfirmed();
       }
-      setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(friendingGoError(body))}`) });
+      const error = friendingGoError(body);
+      // A timed-out export may already be in the audit log: say so, so nobody exports twice blindly (review P3-6).
+      setNotice({ tone: "error", text: error === "core-timeout" || response === null ? t("preorders.export.timeout") : t(`errors.${friendingGoErrorKey(error)}`) });
     }
     setExporting(false);
     setExportConfirm(false);
@@ -537,6 +560,7 @@ export default function FriendingGoPreordersConsole() {
       exporting={exporting}
       confirm={confirm}
       exportConfirm={exportConfirm}
+      emailPending={emailPending}
       // An answer belongs to its filters: the previous view is cleared, never shown under new ones.
       onFilters={(next) => { setData(null); setFilters(next); }}
       onReload={reload}

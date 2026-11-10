@@ -2702,7 +2702,7 @@
           "statusChanges": {
             "title": "Unsubscribe and resubscribe",
             "purpose": "Unsubscribe stops all FriendingGO email to an address at once. Resubscribe turns it back on, and Core offers it only to undo an unsubscribe made in this console.",
-            "guidance": "An address the person unsubscribed themselves, one unsubscribed by delivery feedback, and bounced or spam-reporting addresses are locked: the row says why instead of showing a button. The person can come back themselves from the unsubscribe page.",
+            "guidance": "An address the person unsubscribed themselves, one unsubscribed by delivery feedback, and bounced or spam-reporting addresses are locked: the row says why instead of showing a button. If the person also clicks unsubscribe after an admin did, the unsubscribe becomes theirs and is locked too. The person can come back themselves from the unsubscribe page.",
             "actions": {
               "1": "Press Unsubscribe or Resubscribe on a row and confirm in the dialog.",
               "2": "If the outcome is unknown, press Retry the same request in the notice; it never makes a second change."
@@ -2767,7 +2767,7 @@
           "send": {
             "title": "Sending",
             "purpose": "Send… opens a confirmation that states the exact number of people who will receive the email and how many are left out, by reason. Core writes a large send in parts; the console carries it on with the same request and shows how far it is.",
-            "guidance": "Sending cannot be undone; keep the page open until it says the email was sent. If the audience changed since the preview, Core refuses the send, the preview is updated, and you confirm the new number.",
+            "guidance": "Sending cannot be undone; keep the page open until it says the email was sent. Leaving the page asks first; a send left behind continues when this browser tab opens the Email or Sent tab again. If the audience changed since the preview, Core refuses the send, the preview is updated, and you confirm the new number.",
             "actions": {
               "1": "Confirm only when the number in the dialog is what you expect.",
               "2": "Check the Sent tab afterwards to see delivery."
@@ -2796,10 +2796,11 @@
           "campaigns": {
             "title": "Campaigns",
             "purpose": "Each row is one campaign: subject, type and state, audience, who sent it, when, and how many people were emailed and left out. The Show filter lists only drafts, sends in progress or sent campaigns.",
-            "guidance": "A campaign marked Sending is still being written by Core; refresh after a moment. Drafts show no counts because nobody was emailed.",
+            "guidance": "A send continues only while a console tab is driving it with the same request. If that tab was closed, the campaign stays Sending; after two minutes without progress it is marked Stalled with how far it got, and an admin can press Finish sending. Drafts show no counts because nobody was emailed.",
             "actions": {
               "1": "Press Open to see one campaign in detail.",
-              "2": "Press Edit draft to continue a draft on the Email tab."
+              "2": "Press Edit draft to continue a draft on the Email tab.",
+              "3": "Press Finish sending on a Stalled campaign to write the rest; nobody already emailed is emailed again."
             }
           },
           "detail": {
@@ -13114,6 +13115,12 @@
       "restored": "A request from earlier in this tab has no known outcome yet. Retry it before you start anything new.",
       "discarded": "The unknown request was forgotten. Check the current state before you try again."
     },
+    "navigation": {
+      "title": "Leave while a send is running?",
+      "leave": "Leave page",
+      "confirm": "This tab is still sending. If you leave, the send pauses; it continues by itself when you open the Email or Sent tab again in this browser tab. Leave this page?",
+      "history": "You left while a send was running. It continues when you open the Email or Sent tab again in this browser tab; if the tab is gone, the send shows as stalled on the Sent tab and can be finished with Finish sending."
+    },
     "errors": {
       "sessionInvalid": "Your admin session is no longer valid. Sign in again.",
       "writeRequired": "Your role is read-only. Only an admin or the owner can do this.",
@@ -13135,6 +13142,7 @@
       "rateLimited": "You have reached the newsletter limit. Try again later.",
       "campaignNotFound": "That draft no longer exists. What you wrote is kept; saving it creates a new draft.",
       "campaignNotDraft": "That draft has already been sent. What you wrote is kept; saving it creates a new draft.",
+      "campaignNotResumable": "This send cannot be finished from here now. Look at the Sent tab.",
       "unavailable": "FriendingGO is not available in Core right now. Try again later.",
       "capabilityRequired": "This Core does not offer FriendingGO yet.",
       "outcomeUnknown": "Core's answer was lost or could not be read. The request may have gone through.",
@@ -13153,7 +13161,8 @@
         "copy": "The CSV file holds {count, plural, one {# sign-up} other {# sign-ups}} of the current search and status filter (at most {limit}), with full email addresses and phone numbers. The export is recorded in the audit log. Keep the file safe and delete it when you no longer need it.",
         "confirm": "Download CSV",
         "done": "{count, plural, one {# sign-up was} other {# sign-ups were}} exported.",
-        "truncated": "Only the first {limit} sign-ups were exported. Narrow the search or the status filter to export the rest."
+        "truncated": "Only the first {limit} sign-ups were exported. Narrow the search or the status filter to export the rest.",
+        "timeout": "The export took too long and no file was produced. It may already be recorded in the audit log; check the audit log before you export again."
       },
       "pending": {
         "unsubscribed": "Unsubscribing {name} may not have been saved.",
@@ -13192,7 +13201,8 @@
         "notActive": "({count, plural, one {# of them is} other {# of them are}} not active and will be left out.)",
         "emailSelected": "Email selected ({count})",
         "clear": "Clear selection",
-        "limit": "You can select at most {limit} people."
+        "limit": "You can select at most {limit} people.",
+        "emailPending": "An email of this tab is still running or waiting for a retry: finish it on the Email tab before you hand over new people."
       },
       "status": {
         "unsubscribe": "Unsubscribe",
@@ -13271,7 +13281,8 @@
         "saving": "Saving…",
         "send": "Send…",
         "sending": "Sending…",
-        "sendHint": "Send becomes available after a preview of exactly this text and audience."
+        "sendHint": "Send becomes available after a preview of exactly this text and audience.",
+        "overCap": "Send is off: this audience is larger than {cap} people. Choose fewer people."
       },
       "preview": {
         "title": "Preview",
@@ -13306,6 +13317,7 @@
         "test": "We don't know whether the test of “{subject}” was sent.",
         "save_draft": "We don't know whether the draft “{subject}” was saved.",
         "send": "We don't know whether “{subject}” was sent.",
+        "resume": "We don't know whether finishing the stalled send went through.",
         "copy": "Retry sends exactly the same request: Core finishes it if it started and never emails anyone twice.",
         "stillSending": "Core has not finished this request yet (a large send can take a while, or an earlier attempt stopped midway). Retry the same request to finish it; nobody is emailed twice.",
         "paused": "The send stopped at {processed} of {total} people. Retry the same request to carry it on; nobody is emailed twice."
@@ -13314,7 +13326,10 @@
         "test": "A test copy was sent to {to}.",
         "testReplayed": "The test copy to {to} had already been sent.",
         "draftSaved": "The draft “{subject}” is saved.",
-        "sent": "Sent to {count, plural, one {# person} other {# people}}. {suppressed, plural, =0 {Nobody was left out.} one {# person was left out.} other {# people were left out.}} Delivery is shown on the Sent tab."
+        "sent": "Sent to {count, plural, one {# person} other {# people}}. {suppressed, plural, =0 {Nobody was left out.} one {# person was left out.} other {# people were left out.}} Delivery is shown on the Sent tab.",
+        "continuing": "The send that was running in this tab continues with the same request.",
+        "resumed": "The stalled send “{subject}” is finished: {total} people processed.",
+        "changedSincePreview": "The text or the audience changed after the preview. Check the new preview, then send again."
       },
       "refusals": {
         "audienceChanged": "The audience changed since your preview: now {count, plural, one {# person} other {# people}} would receive it. The preview was updated. Check it and send again.",
@@ -13332,6 +13347,7 @@
         "title": "Forget the unknown request?",
         "copy": "The console stops retrying it. If it went through, it stays done.",
         "copySend": "The console stops retrying it. If the send went through, sending the same email again emails everyone twice. Check the Sent tab first.",
+        "copyResume": "The console stops finishing it. If it is still stalled, it can be finished later with Finish sending on the Sent tab; nobody is emailed twice.",
         "confirm": "Forget it"
       },
       "replace": {
@@ -13344,7 +13360,19 @@
       "accessError": "Core did not confirm whether you may send. Reload the page to send a test, save a draft or send.",
       "progress": {
         "sending": "Sending in parts: {processed} of {total} people done. Keep this page open; the console carries the send on with the same request.",
-        "waiting": "Core is still busy with an earlier attempt of this send. The console tries the same request again in {seconds} s."
+        "waiting": {
+          "test": "Core is still working on this test send. The console asks again with the same request in {seconds} s.",
+          "save_draft": "Core is still saving this draft. The console asks again with the same request in {seconds} s.",
+          "send": "Core is still busy with an earlier call of this send. The console asks again with the same request in {seconds} s.",
+          "resume": "Core is still busy with this finishing send. The console asks again with the same request in {seconds} s."
+        },
+        "timeout": "A part of the send took too long to answer. The console asks again with the same request in {seconds} s; nobody is emailed twice.",
+        "working": {
+          "test": "Sending the test…",
+          "save_draft": "Saving the draft…",
+          "send": "Sending…",
+          "resume": "Finishing the send…"
+        }
       }
     },
     "sent": {
@@ -13367,7 +13395,8 @@
         "counts": "Emailed / left out",
         "countsValue": "{queued} / {suppressed}",
         "editDraft": "Edit draft",
-        "emptyFiltered": "No campaign is in this state."
+        "emptyFiltered": "No campaign is in this state.",
+        "progress": "{processed} / {total} done"
       },
       "audience": {
         "allActive": "Everyone active",
@@ -13385,7 +13414,8 @@
         "draftNote": "This is a draft: nobody has been emailed yet.",
         "content": "Content",
         "contentFrame": "Stored content: {subject}",
-        "contentHint": "The stored body, without the FriendingGO layout. Merge tags are shown as written; each person got their own first name and city."
+        "contentHint": "The stored body, without the FriendingGO layout. Merge tags are shown as written; each person got their own first name and city.",
+        "stalledNote": "This send stopped: nobody is carrying it on. Finish sending writes the rest with the stored content and audience; nobody is emailed twice."
       },
       "counts": {
         "selected": "Selected",
@@ -13405,6 +13435,17 @@
       "filters": {
         "state": "Show",
         "all": "All campaigns"
+      },
+      "stalled": "Stalled",
+      "sendingNote": "A send continues only while a console tab is driving it. If that tab was closed, the send stops; after two minutes without progress it is marked Stalled and can be finished with Finish sending.",
+      "resume": {
+        "button": "Finish sending",
+        "title": "Finish this send?",
+        "copy": "“{subject}” stopped at {processed} of {total} people. Finishing writes the rest with the content and the audience it was sent with; people already emailed are not emailed again. Keep this page open until it says the send is finished.",
+        "confirm": "Finish sending",
+        "done": "“{subject}” is sent: {total} people processed.",
+        "notYet": "This send is still making progress. Try again in {seconds} s if it is still stalled then.",
+        "notSending": "This campaign is no longer sending. The list was reloaded."
       }
     }
   }

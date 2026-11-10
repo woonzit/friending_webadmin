@@ -34,6 +34,8 @@ const CONTENT: go.FriendingGoEmailContent = { kind: "newsletter", subject: "Frie
 const PREVIEW = go.friendingGoPreview(PREVIEW_BODY, CONTENT)!;
 const CAMPAIGNS = go.friendingGoCampaigns(fixture("webadmin-go-email-campaigns"), 1)!;
 const DRAFTS = go.friendingGoCampaigns(fixture("webadmin-go-email-campaigns-drafts"), 1, "draft")!;
+const STALLED = go.friendingGoCampaigns(fixture("webadmin-go-email-campaigns-sending"), 1, "sending")!;
+const IDLE = { pending: null, busy: false, progress: null };
 const DETAIL = go.friendingGoCampaignDetail(fixture("webadmin-go-email-campaign-detail"), "000000000000000000006002", 1)!;
 const DETAIL_VIEWER = go.friendingGoCampaignDetail(fixture("webadmin-go-email-campaign-detail-viewer"), "000000000000000000006002", 1)!;
 const noop = () => undefined;
@@ -161,7 +163,7 @@ const WRITER = { load: "ready", canWrite: true, active: 3 } as const;
 function email(locale: Locale, props: Partial<Parameters<typeof FriendingGoEmailView>[0]> = {}): string {
   return render(locale, "/friendinggo/email", createElement(FriendingGoEmailView, {
     access: WRITER, hydrated: true, composer: COMPOSER, selection: PEOPLE, preview: { kind: "idle" }, currentKey: KEY, problems: [],
-    drafts: { load: "ready", drafts: [], more: false }, pending: null, busy: false, sending: null, notice: null, confirm: null,
+    drafts: { load: "ready", drafts: [], more: false }, command: { pending: null, busy: false, progress: null }, notice: null, confirm: null,
     onChange: noop, onClearAudience: noop, onPreview: noop, onStart: noop, onAskSend: noop, onCancelConfirm: noop, onConfirm: noop,
     onRetryPending: noop, onAskDiscard: noop, onOpenDraft: noop, onAskNew: noop, onReloadDrafts: noop, ...props,
   }));
@@ -221,11 +223,11 @@ test("Email: a read-only operator may preview, but sees no test, draft or send; 
     assert.match(problems, /friendinggo-problems" role="alert"/);
     assert.ok(problems.includes(locale === "en" ? "Write a subject of 1 to 150 characters, on one line." : "Írj 1–150 karakteres, egysoros tárgyat."));
     assert.ok(problems.includes(locale === "en" ? "at most 100 people" : "legfeljebb 100 főnek"));
-    const pending = email(locale, { pending: { version: 1, command: { ...CONTENT, mode: "send", campaign_id: "", request_id: "00000011-0000-4000-8000-000000000011", expected_sendable: 2 } } });
+    const pending = email(locale, { command: { pending: { version: 1, command: { ...CONTENT, mode: "send", campaign_id: "", request_id: "00000011-0000-4000-8000-000000000011", expected_sendable: 2 }, running: false }, busy: false, progress: null } });
     assert.ok(pending.includes(escaped(copy.pending.retry)) && pending.includes(escaped(copy.email.pending.copy)));
     assert.ok(pending.includes(locale === "en" ? "We don&#x27;t know whether “FriendingGO update” was sent." : "Nem tudjuk, elment-e a(z) „FriendingGO update”."));
     assert.match(pending, /<fieldset class="friendinggo-fieldset" disabled="">/, "the composer is locked while a request is pending");
-    const discard = email(locale, { pending: { version: 1, command: { ...CONTENT, mode: "send", campaign_id: "", request_id: "00000011-0000-4000-8000-000000000011", expected_sendable: 2 } }, confirm: { kind: "discard" } });
+    const discard = email(locale, { command: { pending: { version: 1, command: { ...CONTENT, mode: "send", campaign_id: "", request_id: "00000011-0000-4000-8000-000000000011", expected_sendable: 2 }, running: false }, busy: false, progress: null }, confirm: { kind: "discard" } });
     assert.ok(discard.includes(escaped(copy.email.discard.copySend)), "forgetting a send warns about a double send");
     const drafts = email(locale, { drafts: { load: "ready", drafts: DRAFTS.campaigns, more: true } });
     assert.ok(drafts.includes("Spring update (draft)") && drafts.includes(escaped(copy.email.drafts.open)) && drafts.includes(escaped(copy.email.drafts.more)));
@@ -237,18 +239,24 @@ test("Email: a read-only operator may preview, but sees no test, draft or send; 
     assert.equal(failed.includes(`>${escaped(copy.email.actions.test)}<`), false);
     // A sliced send shows how far it is, and a wait on an earlier attempt says so.
     const command = { ...CONTENT, mode: "send" as const, campaign_id: "", request_id: "0000001f-0000-4000-8000-00000000001f", expected_sendable: 2 };
-    const progress = email(locale, { busy: true, pending: { version: 1, command }, sending: { progress: { processed: 50, total: 101 }, waitSeconds: null } });
+    const progress = email(locale, { command: { busy: true, pending: { version: 1, command, running: true }, progress: { progress: { processed: 50, total: 101 }, waitSeconds: null, waitReason: null } } });
     assert.ok(progress.includes(locale === "en" ? "Sending in parts: 50 of 101 people done." : "Küldés részletekben: 50 / 101 fő kész."));
     assert.match(progress, /<progress max="101" value="50">/);
-    const waiting = email(locale, { busy: true, pending: { version: 1, command }, sending: { progress: { processed: 50, total: 101 }, waitSeconds: 120 } });
-    assert.ok(waiting.includes(locale === "en" ? "again in 120 s" : "120 mp múlva"));
+    const waiting = email(locale, { command: { busy: true, pending: { version: 1, command, running: true }, progress: { progress: { processed: 50, total: 101 }, waitSeconds: 8, waitReason: "in_progress" } } });
+    assert.ok(waiting.includes(locale === "en" ? "Core is still busy with an earlier call of this send. The console asks again with the same request in 8 s."
+      : "A Core még a küldés egy korábbi hívásán dolgozik. A konzol 8 mp múlva ugyanazzal a kéréssel újra rákérdez."), "the wait names what waits (review P3-9)");
+    const testCommand = { mode: "test" as const, kind: "newsletter" as const, subject: CONTENT.subject, preheader: CONTENT.preheader, body_html: CONTENT.body_html, request_id: "0000000b-0000-4000-8000-00000000000b" };
+    const testWaiting = email(locale, { command: { busy: true, pending: { version: 1, command: testCommand, running: false }, progress: { progress: null, waitSeconds: 8, waitReason: "in_progress" } } });
+    assert.ok(testWaiting.includes(locale === "en" ? "Core is still working on this test send." : "A Core még dolgozik ezen a tesztküldésen."));
+    const timedOut = email(locale, { command: { busy: true, pending: { version: 1, command, running: true }, progress: { progress: { processed: 50, total: 101 }, waitSeconds: 2, waitReason: "timeout" } } });
+    assert.ok(timedOut.includes(locale === "en" ? "A part of the send took too long to answer." : "A küldés egy része túl sokáig nem válaszolt."));
   }
 });
 
 test("Sent: the campaign list and one campaign's recipients, in both locales; a viewer sees masked addresses", () => {
   for (const locale of ["en", "hu"] as const) {
     const copy = MESSAGES[locale].friendinggo;
-    const list = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: CAMPAIGNS, load: "ready", page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    const list = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: CAMPAIGNS, load: "ready", page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
     for (const text of [copy.sent.title, copy.sent.list.subject, copy.kind.newsletter, copy.kind.direct, copy.campaignState.sent, copy.campaignState.draft,
       copy.sent.audience.allActiveCount.replace("{count}", "3"), copy.sent.filters.state, copy.sent.filters.all, copy.sent.list.editDraft]) {
       assert.ok(list.includes(escaped(text)), `${locale}: ${text}`);
@@ -256,12 +264,12 @@ test("Sent: the campaign list and one campaign's recipients, in both locales; a 
     assert.ok(list.includes("owner@example.test"));
     assert.ok(list.includes(">2 / 1<"), "emailed / left out");
     // Core's genuine draft (the drafts filter's answer) is opened in the composer.
-    const drafts = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: DRAFTS, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    const drafts = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: DRAFTS, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
     assert.ok(drafts.includes(`href="/friendinggo/email?draft=000000000000000000006007"`));
     assert.match(drafts, /<option value="draft" selected="">/);
-    const none = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: { ...DRAFTS, campaigns: [] }, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+    const none = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: { ...DRAFTS, campaigns: [] }, load: "ready", page: 1, state: "draft", onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
     assert.ok(none.includes(escaped(copy.sent.list.emptyFiltered)));
-    const detail = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop }));
+    const detail = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
     for (const text of [copy.sent.recipients.title, copy.delivery.delivered, copy.delivery.failed, copy.delivery.purged, copy.sent.recipients.suppressed, copy.status.unsubscribed, copy.sent.detail.back]) {
       assert.ok(detail.includes(escaped(text)), `${locale}: ${text}`);
     }
@@ -269,13 +277,54 @@ test("Sent: the campaign list and one campaign's recipients, in both locales; a 
     assert.ok(detail.includes(locale === "en" ? "Left out: Unsubscribed (1)." : "Kimarad: Leiratkozott (1 fő)."), "Core's reasons on the campaign");
     assert.match(detail, /<iframe class="friendinggo-email-frame is-content" sandbox="" srcDoc="/);
     assert.doesNotMatch(detail, new RegExp(escaped(copy.maskedNote)));
-    const masked = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL_VIEWER, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop }));
+    const masked = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignDetailView, { data: DETAIL_VIEWER, load: "ready", page: 1, onPage: noop, onReload: noop, onBack: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
     assert.ok(masked.includes(escaped(copy.maskedNote)) && masked.includes("av•••@example.com"));
     assert.equal(masked.includes("ava.stone@example.com"), false);
     for (const load of ["invalid", "unavailable", "error"] as const) {
-      const failed = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: null, load, page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop }));
+      const failed = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: null, load, page: 1, state: "", onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
       assert.ok(failed.includes(escaped(copy.sent.failures[load])));
       assert.doesNotMatch(failed, /<table/u);
     }
   }
+});
+
+test("round 3 and the review fixes: over-cap send is off, a stalled send can be finished, a pending email blocks the hand-over", async () => {
+  const { FriendingGoResumeDialog } = await import("../components/FriendingGoSentConsole.tsx");
+  for (const locale of ["en", "hu"] as const) {
+    const copy = MESSAGES[locale].friendinggo;
+    // DERIVED: Core's preview with more active people than the newsletter cap (Core's preview does not refuse it).
+    const overCap = { ...PREVIEW, counts: { selected: 5001, sendable: 5001, suppressed: 0, suppressed_by_reason: { unsubscribed: 0, bounced: 0, complained: 0 } } };
+    const html = email(locale, { preview: { kind: "ready", key: KEY, data: overCap } });
+    assert.match(html, new RegExp(`disabled="">${escaped(copy.email.actions.send)}<`), "Send is off above the cap (review P3-1)");
+    assert.ok(html.includes(locale === "en" ? "Send is off: this audience is larger than 5,000 people." : "A küldés nem lehetséges: ez a kör nagyobb 5000 főnél."));
+    // Core's stalled campaign: marked, with how far it got, and "Finish sending" for a writer only.
+    const stalled = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: STALLED, load: "ready", page: 1, state: "sending",
+      onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
+    for (const text of [copy.sent.stalled, copy.sent.resume.button, copy.sent.sendingNote, "Abandoned news"]) assert.ok(stalled.includes(escaped(text)), `${locale}: ${text}`);
+    assert.ok(stalled.includes(locale === "en" ? "50 / 101 done" : "50 / 101 kész"));
+    const viewer = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: STALLED, load: "ready", page: 1, state: "sending",
+      onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: false, notice: null, command: IDLE, onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
+    assert.equal(viewer.includes(`>${escaped(copy.sent.resume.button)}<`), false, "a reader cannot finish a send");
+    const resume = render(locale, "/friendinggo/sent", createElement(FriendingGoResumeDialog, { campaign: STALLED.campaigns[0]!, onCancel: noop, onConfirm: noop }));
+    assert.ok(resume.includes(escaped(copy.sent.resume.title)) && resume.includes("Abandoned news"));
+    assert.ok(resume.includes(locale === "en" ? "stopped at 50 of 101 people" : "50 / 101 főnél megállt"));
+    // A resume whose outcome is unknown waits for the operator on the Sent tab too.
+    const pendingResume = render(locale, "/friendinggo/sent", createElement(FriendingGoCampaignListView, { data: STALLED, load: "ready", page: 1, state: "sending",
+      onPage: noop, onState: noop, onReload: noop, onOpen: noop, canWrite: true, notice: null,
+      command: { pending: { version: 1, command: { mode: "resume", campaign_id: "000000000000000000006016", request_id: "00000022-0000-4000-8000-000000000022" }, running: false }, busy: false, progress: null },
+      onAskResume: noop, onRetryPending: noop, onAskDiscard: noop }));
+    assert.ok(pendingResume.includes(escaped(copy.email.pending.resume)) && pendingResume.includes(escaped(copy.pending.retry)));
+    assert.equal(pendingResume.includes(`>${escaped(copy.sent.resume.button)}<`), false, "one email command at a time");
+    // An email command of this tab blocks a new hand-over from Preorders (review P3-7).
+    const blocked = preorders(locale, { selection: [{ id: OWNER.rows[2]!.id, name: OWNER.rows[2]!.name, status: "active" }], emailPending: true });
+    assert.ok(blocked.includes(escaped(copy.preorders.selection.emailPending)));
+    assert.ok(blocked.includes(`disabled="">${escaped(locale === "en" ? "Email selected (1)" : "E-mail a kijelölteknek (1)")}<`));
+  }
+  // The Sent help says what really happens to a send left behind (review P2-1), in both languages.
+  for (const locale of ["en", "hu"] as const) {
+    const help = JSON.stringify(MESSAGES[locale].adminHelp.pages.friendingGoSent);
+    assert.doesNotMatch(help, /still being written by Core|a Core még írja/u);
+    assert.ok(help.includes(MESSAGES[locale].friendinggo.sent.resume.button));
+  }
+  assert.equal(MESSAGES.hu.friendinggo.preorders.status.unsubscribed, "{name} leiratkoztatva.");
 });

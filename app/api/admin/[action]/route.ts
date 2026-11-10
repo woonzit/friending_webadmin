@@ -23,6 +23,7 @@ import { normalizeMailDeliveryProxyBody, normalizeMailDeliveryResponse } from "@
 import {
   friendingGoProxyCapabilityAuthorized,
   normalizeFriendingGoProxyBody,
+  normalizeFriendingGoRefusal,
   normalizeFriendingGoResponse,
 } from "@/lib/friendinggo";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
@@ -489,6 +490,12 @@ export async function POST(
       : null;
     if (!projected) return bridgeError("invalid-core-response", 502);
     return NextResponse.json(projected, { status: 200, headers: NO_STORE_HEADERS });
+  }
+  if (friendingGoBody !== undefined) {
+    // A refusal, too, travels only as a known name at its status with the documented data fields.
+    const refusal = normalizeFriendingGoRefusal(result.data, result.status);
+    if (!refusal) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(refusal, { status: result.status, headers: NO_STORE_HEADERS });
   }
   if (isDatesAdminRoute(action)) {
     // The browser never receives a raw Core body of a Dates route: only the fields this console names. A key on the

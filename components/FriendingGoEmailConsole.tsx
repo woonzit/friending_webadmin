@@ -4,13 +4,19 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import FriendingGoCommandStatus, { FriendingGoDiscardDialog } from "@/components/FriendingGoCommandStatus";
 import FriendingGoTabs from "@/components/FriendingGoTabs";
 import PageHeader from "@/components/PageHeader";
 import { LoadingPanel } from "@/components/StatePanel";
+import {
+  friendingGoBrowserStorage,
+  useFriendingGoAccess,
+  useFriendingGoEmailCommand,
+  type FriendingGoAccess,
+} from "@/components/useFriendingGoEmailCommand";
 import { adminCall } from "@/lib/adminClient";
 import { formatDate, formatNumber } from "@/lib/format";
 import {
-  DEFAULT_FRIENDINGGO_LIST_FILTERS,
   FRIENDINGGO_BODY_MAX,
   FRIENDINGGO_CAPS,
   FRIENDINGGO_KINDS,
@@ -23,7 +29,7 @@ import {
   friendingGoCampaigns,
   friendingGoError,
   friendingGoErrorKey,
-  friendingGoPreorders,
+  friendingGoNotResumable,
   friendingGoPreview,
   friendingGoPreviewDocument,
   friendingGoRateLimit,
@@ -32,32 +38,31 @@ import {
   type FriendingGoEmailContent,
   type FriendingGoKind,
   type FriendingGoPreview,
-  type FriendingGoProgress,
   type FriendingGoReasons,
-  type FriendingGoSendBody,
-  type FriendingGoSendMode,
 } from "@/lib/friendinggo";
 import {
   EMPTY_FRIENDINGGO_COMPOSER,
-  FRIENDINGGO_SEND_LOOP_START,
   FRIENDINGGO_STORAGE_KEYS,
+  friendingGoBuildCommand,
   friendingGoComposer,
   friendingGoComposerContent,
-  friendingGoComposerWording,
   friendingGoContentKey,
+  friendingGoHydration,
   friendingGoInsert,
-  friendingGoPendingEmail,
   friendingGoSelection,
-  friendingGoSendStep,
+  friendingGoSelectionAfterSend,
   friendingGoStore,
   friendingGoStored,
   type FriendingGoComposer,
   type FriendingGoComposerProblem,
   type FriendingGoPendingEmail,
+  type FriendingGoRunOutcome,
+  type FriendingGoRunProgress,
   type FriendingGoSelected,
-  type FriendingGoStorage,
 } from "@/lib/friendinggoConsole";
 import type { FriendingGoNotice } from "@/components/FriendingGoPreordersConsole";
+
+export type { FriendingGoAccess };
 
 export type FriendingGoPreviewState =
   | { kind: "idle" }
@@ -73,22 +78,10 @@ export type FriendingGoEmailConfirm =
 
 export type FriendingGoDraftsState = { load: "loading" | "ready" | "error"; drafts: FriendingGoCampaign[]; more: boolean };
 
-/**
- * Whether this operator may test, save and send, from Core's own answer (`go_preorders.can_write`), never
- * from the role alone: Core treats an unrecognised stored role as read-only although `admin_me` shows it as
- * `admin` (Core round 2). The same answer gives the number of active sign-ups for "Everyone active".
- */
-export type FriendingGoAccess = { load: "loading" | "ready" | "error"; canWrite: boolean; active: number | null };
-
-/** A send in flight: how far it is, and whether the console is waiting on an earlier attempt. */
-export type FriendingGoSending = { progress: FriendingGoProgress | null; waitSeconds: number | null };
+/** The tab's email command as the view shows it. */
+export type FriendingGoCommandView = { pending: FriendingGoPendingEmail | null; busy: boolean; progress: FriendingGoRunProgress | null };
 
 const NAMES_SHOWN = 8;
-
-function browserStorage(): FriendingGoStorage | null {
-  try { return window.sessionStorage; } catch { return null; }
-}
-
 const length = (value: string) => [...value].length;
 
 /** Whether the composer holds anything an operator would lose. */
@@ -96,8 +89,8 @@ export function friendingGoComposerHasContent(composer: FriendingGoComposer): bo
   return composer.subject.trim() !== "" || composer.preheader.trim() !== "" || composer.body.trim() !== "";
 }
 
-/** "Unsubscribed (1), Bounced (2)": the left-out reasons that are not zero, or "" when nobody is left out. */
-function useReasonList() {
+/** "Unsubscribed (1), Bounced (2)": the left-out reasons that are not zero. */
+export function useFriendingGoReasonList() {
   const t = useTranslations("friendinggo");
   return (reasons: FriendingGoReasons) => FRIENDINGGO_SUPPRESSION_REASONS
     .filter((reason) => reasons[reason] > 0)
@@ -115,9 +108,7 @@ export function FriendingGoEmailView({
   currentKey,
   problems,
   drafts,
-  pending,
-  busy,
-  sending,
+  command,
   notice,
   confirm,
   onChange,
@@ -143,15 +134,13 @@ export function FriendingGoEmailView({
   /** Problems to show (after the operator tried an action). */
   problems: FriendingGoComposerProblem[];
   drafts: FriendingGoDraftsState;
-  pending: FriendingGoPendingEmail | null;
-  busy: boolean;
-  sending: FriendingGoSending | null;
+  command: FriendingGoCommandView;
   notice: FriendingGoNotice | null;
   confirm: FriendingGoEmailConfirm | null;
   onChange: (next: Partial<FriendingGoComposer>) => void;
   onClearAudience: () => void;
   onPreview: () => void;
-  onStart: (mode: Exclude<FriendingGoSendMode, "send">) => void;
+  onStart: (mode: "test" | "save_draft") => void;
   onAskSend: () => void;
   onCancelConfirm: () => void;
   onConfirm: () => void;
@@ -163,17 +152,20 @@ export function FriendingGoEmailView({
 }) {
   const t = useTranslations("friendinggo");
   const locale = useLocale();
-  const reasonList = useReasonList();
+  const reasonList = useFriendingGoReasonList();
   const num = (value: number) => formatNumber(value, locale);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const { pending, busy } = command;
   const canWrite = access.load === "ready" && access.canWrite;
   const showWrites = access.load === "loading" || canWrite;
   const locked = busy || pending !== null || !hydrated;
   const ready = preview.kind === "ready" ? preview : null;
   const fresh = ready !== null && currentKey !== null && ready.key === currentKey;
-  const canSend = canWrite && fresh && ready.data.counts.sendable > 0 && !locked;
+  const overCap = ready !== null && ready.data.counts.selected > ready.data.cap;
+  const canSend = canWrite && fresh && !overCap && ready.data.counts.sendable > 0 && !locked;
   const named = selection.filter((person) => person.name !== "");
   const previewDocument = ready ? friendingGoPreviewDocument(ready.data.html) : null;
+  const pendingMode = pending?.command.mode ?? null;
 
   function insertTag(tag: string) {
     const element = bodyRef.current;
@@ -186,8 +178,6 @@ export function FriendingGoEmailView({
     }
   }
 
-  const pendingCommand = pending?.command ?? null;
-
   return (
     <>
       <FriendingGoTabs />
@@ -199,32 +189,8 @@ export function FriendingGoEmailView({
       />
 
       {notice ? <div className={`alert alert-${notice.tone} page-alert`} role="status">{notice.text}</div> : null}
-      {busy && sending ? (
-        <div className="alert alert-info page-alert friendinggo-progress" role="status" aria-live="polite">
-          {sending.waitSeconds !== null
-            ? t("email.progress.waiting", { seconds: num(sending.waitSeconds) })
-            : sending.progress
-              ? t("email.progress.sending", { processed: num(sending.progress.processed), total: num(sending.progress.total) })
-              : t("email.actions.sending")}
-          {sending.progress ? (
-            <progress max={sending.progress.total} value={sending.progress.processed}>
-              {num(sending.progress.processed)} / {num(sending.progress.total)}
-            </progress>
-          ) : null}
-        </div>
-      ) : null}
-      {pendingCommand && !busy ? (
-        <div className="alert alert-warning page-alert friendinggo-pending" role="status">
-          <div>
-            <strong>{t("pending.title")}</strong>{" "}
-            {t(`email.pending.${pendingCommand.mode}`, { subject: pendingCommand.subject })} {t("email.pending.copy")}
-          </div>
-          <div className="row-actions">
-            <button className="button button-primary button-small" type="button" disabled={busy || !canWrite} onClick={onRetryPending}>{t("pending.retry")}</button>
-            <button className="button button-secondary button-small" type="button" disabled={busy} onClick={onAskDiscard}>{t("pending.discard")}</button>
-          </div>
-        </div>
-      ) : null}
+      <FriendingGoCommandStatus pending={pending} busy={busy} progress={command.progress} canRetry={canWrite && !busy}
+        onRetry={onRetryPending} onAskDiscard={onAskDiscard} />
       {access.load === "ready" && !access.canWrite ? <p className="list-note friendinggo-read-only">{t("email.readOnly")}</p> : null}
       {access.load === "error" ? <p className="alert alert-error page-alert" role="alert">{t("email.accessError")}</p> : null}
 
@@ -327,18 +293,22 @@ export function FriendingGoEmailView({
                 {showWrites ? (
                   <>
                     <button className="button button-secondary" type="button" disabled={locked || !canWrite} onClick={() => onStart("test")}>
-                      {busy && pendingCommand?.mode === "test" ? t("email.actions.testing") : t("email.actions.test")}
+                      {busy && pendingMode === "test" ? t("email.actions.testing") : t("email.actions.test")}
                     </button>
                     <button className="button button-secondary" type="button" disabled={locked || !canWrite} onClick={() => onStart("save_draft")}>
-                      {busy && pendingCommand?.mode === "save_draft" ? t("email.actions.saving") : t("email.actions.saveDraft")}
+                      {busy && pendingMode === "save_draft" ? t("email.actions.saving") : t("email.actions.saveDraft")}
                     </button>
                     <button className="button button-primary" type="button" disabled={!canSend} onClick={onAskSend}>
-                      {busy && pendingCommand?.mode === "send" ? t("email.actions.sending") : t("email.actions.send")}
+                      {busy && pendingMode === "send" ? t("email.actions.sending") : t("email.actions.send")}
                     </button>
                   </>
                 ) : null}
               </div>
-              {showWrites ? <p className="field-hint">{t("email.actions.sendHint")}</p> : null}
+              {showWrites ? (
+                <p className={fresh && overCap ? "field-hint friendinggo-over-cap" : "field-hint"}>
+                  {fresh && overCap ? t("email.actions.overCap", { cap: num(ready.data.cap) }) : t("email.actions.sendHint")}
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -372,8 +342,7 @@ export function FriendingGoEmailView({
                       </p>
                     ) : null}
                     {ready.data.counts.sendable === 0 ? <p className="alert alert-warning">{t("errors.audienceEmpty")}</p> : null}
-                    {ready.data.counts.selected > ready.data.cap
-                      ? <p className="alert alert-warning">{t("email.preview.overCap", { cap: num(ready.data.cap) })}</p> : null}
+                    {overCap ? <p className="alert alert-warning">{t("email.preview.overCap", { cap: num(ready.data.cap) })}</p> : null}
                     <dl className="detail-list compact friendinggo-envelope">
                       <div className="detail-row"><dt>{t("email.composer.subject")}</dt><dd>{ready.data.subject}</dd></div>
                       <div className="detail-row"><dt>{t("email.composer.preheader")}</dt><dd>{ready.data.preheader || "—"}</dd></div>
@@ -436,15 +405,7 @@ export function FriendingGoEmailView({
           <p className="field-hint">{t("email.confirm.final")}</p>
         </ConfirmDialog>
       ) : null}
-      {confirm?.kind === "discard" ? (
-        <ConfirmDialog
-          title={t("email.discard.title")}
-          copy={t(pendingCommand?.mode === "send" ? "email.discard.copySend" : "email.discard.copy")}
-          confirmLabel={t("email.discard.confirm")}
-          onCancel={onCancelConfirm}
-          onConfirm={onConfirm}
-        />
-      ) : null}
+      {confirm?.kind === "discard" && pending ? <FriendingGoDiscardDialog pending={pending} onCancel={onCancelConfirm} onConfirm={onConfirm} /> : null}
       {confirm?.kind === "replace" ? (
         <ConfirmDialog
           title={confirm.draft ? t("email.replace.titleDraft", { subject: confirm.draft.subject ?? "" }) : t("email.replace.titleNew")}
@@ -458,118 +419,33 @@ export function FriendingGoEmailView({
   );
 }
 
-const sleep = (milliseconds: number) => new Promise<void>((resolve) => { window.setTimeout(resolve, milliseconds); });
-
 /**
  * Email: a composer whose content and audience survive tab switches, a preview of the real layout, and
- * three receipted writes (test, draft, send). Every write's request id is stored before it leaves and
- * kept until its outcome is known: an unknown outcome is retried with the same id, and a send Core
- * answers in slices (`sending`) is carried on with the same id until it is `sent`, so nobody is mailed
- * twice. Never a recovery-loader registration.
+ * the receipted writes (test, draft, send) through the tab's one email command. Never a recovery-loader
+ * registration.
  */
 export default function FriendingGoEmailConsole({ initialDraftId }: { initialDraftId: string | null }) {
   const t = useTranslations("friendinggo");
   const locale = useLocale();
-  const reasonList = useReasonList();
+  const reasonList = useFriendingGoReasonList();
+  const access = useFriendingGoAccess();
   const [hydrated, setHydrated] = useState(false);
-  const [access, setAccess] = useState<FriendingGoAccess>({ load: "loading", canWrite: false, active: null });
   const [composer, setComposer] = useState<FriendingGoComposer>(EMPTY_FRIENDINGGO_COMPOSER);
   const [selection, setSelection] = useState<FriendingGoSelected[]>([]);
   const [preview, setPreview] = useState<FriendingGoPreviewState>({ kind: "idle" });
   const [showProblems, setShowProblems] = useState(false);
   const [drafts, setDrafts] = useState<FriendingGoDraftsState>({ load: "loading", drafts: [], more: false });
   const [draftsRevision, setDraftsRevision] = useState(0);
-  const [pending, setPending] = useState<FriendingGoPendingEmail | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [sending, setSending] = useState<FriendingGoSending | null>(null);
   const [notice, setNotice] = useState<FriendingGoNotice | null>(null);
   const [confirm, setConfirm] = useState<FriendingGoEmailConfirm | null>(null);
-  const busyRef = useRef(false);
-  const mountedRef = useRef(true);
   const previewSequence = useRef(0);
+  const storedComposer = useRef<FriendingGoComposer>(EMPTY_FRIENDINGGO_COMPOSER);
+  const decided = useRef(false);
 
   const content = friendingGoComposerContent(composer, selection);
   const currentKey = content.ok ? friendingGoContentKey(content.value) : null;
   const problems = showProblems && !content.ok ? content.problems : [];
   const canWrite = access.load === "ready" && access.canWrite;
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  // Write access and the active count come from Core's answer, not from the role.
-  useEffect(() => {
-    const controller = new AbortController();
-    void adminCall("go_preorders", { ...DEFAULT_FRIENDINGGO_LIST_FILTERS }, controller.signal).then((response) => {
-      if (controller.signal.aborted) return;
-      const list = friendingGoPreorders(response, DEFAULT_FRIENDINGGO_LIST_FILTERS);
-      setAccess(list ? { load: "ready", canWrite: list.can_write, active: list.totals.active } : { load: "error", canWrite: false, active: null });
-    });
-    return () => controller.abort();
-  }, []);
-
-  const openDraft = useCallback(async (id: string) => {
-    const response = await adminCall("go_email_campaigns", { campaign_id: id, page: 1 });
-    const detail = friendingGoCampaignDetail(response, id, 1);
-    if (!detail || detail.campaign.state !== "draft") {
-      const error = friendingGoError(response);
-      setNotice({ tone: "error", text: detail ? t("email.drafts.notDraft") : t(`errors.${friendingGoErrorKey(error)}`) });
-      return;
-    }
-    const draft = detail.campaign;
-    setComposer({
-      kind: draft.kind,
-      audience: draft.audience.mode,
-      subject: draft.subject,
-      preheader: draft.preheader,
-      body: draft.body_html,
-      campaignId: draft.id,
-    });
-    // A draft names its people by id only; Core's preview counts them and says who is left out and why.
-    setSelection(draft.audience.mode === "selected" ? draft.audience.preorder_ids.map((person) => ({ id: person, name: "", status: null })) : []);
-    setPreview({ kind: "idle" });
-    setShowProblems(false);
-    setNotice({ tone: "info", text: t("email.drafts.opened", { subject: draft.subject }) });
-  }, [t]);
-
-  useEffect(() => {
-    const storage = browserStorage();
-    const storedComposer = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.composer, friendingGoComposer) ?? EMPTY_FRIENDINGGO_COMPOSER;
-    const storedSelection = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.audience, friendingGoSelection) ?? [];
-    const storedPending = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, friendingGoPendingEmail);
-    if (storage === null || storedPending === undefined) setNotice({ tone: "error", text: t("errors.storageUnavailable") });
-    setComposer(storedComposer);
-    setSelection(storedSelection);
-    if (storedPending) {
-      setPending(storedPending);
-      setNotice({ tone: "info", text: t("pending.restored") });
-    } else if (initialDraftId && storedComposer.campaignId !== initialDraftId) {
-      // Opening a draft replaces what is being written: ask first when there is something to lose.
-      if (friendingGoComposerHasContent(storedComposer)) setConfirm({ kind: "replace", draft: { id: initialDraftId, subject: null } });
-      else void openDraft(initialDraftId);
-    }
-    setHydrated(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (hydrated) friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.composer, composer);
-  }, [composer, hydrated]);
-  useEffect(() => {
-    if (hydrated) friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.audience, selection.length > 0 ? selection : null);
-  }, [selection, hydrated]);
-
-  // Every draft, newest first, through Core's state filter (round 2).
-  useEffect(() => {
-    const controller = new AbortController();
-    setDrafts((current) => ({ ...current, load: "loading" }));
-    void adminCall("go_email_campaigns", { state: "draft", page: 1 }, controller.signal).then((response) => {
-      if (controller.signal.aborted) return;
-      const list = friendingGoCampaigns(response, 1, "draft");
-      setDrafts(list ? { load: "ready", drafts: list.campaigns, more: list.has_more } : { load: "error", drafts: [], more: false });
-    });
-    return () => controller.abort();
-  }, [draftsRevision]);
 
   const runPreview = useCallback(async (value: FriendingGoEmailContent) => {
     const key = friendingGoContentKey(value);
@@ -584,138 +460,169 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
       : { kind: "error", key, message: t(`errors.${friendingGoErrorKey(friendingGoError(response))}`) });
   }, [t]);
 
+  const onOutcome = (outcome: Exclude<FriendingGoRunOutcome, { kind: "left" }>, stored: FriendingGoPendingEmail) => {
+    const command = stored.command;
+    if (outcome.kind === "done") {
+      const result = outcome.result;
+      if (result.mode === "test") {
+        setNotice({ tone: "success", text: t(result.receipt.replayed ? "email.notices.testReplayed" : "email.notices.test", { to: result.to }) });
+      } else if (result.mode === "save_draft") {
+        setComposer((current) => ({ ...current, campaignId: result.campaign.id }));
+        setNotice({ tone: "success", text: t("email.notices.draftSaved", { subject: result.campaign.subject }) });
+        setDraftsRevision((value) => value + 1);
+      } else if (result.mode === "resume") {
+        setNotice({ tone: "success", text: t("email.notices.resumed", { subject: result.campaign.subject, total: formatNumber(result.progress.total, locale) }) });
+      } else {
+        const counts = result.campaign.counts;
+        setComposer(EMPTY_FRIENDINGGO_COMPOSER);
+        // The audience is cleared only when it is still the one that was sent (review P3-7).
+        setSelection((current) => friendingGoSelectionAfterSend(current, command));
+        setPreview({ kind: "idle" });
+        setShowProblems(false);
+        setNotice({
+          tone: "success",
+          text: [
+            t("email.notices.sent", { count: counts?.queued ?? 0, suppressed: counts?.suppressed ?? 0 }),
+            counts && counts.suppressed > 0 ? t("email.preview.leftOutBy", { reasons: reasonList(counts.suppressed_by_reason) }) : "",
+          ].filter(Boolean).join(" "),
+        });
+        setDraftsRevision((value) => value + 1);
+      }
+      return;
+    }
+    if (outcome.kind === "paused") {
+      setNotice({ tone: "warning", text: t("email.pending.paused", { processed: formatNumber(outcome.progress.processed, locale), total: formatNumber(outcome.progress.total, locale) }) });
+      return;
+    }
+    if (outcome.kind === "unknown") {
+      // The request may have run: it is kept, and Retry sends exactly it. A long send is "still sending", not an error.
+      setNotice({
+        tone: "warning",
+        text: command.mode === "send" || command.mode === "resume" || outcome.error === "go-request-in-progress"
+          ? t("email.pending.stillSending") : t(`errors.${friendingGoErrorKey(outcome.error)}`),
+      });
+      return;
+    }
+    // A named refusal is final for its request id: the next attempt draws a new one.
+    const error = outcome.error;
+    const refusal = friendingGoRefusalCounts(outcome.response);
+    if (error === "go-email-audience-changed" && command.mode === "send") {
+      setNotice({ tone: "warning", text: t("email.refusals.audienceChanged", { count: refusal?.counts.sendable ?? 0 }) });
+      const { mode: _mode, campaign_id: _campaign, request_id: _request, expected_sendable: _expected, ...again } = command;
+      void runPreview(again);
+    } else if (error === "go-email-audience-too-large") {
+      const cap = refusal?.cap ?? (command.mode === "send" || command.mode === "save_draft" ? FRIENDINGGO_CAPS[command.kind] : FRIENDINGGO_CAPS.newsletter);
+      setNotice({ tone: "error", text: t("email.actions.overCap", { cap: formatNumber(cap, locale) }) });
+    } else if (error === "go-email-rate-limited") {
+      const limit = friendingGoRateLimit(outcome.response);
+      setNotice({ tone: "error", text: t("email.refusals.rateLimited", { limit: limit?.limit ?? 3, minutes: Math.round((limit?.window_seconds ?? 3600) / 60) }) });
+    } else if (error === "go-campaign-not-found" || error === "go-campaign-not-draft") {
+      // The draft is gone or was sent meanwhile: what is written stays, saving it makes a new draft, and a send
+      // needs a new preview and confirmation first (review P3-2).
+      setComposer((current) => ({ ...current, campaignId: "" }));
+      if (command.mode === "send") setPreview({ kind: "idle" });
+      setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(error)}`) });
+      setDraftsRevision((value) => value + 1);
+    } else if (error === "go-campaign-not-resumable") {
+      const wait = friendingGoNotResumable(outcome.response);
+      setNotice({ tone: "warning", text: wait?.retry_after_seconds ? t("sent.resume.notYet", { seconds: formatNumber(wait.retry_after_seconds, locale) }) : t("sent.resume.notSending") });
+    } else {
+      setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(error)}`) });
+    }
+  };
+
+  const command = useFriendingGoEmailCommand(onOutcome, {
+    confirm: t("navigation.confirm"), history: t("navigation.history"), title: t("navigation.title"), leave: t("navigation.leave"),
+  });
+
+  const openDraft = useCallback(async (id: string) => {
+    const response = await adminCall("go_email_campaigns", { campaign_id: id, page: 1 });
+    const detail = friendingGoCampaignDetail(response, id, 1);
+    if (!detail || detail.campaign.state !== "draft") {
+      const error = friendingGoError(response);
+      setNotice({ tone: "error", text: detail ? t("email.drafts.notDraft") : t(`errors.${friendingGoErrorKey(error)}`) });
+      return;
+    }
+    const draft = detail.campaign;
+    setComposer({ kind: draft.kind, audience: draft.audience.mode, subject: draft.subject, preheader: draft.preheader, body: draft.body_html, campaignId: draft.id });
+    // A draft names its people by id only; Core's preview counts them and says who is left out and why.
+    setSelection(draft.audience.mode === "selected" ? draft.audience.preorder_ids.map((person) => ({ id: person, name: "", status: null })) : []);
+    setPreview({ kind: "idle" });
+    setShowProblems(false);
+    setNotice({ tone: "info", text: t("email.drafts.opened", { subject: draft.subject }) });
+  }, [t]);
+
+  useEffect(() => {
+    const storage = friendingGoBrowserStorage();
+    const restoredComposer = friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.composer, friendingGoComposer) ?? EMPTY_FRIENDINGGO_COMPOSER;
+    storedComposer.current = restoredComposer;
+    setComposer(restoredComposer);
+    setSelection(friendingGoStored(storage, FRIENDINGGO_STORAGE_KEYS.audience, friendingGoSelection) ?? []);
+    setHydrated(true);
+  }, []);
+
+  // Once the stored command is read: a running send continues (the hook does it), an unknown one waits
+  // for the operator, and only without either does a `?draft=` link open its draft.
+  useEffect(() => {
+    if (!hydrated || command.restored === undefined || decided.current) return;
+    decided.current = true;
+    if (!command.storageAvailable) setNotice({ tone: "error", text: t("errors.storageUnavailable") });
+    const decision = friendingGoHydration(command.restored, initialDraftId, storedComposer.current);
+    if (decision.kind === "continue") setNotice({ tone: "info", text: t("email.notices.continuing") });
+    else if (decision.kind === "pending") setNotice({ tone: "info", text: t("pending.restored") });
+    else if (decision.kind === "askDraft") setConfirm({ kind: "replace", draft: { id: decision.id, subject: null } });
+    else if (decision.kind === "openDraft") void openDraft(decision.id);
+  }, [command.restored, command.storageAvailable, hydrated, initialDraftId, openDraft, t]);
+
+  useEffect(() => {
+    if (hydrated) friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.composer, composer);
+  }, [composer, hydrated]);
+  useEffect(() => {
+    if (hydrated) friendingGoStore(friendingGoBrowserStorage(), FRIENDINGGO_STORAGE_KEYS.audience, selection.length > 0 ? selection : null);
+  }, [selection, hydrated]);
+
+  // Every draft, newest first, through Core's state filter.
+  useEffect(() => {
+    const controller = new AbortController();
+    setDrafts((current) => ({ ...current, load: "loading" }));
+    void adminCall("go_email_campaigns", { state: "draft", page: 1 }, controller.signal).then((response) => {
+      if (controller.signal.aborted) return;
+      const list = friendingGoCampaigns(response, 1, "draft");
+      setDrafts(list ? { load: "ready", drafts: list.campaigns, more: list.has_more } : { load: "error", drafts: [], more: false });
+    });
+    return () => controller.abort();
+  }, [draftsRevision]);
+
   function previewNow() {
     setShowProblems(true);
     setNotice(null);
     if (content.ok) void runPreview(content.value);
   }
 
-  const execute = useCallback(async (stored: FriendingGoPendingEmail) => {
-    if (busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
-    setNotice(null);
-    setSending(stored.command.mode === "send" ? { progress: null, waitSeconds: null } : null);
-    const command = stored.command;
-    const storage = browserStorage();
-    let loop = FRIENDINGGO_SEND_LOOP_START;
-    let response: unknown = null;
-    for (;;) {
-      response = await adminCall("go_email_send", { ...command });
-      const next = friendingGoSendStep(response, command, loop);
-      loop = next.loop;
-      const step = next.step;
-      // Leaving the page stops the loop; the command stays stored and is offered for a retry on return.
-      if (!mountedRef.current) return;
-      if (step.kind === "continue") {
-        setSending({ progress: step.progress, waitSeconds: null });
-        await sleep(step.delayMs);
-        continue;
-      }
-      if (step.kind === "wait") {
-        setSending((current) => ({ progress: current?.progress ?? null, waitSeconds: step.seconds }));
-        await sleep(step.seconds * 1000);
-        if (!mountedRef.current) return;
-        setSending((current) => ({ progress: current?.progress ?? null, waitSeconds: null }));
-        continue;
-      }
-      if (step.kind === "done") {
-        friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, null);
-        setPending(null);
-        const result = step.result;
-        if (result.mode === "test") {
-          setNotice({ tone: "success", text: t(result.receipt.replayed ? "email.notices.testReplayed" : "email.notices.test", { to: result.to }) });
-        } else if (result.mode === "save_draft") {
-          setComposer((current) => ({ ...current, campaignId: result.campaign.id }));
-          setNotice({ tone: "success", text: t("email.notices.draftSaved", { subject: result.campaign.subject }) });
-          setDraftsRevision((value) => value + 1);
-        } else {
-          const counts = result.campaign.counts;
-          setComposer(EMPTY_FRIENDINGGO_COMPOSER);
-          setSelection([]);
-          setPreview({ kind: "idle" });
-          setShowProblems(false);
-          setNotice({
-            tone: "success",
-            text: [
-              t("email.notices.sent", { count: counts?.queued ?? 0, suppressed: counts?.suppressed ?? 0 }),
-              counts && counts.suppressed > 0 ? t("email.preview.leftOutBy", { reasons: reasonList(counts.suppressed_by_reason) }) : "",
-            ].filter(Boolean).join(" "),
-          });
-          setDraftsRevision((value) => value + 1);
-        }
-      } else if (step.kind === "paused") {
-        // Core is still sending: keep the command; Retry carries the same send on.
-        setPending(stored);
-        setNotice({ tone: "warning", text: t("email.pending.paused", { processed: formatNumber(step.progress.processed, locale), total: formatNumber(step.progress.total, locale) }) });
-      } else if (step.kind === "unknown") {
-        // The request may have run: keep it, and retry exactly it. A long send is "still sending", not an error.
-        setPending(stored);
-        setNotice({
-          tone: "warning",
-          text: command.mode === "send" || step.error === "go-request-in-progress" ? t("email.pending.stillSending") : t(`errors.${friendingGoErrorKey(step.error)}`),
-        });
-      } else {
-        // A named refusal is final for its request id: the next attempt draws a new one.
-        friendingGoStore(storage, FRIENDINGGO_STORAGE_KEYS.pendingEmail, null);
-        setPending(null);
-        const error = step.error;
-        const refusal = friendingGoRefusalCounts(response);
-        if (error === "go-email-audience-changed" && command.mode === "send") {
-          setNotice({ tone: "warning", text: t("email.refusals.audienceChanged", { count: refusal?.counts.sendable ?? 0 }) });
-          const { mode: _mode, campaign_id: _campaign, request_id: _request, expected_sendable: _expected, ...again } = command;
-          void runPreview(again);
-        } else if (error === "go-email-audience-too-large") {
-          setNotice({ tone: "error", text: t("email.refusals.tooLarge", { cap: formatNumber(refusal?.cap ?? FRIENDINGGO_CAPS[command.kind], locale) }) });
-        } else if (error === "go-email-rate-limited") {
-          const limit = friendingGoRateLimit(response);
-          setNotice({ tone: "error", text: t("email.refusals.rateLimited", { limit: limit?.limit ?? 3, minutes: Math.round((limit?.window_seconds ?? 3600) / 60) }) });
-        } else if (error === "go-campaign-not-found" || error === "go-campaign-not-draft") {
-          // The draft is gone or was sent meanwhile: what is written stays, and saving it makes a new draft.
-          setComposer((current) => ({ ...current, campaignId: "" }));
-          setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(error)}`) });
-          setDraftsRevision((value) => value + 1);
-        } else {
-          setNotice({ tone: "error", text: t(`errors.${friendingGoErrorKey(error)}`) });
-        }
-      }
-      break;
-    }
-    busyRef.current = false;
-    setBusy(false);
-    setSending(null);
-  }, [locale, reasonList, runPreview, t]);
-
-  function start(mode: FriendingGoSendMode) {
-    if (pending || busyRef.current || !canWrite) return;
+  function start(mode: "test" | "save_draft" | "send") {
+    if (command.pending || command.busy || !canWrite) return;
     setShowProblems(true);
-    const requestId = crypto.randomUUID();
-    let command: FriendingGoSendBody;
-    if (mode === "test") {
-      const words = friendingGoComposerWording(composer);
-      if (!words.ok) return;
-      command = { mode, ...words.value, request_id: requestId };
-    } else {
-      if (!content.ok) return;
-      if (mode === "save_draft") {
-        command = { mode, ...content.value, campaign_id: composer.campaignId, request_id: requestId };
-      } else {
-        if (preview.kind !== "ready" || preview.key !== currentKey || preview.data.counts.sendable < 1) return;
-        command = { mode, ...content.value, campaign_id: composer.campaignId, request_id: requestId, expected_sendable: preview.data.counts.sendable };
+    const previewed = preview.kind === "ready" ? { key: preview.key, counts: preview.data.counts, cap: preview.data.cap } : null;
+    const built = friendingGoBuildCommand(mode, composer, selection, previewed, crypto.randomUUID());
+    if (!built.ok) {
+      if (built.reason === "stalePreview") {
+        // The text or the audience changed behind the confirmation: say so and preview again (review P3-9).
+        setNotice({ tone: "warning", text: t("email.notices.changedSincePreview") });
+        if (content.ok) void runPreview(content.value);
+      } else if (built.reason === "overCap" && previewed) {
+        setNotice({ tone: "error", text: t("email.actions.overCap", { cap: formatNumber(previewed.cap, locale) }) });
+      } else if (built.reason === "nothingToSend") {
+        setNotice({ tone: "error", text: t("errors.audienceEmpty") });
       }
-    }
-    const stored: FriendingGoPendingEmail = { version: 1, command };
-    // The request id is stored before the request leaves: a lost answer is retried, never re-minted.
-    if (!friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingEmail, stored)) {
-      setNotice({ tone: "error", text: t("errors.storageUnavailable") });
       return;
     }
-    setPending(stored);
-    void execute(stored);
+    setNotice(null);
+    // The request id is stored before the request leaves: a lost answer is retried, never re-minted.
+    if (!command.start(built.command)) setNotice({ tone: "error", text: t("errors.storageUnavailable") });
   }
 
   function change(next: Partial<FriendingGoComposer>) {
-    if (pending || busy) return;
+    if (command.pending || command.busy) return;
     setComposer((current) => ({ ...current, ...next }));
   }
 
@@ -725,8 +632,10 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
     if (!current) return;
     if (current.kind === "send") start("send");
     else if (current.kind === "discard") {
-      friendingGoStore(browserStorage(), FRIENDINGGO_STORAGE_KEYS.pendingEmail, null);
-      setPending(null);
+      const forgotten = command.pending?.command.mode;
+      command.discard();
+      // A forgotten send may have gone out: sending again needs a new preview and confirmation (review P3-2).
+      if (forgotten === "send") setPreview({ kind: "idle" });
       setNotice({ tone: "info", text: t("pending.discarded") });
       setDraftsRevision((value) => value + 1);
     } else if (current.draft) {
@@ -749,21 +658,19 @@ export default function FriendingGoEmailConsole({ initialDraftId }: { initialDra
       currentKey={currentKey}
       problems={problems}
       drafts={drafts}
-      pending={pending}
-      busy={busy}
-      sending={sending}
+      command={{ pending: command.pending, busy: command.busy, progress: command.progress }}
       notice={notice}
       confirm={confirm}
       onChange={change}
-      onClearAudience={() => { if (!pending && !busy) setSelection([]); }}
+      onClearAudience={() => { if (!command.pending && !command.busy) setSelection([]); }}
       onPreview={previewNow}
       onStart={(mode) => start(mode)}
       onAskSend={() => {
-        if (preview.kind === "ready" && preview.key === currentKey && !pending && !busy) setConfirm({ kind: "send" });
+        if (preview.kind === "ready" && preview.key === currentKey && !command.pending && !command.busy) setConfirm({ kind: "send" });
       }}
       onCancelConfirm={() => setConfirm(null)}
       onConfirm={confirmAction}
-      onRetryPending={() => { if (pending) void execute(pending); }}
+      onRetryPending={command.retry}
       onAskDiscard={() => setConfirm({ kind: "discard" })}
       onOpenDraft={(draft) => {
         if (friendingGoComposerHasContent(composer) && composer.campaignId !== draft.id) setConfirm({ kind: "replace", draft: { id: draft.id, subject: draft.subject } });

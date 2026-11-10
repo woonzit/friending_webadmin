@@ -216,7 +216,12 @@ export function friendingGoInsert(text: string, start: number, end: number, inse
 
 // ------------------------------------------------------------------ pending writes
 
-export type FriendingGoPendingEmail = { version: 1; command: FriendingGoSendBody };
+/**
+ * A stored email command. `running`: the console was carrying a sliced send (or a resume) on when the page
+ * went away (a tab switch, a reload); the next console that mounts in this tab continues it with the same
+ * request id. Otherwise the outcome is unknown and the operator decides (Retry or Forget it).
+ */
+export type FriendingGoPendingEmail = { version: 1; command: FriendingGoSendBody; running: boolean };
 export type FriendingGoPendingStatus = { version: 1; command: FriendingGoStatusBody; name: string };
 
 function sameCommand(left: Record<string, unknown>, right: Record<string, unknown>): boolean {
@@ -228,9 +233,11 @@ function sameCommand(left: Record<string, unknown>, right: Record<string, unknow
 export function friendingGoPendingEmail(value: unknown): FriendingGoPendingEmail | null {
   const entry = record(value);
   const raw = record(entry?.command);
-  if (!entry || !raw || !exactKeys(entry, ["version", "command"]) || entry.version !== 1) return null;
+  if (!entry || !raw || !exactKeys(entry, ["version", "command", "running"]) || entry.version !== 1 || typeof entry.running !== "boolean") return null;
   const command = friendingGoSendBody(raw);
-  return command && sameCommand(command, raw) ? { version: 1, command } : null;
+  // Only a send or a resume is ever carried on by itself.
+  if (!command || !sameCommand(command, raw) || (entry.running && command.mode !== "send" && command.mode !== "resume")) return null;
+  return { version: 1, command, running: entry.running };
 }
 
 export function friendingGoPendingStatus(value: unknown): FriendingGoPendingStatus | null {
@@ -242,30 +249,33 @@ export function friendingGoPendingStatus(value: unknown): FriendingGoPendingStat
   return command ? { version: 1, command, name: entry.name } : null;
 }
 
-// ------------------------------------------------------------------ a sliced send (Core round 2)
+// ------------------------------------------------------------------ a sliced send (Core rounds 2 and 3)
 
 /**
  * How far the console carries one email command on its own before it hands the decision back to the
- * operator (the manual "Retry the same request"). Core writes at least one batch of 50 per call, so a
- * 5,000-recipient send needs at most 100 calls; three answers without progress, or three waits on an
- * earlier attempt still running, mean something is wrong. A wait is what Core asks
- * (`retry_after_seconds`, 120 s for a send that died), capped.
+ * operator (the manual "Retry the same request"):
+ * - `slices`: Core writes at least one batch of 50 per call, so 5,000 people need at most 100 `sending` answers;
+ * - `stalls`: three `sending` answers without progress mean something is wrong;
+ * - `waitBudgetSeconds`: the time spent waiting on `go-request-in-progress` (Core asks for about 8 s while
+ *   an earlier call may still run, and takes a died send over after 120 s without progress) and after a
+ *   timeout in the middle of a send; 180 s covers a takeover with room to spare (review P3-8);
+ * - `timeoutWaitSeconds`: the pause before a timed-out slice is asked again with the same request id (P3-3).
  */
-export const FRIENDINGGO_SEND_LIMITS = { rounds: 120, stalls: 3, waits: 3, waitCapSeconds: 150, continueDelayMs: 300 } as const;
+export const FRIENDINGGO_SEND_LIMITS = { slices: 120, stalls: 3, waitBudgetSeconds: 180, timeoutWaitSeconds: 2, continueDelayMs: 300 } as const;
 
-export type FriendingGoSendLoop = { rounds: number; stalls: number; waits: number; processed: number };
-export const FRIENDINGGO_SEND_LOOP_START: FriendingGoSendLoop = { rounds: 0, stalls: 0, waits: 0, processed: -1 };
+export type FriendingGoSendLoop = { slices: number; stalls: number; waited: number; processed: number };
+export const FRIENDINGGO_SEND_LOOP_START: FriendingGoSendLoop = { slices: 0, stalls: 0, waited: 0, processed: -1 };
 
 export type FriendingGoSendStep =
-  /** A test, a draft, or a send Core answered `sent`: the command is settled. */
+  /** A test, a draft, or a send / resume Core answered `sent`: the command is settled. */
   | { kind: "done"; result: FriendingGoSendResult }
   /** Core answered `sending`: call again with the SAME command. */
   | { kind: "continue"; progress: FriendingGoProgress; delayMs: number }
-  /** The same request is still running (`go-request-in-progress`): wait as Core asks, then call again. */
-  | { kind: "wait"; seconds: number }
+  /** The same request is still running, or a slice timed out: wait, then call again with the same command. */
+  | { kind: "wait"; seconds: number; reason: "in_progress" | "timeout" }
   /** The limits are reached while Core still answers `sending`: keep the command, the operator retries. */
   | { kind: "paused"; progress: FriendingGoProgress }
-  /** The outcome is not known (timeout, 503, a lost answer, or waits used up): keep the command. */
+  /** The outcome is not known (timeout, 503, a lost answer, or the wait budget used up): keep the command. */
   | { kind: "unknown"; error: FriendingGoError | null }
   /** A named refusal: final for this request id. */
   | { kind: "refused"; error: FriendingGoError | null };
@@ -276,28 +286,157 @@ export function friendingGoSendStep(
   command: FriendingGoSendBody,
   loop: FriendingGoSendLoop,
 ): { step: FriendingGoSendStep; loop: FriendingGoSendLoop } {
-  const rounds = loop.rounds + 1;
   const result = friendingGoSendResult(response, command);
   if (result) {
-    if (result.mode === "send" && result.campaign.state === "sending") {
+    if ((result.mode === "send" || result.mode === "resume") && result.campaign.state === "sending") {
       const progress = result.progress;
+      const slices = loop.slices + 1;
       const stalls = progress.processed > loop.processed ? 0 : loop.stalls + 1;
-      const next = { rounds, stalls, waits: loop.waits, processed: Math.max(loop.processed, progress.processed) };
-      return rounds >= FRIENDINGGO_SEND_LIMITS.rounds || stalls >= FRIENDINGGO_SEND_LIMITS.stalls
+      const next = { ...loop, slices, stalls, processed: Math.max(loop.processed, progress.processed) };
+      return slices >= FRIENDINGGO_SEND_LIMITS.slices || stalls >= FRIENDINGGO_SEND_LIMITS.stalls
         ? { step: { kind: "paused", progress }, loop: next }
         : { step: { kind: "continue", progress, delayMs: FRIENDINGGO_SEND_LIMITS.continueDelayMs }, loop: next };
     }
-    return { step: { kind: "done", result }, loop: { ...loop, rounds } };
+    return { step: { kind: "done", result }, loop };
   }
+  const left = FRIENDINGGO_SEND_LIMITS.waitBudgetSeconds - loop.waited;
   const retryAfter = friendingGoRetryAfter(response);
-  if (retryAfter !== null && loop.waits < FRIENDINGGO_SEND_LIMITS.waits && rounds < FRIENDINGGO_SEND_LIMITS.rounds) {
-    return {
-      step: { kind: "wait", seconds: Math.min(retryAfter, FRIENDINGGO_SEND_LIMITS.waitCapSeconds) },
-      loop: { ...loop, rounds, waits: loop.waits + 1 },
-    };
+  if (retryAfter !== null && left > 0) {
+    const seconds = Math.min(retryAfter, left);
+    return { step: { kind: "wait", seconds, reason: "in_progress" }, loop: { ...loop, waited: loop.waited + seconds } };
   }
   const error = response === null ? null : friendingGoError(response);
+  // A slice that timed out in the middle of a send is asked again (Core's overlap answer covers a call still running).
+  if (error === "core-timeout" && loop.slices > 0 && left > 0) {
+    const seconds = Math.min(FRIENDINGGO_SEND_LIMITS.timeoutWaitSeconds, left);
+    return { step: { kind: "wait", seconds, reason: "timeout" }, loop: { ...loop, waited: loop.waited + seconds } };
+  }
   return friendingGoOutcomeUnknown(response)
-    ? { step: { kind: "unknown", error }, loop: { ...loop, rounds } }
-    : { step: { kind: "refused", error }, loop: { ...loop, rounds } };
+    ? { step: { kind: "unknown", error }, loop }
+    : { step: { kind: "refused", error }, loop };
+}
+
+export type FriendingGoRunOutcome =
+  | { kind: "done"; result: FriendingGoSendResult }
+  | { kind: "paused"; progress: FriendingGoProgress }
+  | { kind: "unknown"; error: FriendingGoError | null }
+  | { kind: "refused"; error: FriendingGoError | null; response: unknown }
+  /** The page went away; the command stays stored as `running`, and the next console continues it. */
+  | { kind: "left" };
+
+export type FriendingGoRunProgress = { progress: FriendingGoProgress | null; waitSeconds: number | null; waitReason: "in_progress" | "timeout" | null };
+
+/**
+ * Carry one stored email command to an outcome: call, follow `friendingGoSendStep`, keep the storage in
+ * step (`running` while a send or resume is being carried on; removed on a final answer; kept, not running,
+ * when the operator must decide). The adapters are injected, so the whole loop runs in tests.
+ */
+export async function runFriendingGoEmailCommand(stored: FriendingGoPendingEmail, adapters: {
+  call: (command: FriendingGoSendBody) => Promise<unknown>;
+  sleep: (milliseconds: number) => Promise<void>;
+  alive: () => boolean;
+  store: (pending: FriendingGoPendingEmail | null) => boolean;
+  onProgress: (progress: FriendingGoRunProgress) => void;
+}): Promise<FriendingGoRunOutcome> {
+  const command = stored.command;
+  const carried = command.mode === "send" || command.mode === "resume";
+  if (carried) adapters.store({ ...stored, running: true });
+  let loop = FRIENDINGGO_SEND_LOOP_START;
+  let progress: FriendingGoProgress | null = null;
+  for (;;) {
+    const response = await adapters.call(command);
+    const next = friendingGoSendStep(response, command, loop);
+    loop = next.loop;
+    const step = next.step;
+    if (!adapters.alive()) return { kind: "left" };
+    switch (step.kind) {
+      case "continue":
+        progress = step.progress;
+        adapters.onProgress({ progress, waitSeconds: null, waitReason: null });
+        await adapters.sleep(step.delayMs);
+        if (!adapters.alive()) return { kind: "left" };
+        continue;
+      case "wait":
+        adapters.onProgress({ progress, waitSeconds: step.seconds, waitReason: step.reason });
+        await adapters.sleep(step.seconds * 1000);
+        if (!adapters.alive()) return { kind: "left" };
+        adapters.onProgress({ progress, waitSeconds: null, waitReason: null });
+        continue;
+      case "done":
+        adapters.store(null);
+        return { kind: "done", result: step.result };
+      case "paused":
+        adapters.store({ ...stored, running: false });
+        return { kind: "paused", progress: step.progress };
+      case "unknown":
+        adapters.store({ ...stored, running: false });
+        return { kind: "unknown", error: step.error };
+      case "refused":
+        adapters.store(null);
+        return { kind: "refused", error: step.error, response };
+    }
+  }
+}
+
+// ------------------------------------------------------------------ the composer's decisions, pure
+
+export type FriendingGoPreviewed = { key: string; counts: { selected: number; sendable: number }; cap: number } | null;
+
+export type FriendingGoBuild =
+  | { ok: true; command: FriendingGoSendBody }
+  | { ok: false; reason: "problems" | "stalePreview" | "overCap" | "nothingToSend" };
+
+/**
+ * The command a composer action sends, or why it cannot: the wording for a test; the content for a draft;
+ * for a send, the content AND a preview of exactly it whose audience is within the cap and has someone
+ * to send to (review P3-1). `expected_sendable` is the previewed count.
+ */
+export function friendingGoBuildCommand(
+  mode: "test" | "save_draft" | "send",
+  composer: FriendingGoComposer,
+  selection: readonly FriendingGoSelected[],
+  previewed: FriendingGoPreviewed,
+  requestId: string,
+): FriendingGoBuild {
+  if (mode === "test") {
+    const words = friendingGoComposerWording(composer);
+    return words.ok ? { ok: true, command: { mode, ...words.value, request_id: requestId } } : { ok: false, reason: "problems" };
+  }
+  const content = friendingGoComposerContent(composer, selection);
+  if (!content.ok) return { ok: false, reason: "problems" };
+  if (mode === "save_draft") return { ok: true, command: { mode, ...content.value, campaign_id: composer.campaignId, request_id: requestId } };
+  if (!previewed || previewed.key !== friendingGoContentKey(content.value)) return { ok: false, reason: "stalePreview" };
+  if (previewed.counts.selected > previewed.cap) return { ok: false, reason: "overCap" };
+  if (previewed.counts.sendable < 1) return { ok: false, reason: "nothingToSend" };
+  return { ok: true, command: { mode, ...content.value, campaign_id: composer.campaignId, request_id: requestId, expected_sendable: previewed.counts.sendable } };
+}
+
+export type FriendingGoHydration =
+  | { kind: "continue"; pending: FriendingGoPendingEmail }
+  | { kind: "pending"; pending: FriendingGoPendingEmail }
+  | { kind: "openDraft"; id: string }
+  | { kind: "askDraft"; id: string }
+  | { kind: "none" };
+
+/**
+ * What the Email tab does when it mounts: a stored command comes first (a running send or resume is
+ * continued with the same request id; any other waits for the operator); otherwise a `?draft=` link
+ * opens that draft, asking first when the composer holds something that would be lost.
+ */
+export function friendingGoHydration(pending: FriendingGoPendingEmail | null, draftId: string | null, composer: FriendingGoComposer): FriendingGoHydration {
+  if (pending) return pending.running ? { kind: "continue", pending } : { kind: "pending", pending };
+  if (!draftId || composer.campaignId === draftId) return { kind: "none" };
+  return composer.subject.trim() !== "" || composer.preheader.trim() !== "" || composer.body.trim() !== ""
+    ? { kind: "askDraft", id: draftId }
+    : { kind: "openDraft", id: draftId };
+}
+
+/**
+ * The selection after a send: cleared only when it is still the audience that was sent; a selection made
+ * meanwhile (another tab of the console) is kept (review P3-7).
+ */
+export function friendingGoSelectionAfterSend(selection: readonly FriendingGoSelected[], command: FriendingGoSendBody): FriendingGoSelected[] {
+  if (command.mode !== "send" || command.audience !== "selected") return [...selection];
+  const sent = command.preorder_ids.join(",");
+  return friendingGoSelectionIds(selection).join(",") === sent ? [] : [...selection];
 }

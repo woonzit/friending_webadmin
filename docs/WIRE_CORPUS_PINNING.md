@@ -66,20 +66,18 @@ Presence retains `date_enabled` and the `date` key; only its EN/HU labels change
 ## FriendingGO preorders corpus (D-153, T-937, 2026-11-10)
 
 `go_preorders_wire` (contract `go-preorders-v1`, Core `docs/GO_PREORDERS_V1.md`) is copied byte for byte from the
-git objects of the Core lane tip `bc4b0ba3e5e4753feb3324926de6e7f8cad28203` (T-936 round 2, branch
+git objects of the Core lane tip `5e4e4953d789a41977a317b1e27c7cc717c2a40c` (T-936 round 3, branch
 `lane/t936-go-preorders`, not yet on Core `main`); its manifest records scoped source
-`895dbc1e690c9e449703cad0871e1d1d3ae2484f`, an ancestor of that tip. 66 bodies: the 54 `webadmin-*` bodies of the
+`ead89c9275b91e4e7149083c1d29f7bef1d747ff`, an ancestor of that tip. 69 bodies: the 57 `webadmin-*` bodies of the
 five console routes and the twelve `goweb-*` bodies of the web tier, vendored only so that the set digest can be
-recomputed. `fixture_set_sha256` `9f6257c802cc2e886617a91641624e410d0def037bfee478b89cb572167b8c92`; the pin is the
+recomputed. `fixture_set_sha256` `d8bb403b8f41be2c15dcb39f903b079a5ffe152cad6bc4e9d7039c2f21daf2b5`; the pin is the
 `PIN` block of `tests/friendinggo.test.mts`, which also checks every body against its manifest sha256 and the
 directory against the manifest's list.
 
-The first pin (Core `aa6ce6e4`, source `7274489a`, 57 bodies, set `17b28944…`) was replaced as a whole by Core's
-round 2 after its review (contract §10): nine bodies added (the sliced send, the died send and its takeover, the
-drafts filter, the body limit, the self-unsubscribe lock, three web-tier bodies), 26 changed (rows gain
-`can_resubscribe` and the `self` / `admin` / `feedback` sources, counts gain `suppressed_by_reason`, send answers
-gain `progress`, the campaign list gains `filters`, ids renumbered where new captures come first), none removed;
-the other 31 are byte-identical. Re-vendoring is the step of the host moderation corpus below
+History of this pin: Core `aa6ce6e4` (round 1, 57 bodies, set `17b28944…`) → `bc4b0ba3` (round 2, 66 bodies, set
+`9f6257c8…`: 9 added, 26 changed) → `5e4e4953` (round 3: 3 added — the stalled send, its resume and the resume
+refusal —, 5 changed — listed campaigns gain `resumable` / `progress`, the in-progress hint is 8 s —, none
+removed; the other 61 byte-identical). Re-vendoring is the step of the host moderation corpus below
 (`D=tests/fixtures/go_preorders_wire`); replace the five `PIN` values and review every moved body. When Core
 publishes, re-pin to the published commit with the same set digest, as the reachability rule says.
 

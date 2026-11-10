@@ -22,13 +22,14 @@ type Json = Record<string, any>;
 
 /**
  * GENUINE: tests/fixtures/go_preorders_wire, copied byte for byte (git archive) from the Core lane tip
- * `bc4b0ba3` (T-936 round 2, branch lane/t936-go-preorders, not yet on Core main): Core's storage suite
+ * `5e4e4953` (T-936 round 3, branch lane/t936-go-preorders, not yet on Core main): Core's storage suite
  * `tests/go_preorders_storage_test.php` captured every route against an owned replica set with the clock
- * pinned to 1800000000 (docs/GO_PREORDERS_V1.md). 66 bodies: the 54 `webadmin-*` bodies this console
+ * pinned to 1800000000 (docs/GO_PREORDERS_V1.md). 69 bodies: the 57 `webadmin-*` bodies this console
  * reads and the twelve `goweb-*` bodies of the web tier, vendored only so that the set digest can be
  * recomputed. Round 2 added the sliced send (`-send-sending`), the died send and its takeover
  * (`-send-in-progress`, `-send-taken-over`), the drafts filter, the body limit and the self-unsubscribe
- * lock. DERIVED, and marked so at each use: a genuine body with one stated change (the negative
+ * lock; round 3 the stalled send and its resume (`-campaigns-sending`, `-send-resume`, `-send-resume-refused`),
+ * `resumable` / `progress` on listed campaigns and an 8 s retry hint. DERIVED, and marked so at each use: a genuine body with one stated change (the negative
  * controls, a value no capture holds such as a fractional delivery time).
  *
  * THE PIN (docs/WIRE_CORPUS_PINNING.md). Re-vendoring is one step: copy the directory from the Core
@@ -37,15 +38,15 @@ type Json = Record<string, any>;
  */
 const PIN = {
   /** The Core commit the directory was copied from, from its git objects. */
-  core: "bc4b0ba3e5e4753feb3324926de6e7f8cad28203",
+  core: "5e4e4953d789a41977a317b1e27c7cc717c2a40c",
   /** sha256 of manifest.json. */
-  manifest: "8ad24c61b29e567bfc65e11503d71df1e603fa26291f0118773964ac1c66bd9c",
+  manifest: "26e9a101c765e41e2f495a348cf464e61b5ee3ef3ea9d5472d3a7626d62f0d9e",
   /** The manifest's source binding (an ancestor of `core`). */
-  source_commit: "895dbc1e690c9e449703cad0871e1d1d3ae2484f",
-  /** `fixture_set_sha256`: the 66 bodies. */
-  set: "9f6257c802cc2e886617a91641624e410d0def037bfee478b89cb572167b8c92",
+  source_commit: "ead89c9275b91e4e7149083c1d29f7bef1d747ff",
+  /** `fixture_set_sha256`: the 69 bodies. */
+  set: "d8bb403b8f41be2c15dcb39f903b079a5ffe152cad6bc4e9d7039c2f21daf2b5",
   /** sha256 of Core's generator, tests/go_preorders_storage_test.php. */
-  generator: "efaadf61eb07a75023ae5746862fc65814d8e92c92e67d552200e82817f5fff8",
+  generator: "657962f57ae5f988d92a67e4164309a51a980cff4a1946aeeeed71c4eff757e5",
 };
 const DIRECTORY = new URL("./fixtures/go_preorders_wire/", import.meta.url);
 const bytes = (file: string) => readFileSync(new URL(file, DIRECTORY));
@@ -67,6 +68,8 @@ const CAMPAIGNS = fixture("webadmin-go-email-campaigns"), DETAIL = fixture("weba
 const DRAFTS = fixture("webadmin-go-email-campaigns-drafts");
 const SENDING = fixture("webadmin-go-email-send-sending"), IN_PROGRESS = fixture("webadmin-go-email-send-in-progress");
 const TAKEN_OVER = fixture("webadmin-go-email-send-taken-over");
+const STALLED = fixture("webadmin-go-email-campaigns-sending"), RESUME = fixture("webadmin-go-email-send-resume");
+const RESUME_REFUSED = fixture("webadmin-go-email-send-resume-refused");
 const DETAIL_VIEWER = fixture("webadmin-go-email-campaign-detail-viewer");
 const UNSUBSCRIBE = fixture("webadmin-go-set-status-unsubscribe"), RESUBSCRIBE = fixture("webadmin-go-set-status-resubscribe");
 const UNCHANGED = fixture("webadmin-go-set-status-unchanged"), STATUS_REPLAY = fixture("webadmin-go-set-status-replay");
@@ -96,6 +99,9 @@ const COMMANDS = {
     preorder_ids: HUNDRED_ONE, mode: "send", campaign_id: "", request_id: "0000001f-0000-4000-8000-00000000001f", expected_sendable: 101 },
   takenOver: { kind: "newsletter", subject: "News for everyone", preheader: "", body_html: "<p>Hi {{first_name}}</p>", audience: "selected",
     preorder_ids: HUNDRED_ONE, mode: "send", campaign_id: "", request_id: "0000001e-0000-4000-8000-00000000001e", expected_sendable: 101 },
+  // Round 3: another administrator finishes the abandoned "Abandoned news" campaign under a new request id.
+  resume: { mode: "resume", campaign_id: "000000000000000000006016", request_id: "00000022-0000-4000-8000-000000000022" },
+  resumeRefused: { mode: "resume", campaign_id: "000000000000000000006016", request_id: "00000021-0000-4000-8000-000000000021" },
 } as const satisfies Record<string, go.FriendingGoSendBody>;
 
 test("the FriendingGO corpus is Core's, byte for byte, pinned to the lane tip", () => {
@@ -105,7 +111,7 @@ test("the FriendingGO corpus is Core's, byte for byte, pinned to the lane tip", 
   assert.equal(MANIFEST.provenance.generator, "tests/go_preorders_storage_test.php");
   // The selector the capture sent with every Webadmin call is the one this console's bridge adds.
   assert.deepEqual(MANIFEST.selectors, { webadmin: { contract_version: go.FRIENDINGGO_CONTRACT_VERSION } });
-  assert.equal(MANIFEST.fixtures.length, 66);
+  assert.equal(MANIFEST.fixtures.length, 69);
   const lines = MANIFEST.fixtures.map((entry) => {
     assert.equal(sha256(bytes(entry.file)), entry.sha256, entry.file);
     const body = JSON.parse(bytes(entry.file).toString("utf8"));
@@ -138,11 +144,12 @@ test("Core's successful captures are read in full: nothing added, nothing droppe
   assert.deepEqual(go.friendingGoPreview(PREVIEW_ALL, { ...NEWSLETTER, audience: "all_active", preorder_ids: [] }), PREVIEW_ALL.data);
   for (const [body, command] of [[SEND, COMMANDS.send], [SEND_REPLAY, COMMANDS.send], [SEND_ALL, COMMANDS.sendAll], [DRAFT, COMMANDS.draft],
     [DRAFT_UPDATE, COMMANDS.draftUpdate], [SEND_DIRECT, COMMANDS.direct], [TEST_SEND, COMMANDS.test],
-    [SENDING, COMMANDS.sliced], [TAKEN_OVER, COMMANDS.takenOver]] as const) {
+    [SENDING, COMMANDS.sliced], [TAKEN_OVER, COMMANDS.takenOver], [RESUME, COMMANDS.resume]] as const) {
     assert.deepEqual(go.friendingGoSendResult(body, command), body.data, command.request_id);
   }
   assert.deepEqual(go.friendingGoCampaigns(CAMPAIGNS, 1), CAMPAIGNS.data);
   assert.deepEqual(go.friendingGoCampaigns(DRAFTS, 1, "draft"), DRAFTS.data);
+  assert.deepEqual(go.friendingGoCampaigns(STALLED, 1, "sending"), STALLED.data);
   assert.equal(go.friendingGoCampaigns(DRAFTS, 1), null, "a drafts-only answer is not the whole list");
   assert.equal(go.friendingGoCampaigns(CAMPAIGNS, 1, "draft"), null, "the whole list is not the drafts");
   assert.deepEqual(go.friendingGoCampaignDetail(DETAIL, "000000000000000000006002", 1), DETAIL.data);
@@ -207,6 +214,9 @@ test("a partial, loosely typed or self-contradicting answer is never a list, a p
   refused(OWNER, (d) => { d.rows[0].can_resubscribe = true; }, list, "a self unsubscribe offered a resubscribe");
   refused(OWNER, (d) => { d.rows[0].status_source = "webadmin"; }, list, "a round-1 status source");
   refused(OWNER, (d) => { d.rows[2].confirmation.state = "skipped"; }, list, "skipped beside an outbox row");
+  refused(OWNER, (d) => { d.rows[0].internal_note = "x"; }, list, "an unknown row field fails the list (review P3-4)");
+  refused(OWNER, (d) => { d.extra = 1; }, list, "an unknown list field");
+  refused(EXPORT, (d) => { d.extra = 1; }, (body) => go.friendingGoExport(body, { q: "", status: "active" }), "an unknown export field");
   const search = (body: Json) => go.friendingGoPreorders(body, { q: "ca", status: "active", page: 1 });
   refused(SEARCH, (d) => { d.rows[0].status = "bounced"; }, search, "a row outside the status filter");
 
@@ -257,6 +267,18 @@ test("a partial, loosely typed or self-contradicting answer is never a list, a p
   refused(CAMPAIGNS, (d) => { d.campaigns[1].audience.count = null; }, campaigns, "a sent campaign without its count");
   refused(CAMPAIGNS, (d) => { d.campaigns[4].audience.mode = "all_active"; }, campaigns, "a direct email to everyone");
   refused(CAMPAIGNS, (d) => { delete d.filters; }, campaigns, "a list without its filter echo");
+  refused(CAMPAIGNS, (d) => { d.campaigns[1].resumable = true; }, campaigns, "a sent campaign offered for resuming");
+  refused(CAMPAIGNS, (d) => { d.campaigns[0].progress = { processed: 0, total: 0 }; }, campaigns, "a draft with progress");
+  refused(CAMPAIGNS, (d) => { delete d.campaigns[1].resumable; }, campaigns, "a listed campaign without resumable");
+  refused(CAMPAIGNS, (d) => { d.campaigns[1].progress.processed = 0; }, campaigns, "a sent campaign not wholly processed");
+  const stalled = (body: Json) => go.friendingGoCampaigns(body, 1, "sending");
+  refused(STALLED, (d) => { d.campaigns[0].progress.processed = 49; }, stalled, "progress that is not the counts so far");
+  refused(STALLED, (d) => { d.campaigns[0].progress.total = 100; }, stalled, "a total that is not the audience");
+  refused(STALLED, (d) => { d.campaigns[0].resumable = "yes"; }, stalled, "a loose resumable");
+  const resumed = (body: Json) => go.friendingGoSendResult(body, COMMANDS.resume);
+  refused(RESUME, (d) => { d.campaign.id = "000000000000000000006017"; }, resumed, "another campaign resumed");
+  refused(RESUME, (d) => { d.mode = "send"; }, resumed, "a send answering a resume");
+  refused(RESUME, (d) => { delete d.progress; }, resumed, "a resume without its progress");
   refused(DRAFTS, (d) => { d.campaigns.push({ ...CAMPAIGNS.data.campaigns[1], created_at: 1 }); }, (body) => go.friendingGoCampaigns(body, 1, "draft"), "a sent campaign among the drafts");
   const detail = (body: Json) => go.friendingGoCampaignDetail(body, "000000000000000000006002", 1);
   refused(DETAIL, (d) => { d.delivery_counts.delivered = 2; }, detail, "deliveries that are not the queued messages");
@@ -300,44 +322,132 @@ test("round 2: who may resubscribe, why a row is locked, and the left-out reason
   assert.equal(go.friendingGoPreorders(skipped, ALL)?.rows[2]?.confirmation.state, "skipped");
 });
 
-test("round 2: a sliced send is carried on with the same request until it is sent; a died send is waited for and taken over", () => {
-  // Core's sliced send: 50 of 101 written, `sending`.
-  const sending = go.friendingGoSendResult(SENDING, COMMANDS.sliced)!;
-  assert.equal(sending.mode, "send");
-  assert.deepEqual([sending.mode === "send" && sending.campaign.state, sending.mode === "send" && sending.progress], ["sending", { processed: 50, total: 101 }]);
-  let step = state.friendingGoSendStep(SENDING, COMMANDS.sliced, state.FRIENDINGGO_SEND_LOOP_START);
+test("a sliced send or resume is carried on with the same request; waits are a time budget; a died send is waited for and taken over", () => {
+  const start = state.FRIENDINGGO_SEND_LOOP_START;
+  // Core's sliced send: 50 of 101 written, `sending`: call again with the same command.
+  let step = state.friendingGoSendStep(SENDING, COMMANDS.sliced, start);
   assert.deepEqual(step.step, { kind: "continue", progress: { processed: 50, total: 101 }, delayMs: state.FRIENDINGGO_SEND_LIMITS.continueDelayMs });
   // The same answer again and again is no progress: after three the console stops and hands it to the operator.
   for (let round = 0; round < state.FRIENDINGGO_SEND_LIMITS.stalls; round += 1) step = state.friendingGoSendStep(SENDING, COMMANDS.sliced, step.loop);
   assert.deepEqual(step.step, { kind: "paused", progress: { processed: 50, total: 101 } });
-  // Core's died send: the same request answers in progress (wait 120 s), then the takeover finishes it.
-  assert.equal(go.friendingGoRetryAfter(IN_PROGRESS), 120);
+  // Core round 3: the resume of the abandoned campaign answers `sending` 100 of 101 and is carried on the same way.
+  assert.deepEqual(state.friendingGoSendStep(RESUME, COMMANDS.resume, start).step,
+    { kind: "continue", progress: { processed: 100, total: 101 }, delayMs: state.FRIENDINGGO_SEND_LIMITS.continueDelayMs });
+  // Core's overlap answer asks for 8 s; the console waits that long, again and again, within a budget of seconds (review P3-8).
+  assert.equal(go.friendingGoRetryAfter(IN_PROGRESS), 8);
   assert.equal(go.friendingGoOutcomeUnknown(IN_PROGRESS), true, "never a refusal: retry the same request id");
-  const waited = state.friendingGoSendStep(IN_PROGRESS, COMMANDS.takenOver, state.FRIENDINGGO_SEND_LOOP_START);
-  assert.deepEqual(waited.step, { kind: "wait", seconds: 120 });
-  const finished = state.friendingGoSendStep(TAKEN_OVER, COMMANDS.takenOver, waited.loop);
+  let loop = start;
+  let waited = 0;
+  for (;;) {
+    const next = state.friendingGoSendStep(IN_PROGRESS, COMMANDS.takenOver, loop);
+    loop = next.loop;
+    if (next.step.kind !== "wait") { assert.deepEqual(next.step, { kind: "unknown", error: "go-request-in-progress" }); break; }
+    assert.equal(next.step.reason, "in_progress");
+    waited += next.step.seconds;
+  }
+  assert.equal(waited, state.FRIENDINGGO_SEND_LIMITS.waitBudgetSeconds, "the waits add up to the budget, then the operator decides");
+  assert.ok(state.FRIENDINGGO_SEND_LIMITS.waitBudgetSeconds >= 150, "the budget covers Core's 120 s takeover");
+  // Waiting over the takeover: the same request then finishes the died send.
+  const waitedOnce = state.friendingGoSendStep(IN_PROGRESS, COMMANDS.takenOver, start);
+  assert.deepEqual(waitedOnce.step, { kind: "wait", seconds: 8, reason: "in_progress" });
+  const finished = state.friendingGoSendStep(TAKEN_OVER, COMMANDS.takenOver, waitedOnce.loop);
   assert.equal(finished.step.kind, "done");
-  assert.deepEqual(finished.step.kind === "done" && finished.step.result.mode === "send" && finished.step.result.progress, { processed: 101, total: 101 });
-  // Waits are bounded too: after three, the in-progress answer is an unknown outcome kept for a manual retry.
-  let loop = state.FRIENDINGGO_SEND_LOOP_START;
-  for (let round = 0; round < state.FRIENDINGGO_SEND_LIMITS.waits; round += 1) loop = state.friendingGoSendStep(IN_PROGRESS, COMMANDS.takenOver, loop).loop;
-  assert.deepEqual(state.friendingGoSendStep(IN_PROGRESS, COMMANDS.takenOver, loop).step, { kind: "unknown", error: "go-request-in-progress" });
+  // A timeout in the middle of a send is asked again with the same request id (review P3-3); at the first call it is unknown.
+  const timeout = { success: false, status_code: 504, error: "core-timeout" };
+  const afterSlice = state.friendingGoSendStep(SENDING, COMMANDS.sliced, start).loop;
+  assert.deepEqual(state.friendingGoSendStep(timeout, COMMANDS.sliced, afterSlice).step,
+    { kind: "wait", seconds: state.FRIENDINGGO_SEND_LIMITS.timeoutWaitSeconds, reason: "timeout" });
+  assert.deepEqual(state.friendingGoSendStep(timeout, COMMANDS.sliced, start).step, { kind: "unknown", error: "core-timeout" });
+  assert.deepEqual(state.friendingGoSendStep(timeout, COMMANDS.sliced, { ...afterSlice, waited: state.FRIENDINGGO_SEND_LIMITS.waitBudgetSeconds }).step,
+    { kind: "unknown", error: "core-timeout" }, "a timeout after the budget is the operator's");
   // A test, a draft and a whole send settle at once; a lost answer is kept; a receipted refusal is final.
-  assert.equal(state.friendingGoSendStep(SEND, COMMANDS.send, state.FRIENDINGGO_SEND_LOOP_START).step.kind, "done");
-  assert.equal(state.friendingGoSendStep(TEST_SEND, COMMANDS.test, state.FRIENDINGGO_SEND_LOOP_START).step.kind, "done");
-  assert.deepEqual(state.friendingGoSendStep(null, COMMANDS.send, state.FRIENDINGGO_SEND_LOOP_START).step, { kind: "unknown", error: null });
-  assert.deepEqual(state.friendingGoSendStep({ success: false, status_code: 504, error: "core-timeout" }, COMMANDS.send, state.FRIENDINGGO_SEND_LOOP_START).step,
-    { kind: "unknown", error: "core-timeout" });
+  assert.equal(state.friendingGoSendStep(SEND, COMMANDS.send, start).step.kind, "done");
+  assert.equal(state.friendingGoSendStep(TEST_SEND, COMMANDS.test, start).step.kind, "done");
+  assert.deepEqual(state.friendingGoSendStep(null, COMMANDS.send, start).step, { kind: "unknown", error: null });
   assert.deepEqual(state.friendingGoSendStep(fixture("webadmin-go-email-send-audience-changed"), { ...COMMANDS.send, request_id: "00000012-0000-4000-8000-000000000012" },
-    state.FRIENDINGGO_SEND_LOOP_START).step, { kind: "refused", error: "go-email-audience-changed" });
+    start).step, { kind: "refused", error: "go-email-audience-changed" });
+  // Core round 3: a resume that is not allowed yet is final for its request id, with when to try again.
+  assert.deepEqual(state.friendingGoSendStep(RESUME_REFUSED, COMMANDS.resumeRefused, start).step, { kind: "refused", error: "go-campaign-not-resumable" });
+  assert.deepEqual(go.friendingGoNotResumable(RESUME_REFUSED), { state: "sending", retry_after_seconds: 120 });
   // A sending answer for another request is not progress of this one.
-  assert.deepEqual(state.friendingGoSendStep(SENDING, COMMANDS.takenOver, state.FRIENDINGGO_SEND_LOOP_START).step, { kind: "unknown", error: null });
-  // The rounds are bounded: Core writes at least 50 a call, so 5,000 people need at most 100 calls.
-  assert.ok(state.FRIENDINGGO_SEND_LIMITS.rounds > go.FRIENDINGGO_CAPS.newsletter / 50);
-  let rounds = { ...state.FRIENDINGGO_SEND_LOOP_START, rounds: state.FRIENDINGGO_SEND_LIMITS.rounds - 1 };
-  assert.equal(state.friendingGoSendStep(SENDING, COMMANDS.sliced, rounds).step.kind, "paused");
-  rounds = { ...rounds, rounds: 1 };
-  assert.equal(state.friendingGoSendStep(SENDING, COMMANDS.sliced, rounds).step.kind, "continue");
+  assert.deepEqual(state.friendingGoSendStep(SENDING, COMMANDS.takenOver, start).step, { kind: "unknown", error: null });
+  // The slices are bounded: Core writes at least 50 a call, so 5,000 people need at most 100 calls.
+  assert.ok(state.FRIENDINGGO_SEND_LIMITS.slices > go.FRIENDINGGO_CAPS.newsletter / 50);
+  assert.equal(state.friendingGoSendStep(SENDING, COMMANDS.sliced, { ...start, slices: state.FRIENDINGGO_SEND_LIMITS.slices - 1 }).step.kind, "paused");
+});
+
+test("the runner carries a stored command to its outcome and keeps the storage in step (executed with Core's captures)", async () => {
+  const run = async (answers: unknown[], stored: state.FriendingGoPendingEmail, alive: () => boolean = () => true) => {
+    const calls: unknown[] = [], stores: Array<state.FriendingGoPendingEmail | null> = [], sleeps: number[] = [], seen: unknown[] = [];
+    const outcome = await state.runFriendingGoEmailCommand(stored, {
+      call: async (command) => { calls.push(command); return answers.shift() ?? null; },
+      sleep: async (milliseconds) => { sleeps.push(milliseconds); },
+      alive,
+      store: (value) => { stores.push(value === null ? null : clone(value)); return true; },
+      onProgress: (progress) => { seen.push(progress); },
+    });
+    return { outcome, calls, stores, sleeps, seen };
+  };
+  // The died send: Core asks to wait 8 s, then the takeover finishes it; the SAME command both times.
+  const died = await run([IN_PROGRESS, TAKEN_OVER], { version: 1, command: COMMANDS.takenOver, running: false });
+  assert.equal(died.outcome.kind, "done");
+  assert.deepEqual(died.calls, [COMMANDS.takenOver, COMMANDS.takenOver]);
+  assert.deepEqual(died.sleeps, [8000]);
+  assert.deepEqual(died.stores, [{ version: 1, command: COMMANDS.takenOver, running: true }, null], "running while carried, removed when sent");
+  // One slice, then three answers without progress: kept, not running, for the operator's Retry.
+  const stalled = await run([SENDING, SENDING, SENDING, SENDING], { version: 1, command: COMMANDS.sliced, running: false });
+  assert.equal(stalled.calls.length, 4);
+  assert.deepEqual(stalled.outcome, { kind: "paused", progress: { processed: 50, total: 101 } });
+  assert.deepEqual(stalled.stores.at(-1), { version: 1, command: COMMANDS.sliced, running: false });
+  // A lost answer: kept, not running. A receipted refusal: removed (the next attempt draws a new id).
+  const lost = await run([null], { version: 1, command: COMMANDS.send, running: false });
+  assert.deepEqual(lost.outcome, { kind: "unknown", error: null });
+  assert.deepEqual(lost.stores.at(-1), { version: 1, command: COMMANDS.send, running: false });
+  const refused = await run([RESUME_REFUSED], { version: 1, command: COMMANDS.resumeRefused, running: false });
+  assert.equal(refused.outcome.kind, "refused");
+  assert.equal(refused.stores.at(-1), null);
+  // The page goes away mid-send: the command stays stored as running, so the next Email or Sent tab continues it (P2-1).
+  let calls = 0;
+  const left = await run([RESUME, RESUME], { version: 1, command: COMMANDS.resume, running: false }, () => calls++ < 1);
+  assert.deepEqual(left.outcome, { kind: "left" });
+  assert.deepEqual(left.stores, [{ version: 1, command: COMMANDS.resume, running: true }]);
+  // A test is not carried on by itself: it is never stored as running.
+  const testRun = await run([TEST_SEND], { version: 1, command: COMMANDS.test, running: false });
+  assert.deepEqual(testRun.stores, [null]);
+  assert.equal(state.friendingGoPendingEmail({ version: 1, command: COMMANDS.test, running: true }), null);
+});
+
+test("the composer's decisions are pure: what a button sends, what a page does on mount, what a send leaves selected", () => {
+  const composer: state.FriendingGoComposer = { kind: "newsletter", audience: "selected", subject: NEWSLETTER.subject, preheader: NEWSLETTER.preheader, body: BODY, campaignId: "" };
+  const people = THREE.map((id) => ({ id, name: "", status: null }));
+  const key = state.friendingGoContentKey(NEWSLETTER);
+  const id = "00000099-0000-4000-8000-000000000099";
+  const previewed = { key, counts: { selected: 3, sendable: 2 }, cap: 5000 };
+  assert.deepEqual(state.friendingGoBuildCommand("send", composer, people, previewed, id),
+    { ok: true, command: { ...NEWSLETTER, mode: "send", campaign_id: "", request_id: id, expected_sendable: 2 } });
+  assert.deepEqual(state.friendingGoBuildCommand("send", { ...composer, subject: "Other" }, people, previewed, id), { ok: false, reason: "stalePreview" });
+  assert.deepEqual(state.friendingGoBuildCommand("send", composer, people, null, id), { ok: false, reason: "stalePreview" });
+  // More than the cap: Send is refused before anything leaves (review P3-1), and nobody to send to likewise.
+  assert.deepEqual(state.friendingGoBuildCommand("send", composer, people, { ...previewed, counts: { selected: 3, sendable: 3 }, cap: 2 }, id), { ok: false, reason: "overCap" });
+  assert.deepEqual(state.friendingGoBuildCommand("send", composer, people, { ...previewed, counts: { selected: 3, sendable: 0 } }, id), { ok: false, reason: "nothingToSend" });
+  assert.deepEqual(state.friendingGoBuildCommand("save_draft", composer, people, null, id),
+    { ok: true, command: { ...NEWSLETTER, mode: "save_draft", campaign_id: "", request_id: id } });
+  assert.deepEqual(state.friendingGoBuildCommand("test", { ...composer, audience: "all_active" }, [], null, id),
+    { ok: true, command: { mode: "test", kind: "newsletter", subject: NEWSLETTER.subject, preheader: NEWSLETTER.preheader, body_html: BODY, request_id: id } });
+  assert.deepEqual(state.friendingGoBuildCommand("send", { ...composer, body: "<p>open" }, people, previewed, id), { ok: false, reason: "problems" });
+  // On mount: a running command continues, a stored one waits for the operator, and only then a ?draft= link opens.
+  const running: state.FriendingGoPendingEmail = { version: 1, command: COMMANDS.send, running: true };
+  const waiting: state.FriendingGoPendingEmail = { ...running, running: false };
+  assert.deepEqual(state.friendingGoHydration(running, "000000000000000000006007", composer), { kind: "continue", pending: running });
+  assert.deepEqual(state.friendingGoHydration(waiting, "000000000000000000006007", composer), { kind: "pending", pending: waiting });
+  assert.deepEqual(state.friendingGoHydration(null, "000000000000000000006007", composer), { kind: "askDraft", id: "000000000000000000006007" });
+  assert.deepEqual(state.friendingGoHydration(null, "000000000000000000006007", state.EMPTY_FRIENDINGGO_COMPOSER), { kind: "openDraft", id: "000000000000000000006007" });
+  assert.deepEqual(state.friendingGoHydration(null, null, composer), { kind: "none" });
+  // After a send: the audience is cleared only when it is still the one that was sent (review P3-7).
+  assert.deepEqual(state.friendingGoSelectionAfterSend(people, COMMANDS.send), []);
+  const other = [{ id: "000000000000000000006011", name: "Dan Ruiz", status: "bounced" as const }];
+  assert.deepEqual(state.friendingGoSelectionAfterSend(other, COMMANDS.send), other);
+  assert.deepEqual(state.friendingGoSelectionAfterSend(people, COMMANDS.sendAll), people, "an everyone-active send leaves the selection");
 });
 
 test("every refusal Core captured keeps its name and status, and says whether the request may have run", () => {
@@ -348,6 +458,13 @@ test("every refusal Core captured keeps its name and status, and says whether th
     assert.equal(go.FRIENDINGGO_ERRORS[error!].status, entry.status_code, entry.file);
     // `go-request-in-progress` is the one captured refusal that is not final: the same request id is retried.
     assert.equal(go.friendingGoOutcomeUnknown(body), error === "go-request-in-progress", `${entry.file}: final unless still running`);
+    // The bridge rebuilds every genuine refusal exactly: a known name, its status, the documented fields (review P3-5).
+    assert.deepEqual(go.normalizeFriendingGoRefusal(body, entry.status_code), body, `${entry.file}: projected as Core sent it`);
+    assert.equal(go.normalizeFriendingGoRefusal(body, entry.status_code === 409 ? 422 : 409), null, `${entry.file}: at another status it is not that refusal`);
+  }
+  for (const data of [{ receipt: { request_id: "x" } }, { counts: { selected: 1 } }, { cap: 7 }, { status: "paused" }, { state: "lost" },
+    { retry_after_seconds: 0 }, { status_source: "webadmin" }, { email: "eve.moss@example.com" }]) {
+    assert.equal(go.normalizeFriendingGoRefusal({ ...fixture("webadmin-go-email-send-in-progress"), data }, 409), null, JSON.stringify(data));
   }
   assert.deepEqual(go.friendingGoRefusalCounts(fixture("webadmin-go-email-send-audience-changed")),
     { counts: { selected: 3, sendable: 2, suppressed: 1, suppressed_by_reason: { unsubscribed: 1, bounced: 0, complained: 0 } }, cap: null });
@@ -448,6 +565,8 @@ test("the largest preview or send a browser may build fits the raised body ceili
   assert.ok(size < actions.adminActionBodyLimit("go_email_send"), `${size} bytes`);
   assert.equal(actions.adminActionBodyLimit("go_email_send"), 400_000);
   assert.equal(actions.adminActionBodyLimit("go_email_preview"), 400_000);
+  assert.equal(actions.adminActionTimeoutMs("go_email_send"), 20_000, "Core's 6 s slices on a slow link (review P3-3)");
+  assert.equal(actions.adminActionTimeoutMs("go_email_preview"), 10_000);
   assert.equal(go.FRIENDINGGO_BODY_MAX, 50_000, "one body limit (Core round 2, GoPreorderPolicy::BODY_MAX)");
   assert.equal(go.FRIENDINGGO_SUBJECT_MAX, 150);
 });
@@ -502,6 +621,7 @@ async function bridge(action: string, role: string, body: unknown, answer: { sta
     webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     normalizeMailDeliveryProxyBody, normalizeFriendingGoProxyBody: go.normalizeFriendingGoProxyBody,
     normalizeFriendingGoResponse: go.normalizeFriendingGoResponse, friendingGoProxyCapabilityAuthorized: go.friendingGoProxyCapabilityAuthorized,
+    normalizeFriendingGoRefusal: go.normalizeFriendingGoRefusal,
     readAdminSession: async () => ({ email: MEMBERSHIP_EMAIL }),
     coreCall: async (name: string, payload: Record<string, unknown>) => {
       assert.equal(payload.admin_email, MEMBERSHIP_EMAIL);
@@ -528,7 +648,8 @@ test("DERIVED bridge: each route forwards its closed fields with the version and
   assert.deepEqual(list.forwarded, [{ contract_version: 1, q: "", status: "", page: 1, admin_email: MEMBERSHIP_EMAIL }]);
   assert.deepEqual(list.body, strip(OWNER), "no legacy trio, nothing unparsed");
   const extra = clone(OWNER); extra.data.rows[0].internal = "never forwarded";
-  assert.equal(JSON.stringify((await bridge("go_preorders", "admin", {}, { status: 200, data: extra })).body).includes("internal"), false);
+  assert.deepEqual((await bridge("go_preorders", "admin", {}, { status: 200, data: extra })).body,
+    { success: false, status_code: 502, error: "invalid-core-response" }, "an unknown field fails the answer (review P3-4)");
   const other = await bridge("go_preorders", "owner", { q: "ca", status: "active" }, { status: 200, data: OWNER });
   assert.deepEqual(other.body, { success: false, status_code: 502, error: "invalid-core-response" }, "an answer for other filters");
 
@@ -557,6 +678,14 @@ test("DERIVED bridge: each route forwards its closed fields with the version and
   assert.deepEqual(sliced.body, strip(SENDING), "a sending slice reaches the page with its progress");
   const running = await bridge("go_email_send", "owner", { ...COMMANDS.takenOver }, { status: 409, data: IN_PROGRESS });
   assert.deepEqual(running.body, IN_PROGRESS, "the in-progress refusal keeps retry_after_seconds");
+  // Core round 3: "Finish sending" travels as exactly the campaign and the request id.
+  const resume = await bridge("go_email_send", "admin", { ...COMMANDS.resume }, { status: 200, data: RESUME });
+  assert.deepEqual(resume.forwarded, [{ contract_version: 1, ...COMMANDS.resume, admin_email: MEMBERSHIP_EMAIL }]);
+  assert.deepEqual(resume.body, strip(RESUME));
+  const notYet = await bridge("go_email_send", "admin", { ...COMMANDS.resumeRefused }, { status: 409, data: RESUME_REFUSED });
+  assert.deepEqual(notYet.body, RESUME_REFUSED);
+  const stalled = await bridge("go_email_campaigns", "admin", { state: "sending" }, { status: 200, data: STALLED });
+  assert.deepEqual(stalled.body, strip(STALLED));
 });
 
 test("DERIVED bridge: a viewer never receives an address or a phone number, and never reaches a write", async () => {
@@ -596,6 +725,16 @@ test("DERIVED bridge: without Core's capability block, with a bad body or with e
   const broken = clone(SEND); broken.data.campaign.counts.queued = 7;
   assert.deepEqual((await bridge("go_email_send", "owner", { ...COMMANDS.send }, { status: 200, data: broken })).body,
     { success: false, status_code: 502, error: "invalid-core-response" });
+  // A refusal travels only as a known name at its status with the documented fields (review P3-5).
+  const leaky = clone(fixture("webadmin-go-email-send-audience-changed")); leaky.data.email = "eve.moss@example.com";
+  assert.deepEqual((await bridge("go_email_send", "owner", { ...COMMANDS.send, request_id: "00000012-0000-4000-8000-000000000012" }, { status: 409, data: leaky })).body,
+    { success: false, status_code: 502, error: "invalid-core-response" });
+  const unknown = { success: false, status_code: 409, error: "go-something-new", message: 200, status: 200, can_send: 0 };
+  assert.equal((await bridge("go_email_send", "owner", { ...COMMANDS.send }, { status: 409, data: unknown })).body.error, "invalid-core-response");
+  const extraKey = { ...fixture("webadmin-go-preorders-filter-invalid"), debug: "trace" };
+  assert.deepEqual((await bridge("go_preorders", "owner", {}, { status: 422, data: extraKey })).body, fixture("webadmin-go-preorders-filter-invalid"),
+    "only the envelope's known keys are rebuilt");
+  assert.match(BRIDGE.source, /const refusal = normalizeFriendingGoRefusal\(result\.data, result\.status\);\s*if \(!refusal\) return bridgeError\("invalid-core-response", 502\);/u);
   assert.match(BRIDGE.source, /const friendingGoBody = normalizeFriendingGoProxyBody\(action, body\);\s*if \(friendingGoBody === null\) \{\s*return bridgeError\("invalid-input", 400\);/);
   assert.ok(BRIDGE.source.indexOf("normalizeFriendingGoProxyBody(action, body)") < BRIDGE.source.indexOf("const result = await coreCall("));
   assert.match(BRIDGE.source, /normalizeFriendingGoResponse\(action, result\.data, friendingGoBody, \{ viewer: principal\.role !== "owner" && principal\.role !== "admin" \}\)/);
@@ -662,6 +801,10 @@ test("DERIVED CSV route: role, origin, capability and filters are checked before
   assert.deepEqual(JSON.parse(refused.text), { success: false, status_code: 403, error: "admin-write-required" });
   const filter = fixture("webadmin-go-preorders-filter-invalid");
   assert.deepEqual(JSON.parse((await exportRoute({}, OWNER_WRITER, { status: 422, data: filter })).text), { success: false, status_code: 422, error: "go-filter-invalid" });
+  // A timeout keeps its own status: the page says the export may already be in the audit log (review P3-6).
+  const timedOut = await exportRoute({}, OWNER_WRITER, { status: 504, data: { success: false, error: "core-timeout" } });
+  assert.deepEqual(JSON.parse(timedOut.text), { success: false, status_code: 504, error: "core-timeout" });
+  assert.equal(go.friendingGoError(JSON.parse(timedOut.text)), "core-timeout");
   // Core's export for other filters, or a masked one, is never a file.
   for (const answer of [EXPORT, VIEWER]) {
     const wrong = await exportRoute({ q: "", status: "" }, OWNER_WRITER, { status: 200, data: answer });
@@ -691,10 +834,14 @@ test("CSV: RFC 4180 quoting and the formula-injection guard (review P3-6)", () =
 });
 
 test("the console's stored state decodes exactly, and a retry can never acquire new meaning", () => {
-  const pending = { version: 1, command: { ...COMMANDS.send } };
+  const pending = { version: 1, command: { ...COMMANDS.send }, running: false };
   assert.deepEqual(state.friendingGoPendingEmail(clone(pending)), pending);
-  for (const variant of [{ ...pending, version: 2 }, { ...pending, extra: 1 }, { version: 1, command: { ...COMMANDS.send, expected_sendable: 9 } },
-    { version: 1, command: { ...COMMANDS.send, preorder_ids: [...THREE].reverse() } }, { version: 1, command: { ...COMMANDS.test, audience: "selected" } }]) {
+  assert.deepEqual(state.friendingGoPendingEmail({ ...pending, running: true }), { ...pending, running: true });
+  assert.deepEqual(state.friendingGoPendingEmail({ version: 1, command: COMMANDS.resume, running: true }), { version: 1, command: COMMANDS.resume, running: true });
+  for (const variant of [{ ...pending, version: 2 }, { ...pending, extra: 1 }, { version: 1, command: { ...COMMANDS.send } },
+    { ...pending, running: "yes" }, { ...pending, command: { ...COMMANDS.send, expected_sendable: 9 } },
+    { ...pending, command: { ...COMMANDS.send, preorder_ids: [...THREE].reverse() } }, { ...pending, command: { ...COMMANDS.test, audience: "selected" } },
+    { ...pending, command: { ...COMMANDS.resume, subject: "x" } }, { version: 1, command: COMMANDS.draft, running: true }]) {
     assert.equal(state.friendingGoPendingEmail(variant), null, JSON.stringify(variant).slice(0, 80));
   }
   const status = { version: 1, command: { preorder_id: THREE[0], status: "unsubscribed", request_id: COMMANDS.send.request_id }, name: "Ava Stone" };
@@ -742,25 +889,35 @@ test("the composer turns typing into exactly the canonical content, or says ever
   assert.equal(state.friendingGoSelection([...people, people[0]]), null, "a person twice");
 });
 
-test("the write paths mint a request id once, store it before sending, and retry exactly the stored command", () => {
+test("the write paths mint a request id once, store it before sending, guard the page while a send runs, and retry exactly the stored command", () => {
   const email = readFileSync(new URL("../components/FriendingGoEmailConsole.tsx", import.meta.url), "utf8");
   const preorders = readFileSync(new URL("../components/FriendingGoPreordersConsole.tsx", import.meta.url), "utf8");
-  for (const source of [email, preorders]) {
-    assert.equal(source.match(/crypto\.randomUUID\(\)/gu)?.length, 1, "one place mints an id");
+  const sent = readFileSync(new URL("../components/FriendingGoSentConsole.tsx", import.meta.url), "utf8");
+  const hook = readFileSync(new URL("../components/useFriendingGoEmailCommand.ts", import.meta.url), "utf8");
+  for (const source of [email, preorders, sent]) {
+    assert.equal(source.match(/crypto\.randomUUID\(\)/gu)?.length, 1, "one place per console mints an id");
     assert.doesNotMatch(source, /useAdminReadRecovery/);
   }
-  assert.match(email, /if \(!friendingGoStore\(browserStorage\(\), FRIENDINGGO_STORAGE_KEYS\.pendingEmail, stored\)\) \{[\s\S]*?return;\s*\}\s*setPending\(stored\);\s*void execute\(stored\);/u);
-  assert.match(email, /onRetryPending=\{\(\) => \{ if \(pending\) void execute\(pending\); \}\}/u);
-  assert.match(preorders, /if \(!friendingGoStore\(browserStorage\(\), FRIENDINGGO_STORAGE_KEYS\.pendingStatus, command\)\) \{[\s\S]*?return;\s*\}\s*setPending\(command\);\s*void settleStatus\(command\);/u);
-  assert.match(preorders, /onRetryStatus=\{\(\) => \{ if \(pending\) void settleStatus\(pending\); \}\}/u);
-  // An unknown outcome and a paused send keep the command; a sending slice is carried on with the same command.
-  assert.match(email, /\} else if \(step\.kind === "unknown"\) \{\s*\/\/[^\n]*\n\s*setPending\(stored\);/u);
-  assert.match(email, /\} else if \(step\.kind === "paused"\) \{\s*\/\/[^\n]*\n\s*setPending\(stored\);/u);
-  assert.match(email, /response = await adminCall\("go_email_send", \{ \.\.\.command \}\);\s*const next = friendingGoSendStep\(response, command, loop\);/u);
-  // Write access comes from Core's answer, never from the role (Core round 2).
-  assert.match(email, /setAccess\(list \? \{ load: "ready", canWrite: list\.can_write, active: list\.totals\.active \}/u);
+  assert.doesNotMatch(hook, /randomUUID/u, "the shared command never mints: it stores and repeats");
+  // Stored before it leaves; nothing is sent when the browser refuses to store it.
+  assert.match(hook, /if \(!friendingGoStore\(friendingGoBrowserStorage\(\), FRIENDINGGO_STORAGE_KEYS\.pendingEmail, stored\)\) \{\s*setStorageAvailable\(false\);\s*return false;\s*\}\s*void execute\(stored\);/u);
+  assert.match(hook, /const retry = useCallback\(\(\) => \{ if \(pending && !busyRef\.current\) void execute\(pending\); \}/u);
+  // A running send continues on the next mount; leaving the page while it runs asks first (review P2-1).
+  assert.match(hook, /if \(stored\?\.running\) void execute\(stored\);/u);
+  assert.match(hook, /carried \? retainResearchCommandNavigation\(confirm, history, \{ title, leave \}\) : undefined/u);
+  assert.match(hook, /const carried = busy && pending !== null && \(pending\.command\.mode === "send" \|\| pending\.command\.mode === "resume"\);/u);
+  // Write access comes from Core's answer, never from the role.
+  assert.match(hook, /canWrite: list\.can_write, active: list\.totals\.active/u);
   const page = readFileSync(new URL("../app/(dashboard)/friendinggo/email/page.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(page, /isAdminWriteRole|\.role\b/u);
+  // The Preorders status change: stored before it leaves, retried as stored.
+  assert.match(preorders, /if \(!friendingGoStore\(browserStorage\(\), FRIENDINGGO_STORAGE_KEYS\.pendingStatus, command\)\) \{[\s\S]*?return;\s*\}\s*setPending\(command\);\s*void settleStatus\(command\);/u);
+  assert.match(preorders, /onRetryStatus=\{\(\) => \{ if \(pending\) void settleStatus\(pending\); \}\}/u);
+  // "Finish sending": a fresh request id per press, through the shared command.
+  assert.match(sent, /command\.start\(\{ mode: "resume", campaign_id: campaign\.id, request_id: crypto\.randomUUID\(\) \}\)/u);
+  // The shared navigation guard keeps its research labels and takes ours (title, leave) only when given.
+  const guard = readFileSync(new URL("../lib/datesResearchNavigation.ts", import.meta.url), "utf8");
+  assert.match(guard, /owners\.set\(token, labels \? \{ confirm, history, labels \} : \{ confirm, history \}\);/u);
 });
 
 test("Email delivery reads Core's three FriendingGO kinds (review P1-1, DERIVED from its genuine capture)", () => {

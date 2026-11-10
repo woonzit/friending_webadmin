@@ -61,12 +61,19 @@ const BULK_ACTIONS = [
   "admin_replace_image",
 ];
 
+// D-153: a FriendingGO send call works for about 6 s per slice and Core measured 6.07 s for a maximal first
+// call on a local database; production adds Atlas round trips. 20 s, and a timeout is retried with the same id.
+const SLICED_ACTIONS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>> = { go_email_send: 20_000 };
+
 test("the per-action timeout table raises only the measured bulk catalogue paths", () => {
   for (const action of BULK_ACTIONS) {
     assert.equal(adminActionTimeoutMs(action), 30_000, action);
   }
+  for (const [action, timeout] of Object.entries(SLICED_ACTIONS)) {
+    assert.equal(adminActionTimeoutMs(action), timeout, action);
+  }
   for (const action of ADMIN_ACTIONS) {
-    if (BULK_ACTIONS.includes(action)) continue;
+    if (BULK_ACTIONS.includes(action) || action in SLICED_ACTIONS) continue;
     assert.equal(adminActionTimeoutMs(action), 10_000, action);
   }
   // An action nobody classified gets the conservative default, never the generous one.

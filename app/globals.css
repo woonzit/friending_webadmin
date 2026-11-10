@@ -15834,6 +15834,10 @@ fieldset.dates-external-fields {
 .friendinggo-progress progress { width: 100%; height: 8px; accent-color: var(--accent); }
 .friendinggo-sent-filter { grid-template-columns: minmax(180px, 280px); }
 .friendinggo-left-out { margin-bottom: 12px; }
+.friendinggo-email-pending { display: block; margin-top: 4px; color: var(--amber); font-weight: 600; }
+.friendinggo-over-cap { color: #f8d488; font-weight: 600; }
+.friendinggo-sending-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.friendinggo-panel > .friendinggo-sending-note { margin: 0; padding: 12px 22px; border-bottom: 1px solid var(--border); }
 
 @media (max-width: 1180px) {
   .friendinggo-email-layout { grid-template-columns: 1fr; }

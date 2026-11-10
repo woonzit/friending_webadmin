@@ -1,11 +1,17 @@
-export type ResearchNavigationNotice = { kind: "confirm" | "history"; message: string };
+/**
+ * `title` / `leave`: an owner's own dialog labels (D-153: a FriendingGO send in progress); without them the
+ * notice keeps the research labels, exactly as before.
+ */
+export type ResearchNavigationNotice = { kind: "confirm" | "history"; message: string; title?: string; leave?: string };
+export type NavigationLabels = { title: string; leave: string };
 /** One in-page guard for all retained research commands, including hidden actor-fenced owners. */
 export function createResearchNavigationGuard(browser: Window, page: Document) {
-  const owners = new Map<symbol, { confirm: string; history: string }>();
+  const owners = new Map<symbol, { confirm: string; history: string; labels?: NavigationLabels }>();
   const subscribers = new Set<() => void>();
   let notice: ResearchNavigationNotice | null = null, waiting: ((leave: boolean) => void) | null = null, approvedLink: HTMLAnchorElement | null = null;
   let currentHref = browser.location.href;
   const message = () => owners.values().next().value;
+  const labelsOf = () => { const labels = message()?.labels; return labels ? { title: labels.title, leave: labels.leave } : {}; };
   const publish = (next: ResearchNavigationNotice | null) => { notice = next; for (const listener of subscribers) listener(); };
   function choose(leave: boolean) { const answer = waiting; waiting = null; publish(null); answer?.(leave); }
   function request(): Promise<boolean> {
@@ -13,9 +19,9 @@ export function createResearchNavigationGuard(browser: Window, page: Document) {
     choose(false);
     if (!subscribers.size) {
       // A missing/unmounted notice surface must never silently trap navigation.
-      publish({ kind: "history", message: message()!.history }); return Promise.resolve(true);
+      publish({ kind: "history", message: message()!.history, ...labelsOf() }); return Promise.resolve(true);
     }
-    return new Promise((resolve) => { waiting = resolve; publish({ kind: "confirm", message: message()!.confirm }); });
+    return new Promise((resolve) => { waiting = resolve; publish({ kind: "confirm", message: message()!.confirm, ...labelsOf() }); });
   }
   const leavesPage = (href: string) => {
     try {
@@ -30,7 +36,7 @@ export function createResearchNavigationGuard(browser: Window, page: Document) {
     const link = typeof target?.closest === "function" ? target.closest<HTMLAnchorElement>("a[href]") : null;
     if (!link || link.hasAttribute("download") || link.target && link.target.toLowerCase() !== "_self" || !leavesPage(link.href)) return;
     if (link === approvedLink) return;
-    if (!subscribers.size) { publish({ kind: "history", message: message()!.history }); return; }
+    if (!subscribers.size) { publish({ kind: "history", message: message()!.history, ...labelsOf() }); return; }
     event.preventDefault(); event.stopImmediatePropagation();
     void request().then((leave) => {
       if (!leave || !link.isConnected) return;
@@ -45,7 +51,7 @@ export function createResearchNavigationGuard(browser: Window, page: Document) {
   function history() {
     // popstate cannot be canceled. Keep an in-page notice in the persistent
     // Shell as Next changes the page; never trap Back/Forward or rewrite it.
-    if (owners.size && leavesPage(browser.location.href)) { choose(false); publish({ kind: "history", message: message()!.history }); }
+    if (owners.size && leavesPage(browser.location.href)) { choose(false); publish({ kind: "history", message: message()!.history, ...labelsOf() }); }
     currentHref = browser.location.href;
   }
   function attach() {
@@ -61,10 +67,10 @@ export function createResearchNavigationGuard(browser: Window, page: Document) {
   }
   return { request, choose, getSnapshot: () => notice,
     subscribe(listener: () => void) { subscribers.add(listener); return () => { subscribers.delete(listener); if (!subscribers.size && waiting) choose(false); }; },
-    retain(confirm: string, history: string) {
+    retain(confirm: string, history: string, labels?: NavigationLabels) {
     const token = Symbol("retained research command");
     if (!owners.size) attach();
-    owners.set(token, { confirm, history });
+    owners.set(token, labels ? { confirm, history, labels } : { confirm, history });
     return () => { owners.delete(token); if (!owners.size) { detach(); if (waiting) choose(false); } };
   } };
 }
@@ -73,8 +79,8 @@ function browserGuard() {
   if (typeof window === "undefined") return undefined;
   return guard ??= createResearchNavigationGuard(window, document);
 }
-export function retainResearchCommandNavigation(confirm: string, history: string): () => void {
-  return browserGuard()?.retain(confirm, history) ?? (() => {});
+export function retainResearchCommandNavigation(confirm: string, history: string, labels?: NavigationLabels): () => void {
+  return browserGuard()?.retain(confirm, history, labels) ?? (() => {});
 }
 export const confirmResearchNavigation = (): Promise<boolean> => browserGuard()?.request() ?? Promise.resolve(true);
 export const subscribeResearchNavigation = (listener: () => void): (() => void) => browserGuard()?.subscribe(listener) ?? (() => {});

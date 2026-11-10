@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
     admin_email: writer.session.email,
   }, undefined, { signal: request.signal, strictResponse: true });
   const postForwardError = adminPostForwardError(result, writer.session.email, request.signal?.aborted === true);
-  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.status);
+  // A timeout keeps its own status, so the page can say the export may already be in the audit log (review P3-6).
+  if (postForwardError) return errorResponse(postForwardError.error, postForwardError.error === "core-timeout" ? 504 : postForwardError.status);
 
   const exported = friendingGoExport(result.data, filters);
   if (!exported) {
