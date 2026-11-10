@@ -5,7 +5,7 @@
         "contract_version": 1,
         "changed": true,
         "preorder": {
-            "id": "00000000000000000000600c",
+            "id": "00000000000000000000600f",
             "name": "Cleo Park",
             "first_name": "Cleo",
             "email": "cleo@example.org",
@@ -15,14 +15,15 @@
             "city_from_list": false,
             "status": "unsubscribed",
             "status_changed_at": 1800000360,
-            "status_source": "webadmin",
+            "status_source": "admin",
+            "can_resubscribe": true,
             "source": "friending.com/go",
             "consent": {
                 "text_version": "2026-11-10",
                 "captured_at": 1799994200
             },
             "confirmation": {
-                "outbound_id": "00000000000000000000600d",
+                "outbound_id": "000000000000000000006010",
                 "state": "pending"
             },
             "created_at": 1799994200,

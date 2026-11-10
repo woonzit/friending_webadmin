@@ -4,6 +4,7 @@
     "error": "go-preorder-status-locked",
     "data": {
         "status": "bounced",
+        "status_source": "feedback",
         "receipt": {
             "request_id": "00000004-0000-4000-8000-000000000004",
             "audit_id": "wai:186dcdad1271bbaec9c99773e75e7afea621ed1735d1b204f51cac2f05b6bc23",

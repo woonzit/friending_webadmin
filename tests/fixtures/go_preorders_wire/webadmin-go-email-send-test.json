@@ -5,7 +5,7 @@
         "contract_version": 1,
         "mode": "test",
         "to": "owner@example.test",
-        "outbound_id": "00000000000000000000600a",
+        "outbound_id": "00000000000000000000600d",
         "receipt": {
             "request_id": "0000000b-0000-4000-8000-00000000000b",
             "audit_id": "wai:d1a48b416f9b7e44879001e5fa2901b8813c9f9093bf41d02fce1bb7178b6d69",

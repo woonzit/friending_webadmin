@@ -6,7 +6,12 @@
         "counts": {
             "selected": 101,
             "sendable": 101,
-            "suppressed": 0
+            "suppressed": 0,
+            "suppressed_by_reason": {
+                "unsubscribed": 0,
+                "bounced": 0,
+                "complained": 0
+            }
         },
         "cap": 100,
         "receipt": {

@@ -21,7 +21,12 @@
             "counts": {
                 "selected": 3,
                 "queued": 2,
-                "suppressed": 1
+                "suppressed": 1,
+                "suppressed_by_reason": {
+                    "unsubscribed": 1,
+                    "bounced": 0,
+                    "complained": 0
+                }
             },
             "created_by": "owner@example.test",
             "sent_by": "owner@example.test",

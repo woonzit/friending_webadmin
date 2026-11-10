@@ -340,8 +340,8 @@ type CanonicalEmailFragment = {
 };
 
 /** One grammar supplies both validation and the inert preview rewrite. */
-function canonicalCannedEmailFragment(value: unknown, maximum = 50_000): CanonicalEmailFragment | null {
-  const body = canonicalWireText(value, 1, maximum, "body");
+function canonicalCannedEmailFragment(value: unknown): CanonicalEmailFragment | null {
+  const body = canonicalWireText(value, 1, 50_000, "body");
   if (!body || /<!--|<!DOCTYPE|<\?|<!\[CDATA\[/iu.test(body)) return null;
 
   const stack: string[] = [];
@@ -386,9 +386,8 @@ function canonicalCannedEmailFragment(value: unknown, maximum = 50_000): Canonic
  * The accepted contract has a tiny closed tag/attribute vocabulary, so the
  * consumer can fail closed instead of trusting a provider-shaped string.
  */
-export function isCanonicalCannedEmailHtml(value: unknown, maximum = 50_000): value is string {
-  // `maximum`: the canned templates' own 50,000; the FriendingGO composer (D-153) passes Core's 60,000.
-  return canonicalCannedEmailFragment(value, maximum) !== null;
+export function isCanonicalCannedEmailHtml(value: unknown): value is string {
+  return canonicalCannedEmailFragment(value) !== null;
 }
 
 /** Sandboxed preview document for already-canonical Core output only. */

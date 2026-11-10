@@ -1,0 +1,46 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "mode": "send",
+        "campaign": {
+            "id": "00000000000000000000600c",
+            "kind": "newsletter",
+            "state": "sent",
+            "subject": "News for everyone",
+            "preheader": "",
+            "audience": {
+                "mode": "selected",
+                "count": 101
+            },
+            "counts": {
+                "selected": 101,
+                "queued": 101,
+                "suppressed": 0,
+                "suppressed_by_reason": {
+                    "unsubscribed": 0,
+                    "bounced": 0,
+                    "complained": 0
+                }
+            },
+            "created_by": "admin@example.test",
+            "sent_by": "admin@example.test",
+            "created_at": 1800001200,
+            "updated_at": 1800001200,
+            "sent_at": 1800001200
+        },
+        "progress": {
+            "processed": 101,
+            "total": 101
+        },
+        "receipt": {
+            "request_id": "0000001e-0000-4000-8000-00000000001e",
+            "audit_id": "wai:f2376343c845c41db37d2bfa6b25de73d6710bb6ec5c94a4312164f92d9f986a",
+            "replayed": false
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

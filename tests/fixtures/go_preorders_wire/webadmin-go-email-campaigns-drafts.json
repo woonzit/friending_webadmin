@@ -1,0 +1,35 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "filters": {
+            "state": "draft"
+        },
+        "page": 1,
+        "page_size": 50,
+        "has_more": false,
+        "campaigns": [
+            {
+                "id": "000000000000000000006007",
+                "kind": "newsletter",
+                "state": "draft",
+                "subject": "Spring update (draft)",
+                "preheader": "",
+                "audience": {
+                    "mode": "all_active",
+                    "count": null
+                },
+                "counts": null,
+                "created_by": "owner@example.test",
+                "sent_by": null,
+                "created_at": 1800001200,
+                "updated_at": 1800001200,
+                "sent_at": null
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

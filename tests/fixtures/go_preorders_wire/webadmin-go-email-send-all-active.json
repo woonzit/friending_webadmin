@@ -5,7 +5,7 @@
         "contract_version": 1,
         "mode": "send",
         "campaign": {
-            "id": "000000000000000000006008",
+            "id": "000000000000000000006009",
             "kind": "newsletter",
             "state": "sent",
             "subject": "FriendingGO update",
@@ -17,13 +17,22 @@
             "counts": {
                 "selected": 3,
                 "queued": 3,
-                "suppressed": 0
+                "suppressed": 0,
+                "suppressed_by_reason": {
+                    "unsubscribed": 0,
+                    "bounced": 0,
+                    "complained": 0
+                }
             },
             "created_by": "owner@example.test",
             "sent_by": "owner@example.test",
             "created_at": 1800000960,
             "updated_at": 1800000960,
             "sent_at": 1800000960
+        },
+        "progress": {
+            "processed": 3,
+            "total": 3
         },
         "receipt": {
             "request_id": "00000014-0000-4000-8000-000000000014",

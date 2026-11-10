@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "go-preorders-v1",
-    "source_commit": "7274489adf46396dde5b9c83ceedf21bf5efe2dc",
-    "fixture_set_sha256": "17b28944bae440104bd9798aced2ed73347f370401e01d57283a32f1709f29f2",
+    "source_commit": "895dbc1e690c9e449703cad0871e1d1d3ae2484f",
+    "fixture_set_sha256": "9f6257c802cc2e886617a91641624e410d0def037bfee478b89cb572167b8c92",
     "selectors": {
         "webadmin": {
             "contract_version": 1
@@ -10,7 +10,7 @@
     },
     "provenance": {
         "generator": "tests/go_preorders_storage_test.php",
-        "generator_sha256": "966e6ecf88298f0c4100b169dbf1ef396372fe4aa74cbc2bfca6cd57ef520678",
+        "generator_sha256": "efaadf61eb07a75023ae5746862fc65814d8e92c92e67d552200e82817f5fff8",
         "wire_adapters": {
             "goweb": "GoWebSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Core\\Response::ok/error -> Friending\\Core\\Response::send",
             "webadmin": "WebadminSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::noStoreReply -> Friending\\Core\\Response::send"
@@ -136,11 +136,19 @@
             "src/Services/AdministrativeMessageConsentService.php",
             "src/Services/AdministrativeMessageConsentStore.php",
             "src/Services/AppleOidcVerifier.php",
+            "src/Services/AudienceVisibilityAdminService.php",
+            "src/Services/AudienceVisibilityReadinessService.php",
+            "src/Services/DatesAdminAuthorizationService.php",
             "src/Services/DatesEventIntakeAdminService.php",
+            "src/Services/FeatureSwitchesAdminService.php",
+            "src/Services/FeatureSwitchesReadinessService.php",
+            "src/Services/FeatureSwitchesService.php",
             "src/Services/ForcedVerificationService.php",
+            "src/Services/GoEmailSendSlice.php",
             "src/Services/GoPreorderAdminService.php",
             "src/Services/GoPreorderException.php",
             "src/Services/GoPreorderService.php",
+            "src/Services/JoinLandingService.php",
             "src/Services/MailDeliveryEventSync.php",
             "src/Services/MailDeliveryReadService.php",
             "src/Services/MailDeliveryResult.php",
@@ -150,17 +158,26 @@
             "src/Services/MongoAdministrativeMessageConsentStore.php",
             "src/Services/OutboundMessageDeliveryStateService.php",
             "src/Services/OutboundMessageTransportFenceService.php",
+            "src/Services/PersonaAdminService.php",
             "src/Services/PhoneVerificationAttemptService.php",
             "src/Services/ProfileIntentsService.php",
+            "src/Services/ProfileTextModerationAdminService.php",
+            "src/Services/ProfileTextModerationReadinessService.php",
             "src/Services/WebadminMutationCommand.php",
             "src/Services/WebadminMutationException.php",
             "src/Services/WebadminMutationService.php",
+            "src/Support/AdminControlPlaneAuthorization.php",
             "src/Support/AppAppearancePolicy.php",
+            "src/Support/AudienceVisibilityAdminPolicy.php",
+            "src/Support/AudienceVisibilityReadinessPolicy.php",
             "src/Support/AuthMethodPolicy.php",
             "src/Support/CannedTemplateHtmlSanitizer.php",
+            "src/Support/CannedTemplatePolicy.php",
             "src/Support/EmailAddressPolicy.php",
             "src/Support/EmailLanguage.php",
             "src/Support/EventAi/EventImageNormalizer.php",
+            "src/Support/FeatureSwitchesAdminPolicy.php",
+            "src/Support/ForcedVerificationAdminPolicy.php",
             "src/Support/ForcedVerificationExplorePolicy.php",
             "src/Support/ForcedVerificationPolicy.php",
             "src/Support/GoPreorderPolicy.php",
@@ -172,18 +189,27 @@
             "src/Support/MongoNamespacePolicy.php",
             "src/Support/MongoSchemaManifest.php",
             "src/Support/OutboundMessagePolicy.php",
+            "src/Support/PersonaAdminPolicy.php",
+            "src/Support/PersonaScreensAdminPolicy.php",
+            "src/Support/ProductPopupPolicy.php",
+            "src/Support/ProfileTextModerationAdminPolicy.php",
+            "src/Support/ProfileTextModerationReadinessPolicy.php",
             "src/Support/PublicProfileLinkPolicy.php",
             "src/Support/PublicWebBasePolicy.php",
             "src/Support/PushDeliveryModePolicy.php",
+            "src/Support/ReportedContentPolicy.php",
             "src/Support/SectionAvailabilityPolicy.php",
             "src/Support/SessionExpiryPolicy.php",
+            "src/Support/VerificationAdminPolicy.php",
             "src/Support/VerificationCode.php",
+            "src/Support/VerificationMethodAdminPolicy.php",
             "src/Support/VerificationPolicy.php",
             "src/Support/Webadmin.php",
             "src/Support/WebadminMutationPolicy.php",
             "src/Support/WebadminRolePolicy.php",
             "src/Support/WelcomeMessage.php",
             "tests/go_preorders_storage_test.php",
+            "tests/support/go_preorders_send_child.php",
             "tests/support/go_preorders_wire_contract.php"
         ]
     },
@@ -213,6 +239,14 @@
             "sha256": "2ab5437183014846a9d8f05c41df7b85ec6225fd521bddad3c736798e3acb9ee"
         },
         {
+            "file": "goweb-preorder-rate-limited.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/preorder",
+            "http_status": 403,
+            "status_code": 403,
+            "sha256": "e5775c43864ed7df94cb59005fec090e2259da89758e89f03d61760f22860132"
+        },
+        {
             "file": "goweb-preorder-unauthorized.json",
             "consumer": "goweb",
             "route": "/v1/goweb/preorder",
@@ -234,7 +268,7 @@
             "route": "/v1/goweb/unsubscribe",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "902ed8728fc414ec535621e1d967e0c13dda7bb9bd8dd7fb841585bf4b4d0125"
+            "sha256": "49ff4faf79985ad8b01106568e49c5ebd5cdde79825aa282c6d7479da2b31bf6"
         },
         {
             "file": "goweb-unsubscribe-info.json",
@@ -242,7 +276,7 @@
             "route": "/v1/goweb/unsubscribe",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "1effb02f42b82eabd7c0cae6a0cc0186cff3c8aa949c59b8eee4d9b5c0b48e6d"
+            "sha256": "76fa6973c3cfd230b39de2f8c36547f8a215ecab26f30063f6f4250e6c4a6830"
         },
         {
             "file": "goweb-unsubscribe-invalid.json",
@@ -251,6 +285,22 @@
             "http_status": 400,
             "status_code": 400,
             "sha256": "e1f79d5d9727d0f7f095ff83a6986ae52e381170aa444b862434bfb09ddf7d1b"
+        },
+        {
+            "file": "goweb-unsubscribe-resubscribe-refused.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "3c2bbdcd78b7f0f4b3807333c67338bf11929e29e5fcdab07a771d777a5e1cae"
+        },
+        {
+            "file": "goweb-unsubscribe-resubscribe.json",
+            "consumer": "goweb",
+            "route": "/v1/goweb/unsubscribe",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "76fa6973c3cfd230b39de2f8c36547f8a215ecab26f30063f6f4250e6c4a6830"
         },
         {
             "file": "goweb-unsubscribe-unknown.json",
@@ -266,7 +316,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "2c026321f05a68776061136c9879b93e5a1cca271e29a325e106064ba37daefa"
+            "sha256": "d3f5691c3f3d5cb01dcba92e81198e2b5debb46e68ddeec806b74a8ad11c481c"
         },
         {
             "file": "webadmin-go-email-campaign-detail.json",
@@ -274,7 +324,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "63caad9919023a0f8e095c87626a6a238b4d16ced27e98c00f1708581f4380d3"
+            "sha256": "59e2fbbe5c1e40f90b87b88f76aeb0af0fb2296bbd250f9c7b46a3070c598562"
         },
         {
             "file": "webadmin-go-email-campaign-not-found.json",
@@ -283,6 +333,14 @@
             "http_status": 200,
             "status_code": 404,
             "sha256": "96536cdc97c3734f7a71b3c25797a1d3a59c68244d7e5fef2504b7dc733d232c"
+        },
+        {
+            "file": "webadmin-go-email-campaigns-drafts.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "6c2f0f434676ba17f68ffd9ed081355f01e05d1856678b872cc232eb7d730aaa"
         },
         {
             "file": "webadmin-go-email-campaigns-filter-invalid.json",
@@ -298,7 +356,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "fd4df91aa3b6fc1a89f4982914d37da26c026693881910edf51219bb887b930b"
+            "sha256": "f97018bb6e872ce9eb3b092ae58848fd9206d1cafee3952b7de981fc2bdfd90f"
         },
         {
             "file": "webadmin-go-email-preview-all-active.json",
@@ -306,7 +364,7 @@
             "route": "/v1/webadmin/go_email_preview",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "cfc33157853ce70b7a44b0a6e3339850d33ac732f65e90129cf81091a029d762"
+            "sha256": "5ff6083d3e37df4afffb86d4945a92922e3548516cca19347ecfa8216cf45bf2"
         },
         {
             "file": "webadmin-go-email-preview-audience-invalid.json",
@@ -323,6 +381,14 @@
             "http_status": 200,
             "status_code": 422,
             "sha256": "90ebc0672e11ec142d235c3942fad05f5c7268b5b26872b7e5ed433057ad0632"
+        },
+        {
+            "file": "webadmin-go-email-preview-body-too-large.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_preview",
+            "http_status": 200,
+            "status_code": 422,
+            "sha256": "83f01c70d08090af5580fdebfe600a40439d90fa46321a8abf421731ff14f51b"
         },
         {
             "file": "webadmin-go-email-preview-content-invalid.json",
@@ -346,7 +412,7 @@
             "route": "/v1/webadmin/go_email_preview",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "1f976821c73b033f33e6f1387c65129d9cf233fa169440d559afdf5c929b7f24"
+            "sha256": "0c79b3c7158b363c09c441653f7c3b2ac932cd8af4059c250dd8a0ace1836c9d"
         },
         {
             "file": "webadmin-go-email-send-all-active.json",
@@ -354,7 +420,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "04b85ea6c58334c715a5051226a61b1a6f16e05438ea73c9e6053985fcdddd0c"
+            "sha256": "f8e781f28cf336df311446ce4ef7d1c635a51909590c9e2452afb2dbc35881a8"
         },
         {
             "file": "webadmin-go-email-send-audience-changed.json",
@@ -362,7 +428,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 409,
-            "sha256": "59e4e356b0a4290d8d061adb851b3b712ee26b255b346f54960574d870fe5384"
+            "sha256": "eea9c305802a919383fca32d8e6fa785b7281c67a3293112848466c694f4e587"
         },
         {
             "file": "webadmin-go-email-send-audience-empty.json",
@@ -370,7 +436,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 422,
-            "sha256": "f63eb180fd373e4710e374c064fd03d351af7860b8be8e07be6eb9b77c1ed13b"
+            "sha256": "0d854864b30d7a0bd8d556d0028dc12966c7aeb41fd154a2734de3007bf3fc8f"
         },
         {
             "file": "webadmin-go-email-send-campaign-not-draft.json",
@@ -394,7 +460,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "91a8e310e9fb2c651ea831fd14801c0ec1d73900d89b411024520696d0b42979"
+            "sha256": "f1f5d9fb740d60649f17da97cc5524f0dc4a02a83481e9348efe70b205ab377b"
         },
         {
             "file": "webadmin-go-email-send-draft-update.json",
@@ -402,7 +468,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d3ba983afd24ce7477c2be89aa816220e8ad21e0c89590222da4f63714c40ce6"
+            "sha256": "28b8475f3454a1690a6a464ec49b844c4db4f2821ba25007fe2ff64d2b1446f6"
         },
         {
             "file": "webadmin-go-email-send-draft.json",
@@ -410,7 +476,15 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "1d63ce965a1c76d0d5d5caeb66cb0d4ceb8bd2e2eb8dc0c7db3d7af31acb1949"
+            "sha256": "90829cb4d9797b5c64b3a4e8f85f435a596ca4a263be439598a317dddb9fc2db"
+        },
+        {
+            "file": "webadmin-go-email-send-in-progress.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "be0175242292a03cd274b5f01f38b50a52b3e6b604f213e835a2ec84c0491d23"
         },
         {
             "file": "webadmin-go-email-send-mode-invalid.json",
@@ -434,7 +508,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "a7d8a290b62a3ca85c5a7d37438da1e5c287acf47a63c579aed11df5d59dd429"
+            "sha256": "16f4f2e7a2953df15a9ad92a16f6d119b834c04e65fd8f0590711c3b4cd17d9e"
         },
         {
             "file": "webadmin-go-email-send-request-id-conflict.json",
@@ -453,12 +527,28 @@
             "sha256": "cbc682aade386fe5ddd38b0eae4250356099a3d48db6df802f0483f7783ef506"
         },
         {
+            "file": "webadmin-go-email-send-sending.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "dbc1613f0087d1c29bd063cac79a0844b9dd6f6564df46e31d12572e3db1d05f"
+        },
+        {
+            "file": "webadmin-go-email-send-taken-over.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "16fbaa883d086828bc2947b5d87925893b143c29f46a30f9f19d03e61379e860"
+        },
+        {
             "file": "webadmin-go-email-send-test.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "22486470792005345034cc7d3980fb5046fa5bbe217bfa643b62233cdb224c11"
+            "sha256": "4edea9fa0701aeff209433b1140db3681453bd50094f3f40729b9576a7538e22"
         },
         {
             "file": "webadmin-go-email-send-too-large.json",
@@ -466,7 +556,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 422,
-            "sha256": "fba6075a2213fa78f5e40f161836cf7ae9c6045693a8350d8398b1d12fa451f6"
+            "sha256": "9d8996e6acc73862d64e88923dc45a339c6120324faa7a304c1e29a08c1c666f"
         },
         {
             "file": "webadmin-go-email-send-viewer-denied.json",
@@ -482,7 +572,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "12cd09b2ab1ee1058c448dff7be56daaaf3d6ff9dd3d7308308494ffa2a9ecc1"
+            "sha256": "a8deb3e067c87a7334b5fdbb1c848d2a1296c289394e6eab1772fd316ba28885"
         },
         {
             "file": "webadmin-go-preorders-export-viewer-denied.json",
@@ -498,7 +588,7 @@
             "route": "/v1/webadmin/go_preorders",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "98e6434c3773ea031cf405079a0a02a5aa3be75649d6d18a470f19a4f82e406b"
+            "sha256": "10db426886078a6bd001b9fc8cea67f1fac764504dc57683bdc32b06386e29ba"
         },
         {
             "file": "webadmin-go-preorders-filter-invalid.json",
@@ -514,7 +604,7 @@
             "route": "/v1/webadmin/go_preorders",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "41291816553814e39a1c7fd4f33c56f2c3ad4ebc4d5f6b72cb8a8c42a3b134d9"
+            "sha256": "058610b5fab972d772afcdb35c0e9ca408b962fe57051c49298118d4f5b2ced9"
         },
         {
             "file": "webadmin-go-preorders-request-invalid.json",
@@ -538,7 +628,7 @@
             "route": "/v1/webadmin/go_preorders",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "6df4357e277ad24306d960bac53529aa6552a2ba80c2d4408197de1e506b02cc"
+            "sha256": "4408d253a735fbeaaf0f411d465146e2f365321772bf691ab2627da671e6731a"
         },
         {
             "file": "webadmin-go-preorders-session-invalid.json",
@@ -562,7 +652,7 @@
             "route": "/v1/webadmin/go_preorders",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "b92de67a7068db96bea84a95abe7c5f574a3c83556087c20172b03f6e30f8132"
+            "sha256": "bdd2f200dcc0fe2f9dcc9f2b9ba265c45acc8e368ec25361be2a395fce8ee7e5"
         },
         {
             "file": "webadmin-go-set-status-invalid.json",
@@ -578,7 +668,7 @@
             "route": "/v1/webadmin/go_preorder_set_status",
             "http_status": 200,
             "status_code": 409,
-            "sha256": "482c5f79e2a273e45ec69ebdf807ca9439b657a44e16dc8fb27dc708ebc35c58"
+            "sha256": "a502d63e675c5913a8886128725335a10cd68d2b612b098ed803c40c6ed0d13e"
         },
         {
             "file": "webadmin-go-set-status-not-found.json",
@@ -594,7 +684,7 @@
             "route": "/v1/webadmin/go_preorder_set_status",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "9fa3465d887dd2e926b8ad4df4a5da7e102970aa8037dcd420282998cf86d773"
+            "sha256": "05f5b2651e4f7ebd127443299e8ff0a8adf73a1d702040ce4d218e947ba6d80c"
         },
         {
             "file": "webadmin-go-set-status-request-id-conflict.json",
@@ -618,7 +708,15 @@
             "route": "/v1/webadmin/go_preorder_set_status",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "a1affd2846be5ddebcfa2724e8414c90265e2a6c84ee8e81956fb052b0ae39b1"
+            "sha256": "115d806e3dabf16f9d71190fb2ae212b51d17779fe8a1d72a0e3fda3d54454e5"
+        },
+        {
+            "file": "webadmin-go-set-status-self-locked.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_preorder_set_status",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "f38ddc51ec2e7b8952f7c95ee9ece7cf3d157a2cb152d4f10fc17a64b9a11fb9"
         },
         {
             "file": "webadmin-go-set-status-unchanged.json",
@@ -626,7 +724,7 @@
             "route": "/v1/webadmin/go_preorder_set_status",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "f699189232d747a9d2bd4d327c78dbfbb1728c86878cca5e22421286f87d9842"
+            "sha256": "047524b8538b1c4b26df408f19bd39b55f0ae39d233bb1bbe9f306c1277d46a0"
         },
         {
             "file": "webadmin-go-set-status-unsubscribe.json",
@@ -634,7 +732,7 @@
             "route": "/v1/webadmin/go_preorder_set_status",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "3557fc899c87fc93c8593b2b548f68ce55febc8ead9bfd977bb027c1b621180b"
+            "sha256": "bde37317cd7fd4f0bd0a60ff0ad71e4639bb1a0ce2b449dbcaefea9cf7fbe59d"
         },
         {
             "file": "webadmin-go-set-status-viewer-denied.json",

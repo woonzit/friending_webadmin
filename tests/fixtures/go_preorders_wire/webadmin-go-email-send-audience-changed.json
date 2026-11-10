@@ -6,7 +6,12 @@
         "counts": {
             "selected": 3,
             "sendable": 2,
-            "suppressed": 1
+            "suppressed": 1,
+            "suppressed_by_reason": {
+                "unsubscribed": 1,
+                "bounced": 0,
+                "complained": 0
+            }
         },
         "receipt": {
             "request_id": "00000012-0000-4000-8000-000000000012",

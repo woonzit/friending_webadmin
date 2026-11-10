@@ -17,13 +17,22 @@
             "counts": {
                 "selected": 3,
                 "queued": 2,
-                "suppressed": 1
+                "suppressed": 1,
+                "suppressed_by_reason": {
+                    "unsubscribed": 1,
+                    "bounced": 0,
+                    "complained": 0
+                }
             },
             "created_by": "owner@example.test",
             "sent_by": "owner@example.test",
             "created_at": 1800000840,
             "updated_at": 1800000840,
             "sent_at": 1800000840
+        },
+        "progress": {
+            "processed": 3,
+            "total": 3
         },
         "receipt": {
             "request_id": "00000011-0000-4000-8000-000000000011",

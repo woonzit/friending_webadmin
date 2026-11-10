@@ -5,7 +5,7 @@
         "contract_version": 1,
         "mode": "send",
         "campaign": {
-            "id": "000000000000000000006009",
+            "id": "00000000000000000000600a",
             "kind": "direct",
             "state": "sent",
             "subject": "A short note for you",
@@ -17,13 +17,22 @@
             "counts": {
                 "selected": 1,
                 "queued": 1,
-                "suppressed": 0
+                "suppressed": 0,
+                "suppressed_by_reason": {
+                    "unsubscribed": 0,
+                    "bounced": 0,
+                    "complained": 0
+                }
             },
             "created_by": "owner@example.test",
             "sent_by": "owner@example.test",
             "created_at": 1800000660,
             "updated_at": 1800000780,
             "sent_at": 1800000780
+        },
+        "progress": {
+            "processed": 1,
+            "total": 1
         },
         "receipt": {
             "request_id": "0000000e-0000-4000-8000-00000000000e",

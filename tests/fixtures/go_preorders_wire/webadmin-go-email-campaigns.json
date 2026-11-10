@@ -3,12 +3,32 @@
     "status_code": 200,
     "data": {
         "contract_version": 1,
+        "filters": {
+            "state": ""
+        },
         "page": 1,
         "page_size": 50,
         "has_more": false,
         "campaigns": [
             {
                 "id": "000000000000000000006007",
+                "kind": "newsletter",
+                "state": "draft",
+                "subject": "Spring update (draft)",
+                "preheader": "",
+                "audience": {
+                    "mode": "all_active",
+                    "count": null
+                },
+                "counts": null,
+                "created_by": "owner@example.test",
+                "sent_by": null,
+                "created_at": 1800001200,
+                "updated_at": 1800001200,
+                "sent_at": null
+            },
+            {
+                "id": "000000000000000000006008",
                 "kind": "newsletter",
                 "state": "sent",
                 "subject": "FriendingGO update",
@@ -20,7 +40,12 @@
                 "counts": {
                     "selected": 1,
                     "queued": 1,
-                    "suppressed": 0
+                    "suppressed": 0,
+                    "suppressed_by_reason": {
+                        "unsubscribed": 0,
+                        "bounced": 0,
+                        "complained": 0
+                    }
                 },
                 "created_by": "owner@example.test",
                 "sent_by": "owner@example.test",
@@ -29,7 +54,7 @@
                 "sent_at": 1800001020
             },
             {
-                "id": "000000000000000000006008",
+                "id": "000000000000000000006009",
                 "kind": "newsletter",
                 "state": "sent",
                 "subject": "FriendingGO update",
@@ -41,7 +66,12 @@
                 "counts": {
                     "selected": 3,
                     "queued": 3,
-                    "suppressed": 0
+                    "suppressed": 0,
+                    "suppressed_by_reason": {
+                        "unsubscribed": 0,
+                        "bounced": 0,
+                        "complained": 0
+                    }
                 },
                 "created_by": "owner@example.test",
                 "sent_by": "owner@example.test",
@@ -62,7 +92,12 @@
                 "counts": {
                     "selected": 3,
                     "queued": 2,
-                    "suppressed": 1
+                    "suppressed": 1,
+                    "suppressed_by_reason": {
+                        "unsubscribed": 1,
+                        "bounced": 0,
+                        "complained": 0
+                    }
                 },
                 "created_by": "owner@example.test",
                 "sent_by": "owner@example.test",
@@ -71,7 +106,7 @@
                 "sent_at": 1800000840
             },
             {
-                "id": "000000000000000000006009",
+                "id": "00000000000000000000600a",
                 "kind": "direct",
                 "state": "sent",
                 "subject": "A short note for you",
@@ -83,7 +118,12 @@
                 "counts": {
                     "selected": 1,
                     "queued": 1,
-                    "suppressed": 0
+                    "suppressed": 0,
+                    "suppressed_by_reason": {
+                        "unsubscribed": 0,
+                        "bounced": 0,
+                        "complained": 0
+                    }
                 },
                 "created_by": "owner@example.test",
                 "sent_by": "owner@example.test",

@@ -1,0 +1,8 @@
+{
+    "success": false,
+    "status_code": 403,
+    "error": "go-preorder-rate-limited",
+    "message": 403,
+    "status": 403,
+    "can_send": 0
+}

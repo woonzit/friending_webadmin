@@ -20,7 +20,12 @@
         "counts": {
             "selected": 3,
             "sendable": 3,
-            "suppressed": 0
+            "suppressed": 0,
+            "suppressed_by_reason": {
+                "unsubscribed": 0,
+                "bounced": 0,
+                "complained": 0
+            }
         },
         "cap": 5000
     },

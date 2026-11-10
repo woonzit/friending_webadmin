@@ -23,7 +23,7 @@
         "can_write": true,
         "rows": [
             {
-                "id": "00000000000000000000600c",
+                "id": "00000000000000000000600f",
                 "name": "Cleo Park",
                 "first_name": "Cleo",
                 "email": "cleo@example.org",
@@ -34,13 +34,14 @@
                 "status": "active",
                 "status_changed_at": 1799994200,
                 "status_source": null,
+                "can_resubscribe": false,
                 "source": "friending.com/go",
                 "consent": {
                     "text_version": "2026-11-10",
                     "captured_at": 1799994200
                 },
                 "confirmation": {
-                    "outbound_id": "00000000000000000000600d",
+                    "outbound_id": "000000000000000000006010",
                     "state": "pending"
                 },
                 "created_at": 1799994200,
@@ -58,13 +59,14 @@
                 "status": "active",
                 "status_changed_at": 1799994100,
                 "status_source": null,
+                "can_resubscribe": false,
                 "source": "friending.com/go",
                 "consent": {
                     "text_version": "2026-11-10",
                     "captured_at": 1799994100
                 },
                 "confirmation": {
-                    "outbound_id": "00000000000000000000600e",
+                    "outbound_id": "000000000000000000006011",
                     "state": "pending"
                 },
                 "created_at": 1799994100,
