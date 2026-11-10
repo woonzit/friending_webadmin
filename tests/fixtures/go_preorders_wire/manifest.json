@@ -1,8 +1,8 @@
 {
     "schema_version": 1,
     "contract": "go-preorders-v1",
-    "source_commit": "895dbc1e690c9e449703cad0871e1d1d3ae2484f",
-    "fixture_set_sha256": "9f6257c802cc2e886617a91641624e410d0def037bfee478b89cb572167b8c92",
+    "source_commit": "ead89c9275b91e4e7149083c1d29f7bef1d747ff",
+    "fixture_set_sha256": "d8bb403b8f41be2c15dcb39f903b079a5ffe152cad6bc4e9d7039c2f21daf2b5",
     "selectors": {
         "webadmin": {
             "contract_version": 1
@@ -10,7 +10,7 @@
     },
     "provenance": {
         "generator": "tests/go_preorders_storage_test.php",
-        "generator_sha256": "efaadf61eb07a75023ae5746862fc65814d8e92c92e67d552200e82817f5fff8",
+        "generator_sha256": "657962f57ae5f988d92a67e4164309a51a980cff4a1946aeeeed71c4eff757e5",
         "wire_adapters": {
             "goweb": "GoWebSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Core\\Response::ok/error -> Friending\\Core\\Response::send",
             "webadmin": "WebadminSecretMiddleware -> Friending\\Core\\Router::dispatch -> Friending\\Support\\Webadmin::noStoreReply -> Friending\\Core\\Response::send"
@@ -316,7 +316,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "d3f5691c3f3d5cb01dcba92e81198e2b5debb46e68ddeec806b74a8ad11c481c"
+            "sha256": "b66b7e21e3c142821d39041b55842ac5bfaa8e22db562526d23e4e5a9502cff8"
         },
         {
             "file": "webadmin-go-email-campaign-detail.json",
@@ -324,7 +324,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "59e2fbbe5c1e40f90b87b88f76aeb0af0fb2296bbd250f9c7b46a3070c598562"
+            "sha256": "b2e6852b5622f7cf18e772110b8733c9d5c122e904c2a8309efb8fb1fd6bc66f"
         },
         {
             "file": "webadmin-go-email-campaign-not-found.json",
@@ -340,7 +340,7 @@
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "6c2f0f434676ba17f68ffd9ed081355f01e05d1856678b872cc232eb7d730aaa"
+            "sha256": "ed20c0108db90cd88715ceab0f4178659448888702dafd54e36033ee5bc7ef23"
         },
         {
             "file": "webadmin-go-email-campaigns-filter-invalid.json",
@@ -351,12 +351,20 @@
             "sha256": "f6a40cf335cc4854f01a0612fdd70fe1820f757ab97343f702528179f81327ce"
         },
         {
+            "file": "webadmin-go-email-campaigns-sending.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_campaigns",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "66fb201fff7816e44b2074762a129894fbdf5e565383721debe66bc7377537f0"
+        },
+        {
             "file": "webadmin-go-email-campaigns.json",
             "consumer": "webadmin",
             "route": "/v1/webadmin/go_email_campaigns",
             "http_status": 200,
             "status_code": 200,
-            "sha256": "f97018bb6e872ce9eb3b092ae58848fd9206d1cafee3952b7de981fc2bdfd90f"
+            "sha256": "4fe3baff85be367c87971655b669a7781f0566c02d3efc22d9251ac1bca1217f"
         },
         {
             "file": "webadmin-go-email-preview-all-active.json",
@@ -484,7 +492,7 @@
             "route": "/v1/webadmin/go_email_send",
             "http_status": 200,
             "status_code": 409,
-            "sha256": "be0175242292a03cd274b5f01f38b50a52b3e6b604f213e835a2ec84c0491d23"
+            "sha256": "2ada307ad40f923f75a8cacd0b0ecdbed3f4c5b956c371c28429b7313075c696"
         },
         {
             "file": "webadmin-go-email-send-mode-invalid.json",
@@ -525,6 +533,22 @@
             "http_status": 200,
             "status_code": 422,
             "sha256": "cbc682aade386fe5ddd38b0eae4250356099a3d48db6df802f0483f7783ef506"
+        },
+        {
+            "file": "webadmin-go-email-send-resume-refused.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 409,
+            "sha256": "b08f8c1640b4fa7843caef46088ed1a5b8a7df03217859b8f2bd385dd14d158b"
+        },
+        {
+            "file": "webadmin-go-email-send-resume.json",
+            "consumer": "webadmin",
+            "route": "/v1/webadmin/go_email_send",
+            "http_status": 200,
+            "status_code": 200,
+            "sha256": "c049a08962136a301c332c018ff2102e1d91f616509fa489f99d6db2703e94b3"
         },
         {
             "file": "webadmin-go-email-send-sending.json",

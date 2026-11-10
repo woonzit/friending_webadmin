@@ -33,6 +33,11 @@
             "created_at": 1800000840,
             "updated_at": 1800000840,
             "sent_at": 1800000840,
+            "resumable": false,
+            "progress": {
+                "processed": 3,
+                "total": 3
+            },
             "body_html": "<h2>Hi {{first_name}}!</h2><p>FriendingGO news for {{city}}: the first tags are being tested.</p><p><a href=\"https://friending.com/go/\">See the page</a></p>"
         },
         "delivery_counts": {

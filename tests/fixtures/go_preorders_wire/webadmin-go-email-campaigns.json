@@ -25,7 +25,9 @@
                 "sent_by": null,
                 "created_at": 1800001200,
                 "updated_at": 1800001200,
-                "sent_at": null
+                "sent_at": null,
+                "resumable": false,
+                "progress": null
             },
             {
                 "id": "000000000000000000006008",
@@ -51,7 +53,12 @@
                 "sent_by": "owner@example.test",
                 "created_at": 1800001020,
                 "updated_at": 1800001020,
-                "sent_at": 1800001020
+                "sent_at": 1800001020,
+                "resumable": false,
+                "progress": {
+                    "processed": 1,
+                    "total": 1
+                }
             },
             {
                 "id": "000000000000000000006009",
@@ -77,7 +84,12 @@
                 "sent_by": "owner@example.test",
                 "created_at": 1800000960,
                 "updated_at": 1800000960,
-                "sent_at": 1800000960
+                "sent_at": 1800000960,
+                "resumable": false,
+                "progress": {
+                    "processed": 3,
+                    "total": 3
+                }
             },
             {
                 "id": "000000000000000000006002",
@@ -103,7 +115,12 @@
                 "sent_by": "owner@example.test",
                 "created_at": 1800000840,
                 "updated_at": 1800000840,
-                "sent_at": 1800000840
+                "sent_at": 1800000840,
+                "resumable": false,
+                "progress": {
+                    "processed": 3,
+                    "total": 3
+                }
             },
             {
                 "id": "00000000000000000000600a",
@@ -129,7 +146,12 @@
                 "sent_by": "owner@example.test",
                 "created_at": 1800000660,
                 "updated_at": 1800000780,
-                "sent_at": 1800000780
+                "sent_at": 1800000780,
+                "resumable": false,
+                "progress": {
+                    "processed": 1,
+                    "total": 1
+                }
             }
         ]
     },

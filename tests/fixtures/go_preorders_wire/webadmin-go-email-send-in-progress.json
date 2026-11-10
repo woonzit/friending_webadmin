@@ -3,7 +3,7 @@
     "status_code": 409,
     "error": "go-request-in-progress",
     "data": {
-        "retry_after_seconds": 120
+        "retry_after_seconds": 8
     },
     "message": 200,
     "status": 200,

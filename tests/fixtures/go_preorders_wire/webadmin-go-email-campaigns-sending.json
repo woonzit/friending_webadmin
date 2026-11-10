@@ -1,0 +1,49 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "filters": {
+            "state": "sending"
+        },
+        "page": 1,
+        "page_size": 50,
+        "has_more": false,
+        "campaigns": [
+            {
+                "id": "000000000000000000006016",
+                "kind": "newsletter",
+                "state": "sending",
+                "subject": "Abandoned news",
+                "preheader": "",
+                "audience": {
+                    "mode": "selected",
+                    "count": 101
+                },
+                "counts": {
+                    "selected": 101,
+                    "queued": 50,
+                    "suppressed": 0,
+                    "suppressed_by_reason": {
+                        "unsubscribed": 0,
+                        "bounced": 0,
+                        "complained": 0
+                    }
+                },
+                "created_by": "admin@example.test",
+                "sent_by": "admin@example.test",
+                "created_at": 1800001321,
+                "updated_at": 1800001321,
+                "sent_at": 1800001321,
+                "resumable": true,
+                "progress": {
+                    "processed": 50,
+                    "total": 101
+                }
+            }
+        ]
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

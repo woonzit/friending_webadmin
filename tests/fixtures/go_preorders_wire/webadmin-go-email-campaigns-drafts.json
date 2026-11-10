@@ -25,7 +25,9 @@
                 "sent_by": null,
                 "created_at": 1800001200,
                 "updated_at": 1800001200,
-                "sent_at": null
+                "sent_at": null,
+                "resumable": false,
+                "progress": null
             }
         ]
     },
