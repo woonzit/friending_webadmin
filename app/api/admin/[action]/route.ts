@@ -20,6 +20,11 @@ import { normalizeMemberBirthdayLockProxyBody } from "@/lib/memberBirthdayLock";
 import { normalizeUserModerationInsightProxyBody } from "@/lib/userModerationInsight";
 import { normalizeRegistrationPlatformStatsProxyBody } from "@/lib/registrationStats";
 import { normalizeMailDeliveryProxyBody, normalizeMailDeliveryResponse } from "@/lib/mailDelivery";
+import {
+  friendingGoProxyCapabilityAuthorized,
+  normalizeFriendingGoProxyBody,
+  normalizeFriendingGoResponse,
+} from "@/lib/friendinggo";
 import { normalizeSectionTeasersProxyBody } from "@/lib/sectionTeasers";
 import { datesAvailabilityWriteIsRetired } from "@/lib/datesAdmin";
 import { datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody } from "@/lib/datesExternalAdmin";
@@ -194,6 +199,10 @@ export async function POST(
     return bridgeError(action === "feature_switches_get"
       ? "feature-switches-read-required"
       : "feature-switches-edit-required", 403);
+  }
+  // D-153: the five FriendingGO routes exist only while Core serves `admin_me.friendinggo` v1.
+  if (friendingGoProxyCapabilityAuthorized(action, membership.data) === false) {
+    return bridgeError("friendinggo-capability-required", 403);
   }
   if (!isAdminBridgeActionAuthorized(
     action,
@@ -415,6 +424,14 @@ export async function POST(
   }
   if (mailDeliveryBody !== undefined) body = mailDeliveryBody;
 
+  // FriendingGO travels as each route's closed, canonical fields and `contract_version=1`; Core refuses
+  // any other field, so nothing else is forwarded, and `export` never travels from here.
+  const friendingGoBody = normalizeFriendingGoProxyBody(action, body);
+  if (friendingGoBody === null) {
+    return bridgeError("invalid-input", 400);
+  }
+  if (friendingGoBody !== undefined) body = friendingGoBody;
+
   // The browser body is untrusted: reserved names are stripped from it before
   // the server-owned actor identity is applied, so `admin_email` no longer
   // depends on the order of an object literal to stay authoritative.
@@ -459,6 +476,16 @@ export async function POST(
     // viewer unmasked addresses. A named refusal travels on unchanged below.
     const projected = result.status === 200
       ? normalizeMailDeliveryResponse(result.data, mailDeliveryBody, { viewer: principal.role !== "owner" && principal.role !== "admin" })
+      : null;
+    if (!projected) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(projected, { status: 200, headers: NO_STORE_HEADERS });
+  }
+  if (friendingGoBody !== undefined && (result.data as Record<string, unknown>).success === true) {
+    // As for Email delivery: only the parsed answer to the request that was forwarded, never Core's raw
+    // body, and never an address or a phone number for an operator without a write role. A named
+    // refusal (with its receipt and counts) travels on unchanged below.
+    const projected = result.status === 200
+      ? normalizeFriendingGoResponse(action, result.data, friendingGoBody, { viewer: principal.role !== "owner" && principal.role !== "admin" })
       : null;
     if (!projected) return bridgeError("invalid-core-response", 502);
     return NextResponse.json(projected, { status: 200, headers: NO_STORE_HEADERS });

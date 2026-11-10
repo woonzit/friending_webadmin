@@ -2663,6 +2663,156 @@
           }
         }
       },
+      "friendingGoPreorders": {
+        "title": "FriendingGO-előrendelések",
+        "summary": "Itt látszik mindenki, aki előrendelte a FriendingGO-t a friending.com/go oldalon, az állapotával együtt. Erről az oldalról választod ki, kinek írsz, itt iratkoztatsz le vagy vissza egy címet, és innen exportálod a listát CSV-fájlba.",
+        "steps": {
+          "one": "Először a kártyákat nézd meg: ezek a kereséstől függetlenül állapot szerint számolják a feliratkozásokat.",
+          "two": "Keress névre, városra vagy egy e-mail-cím elejére, és szűkítsd a listát állapot szerint.",
+          "three": "Jelöld ki, akiknek írni szeretnél, és nyomd meg az E-mail a kijelölteknek gombot; az E-mail lap velük mint címzettekkel nyílik meg."
+        },
+        "sections": {
+          "totalsFilters": {
+            "title": "Kártyák, keresés és szűrő",
+            "purpose": "A kártyák állapot szerint számolják az összes feliratkozást: Aktív, Leiratkozott, Visszapattant és Spamnek jelölte. A keresés a név vagy a város bármely szavának elejére, illetve az e-mail-cím elejére illeszkedik.",
+            "guidance": "A kártyák a kereséstől nem változnak; a táblázat fölötti sor mondja meg, hány feliratkozás felel meg. Csak olvasási joggal a keresés e-mail-címekre nem illeszkedik.",
+            "actions": {
+              "1": "Írd be egy név vagy város részét, és nyomd meg a Keresés gombot a táblázat szűkítéséhez.",
+              "2": "Válassz állapotot, ha például csak a visszapattant címeket akarod látni."
+            }
+          },
+          "list": {
+            "title": "Feliratkozások",
+            "purpose": "Minden sor egy feliratkozás: név, e-mail, telefon, város, a feliratkozás ideje, valamint az állapot és az, ami utoljára megváltoztatta. A begépeltként jelölt várost nem a városlistából választották.",
+            "guidance": "Csak olvasási joggal az e-mail-címek és a telefonszámok maszkolva látszanak. A táblázat oldalanként ötven sort mutat, a legújabbal kezdve.",
+            "actions": {
+              "1": "Ötvennél több feliratkozásnál az Előző és a Következő gombbal lapozz.",
+              "2": "A Frissítés gombbal újra beolvasod az aktuális listát a Core-ból."
+            }
+          },
+          "selection": {
+            "title": "Címzettek kiválasztása",
+            "purpose": "A jelölőnégyzetekkel oldalakon át gyűjtheted a címzetteket; a táblázat fölötti sáv megszámolja őket, és megmondja, hányan nem aktívak, akik minden levélből kimaradnak.",
+            "guidance": "Az E-mail a kijelölteknek gomb pontosan ezekkel a címzettekkel nyitja meg az E-mail lapot, és megtartja, amit már írtál. Leiratkozott, visszapattant és spamnek jelölő címre akkor sem megy levél, ha ki van jelölve.",
+            "actions": {
+              "1": "A táblázat fejlécében lévő négyzettel az aktuális oldalon mindenkit kijelölsz.",
+              "2": "A Kijelölés törlése gombbal elölről kezdheted a választást."
+            }
+          },
+          "statusChanges": {
+            "title": "Leiratkoztatás és visszairatkoztatás",
+            "purpose": "A Leiratkoztatás azonnal leállít minden FriendingGO-levelet egy címre. A Visszairatkoztatás újra bekapcsolja, és csak ott jelenik meg, ahol a Core ezt a konzolnak megengedi.",
+            "guidance": "Csak az illető saját kérésére iratkoztass vissza. A visszapattant és a spamnek jelölő cím zárolva van, és az is, amelyik maga iratkozott le: ilyenkor gomb helyett a sor megmondja, miért.",
+            "actions": {
+              "1": "Nyomd meg a sorban a Leiratkoztatás vagy a Visszairatkoztatás gombot, és erősítsd meg a párbeszédablakban.",
+              "2": "Ha a kimenetel ismeretlen, nyomd meg az értesítésben az Ugyanannak a kérésnek az újraküldése gombot; ez sosem végez második módosítást."
+            }
+          },
+          "export": {
+            "title": "CSV-export",
+            "purpose": "A CSV-export az aktuális keresés és állapotszűrő feliratkozásait tölti le, legfeljebb 5000 sort, teljes e-mail-címekkel és telefonszámokkal. A gombot csak admin és a tulajdonos látja.",
+            "guidance": "Minden export bekerül az auditnaplóba. Tárold biztonságosan a fájlt, ne add tovább, és töröld, amikor már nincs rá szükség. Az =, +, - vagy @ jellel kezdődő cella elé aposztróf kerül, hogy a táblázatkezelő soha ne futtassa képletként.",
+            "actions": {
+              "1": "Előbb állítsd be a keresést és az állapotszűrőt; a fájlban pontosan ezek a sorok lesznek.",
+              "2": "Ha az értesítés szerint csak az első 5000 feliratkozás került az exportba, szűkítsd a szűrőt, és exportálj újra."
+            }
+          }
+        }
+      },
+      "friendingGoEmail": {
+        "title": "FriendingGO-levél",
+        "summary": "Írj közvetlen e-mailt kiválasztott címzetteknek vagy hírlevelet minden aktív feliratkozónak, nézd meg a valódi FriendingGO-elrendezésben a pontos címzettszámmal, küldj magadnak tesztet, ments piszkozatot, és küldd el.",
+        "steps": {
+          "one": "Válaszd ki a típust és a címzetteket, aztán írd meg a tárgyat, ha kell az előnézeti sort, és a szöveget.",
+          "two": "Nyomd meg az Előnézet gombot, és nézd meg a levelet és a számokat: ki kapja meg, és ki marad ki.",
+          "three": "Nyomd meg a Teszt nekem gombot, olvasd el a tesztet a saját postafiókodban, aztán nyomd meg a Küldés… gombot, és erősítsd meg a számot."
+        },
+        "sections": {
+          "composer": {
+            "title": "Megírás",
+            "purpose": "A tárgy (legfeljebb 150 karakter), az előnézeti sor (legfeljebb 200) és a HTML-szöveg (legfeljebb 60 000 karakter, csak az üzenetsablonok tagjeivel). A {{first_name}} és a {{city}} mezőkód helyére mindenkinél a saját adata kerül.",
+            "guidance": "A FriendingGO-levelek angolul mennek ki. A fejlécet, a cég postai címét és a leiratkozó linket a rendszer automatikusan hozzáadja; ezeket ne írd bele a szövegbe.",
+            "actions": {
+              "1": "A mezőkód-gombokkal a kurzor helyére szúrod be a {{first_name}} vagy a {{city}} kódot.",
+              "2": "Csak https:// vagy mailto: kezdetű címre linkelj; minden más linket elutasítunk."
+            }
+          },
+          "audience": {
+            "title": "Címzettek",
+            "purpose": "A közvetlen e-mail az Előrendelések lapon kiválasztott címzetteknek megy, legfeljebb 100 főnek. A hírlevél a kiválasztottaknak vagy mindenkinek, akinek az állapota a küldéskor Aktív, legfeljebb 5000 főnek.",
+            "guidance": "Egy admin óránként legfeljebb három hírlevelet küldhet. Aki leiratkozott, visszapattant vagy spamnek jelölte a levelet, kimarad: megszámoljuk, de nem kap levelet.",
+            "actions": {
+              "1": "A Címzettek kiválasztása az Előrendelések lapon linkkel módosíthatod, ki van kiválasztva.",
+              "2": "A Törlés gombbal eltávolítod a kiválasztott címzetteket ebből a levélből."
+            }
+          },
+          "preview": {
+            "title": "Előnézet",
+            "purpose": "Az Előnézet a valódi FriendingGO-elrendezésben mutatja a levelet Alex keresztnévvel és Raleigh, NC várossal, és megmutatja, hányan vannak kiválasztva, hányan kapják meg, és hányan maradnak ki.",
+            "guidance": "Egy előnézet pontosan ahhoz a szöveghez és címzettkörhöz tartozik, amelyhez készült. Bármilyen változás után elavultként jelöljük, és a Küldés addig nem érhető el, amíg nem kérsz új előnézetet.",
+            "actions": {
+              "1": "Küldés előtt olvasd el a számokat; ha valaki kimarad, az teljesen rendben van.",
+              "2": "Görgesd le az előnézet keretét, és nézd meg a láblécet és a leiratkozó linket."
+            }
+          },
+          "testDrafts": {
+            "title": "Teszt és piszkozatok",
+            "purpose": "A Teszt nekem egy példányt küld a saját admin címedre, a tárgy elején [Test] jelöléssel és a mintaadatokkal. A Piszkozat mentése elküldés nélkül tárolja a levelet a Core-ban; a piszkozatok a szerkesztő mellett és az Elküldött lapon látszanak.",
+            "guidance": "A teszt senki máshoz nem jut el, a piszkozat pedig senkinek sem ír. Egy megnyitott piszkozat mentése felülírja azt; a közben elküldött piszkozat már nem módosítható.",
+            "actions": {
+              "1": "Piszkozatot a Piszkozatok listából vagy az Elküldött lap Piszkozat szerkesztése gombjával nyithatsz meg.",
+              "2": "Az Új e-mail gombbal kiürítheted a szerkesztőt; ha valami elveszne, előbb rákérdezünk."
+            }
+          },
+          "send": {
+            "title": "Küldés",
+            "purpose": "A Küldés… gomb megerősítő ablakot nyit, amely megmondja, pontosan hány fő kapja meg a levelet, és hányan maradnak ki. A megerősítés pontosan az előnézetben látott levelet küldi el.",
+            "guidance": "A küldés nem vonható vissza. Ha az előnézet óta megváltoztak a címzettek, a Core elutasítja a küldést, az előnézet frissül, és az új számot kell megerősítened.",
+            "actions": {
+              "1": "Csak akkor erősítsd meg, ha az ablakban látható szám az, amire számítasz.",
+              "2": "Utána az Elküldött lapon nézd meg a kézbesítést."
+            }
+          },
+          "uncertain": {
+            "title": "Ismeretlen kimenetel",
+            "purpose": "Minden teszt, piszkozat és küldés egy kérésazonosítót visz magával, amelyet ez a böngészőlap addig őriz, amíg a Core válasza ismertté nem válik. Ha a válasz elveszik, az oldal megtartja a kérést, és felajánlja az újraküldését.",
+            "guidance": "Ugyanannak a kérésnek az újraküldése senkinek sem ír kétszer; a félbemaradt küldést a Core befejezi. Ha elveted a kérést, és ugyanazt a levelet újra megírod, mindenki kétszer kaphatja meg, ezért előbb nézd meg az Elküldött lapot.",
+            "actions": {
+              "1": "Nyomd meg az Ugyanannak a kérésnek az újraküldése gombot, amíg a kimenetel ismertté nem válik.",
+              "2": "Az Elvetés gombot csak akkor használd, ha az Elküldött lap már megmutatta, mi történt."
+            }
+          }
+        }
+      },
+      "friendingGoSent": {
+        "title": "Elküldött FriendingGO-levelek",
+        "summary": "Minden FriendingGO közvetlen e-mail és hírlevél a legújabbal kezdve, a piszkozatokkal együtt: ki küldte, és hány főnek ment ki, illetve hányan maradtak ki. Egyet megnyitva látod a címzettjeit, és azt, hogy kézbesítették-e a leveleiket.",
+        "steps": {
+          "one": "Keresd meg a kampányt a tárgya és a dátuma alapján; a piszkozatok Piszkozat jelölést kapnak, és megnyithatók a szerkesztőben.",
+          "two": "A Megnyitás gombbal egy kampány számait, kézbesítési állapotait és tárolt tartalmát látod.",
+          "three": "Lapozz végig a címzetteken: kinek ment ki, ki maradt ki, és miért."
+        },
+        "sections": {
+          "campaigns": {
+            "title": "Kampányok",
+            "purpose": "Minden sor egy kampány: tárgy, típus és állapot, címzettkör, ki küldte, mikor, és hány főnek ment ki, illetve hányan maradtak ki.",
+            "guidance": "A Küldés alatt jelölésű kampányt a Core még írja; frissíts egy kicsit később. A piszkozatoknál nincs szám, mert még senkinek sem írtunk.",
+            "actions": {
+              "1": "A Megnyitás gombbal egy kampányt részletesen látsz.",
+              "2": "A Piszkozat szerkesztése gombbal az E-mail lapon folytathatod a piszkozatot."
+            }
+          },
+          "detail": {
+            "title": "Kampány részletei",
+            "purpose": "A részletek a számokat, a kézbesítést állapot szerint (kézbesítve, várakozik, visszatartva, sikertelen, nem ment el, már nincs a naplóban), a tárolt szöveget és oldalanként ötven címzettet mutatnak a kézbesítési állapotukkal.",
+            "guidance": "A kézbesítés az e-mail-kézbesítési naplóból jön, amely minden levelet 30 napig őriz; a régebbiek már nincs a naplóban állapotot kapnak. Csak olvasási joggal a címek maszkolva látszanak.",
+            "actions": {
+              "1": "Az Előző és a Következő gombbal lapozhatsz a címzettek között.",
+              "2": "A Vissza a kampányokhoz gombbal visszatérsz a listához."
+            }
+          }
+        }
+      },
       "helpCms": {
         "title": "Súgóközpont CMS útmutató",
         "summary": "Ez a CMS publikálja a tagok által látott Friending Súgóközpontot. A kategóriák rendezik a felfedezést; minden cikk egy kétnyelvű egységben tárol angol és magyar címet, összefoglalót, keresőszót és strukturált blokktörzset.",
@@ -3393,6 +3543,7 @@
     "audit": "Admin napló",
     "support": "Support üzenetek",
     "mailDelivery": "E-mail-kézbesítés",
+    "friendingGo": "FriendingGO",
     "helpCms": "Súgó CMS",
     "footprints": "Footprints",
     "pinger": "Pinger",
@@ -12781,6 +12932,9 @@
       "user_report": "Profilbejelentés a moderátoroknak",
       "moderation_footprint_report": "Footprint-bejelentés a moderátoroknak",
       "support_request": "Support-kérés",
+      "go_preorder_confirmation": "FriendingGO előrendelés-visszaigazolás",
+      "go_direct_email": "FriendingGO közvetlen e-mail",
+      "go_newsletter": "FriendingGO hírlevél",
       "other": "Egyéb"
     },
     "stateFilter": {
@@ -12912,5 +13066,335 @@
       "generated": "Számítva: {time}."
     },
     "openListNote": "A Tagok megnyitása az adott platform meglévő, nem demó fiókjait listázza. A lista a felfüggesztett fiókokat nem mutatja, az App Review- és tesztfiókokat viszont tartalmazhatja, ezért a darabszáma eltérhet a kártyán látottól."
+  },
+  "friendinggo": {
+    "eyebrow": "FriendingGO",
+    "tabs": {
+      "label": "FriendingGO részei",
+      "preorders": "Előrendelések",
+      "email": "E-mail",
+      "sent": "Elküldött"
+    },
+    "status": {
+      "active": "Aktív",
+      "unsubscribed": "Leiratkozott",
+      "bounced": "Visszapattant",
+      "complained": "Spamnek jelölte"
+    },
+    "statusSource": {
+      "unsubscribe_link": "Leiratkozó link",
+      "webadmin": "Ebben a konzolban módosítva",
+      "signup": "Újra feliratkozott",
+      "mailgun_failed": "A kézbesítés véglegesen meghiúsult",
+      "mailgun_rejected": "A Mailgun elutasította",
+      "mailgun_complained": "Spambejelentés",
+      "mailgun_unsubscribed": "Leiratkozás a Mailgunon át"
+    },
+    "kind": {
+      "direct": "Közvetlen e-mail",
+      "newsletter": "Hírlevél"
+    },
+    "campaignState": {
+      "draft": "Piszkozat",
+      "sending": "Küldés alatt",
+      "sent": "Elküldve"
+    },
+    "delivery": {
+      "delivered": "Kézbesítve",
+      "pending": "Várakozik",
+      "retrying": "Visszatartva, újrapróbálás",
+      "failed": "Sikertelen",
+      "not_sent": "Nem ment el",
+      "purged": "Már nincs a kézbesítési naplóban"
+    },
+    "readOnly": "Csak olvasási jogod van: az e-mail-címek és a telefonszámok maszkolva látszanak, és nem módosíthatsz állapotot, nem exportálhatsz és nem küldhetsz e-mailt.",
+    "maskedNote": "Az e-mail-címek maszkolva látszanak, mert csak olvasási jogod van.",
+    "page": "{page}. oldal",
+    "counter": "{count} / {max}",
+    "pending": {
+      "title": "Ismeretlen kimenetel.",
+      "retry": "Ugyanannak a kérésnek az újraküldése",
+      "discard": "Elvetés",
+      "restored": "Ebben a lapon egy korábbi kérés kimenetele még ismeretlen. Mielőtt bármi újba kezdesz, küldd el újra.",
+      "discarded": "Az ismeretlen kimenetelű kérést elvetettük. Mielőtt újra próbálod, ellenőrizd az aktuális állapotot."
+    },
+    "errors": {
+      "sessionInvalid": "Az admin munkameneted már nem érvényes. Jelentkezz be újra.",
+      "writeRequired": "A szereped csak olvasásra jogosít. Ezt csak admin vagy a tulajdonos teheti meg.",
+      "requestInvalid": "A Core hibás formátumúnak találta a kérést. Töltsd újra az oldalt, és próbáld újra.",
+      "filterInvalid": "A Core elutasította ezt a keresést vagy szűrőt. Rövidítsd le a keresett szöveget, és próbáld újra.",
+      "requestIdConflict": "Ezt a kérést már egy másik módosításhoz használták. Kezdd újra a módosítást.",
+      "requestInProgress": "A Core még dolgozik ezen a kérésen. Várj egy kicsit, aztán küldd el újra ugyanazt a kérést.",
+      "preorderNotFound": "Ez a feliratkozás már nem létezik. A listát újratöltöttük.",
+      "statusInvalid": "A Core elutasította ezt az állapotváltozást.",
+      "statusLocked": "Ez a cím zárolva van, itt nem módosítható.",
+      "kindInvalid": "A Core elutasította az e-mail típusát.",
+      "contentInvalid": "A Core elutasította a tárgyat vagy az előnézeti sort. Ellenőrizd a hosszukat, és vedd ki belőlük a sortörést.",
+      "bodyInvalid": "A Core elutasította a szöveget. Csak az engedélyezett tageket használd, és csak https:// vagy mailto: kezdetű linkeket.",
+      "audienceInvalid": "A Core elutasította a címzetteket: valaki a kiválasztottak közül már nem létezik, vagy a közvetlen e-mail mindenkinek szólna. Válaszd ki újra a címzetteket.",
+      "audienceEmpty": "Ebből a körből senkinek sem küldhető e-mail: mindenki leiratkozott, visszapattant vagy spamnek jelölte.",
+      "audienceChanged": "Az előnézet óta megváltoztak a címzettek.",
+      "audienceTooLarge": "Ez a kör nagyobb, mint amennyi ennél az e-mail-típusnál megengedett.",
+      "rateLimited": "Elérted a hírlevél-korlátot. Próbáld újra később.",
+      "campaignNotFound": "Ez a piszkozat már nem létezik. Amit írtál, megmarad; mentéskor új piszkozat jön létre.",
+      "campaignNotDraft": "Ezt a piszkozatot már elküldték. Amit írtál, megmarad; mentéskor új piszkozat jön létre.",
+      "unavailable": "A FriendingGO most nem érhető el a Core-ban. Próbáld újra később.",
+      "capabilityRequired": "Ez a Core még nem kínálja a FriendingGO-t.",
+      "outcomeUnknown": "A Core válasza elveszett vagy nem olvasható. Lehet, hogy a kérés végrehajtódott.",
+      "coreUnavailable": "A Core nem volt elérhető. Lehet, hogy a kérés el sem ment.",
+      "membershipUnconfirmed": "Nem sikerült megerősíteni az admin hozzáférésedet. Próbáld újra egy kicsit később.",
+      "storageUnavailable": "Ez a böngésző nem engedi, hogy a konzol újrapróbáláshoz megőrizze a kérést (a munkamenet-tároló le van tiltva), ezért nem küldtünk el semmit.",
+      "generic": "Hiba történt. Mielőtt újra próbálod, töltsd újra az oldalt."
+    },
+    "preorders": {
+      "title": "Előrendelések",
+      "subtitle": "Mindenki, aki előrendelte a FriendingGO-t a friending.com/go oldalon, a legújabbal kezdve. Itt választhatod ki, kinek írsz, és itt dönthetsz arról, kap-e egy cím FriendingGO-leveleket.",
+      "export": {
+        "button": "CSV-export",
+        "working": "Exportálás…",
+        "title": "Exportálod ezeket a feliratkozásokat?",
+        "copy": "A CSV-fájl az aktuális keresés és állapotszűrő {count, plural, one {# feliratkozását} other {# feliratkozását}} tartalmazza (legfeljebb {limit} sort), teljes e-mail-címekkel és telefonszámokkal. Az export bekerül az auditnaplóba. Tárold biztonságosan a fájlt, és töröld, amikor már nincs rá szükség.",
+        "confirm": "CSV letöltése",
+        "done": "{count, plural, one {# feliratkozást} other {# feliratkozást}} exportáltunk.",
+        "truncated": "Csak az első {limit} feliratkozás került az exportba. A többihez szűkítsd a keresést vagy az állapotszűrőt."
+      },
+      "pending": {
+        "unsubscribed": "Lehet, hogy {name} leiratkoztatása nem mentődött el.",
+        "active": "Lehet, hogy {name} visszairatkoztatása nem mentődött el."
+      },
+      "filters": {
+        "search": "Keresés",
+        "searchPlaceholder": "Név, város vagy az e-mail-cím eleje",
+        "searchInvalid": "Legfeljebb 100 karakter, sortörés nélkül.",
+        "viewerSearch": "Csak olvasási joggal a keresés csak neveket és városokat talál, e-mail-címeket nem.",
+        "status": "Állapot",
+        "allStatuses": "Minden állapot",
+        "clear": "Keresés törlése"
+      },
+      "cards": {
+        "label": "Feliratkozások állapot szerint",
+        "all": "Összes feliratkozás"
+      },
+      "list": {
+        "title": "Feliratkozások",
+        "matching": "{count, plural, =0 {Egy feliratkozás sem felel meg} one {# feliratkozás felel meg} other {# feliratkozás felel meg}} a keresésnek és a szűrőnek.",
+        "selectPage": "Az oldalon mindenki kijelölése",
+        "selectRow": "{name} kijelölése",
+        "name": "Név",
+        "email": "E-mail",
+        "phone": "Telefon",
+        "city": "Város",
+        "cityTyped": "Begépelve, nem a listából választva",
+        "signedUp": "Feliratkozott",
+        "status": "Állapot",
+        "empty": "Még senki sem rendelte elő a FriendingGO-t.",
+        "emptyFiltered": "Senki sem felel meg ennek a keresésnek és szűrőnek."
+      },
+      "selection": {
+        "count": "{count, plural, =0 {Nincs kijelölve senki} one {# fő kijelölve} other {# fő kijelölve}}",
+        "notActive": "({count, plural, one {Közülük # fő nem aktív, ő kimarad.} other {Közülük # fő nem aktív, ők kimaradnak.}})",
+        "emailSelected": "E-mail a kijelölteknek ({count})",
+        "clear": "Kijelölés törlése",
+        "limit": "Legfeljebb {limit} főt jelölhetsz ki."
+      },
+      "status": {
+        "unsubscribe": "Leiratkoztatás",
+        "resubscribe": "Visszairatkoztatás",
+        "unsubscribeTitle": "Leiratkoztatod: {name}?",
+        "unsubscribeCopy": "A(z) {email} címre ezután nem megy FriendingGO-levél: sem közvetlen e-mail, sem hírlevél. Az előrendelés a listában marad.",
+        "resubscribeTitle": "Visszairatkoztatod: {name}?",
+        "resubscribeCopy": "Csak akkor tedd, ha az illető kérte, például a hello@friending.com címre írt levelében. A(z) {email} cím újra kap FriendingGO-leveleket.",
+        "unsubscribed": "{name} leiratkozott.",
+        "resubscribed": "{name} újra kap FriendingGO-leveleket.",
+        "unchanged": "{name} már ebben az állapotban volt. Nem változott semmi.",
+        "locked": {
+          "unsubscribed": "Zárolva: az illető maga iratkozott le. Csak ő iratkozhat vissza, a leiratkozó oldalon.",
+          "bounced": "Zárolva: az erre a címre küldött levél visszapattant.",
+          "complained": "Zárolva: az illető spamnek jelölte a FriendingGO-levelet. Soha többé nem kap tőlünk e-mailt."
+        }
+      },
+      "failures": {
+        "invalid": "A Core elutasította ezt a keresést vagy szűrőt.",
+        "unavailable": "A FriendingGO-feliratkozások listája most nem érhető el a Core-ban.",
+        "error": "Nem sikerült betölteni a feliratkozásokat."
+      }
+    },
+    "email": {
+      "title": "E-mail",
+      "subtitle": "Közvetlen e-mail kiválasztott címzetteknek vagy hírlevél minden aktív feliratkozónak. Nézd meg a valódi elrendezésben, küldj magadnak tesztet, aztán küldd el.",
+      "new": "Új e-mail",
+      "readOnly": "Csak olvasási jogod van: írhatsz és megnézheted az előnézetet, de tesztet küldeni, piszkozatot menteni és küldeni nem tudsz.",
+      "composer": {
+        "title": "Megírás",
+        "copy": "A FriendingGO-levelek angolul mennek ki. Minden levél automatikusan megkapja a FriendingGO fejlécét, a cég postai címét és a leiratkozó linket.",
+        "editingDraft": "Egy mentett piszkozatot szerkesztesz. A módosításaidhoz mentsd el újra.",
+        "kind": "Típus",
+        "kindHint": {
+          "direct": "Csak kiválasztott címzetteknek, legfeljebb {cap} főnek.",
+          "newsletter": "Kiválasztott címzetteknek vagy minden aktív feliratkozónak, legfeljebb {cap} főnek. Adminonként óránként legfeljebb három hírlevél."
+        },
+        "subject": "Tárgy",
+        "preheader": "Előnézeti sor",
+        "preheaderHint": "A rövid sor, amelyet a levelezőprogramok a tárgy után mutatnak. Nem kötelező.",
+        "body": "Szöveg (HTML)",
+        "mergeTags": "Mezőkód beszúrása:",
+        "mergeHint": "A mezőkódok helyére mindenkinél a saját keresztneve és a feliratkozáskor megadott városa kerül. Az előnézetben és a tesztlevélben ezek: {firstName} és {city}.",
+        "tagsHint": "Engedélyezett tagek: p, br, h1, h2, h3, strong, em, u, ul, ol, li, blockquote, valamint https:// vagy mailto: kezdetű linkek (a href). A kisebb jelet &lt;, az és-jelet &amp; formában írd."
+      },
+      "audience": {
+        "title": "Címzettek",
+        "selected": "{count, plural, =0 {Kiválasztott címzettek (még senki)} one {Kiválasztott címzettek (#)} other {Kiválasztott címzettek (#)}}",
+        "selectedHint": "Akiket az Előrendelések lapon választottál ki.",
+        "allActive": "Minden aktív feliratkozó",
+        "allActiveHint": "Mindenki, akinek az állapota a küldés pillanatában Aktív.",
+        "allActiveDirect": "Közvetlen e-mailnél nem választható: jelöld ki a címzetteket.",
+        "none": "Még nincs kiválasztva senki.",
+        "choose": "Címzettek kiválasztása az Előrendelések lapon",
+        "more": "{count, plural, one {és még # fő} other {és még # fő}}",
+        "clear": "Törlés"
+      },
+      "problems": {
+        "subject": "Írj 1–{subjectMax} karakteres, egysoros tárgyat.",
+        "preheader": "Az előnézeti sor legfeljebb {preheaderMax} karakteres és egysoros lehet.",
+        "body": "A szöveg legfeljebb {bodyMax} karakter lehet, csak engedélyezett tagekkel, és minden tagnek lezárva kell lennie.",
+        "audienceEmpty": "Válassz ki legalább egy címzettet az Előrendelések lapon, vagy küldd a hírlevelet minden aktív feliratkozónak.",
+        "directAudience": "Közvetlen e-mail csak kiválasztott címzetteknek mehet.",
+        "directTooMany": "Közvetlen e-mail legfeljebb {directCap} főnek mehet. Küldj inkább hírlevelet, vagy válassz kevesebb címzettet.",
+        "tooMany": "Egy levél legfeljebb {cap} főnek mehet."
+      },
+      "actions": {
+        "preview": "Előnézet",
+        "previewing": "Előnézet készül…",
+        "test": "Teszt nekem",
+        "testing": "Teszt küldése…",
+        "saveDraft": "Piszkozat mentése",
+        "saving": "Mentés…",
+        "send": "Küldés…",
+        "sending": "Küldés…",
+        "sendHint": "A Küldés gomb azután érhető el, hogy pontosan erről a szövegről és címzettkörről előnézetet kértél."
+      },
+      "preview": {
+        "title": "Előnézet",
+        "copy": "A valódi levélelrendezés, {firstName} keresztnévvel és {city} várossal.",
+        "idle": "Az Előnézet gombbal a valódi elrendezésben látod a levelet, azzal együtt, hány főhöz jut el.",
+        "stale": "Az előnézet óta megváltozott a szöveg vagy a címzettkör. Küldés előtt kérj új előnézetet.",
+        "countsLabel": "Címzettek száma",
+        "counts": {
+          "selected": "Kiválasztva",
+          "sendable": "Megkapja",
+          "suppressed": "Kimarad"
+        },
+        "leftOutBy": "Kimarad: {reasons}.",
+        "leftOutReason": "{status} ({count} fő)",
+        "leftOutWhy": "Aki leiratkozott, akinek a címe visszapattant, vagy aki spamnek jelölte a levelet, soha nem kap e-mailt. Itt megszámoljuk, de nem írunk neki.",
+        "overCap": "Ez a kör nagyobb, mint az ennél a típusnál megengedett {cap} fő.",
+        "frameTitle": "Levél előnézete: {subject}"
+      },
+      "drafts": {
+        "title": "Piszkozatok",
+        "copy": "Mentett piszkozatok a legújabb kampányok között. Nyiss meg egyet, és folytasd az írást.",
+        "reload": "Frissítés",
+        "loading": "Piszkozatok betöltése…",
+        "error": "Nem sikerült betölteni a piszkozatokat.",
+        "empty": "Nincs mentett piszkozat.",
+        "open": "Megnyitás",
+        "more": "A régebbi piszkozatok az Elküldött lapon vannak.",
+        "opened": "Megnyitottad a(z) „{subject}” piszkozatot.",
+        "notDraft": "Ez a kampány már nem piszkozat, ezért nem szerkeszthető."
+      },
+      "pending": {
+        "test": "Nem tudjuk, elment-e a(z) „{subject}” tesztje.",
+        "save_draft": "Nem tudjuk, elmentődött-e a(z) „{subject}” piszkozat.",
+        "send": "Nem tudjuk, elment-e a(z) „{subject}”.",
+        "copy": "Az újraküldés pontosan ugyanazt a kérést küldi el: ha már elkezdődött, a Core befejezi, és senkinek sem ír kétszer.",
+        "stillSending": "A Core még nem fejezte be ezt a kérést (egy nagy küldés eltarthat egy ideig, vagy egy korábbi próbálkozás félbemaradt). Küldd el újra ugyanazt a kérést, hogy befejeződjön; senki sem kap kétszer levelet."
+      },
+      "notices": {
+        "test": "Tesztpéldányt küldtünk ide: {to}.",
+        "testReplayed": "A tesztpéldány már korábban elment ide: {to}.",
+        "draftSaved": "A(z) „{subject}” piszkozat elmentve.",
+        "sent": "Elküldve {count, plural, one {# főnek} other {# főnek}}. {suppressed, plural, =0 {Senki sem maradt ki.} one {# fő kimaradt.} other {# fő kimaradt.}} A kézbesítést az Elküldött lapon látod."
+      },
+      "refusals": {
+        "audienceChanged": "Az előnézet óta megváltoztak a címzettek: most {count, plural, one {# fő} other {# fő}} kapná meg. Frissítettük az előnézetet; nézd át, és küldd el újra.",
+        "tooLarge": "Ez a kör nagyobb, mint az ennél a típusnál megengedett {cap} fő. Válassz kevesebb címzettet.",
+        "rateLimited": "{minutes} perc alatt legfeljebb {limit} hírlevelet küldhetsz. Próbáld újra később."
+      },
+      "confirm": {
+        "title": "Elküldöd {count, plural, one {# főnek} other {# főnek}}?",
+        "copy": "A(z) „{subject}” ({kind}) most {count, plural, one {# főhöz} other {# főhöz}} megy ki. {suppressed, plural, =0 {A kiválasztottak közül senki sem marad ki.} one {A kiválasztottak közül # fő kimarad (leiratkozott, visszapattant vagy spamnek jelölte), neki nem írunk.} other {A kiválasztottak közül # fő kimarad (leiratkozott, visszapattant vagy spamnek jelölte), nekik nem írunk.}}",
+        "copyAll": "A(z) „{subject}” ({kind}) most minden aktív feliratkozónak kimegy: {count, plural, one {# főnek} other {# főnek}}.",
+        "button": "Küldés {count} főnek",
+        "final": "A küldés nem vonható vissza. Ha még nem tetted, előbb küldj magadnak tesztet."
+      },
+      "discard": {
+        "title": "Elveted az ismeretlen kimenetelű kérést?",
+        "copy": "A konzol nem próbálja tovább. Ha végrehajtódott, úgy is marad.",
+        "copySend": "A konzol nem próbálja tovább. Ha a küldés végrehajtódott, ugyanennek a levélnek az újbóli elküldése mindenkinek kétszer írna. Előbb nézd meg az Elküldött lapot.",
+        "confirm": "Elvetés"
+      },
+      "replace": {
+        "titleDraft": "Megnyitod a(z) {subject} piszkozatot?",
+        "titleNew": "Új e-mailt kezdesz?",
+        "copy": "Amit most írsz, felülíródik. Ha meg akarod tartani, előbb mentsd el piszkozatként.",
+        "open": "Piszkozat megnyitása",
+        "clear": "Új e-mail kezdése"
+      }
+    },
+    "sent": {
+      "title": "Elküldött",
+      "subtitle": "Minden FriendingGO közvetlen e-mail és hírlevél a legújabbal kezdve, a piszkozatokkal együtt. Nyiss meg egyet, és látod, kinek ment ki, és kézbesítették-e.",
+      "failures": {
+        "invalid": "A Core elutasította ezt a kérést.",
+        "unavailable": "A FriendingGO-kampányok most nem érhetők el a Core-ban.",
+        "error": "Nem sikerült betölteni a kampányokat."
+      },
+      "list": {
+        "title": "Kampányok",
+        "copy": "Oldalanként ötven, a legújabbal kezdve.",
+        "empty": "Még nem írtak FriendingGO-levelet.",
+        "subject": "Tárgy",
+        "kind": "Típus",
+        "audience": "Címzettek",
+        "sentBy": "Küldte",
+        "when": "Időpont",
+        "counts": "Kiküldve / kimaradt",
+        "countsValue": "{queued} / {suppressed}",
+        "editDraft": "Piszkozat szerkesztése"
+      },
+      "audience": {
+        "allActive": "Minden aktív feliratkozó",
+        "allActiveCount": "Minden aktív feliratkozó ({count})",
+        "selected": "{count, plural, one {# kiválasztott címzett} other {# kiválasztott címzett}}"
+      },
+      "detail": {
+        "title": "Kampány",
+        "subtitle": "{kind} · {when}",
+        "back": "Vissza a kampányokhoz",
+        "state": "Állapot",
+        "createdBy": "Létrehozta",
+        "countsLabel": "Címzettek",
+        "deliveryLabel": "Kézbesítés",
+        "draftNote": "Ez piszkozat: még senkinek sem írtunk.",
+        "content": "Tartalom",
+        "contentFrame": "Tárolt tartalom: {subject}",
+        "contentHint": "A tárolt szöveg, a FriendingGO-elrendezés nélkül. A mezőkódok úgy látszanak, ahogy megírták őket; mindenki a saját keresztnevét és városát kapta."
+      },
+      "counts": {
+        "selected": "Kiválasztva",
+        "queued": "Kiküldve",
+        "suppressed": "Kimaradt"
+      },
+      "recipients": {
+        "title": "Címzettek",
+        "copy": "Oldalanként ötven. A kézbesítést az e-mail-kézbesítési naplóból olvassuk, amely minden levelet 30 napig őriz.",
+        "empty": "Ehhez a kampányhoz nincs rögzített címzett.",
+        "state": "Címzett",
+        "delivery": "Kézbesítés",
+        "deliveredAt": "Kézbesítve",
+        "queued": "Kiküldve",
+        "suppressed": "Kimaradt"
+      }
+    }
   }
 }

@@ -24,6 +24,11 @@ export const MAIL_DELIVERY_KINDS = [
   "user_report",
   "moderation_footprint_report",
   "support_request",
+  // FriendingGO (D-153, Core T-936): the preorder confirmation, a direct email and a newsletter. Core reports
+  // them by name, so this list must know them before any go_* row exists (review P1-1).
+  "go_preorder_confirmation",
+  "go_direct_email",
+  "go_newsletter",
 ] as const;
 export type MailDeliveryKind = (typeof MAIL_DELIVERY_KINDS)[number];
 /** The state filter: the five row states plus `slow` (delivered later than `slow_seconds`). */

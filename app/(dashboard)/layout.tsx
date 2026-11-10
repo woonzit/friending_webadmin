@@ -19,6 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       verificationConsoleReady={me.verificationConsoleReady}
       audienceVisibilityConsoleReady={me.audienceVisibilityConsoleReady}
       profileTextModerationConsoleReady={me.profileTextModerationConsoleReady}
+      friendingGoConsoleReady={me.friendingGoConsoleReady}
     >
       {children}
     </Shell>

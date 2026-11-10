@@ -252,6 +252,8 @@ test("Email delivery: the type filter is Friending Core's closed outbox vocabula
   assert.deepEqual([...MAIL_DELIVERY_KINDS], [
     "email_auth_verification", "email_change_verification", "admin_login_verification", "admin_outbound_message",
     "user_report", "moderation_footprint_report", "support_request",
+    // D-153: Core's MailDeliveryReadService::KINDS gained the three FriendingGO kinds (Core aa6ce6e4, review P1-1).
+    "go_preorder_confirmation", "go_direct_email", "go_newsletter",
   ]);
   for (const kind of ["moderation_report", "legacy_engagement"]) {
     assert.equal(normalizeMailDeliveryProxyBody("mail_delivery", { kind }), null, kind);

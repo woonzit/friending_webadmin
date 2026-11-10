@@ -43,6 +43,7 @@ async function renderShell(locale: "en" | "hu"): Promise<string> {
           verificationConsoleReady: true,
           audienceVisibilityConsoleReady: true,
           profileTextModerationConsoleReady: true,
+          friendingGoConsoleReady: true,
           children: createElement("div", { className: "probe" }, "content"),
         }),
       ),

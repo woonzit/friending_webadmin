@@ -63,6 +63,20 @@ the help panel explicitly marks absent settings as not returned. The additive
 `effective_by_storefront` answer remains optional for compatibility with old Core.
 Presence retains `date_enabled` and the `date` key; only its EN/HU labels change.
 
+## FriendingGO preorders corpus (D-153, T-937, 2026-11-10)
+
+`go_preorders_wire` (contract `go-preorders-v1`, Core `docs/GO_PREORDERS_V1.md`) is copied byte for byte from the
+git objects of the Core lane tip `aa6ce6e46dcf7751195074a431177a7ca257952e` (branch `lane/t936-go-preorders`, not yet
+on Core `main`); its manifest records scoped source `7274489adf46396dde5b9c83ceedf21bf5efe2dc`, an ancestor of that
+tip. 57 bodies: the 48 `webadmin-*` bodies of the five console routes and the nine `goweb-*` bodies of the web tier,
+vendored only so that the set digest can be recomputed. `fixture_set_sha256`
+`17b28944bae440104bd9798aced2ed73347f370401e01d57283a32f1709f29f2`; the pin is the `PIN` block of
+`tests/friendinggo.test.mts`, which also checks every body against its manifest sha256 and the directory against the
+manifest's list. Core's round 2 after its review (contract §10) moves bodies: re-vendor with the step of the host
+moderation corpus below (`D=tests/fixtures/go_preorders_wire`), replace the five `PIN` values, and review every
+moved body; a moved set digest is expected there and is not a mechanical re-pin. When Core publishes, re-pin to the
+published commit with the same set digest, as the reachability rule says.
+
 ## AreYouIn port (2026-11-02, current for six corpora)
 
 Six corpora are re-vendored byte for byte (git objects, `git archive`) from Core branch

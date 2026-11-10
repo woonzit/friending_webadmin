@@ -30,7 +30,7 @@ import {
 
 /**
  * The per-operator console readiness Core projects through `admin_me`. The
- * dashboard layout already computes exactly these four for the sidebar; Help
+ * dashboard layout already computes exactly these five for the sidebar; Help
  * receives the same values rather than re-deriving them, so a guide and its
  * navigation entry can never disagree about whether a screen exists.
  */
@@ -39,6 +39,8 @@ export type AdminHelpConsoleReadiness = {
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
   profileTextModerationConsoleReady: boolean;
+  /** D-153: Core's `admin_me.friendinggo` block; the three FriendingGO screens refuse to render without it. */
+  friendingGoConsoleReady: boolean;
 };
 
 export type AdminHelpConsoleReadyKey = keyof AdminHelpConsoleReadiness;
@@ -500,6 +502,28 @@ export const ADMIN_HELP_PAGES = [
     route: "/mail-delivery",
     sections: ["filters", "summary", "list"],
     matches: exact("/mail-delivery"),
+  },
+  {
+    // D-153: FriendingGO preorder sign-ups, the email composer and the campaigns sent, three route tabs.
+    key: "friendingGoPreorders",
+    route: "/friendinggo",
+    sections: ["totalsFilters", "list", "selection", "statusChanges", "export"],
+    consoleReady: "friendingGoConsoleReady",
+    matches: exact("/friendinggo"),
+  },
+  {
+    key: "friendingGoEmail",
+    route: "/friendinggo/email",
+    sections: ["composer", "audience", "preview", "testDrafts", "send", "uncertain"],
+    consoleReady: "friendingGoConsoleReady",
+    matches: exact("/friendinggo/email"),
+  },
+  {
+    key: "friendingGoSent",
+    route: "/friendinggo/sent",
+    sections: ["campaigns", "detail"],
+    consoleReady: "friendingGoConsoleReady",
+    matches: exact("/friendinggo/sent"),
   },
   {
     key: "helpCms",

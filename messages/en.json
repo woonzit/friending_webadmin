@@ -2663,6 +2663,156 @@
           }
         }
       },
+      "friendingGoPreorders": {
+        "title": "FriendingGO preorders",
+        "summary": "Everyone who preordered FriendingGO at friending.com/go is listed here with their status. From this page you choose people to email, unsubscribe or resubscribe an address, and export the list as a CSV file.",
+        "steps": {
+          "one": "Read the cards first: they count every sign-up by status, whatever the search.",
+          "two": "Search by name, city or the start of an email address, and narrow the list by status.",
+          "three": "Tick the people you want to write to and press Email selected; the Email tab opens with them as the audience."
+        },
+        "sections": {
+          "totalsFilters": {
+            "title": "Cards, search and filter",
+            "purpose": "The cards count all sign-ups by status: Active, Unsubscribed, Bounced and Reported spam. The search matches the start of any word of a name or a city, or the start of an email address.",
+            "guidance": "The cards never change with the search; the line above the table says how many sign-ups match. With read-only access the search does not match email addresses.",
+            "actions": {
+              "1": "Type part of a name or a city and press Search to narrow the table.",
+              "2": "Choose a status to see, for example, only the addresses whose email bounced."
+            }
+          },
+          "list": {
+            "title": "Sign-ups",
+            "purpose": "Each row is one sign-up: name, email, phone, city, when they signed up, and the status with what last changed it. A city marked as typed was not chosen from the city list.",
+            "guidance": "Read-only operators see masked email addresses and phone numbers. The table shows fifty rows a page, newest first.",
+            "actions": {
+              "1": "Use Previous and Next to page through more than fifty sign-ups.",
+              "2": "Press Refresh to read the current list from Core again."
+            }
+          },
+          "selection": {
+            "title": "Choosing people to email",
+            "purpose": "The tick boxes collect people across pages; the bar above the table counts them and says how many are not active and will be left out of any email.",
+            "guidance": "Email selected opens the Email tab with exactly these people as the audience and keeps any text you were already writing. Unsubscribed, bounced and spam-reporting addresses are never emailed, even when selected.",
+            "actions": {
+              "1": "Tick the box in the table header to select everyone on the current page.",
+              "2": "Press Clear selection to start choosing again."
+            }
+          },
+          "statusChanges": {
+            "title": "Unsubscribe and resubscribe",
+            "purpose": "Unsubscribe stops all FriendingGO email to an address at once. Resubscribe turns it back on, and is offered only where Core allows the console to do so.",
+            "guidance": "Resubscribe only at the person's own request. Bounced and spam-reported addresses are locked, and so is an address the person unsubscribed themselves: the row says why instead of showing a button.",
+            "actions": {
+              "1": "Press Unsubscribe or Resubscribe on a row and confirm in the dialog.",
+              "2": "If the outcome is unknown, press Retry the same request in the notice; it never makes a second change."
+            }
+          },
+          "export": {
+            "title": "Export CSV",
+            "purpose": "Export CSV downloads the sign-ups of the current search and status filter, at most 5,000 rows, with full email addresses and phone numbers. Only an admin or the owner sees the button.",
+            "guidance": "Every export is recorded in the audit log. Keep the file safe, do not share it, and delete it when you no longer need it. A cell that starts with =, +, - or @ gets a leading apostrophe so a spreadsheet never runs it as a formula.",
+            "actions": {
+              "1": "Set the search and the status filter first; the file holds exactly those rows.",
+              "2": "If the notice says only the first 5,000 sign-ups were exported, narrow the filter and export again."
+            }
+          }
+        }
+      },
+      "friendingGoEmail": {
+        "title": "FriendingGO email",
+        "summary": "Write a direct email to chosen people or a newsletter to everyone active, see it in the real FriendingGO layout with the exact number of recipients, send yourself a test, save drafts, and send.",
+        "steps": {
+          "one": "Choose the type and the audience, then write the subject, an optional preheader and the body.",
+          "two": "Press Preview and check the email and the counts: who will receive it and who is left out.",
+          "three": "Press Send test to me, read the test in your own inbox, then press Send… and confirm the number."
+        },
+        "sections": {
+          "composer": {
+            "title": "Compose",
+            "purpose": "The subject (at most 150 characters), the preheader (at most 200) and the HTML body (at most 60,000 characters, with the message-template tags only). The merge tags {{first_name}} and {{city}} are replaced for each person.",
+            "guidance": "FriendingGO email is in English. The header, the company's postal address and the unsubscribe link are added automatically; do not write them into the body.",
+            "actions": {
+              "1": "Use the merge-tag buttons to insert {{first_name}} or {{city}} where the cursor is.",
+              "2": "Link only to https:// or mailto: addresses; any other link is refused."
+            }
+          },
+          "audience": {
+            "title": "Audience",
+            "purpose": "A direct email goes to the people chosen on the Preorders tab, at most 100. A newsletter goes to the chosen people or to everyone whose status is Active when you send, at most 5,000.",
+            "guidance": "Each admin can send at most three newsletters an hour. People who unsubscribed, bounced or reported spam are left out and counted, never emailed.",
+            "actions": {
+              "1": "Follow Choose people on the Preorders tab to change who is selected.",
+              "2": "Press Clear to remove the selected people from this email."
+            }
+          },
+          "preview": {
+            "title": "Preview",
+            "purpose": "Preview renders the email in the real FriendingGO layout with the sample first name Alex and the city Raleigh, NC, and shows how many are selected, how many will receive it and how many are left out.",
+            "guidance": "A preview belongs to exactly the text and audience it was made for. After any change it is marked out of date, and Send stays unavailable until you preview again.",
+            "actions": {
+              "1": "Read the counts before you send; a left-out count above zero is normal.",
+              "2": "Scroll the preview frame to check the footer and the unsubscribe link."
+            }
+          },
+          "testDrafts": {
+            "title": "Test and drafts",
+            "purpose": "Send test to me sends one copy, with [Test] before the subject and the sample values, to your own admin address. Save draft keeps the email in Core without sending it; drafts are listed beside the composer and on the Sent tab.",
+            "guidance": "A test never reaches anyone else, and a draft emails nobody. Saving an opened draft updates it; a draft that was sent meanwhile cannot be changed.",
+            "actions": {
+              "1": "Open a draft from the Drafts list, or with Edit draft on the Sent tab.",
+              "2": "Press New email to clear the composer; you are asked first if something would be lost."
+            }
+          },
+          "send": {
+            "title": "Sending",
+            "purpose": "Send… opens a confirmation that states the exact number of people who will receive the email and how many are left out. Confirming sends exactly the previewed email.",
+            "guidance": "Sending cannot be undone. If the audience changed since the preview, Core refuses the send, the preview is updated, and you confirm the new number.",
+            "actions": {
+              "1": "Confirm only when the number in the dialog is what you expect.",
+              "2": "Check the Sent tab afterwards to see delivery."
+            }
+          },
+          "uncertain": {
+            "title": "Unknown outcomes",
+            "purpose": "Every test, draft and send carries a request identity that this browser tab keeps until Core's answer is known. When the answer is lost, the page keeps the request and offers Retry the same request.",
+            "guidance": "Retrying the same request never emails anyone twice; Core finishes a send that stopped midway. Forgetting the request and writing the same email again can email everyone twice, so check the Sent tab first.",
+            "actions": {
+              "1": "Press Retry the same request until the outcome is known.",
+              "2": "Use Forget it only after the Sent tab shows what happened."
+            }
+          }
+        }
+      },
+      "friendingGoSent": {
+        "title": "FriendingGO sent email",
+        "summary": "Every FriendingGO direct email and newsletter, newest first and including drafts, with who sent it and how many people were emailed or left out. Opening one shows its recipients and whether each email was delivered.",
+        "steps": {
+          "one": "Find the campaign by its subject and date; drafts are marked Draft and can be opened in the composer.",
+          "two": "Press Open to see the counts, the delivery states and the stored content of one campaign.",
+          "three": "Page through the recipients to check who was emailed, who was left out, and why."
+        },
+        "sections": {
+          "campaigns": {
+            "title": "Campaigns",
+            "purpose": "Each row is one campaign: subject, type and state, audience, who sent it, when, and how many people were emailed and left out.",
+            "guidance": "A campaign marked Sending is still being written by Core; refresh after a moment. Drafts show no counts because nobody was emailed.",
+            "actions": {
+              "1": "Press Open to see one campaign in detail.",
+              "2": "Press Edit draft to continue a draft on the Email tab."
+            }
+          },
+          "detail": {
+            "title": "Campaign detail",
+            "purpose": "The detail shows the counts, delivery by state (delivered, waiting, held back, failed, not sent, no longer in the log), the stored body, and fifty recipients a page with their delivery state.",
+            "guidance": "Delivery comes from the email delivery log, which keeps each email for 30 days; older ones show as no longer in the log. Read-only operators see masked addresses.",
+            "actions": {
+              "1": "Use Previous and Next to page through the recipients.",
+              "2": "Press Back to campaigns to return to the list."
+            }
+          }
+        }
+      },
       "helpCms": {
         "title": "Help centre CMS guide",
         "summary": "This CMS publishes the member-facing Friending Help centre. Categories organize discovery, while each article stores English and Hungarian title, summary, search keywords and a structured block body that publishes as one bilingual unit.",
@@ -3393,6 +3543,7 @@
     "audit": "Audit log",
     "support": "Support inbox",
     "mailDelivery": "Email delivery",
+    "friendingGo": "FriendingGO",
     "helpCms": "Help centre CMS",
     "footprints": "Footprints",
     "pinger": "Pinger",
@@ -12781,6 +12932,9 @@
       "user_report": "Profile report to moderators",
       "moderation_footprint_report": "Footprint report to moderators",
       "support_request": "Support request",
+      "go_preorder_confirmation": "FriendingGO preorder confirmation",
+      "go_direct_email": "FriendingGO direct email",
+      "go_newsletter": "FriendingGO newsletter",
       "other": "Other"
     },
     "stateFilter": {
@@ -12912,5 +13066,335 @@
       "generated": "Calculated {time}."
     },
     "openListNote": "Open these members lists the platform's existing non-demo accounts. The list leaves out suspended accounts and can still include App Review and test accounts, so its count can differ from the card."
+  },
+  "friendinggo": {
+    "eyebrow": "FriendingGO",
+    "tabs": {
+      "label": "FriendingGO sections",
+      "preorders": "Preorders",
+      "email": "Email",
+      "sent": "Sent"
+    },
+    "status": {
+      "active": "Active",
+      "unsubscribed": "Unsubscribed",
+      "bounced": "Bounced",
+      "complained": "Reported spam"
+    },
+    "statusSource": {
+      "unsubscribe_link": "Unsubscribe link",
+      "webadmin": "Changed in this console",
+      "signup": "Signed up again",
+      "mailgun_failed": "Delivery failed permanently",
+      "mailgun_rejected": "Rejected by Mailgun",
+      "mailgun_complained": "Spam report",
+      "mailgun_unsubscribed": "Unsubscribed through Mailgun"
+    },
+    "kind": {
+      "direct": "Direct email",
+      "newsletter": "Newsletter"
+    },
+    "campaignState": {
+      "draft": "Draft",
+      "sending": "Sending",
+      "sent": "Sent"
+    },
+    "delivery": {
+      "delivered": "Delivered",
+      "pending": "Waiting",
+      "retrying": "Held back, retrying",
+      "failed": "Failed",
+      "not_sent": "Not sent",
+      "purged": "No longer in the delivery log"
+    },
+    "readOnly": "You have read-only access: email addresses and phone numbers are masked, and you cannot change a status, export, or send email.",
+    "maskedNote": "Email addresses are masked because you have read-only access.",
+    "page": "Page {page}",
+    "counter": "{count} / {max}",
+    "pending": {
+      "title": "Outcome unknown.",
+      "retry": "Retry the same request",
+      "discard": "Forget it",
+      "restored": "A request from earlier in this tab has no known outcome yet. Retry it before you start anything new.",
+      "discarded": "The unknown request was forgotten. Check the current state before you try again."
+    },
+    "errors": {
+      "sessionInvalid": "Your admin session is no longer valid. Sign in again.",
+      "writeRequired": "Your role is read-only. Only an admin or the owner can do this.",
+      "requestInvalid": "Core refused the request as malformed. Reload the page and try again.",
+      "filterInvalid": "Core refused this search or filter. Shorten the search text and try again.",
+      "requestIdConflict": "This request was already used for a different change. Start the change again.",
+      "requestInProgress": "Core is still working on this request. Wait a moment, then retry the same request.",
+      "preorderNotFound": "This sign-up no longer exists. The list was reloaded.",
+      "statusInvalid": "Core refused this status change.",
+      "statusLocked": "This address is locked and cannot be changed here.",
+      "kindInvalid": "Core refused the email type.",
+      "contentInvalid": "Core refused the subject or the preheader. Check their length and remove line breaks.",
+      "bodyInvalid": "Core refused the body. Use only the allowed tags, and links that start with https:// or mailto:.",
+      "audienceInvalid": "Core refused the audience: someone selected no longer exists, or a direct email was addressed to everyone. Choose the people again.",
+      "audienceEmpty": "Nobody in this audience can receive email: everyone selected has unsubscribed, bounced, or reported spam.",
+      "audienceChanged": "The audience changed since your preview.",
+      "audienceTooLarge": "This audience is larger than the limit for this email type.",
+      "rateLimited": "You have reached the newsletter limit. Try again later.",
+      "campaignNotFound": "That draft no longer exists. What you wrote is kept; saving it creates a new draft.",
+      "campaignNotDraft": "That draft has already been sent. What you wrote is kept; saving it creates a new draft.",
+      "unavailable": "FriendingGO is not available in Core right now. Try again later.",
+      "capabilityRequired": "This Core does not offer FriendingGO yet.",
+      "outcomeUnknown": "Core's answer was lost or could not be read. The request may have gone through.",
+      "coreUnavailable": "Core could not be reached. The request may not have been sent.",
+      "membershipUnconfirmed": "Your admin access could not be confirmed. Try again in a moment.",
+      "storageUnavailable": "This browser does not allow the console to keep the request safe for a retry (session storage is blocked), so nothing was sent.",
+      "generic": "Something went wrong. Reload the page before you try again."
+    },
+    "preorders": {
+      "title": "Preorders",
+      "subtitle": "Everyone who preordered FriendingGO at friending.com/go, newest first. Choose people to email, or change whether an address receives FriendingGO email.",
+      "export": {
+        "button": "Export CSV",
+        "working": "Exporting…",
+        "title": "Export these sign-ups?",
+        "copy": "The CSV file holds {count, plural, one {# sign-up} other {# sign-ups}} of the current search and status filter (at most {limit}), with full email addresses and phone numbers. The export is recorded in the audit log. Keep the file safe and delete it when you no longer need it.",
+        "confirm": "Download CSV",
+        "done": "{count, plural, one {# sign-up was} other {# sign-ups were}} exported.",
+        "truncated": "Only the first {limit} sign-ups were exported. Narrow the search or the status filter to export the rest."
+      },
+      "pending": {
+        "unsubscribed": "Unsubscribing {name} may not have been saved.",
+        "active": "Resubscribing {name} may not have been saved."
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Name, city, or start of the email address",
+        "searchInvalid": "Use at most 100 characters, without line breaks.",
+        "viewerSearch": "With read-only access the search matches names and cities only, not email addresses.",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "clear": "Clear search"
+      },
+      "cards": {
+        "label": "Sign-ups by status",
+        "all": "All sign-ups"
+      },
+      "list": {
+        "title": "Sign-ups",
+        "matching": "{count, plural, =0 {No sign-ups match} one {# sign-up matches} other {# sign-ups match}} the search and filter.",
+        "selectPage": "Select everyone on this page",
+        "selectRow": "Select {name}",
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "city": "City",
+        "cityTyped": "Typed, not chosen from the list",
+        "signedUp": "Signed up",
+        "status": "Status",
+        "empty": "Nobody has preordered FriendingGO yet.",
+        "emptyFiltered": "Nobody matches this search and filter."
+      },
+      "selection": {
+        "count": "{count, plural, =0 {Nobody selected} one {# person selected} other {# people selected}}",
+        "notActive": "({count, plural, one {# of them is} other {# of them are}} not active and will be left out.)",
+        "emailSelected": "Email selected ({count})",
+        "clear": "Clear selection",
+        "limit": "You can select at most {limit} people."
+      },
+      "status": {
+        "unsubscribe": "Unsubscribe",
+        "resubscribe": "Resubscribe",
+        "unsubscribeTitle": "Unsubscribe {name}?",
+        "unsubscribeCopy": "{email} will no longer receive FriendingGO email: no direct emails and no newsletters. Their preorder stays in the list.",
+        "resubscribeTitle": "Resubscribe {name}?",
+        "resubscribeCopy": "Do this only if the person asked for it, for example by writing to hello@friending.com. {email} will receive FriendingGO email again.",
+        "unsubscribed": "{name} is unsubscribed.",
+        "resubscribed": "{name} receives FriendingGO email again.",
+        "unchanged": "{name} already had this status. Nothing changed.",
+        "locked": {
+          "unsubscribed": "Locked: the person unsubscribed. Only they can resubscribe, from the unsubscribe page.",
+          "bounced": "Locked: email to this address bounced.",
+          "complained": "Locked: the person reported FriendingGO email as spam. They are never emailed again."
+        }
+      },
+      "failures": {
+        "invalid": "Core refused this search or filter.",
+        "unavailable": "The FriendingGO sign-up list is not available in Core right now.",
+        "error": "The sign-ups could not be loaded."
+      }
+    },
+    "email": {
+      "title": "Email",
+      "subtitle": "Write a direct email to chosen people or a newsletter to everyone active. Preview it in the real layout, send yourself a test, then send it.",
+      "new": "New email",
+      "readOnly": "You have read-only access: you can write and preview, but you cannot send a test, save a draft, or send.",
+      "composer": {
+        "title": "Compose",
+        "copy": "FriendingGO email is in English. Every email gets the FriendingGO header, the company address, and an unsubscribe link automatically.",
+        "editingDraft": "You are editing a saved draft. Save it again to keep your changes.",
+        "kind": "Type",
+        "kindHint": {
+          "direct": "To chosen people only, at most {cap}.",
+          "newsletter": "To chosen people or everyone active, at most {cap}. At most three newsletters per admin per hour."
+        },
+        "subject": "Subject",
+        "preheader": "Preheader",
+        "preheaderHint": "The short line inbox apps show after the subject. Optional.",
+        "body": "Body (HTML)",
+        "mergeTags": "Insert a merge tag:",
+        "mergeHint": "Merge tags are replaced for each person with their first name and the city they signed up with. In the preview and in your test they read {firstName} and {city}.",
+        "tagsHint": "Allowed tags: p, br, h1, h2, h3, strong, em, u, ul, ol, li, blockquote, and links (a href) that start with https:// or mailto:. Write the less-than sign as &lt; and the ampersand as &amp;."
+      },
+      "audience": {
+        "title": "Audience",
+        "selected": "{count, plural, =0 {Selected people (none yet)} one {Selected people (#)} other {Selected people (#)}}",
+        "selectedHint": "The people you chose on the Preorders tab.",
+        "allActive": "Everyone active",
+        "allActiveHint": "Everyone whose status is Active when you send.",
+        "allActiveDirect": "Not for a direct email: choose the people.",
+        "none": "Nobody is selected yet.",
+        "choose": "Choose people on the Preorders tab",
+        "more": "{count, plural, one {and # more} other {and # more}}",
+        "clear": "Clear"
+      },
+      "problems": {
+        "subject": "Write a subject of 1 to {subjectMax} characters, on one line.",
+        "preheader": "The preheader can have at most {preheaderMax} characters, on one line.",
+        "body": "Write a body of at most {bodyMax} characters using only the allowed tags, with every tag closed.",
+        "audienceEmpty": "Choose at least one person on the Preorders tab, or send the newsletter to everyone active.",
+        "directAudience": "A direct email goes to chosen people only.",
+        "directTooMany": "A direct email can go to at most {directCap} people. Send a newsletter instead, or choose fewer people.",
+        "tooMany": "One email can go to at most {cap} people."
+      },
+      "actions": {
+        "preview": "Preview",
+        "previewing": "Previewing…",
+        "test": "Send test to me",
+        "testing": "Sending test…",
+        "saveDraft": "Save draft",
+        "saving": "Saving…",
+        "send": "Send…",
+        "sending": "Sending…",
+        "sendHint": "Send becomes available after a preview of exactly this text and audience."
+      },
+      "preview": {
+        "title": "Preview",
+        "copy": "The real email layout, with {firstName} as the first name and {city} as the city.",
+        "idle": "Press Preview to see the email in the real layout, with the number of people who will receive it.",
+        "stale": "The text or the audience changed since this preview. Preview again before you send.",
+        "countsLabel": "Audience counts",
+        "counts": {
+          "selected": "Selected",
+          "sendable": "Will receive it",
+          "suppressed": "Left out"
+        },
+        "leftOutBy": "Left out: {reasons}.",
+        "leftOutReason": "{status} ({count})",
+        "leftOutWhy": "People who unsubscribed, whose email bounced, or who reported spam are never emailed. They are counted here, not mailed.",
+        "overCap": "This audience is larger than the limit of {cap} for this email type.",
+        "frameTitle": "Email preview: {subject}"
+      },
+      "drafts": {
+        "title": "Drafts",
+        "copy": "Saved drafts among the newest campaigns. Open one to continue writing.",
+        "reload": "Reload",
+        "loading": "Loading drafts…",
+        "error": "The drafts could not be loaded.",
+        "empty": "No saved drafts.",
+        "open": "Open",
+        "more": "Older drafts are listed on the Sent tab.",
+        "opened": "Opened the draft “{subject}”.",
+        "notDraft": "This campaign is no longer a draft, so it cannot be edited."
+      },
+      "pending": {
+        "test": "We don't know whether the test of “{subject}” was sent.",
+        "save_draft": "We don't know whether the draft “{subject}” was saved.",
+        "send": "We don't know whether “{subject}” was sent.",
+        "copy": "Retry sends exactly the same request: Core finishes it if it started and never emails anyone twice.",
+        "stillSending": "Core has not finished this request yet (a large send can take a while, or an earlier attempt stopped midway). Retry the same request to finish it; nobody is emailed twice."
+      },
+      "notices": {
+        "test": "A test copy was sent to {to}.",
+        "testReplayed": "The test copy to {to} had already been sent.",
+        "draftSaved": "The draft “{subject}” is saved.",
+        "sent": "Sent to {count, plural, one {# person} other {# people}}. {suppressed, plural, =0 {Nobody was left out.} one {# person was left out.} other {# people were left out.}} Delivery is shown on the Sent tab."
+      },
+      "refusals": {
+        "audienceChanged": "The audience changed since your preview: now {count, plural, one {# person} other {# people}} would receive it. The preview was updated. Check it and send again.",
+        "tooLarge": "This audience is larger than the limit of {cap} for this email type. Choose fewer people.",
+        "rateLimited": "You can send at most {limit} newsletters in {minutes} minutes. Try again later."
+      },
+      "confirm": {
+        "title": "Send to {count, plural, one {# person} other {# people}}?",
+        "copy": "The {kind} “{subject}” goes to {count, plural, one {# person} other {# people}} now. {suppressed, plural, =0 {Nobody selected is left out.} one {# selected person is left out (unsubscribed, bounced, or reported spam) and is not emailed.} other {# selected people are left out (unsubscribed, bounced, or reported spam) and are not emailed.}}",
+        "copyAll": "The {kind} “{subject}” goes to everyone active now: {count, plural, one {# person} other {# people}}.",
+        "button": "Send to {count}",
+        "final": "Sending cannot be undone. Send yourself a test first if you have not yet."
+      },
+      "discard": {
+        "title": "Forget the unknown request?",
+        "copy": "The console stops retrying it. If it went through, it stays done.",
+        "copySend": "The console stops retrying it. If the send went through, sending the same email again emails everyone twice. Check the Sent tab first.",
+        "confirm": "Forget it"
+      },
+      "replace": {
+        "titleDraft": "Open the draft {subject}?",
+        "titleNew": "Start a new email?",
+        "copy": "What you are writing now will be replaced. Save it as a draft first if you want to keep it.",
+        "open": "Open the draft",
+        "clear": "Start a new email"
+      }
+    },
+    "sent": {
+      "title": "Sent",
+      "subtitle": "Every FriendingGO direct email and newsletter, newest first, including drafts. Open one to see who it went to and whether it was delivered.",
+      "failures": {
+        "invalid": "Core refused this request.",
+        "unavailable": "FriendingGO campaigns are not available in Core right now.",
+        "error": "The campaigns could not be loaded."
+      },
+      "list": {
+        "title": "Campaigns",
+        "copy": "Fifty per page, newest first.",
+        "empty": "No FriendingGO email has been written yet.",
+        "subject": "Subject",
+        "kind": "Type",
+        "audience": "Audience",
+        "sentBy": "Sent by",
+        "when": "When",
+        "counts": "Emailed / left out",
+        "countsValue": "{queued} / {suppressed}",
+        "editDraft": "Edit draft"
+      },
+      "audience": {
+        "allActive": "Everyone active",
+        "allActiveCount": "Everyone active ({count})",
+        "selected": "{count, plural, one {# selected person} other {# selected people}}"
+      },
+      "detail": {
+        "title": "Campaign",
+        "subtitle": "{kind} · {when}",
+        "back": "Back to campaigns",
+        "state": "State",
+        "createdBy": "Created by",
+        "countsLabel": "Recipients",
+        "deliveryLabel": "Delivery",
+        "draftNote": "This is a draft: nobody has been emailed yet.",
+        "content": "Content",
+        "contentFrame": "Stored content: {subject}",
+        "contentHint": "The stored body, without the FriendingGO layout. Merge tags are shown as written; each person got their own first name and city."
+      },
+      "counts": {
+        "selected": "Selected",
+        "queued": "Emailed",
+        "suppressed": "Left out"
+      },
+      "recipients": {
+        "title": "Recipients",
+        "copy": "Fifty per page. Delivery is read from the email delivery log, which keeps each email for 30 days.",
+        "empty": "Nobody is recorded for this campaign.",
+        "state": "Recipient",
+        "delivery": "Delivery",
+        "deliveredAt": "Delivered",
+        "queued": "Emailed",
+        "suppressed": "Left out"
+      }
+    }
   }
 }

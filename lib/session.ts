@@ -17,6 +17,7 @@ import {
   personaCapabilityAllows,
 } from "@/lib/personaAdmin";
 import { verificationAdminMe } from "@/lib/verificationAdmin";
+import { friendingGoConsoleReady } from "@/lib/friendinggo";
 import {
   verificationMethodAccess,
   verificationMethodAdminMe,
@@ -54,6 +55,11 @@ export type AdminIdentity = {
    * the retired `admin_me.verification_forced` block.
    */
   verificationMethod: VerificationMethodAccess;
+  /**
+   * D-153 FriendingGO preorders, from Core's `admin_me.friendinggo` block ONLY: exactly
+   * `{ready: true, contract_version: 1}`. A Core without the block keeps the section away.
+   */
+  friendingGoConsoleReady: boolean;
 };
 
 export type AdminWriter =
@@ -131,6 +137,7 @@ export async function adminMe(signal?: AbortSignal): Promise<AdminIdentity | nul
       && profileTextModeration?.contract_ready === true
       && profileTextModeration.actions.includes("moderation_profile_text_list"),
     verificationMethod: verificationMethodAccess(verificationMethodAdminMe(data.verification_method)),
+    friendingGoConsoleReady: friendingGoConsoleReady(data),
   };
 }
 

@@ -65,6 +65,14 @@ when it held a message back, and tells the last complete poll (`synced_at`) from
 (`sync_failed_at`). The bridge forwards only the parsed answer, and a viewer never receives
 unmasked recipient addresses.
 
+FriendingGO (`/friendinggo`, D-153) lists the preorder sign-ups of friending.com/go and sends them
+direct email and newsletters through Core's five `go_*` Webadmin routes. It exists only while Core
+serves `admin_me.friendinggo` `{ready: true, contract_version: 1}`. The bridge forwards each route's
+closed fields with `contract_version=1` and only the parsed answer back; a viewer never receives an
+unmasked address or phone number. Every status change and send carries a caller-minted request id kept
+in `sessionStorage` until its outcome is known, and an unknown outcome is retried with the same id. The
+CSV export is its own write route (`/api/admin/go-preorders-export`) with a formula-injection guard.
+
 Do not reintroduce AYI/Are You In, Deplug, curated activities/events, event creation/joining,
 waiting room, mandatory walkthrough, or other retired Friending surfaces. Persona verification is
 in scope only through its reviewed Core contract and dedicated operations surfaces.

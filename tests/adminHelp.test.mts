@@ -75,8 +75,9 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // D-149 (T-908) adds the AreYouIn corrections queue: 46 live guides plus the same two redirects.
   // The Freelove port adds Email delivery: 47 live guides plus the same two redirects.
   // Research follow-ups (owner request 2026-11-03) add the manual-check page: 48 live guides plus the same two redirects.
-  assert.equal(actualRoutes.length, 50, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 48, "review the live-screen census");
+  // D-153 (T-937) adds the three FriendingGO tabs (Preorders, Email, Sent): 51 live guides plus the same two redirects.
+  assert.equal(actualRoutes.length, 53, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 51, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -163,7 +164,8 @@ test("every inventoried functional section has detailed English and Hungarian he
   // and the three topics of the corrections queue (3) (291).
   // The Email delivery page (Freelove port) adds its filters, summary and list (294).
   // The research follow-ups page adds its filters, its rows and the Done / Dismiss / Reopen states (297).
-  assert.equal(totalSections, 297, "review the functional-section census when the UI changes");
+  // D-153 (T-937) adds FriendingGO: Preorders 5, Email 6, Sent 2 (310).
+  assert.equal(totalSections, 310, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
@@ -409,6 +411,7 @@ test("the authenticated shell always renders the visible accessible Help control
   assert.match(shell, /verificationConsoleReady=\{verificationConsoleReady\}/);
   assert.match(shell, /audienceVisibilityConsoleReady=\{audienceVisibilityConsoleReady\}/);
   assert.match(shell, /profileTextModerationConsoleReady=\{profileTextModerationConsoleReady\}/);
+  assert.match(shell, /friendingGoConsoleReady=\{friendingGoConsoleReady\}/);
   assert.match(component, /aria-haspopup="dialog"/);
   assert.match(component, /aria-modal="true"/);
   assert.match(component, /<HelpIcon \/>/);
@@ -438,6 +441,7 @@ const ALL_READY: AdminHelpConsoleReadiness = {
   verificationConsoleReady: true,
   audienceVisibilityConsoleReady: true,
   profileTextModerationConsoleReady: true,
+  friendingGoConsoleReady: true,
 };
 
 test("every help entry declares the same readiness its route checks", async () => {
@@ -489,6 +493,10 @@ test("a guide is withheld exactly while its screen refuses to render", () => {
     ["/persona", "personaConsoleReady"],
     ["/verification", "verificationConsoleReady"],
     ["/audience-visibility", "audienceVisibilityConsoleReady"],
+    // D-153: the three FriendingGO tabs, while Core serves admin_me.friendinggo.
+    ["/friendinggo", "friendingGoConsoleReady"],
+    ["/friendinggo/email", "friendingGoConsoleReady"],
+    ["/friendinggo/sent", "friendingGoConsoleReady"],
   ] as const) {
     assert.ok(adminHelpGuideForPath(route, ALL_READY), `${route} must guide a ready operator`);
     assert.equal(
@@ -505,6 +513,7 @@ test("a guide is withheld exactly while its screen refuses to render", () => {
       verificationConsoleReady: false,
       audienceVisibilityConsoleReady: false,
       profileTextModerationConsoleReady: false,
+      friendingGoConsoleReady: false,
     })?.key,
     "users",
   );

@@ -15651,3 +15651,201 @@ fieldset.dates-external-fields {
     font-size: 22px;
   }
 }
+
+/* FriendingGO preorders, email and sent campaigns (D-153, T-937) */
+.friendinggo-tabs {
+  display: flex;
+  gap: 7px;
+  margin: -8px 0 24px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--bg-soft);
+}
+
+.friendinggo-tabs a {
+  min-width: max-content;
+  padding: 9px 15px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.friendinggo-tabs a:hover { color: var(--text-soft); }
+.friendinggo-tabs a.active { background: var(--accent-soft); color: var(--accent); }
+
+.badge.friendinggo-badge-danger {
+  border-color: rgba(255, 90, 105, 0.3);
+  background: var(--danger-soft);
+  color: #f68a96;
+}
+
+.badge.friendinggo-badge-danger::before { background: var(--danger); }
+
+.friendinggo-pending {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.friendinggo-filter-bar { grid-template-columns: minmax(240px, 1.6fr) minmax(170px, 0.7fr) auto; }
+.friendinggo-filter-bar .row-actions { flex-wrap: nowrap; }
+.friendinggo-body.is-refreshing,
+.friendinggo-panel.is-refreshing { opacity: 0.6; transition: opacity 0.2s; }
+.friendinggo-read-only { margin-top: 0; }
+
+.stat-grid.friendinggo-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.stat-grid.friendinggo-delivery-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.stat-grid.friendinggo-counts { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+.friendinggo-stats .stat-card,
+.friendinggo-delivery-stats .stat-card,
+.friendinggo-counts .stat-card { min-height: 0; }
+.friendinggo-stats .stat-value,
+.friendinggo-delivery-stats .stat-value,
+.friendinggo-counts .stat-value { font-size: 26px; }
+
+.friendinggo-panel { margin-bottom: 18px; }
+.friendinggo-panel .table-wrap { border: 0; border-radius: 0; }
+.friendinggo-panel .empty-state { border: 0; }
+
+.friendinggo-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.friendinggo-bulk > span { color: var(--muted); font-weight: 600; }
+.friendinggo-locked { display: block; max-width: 260px; color: var(--muted); white-space: normal; line-height: 1.4; }
+
+.friendinggo-pagination {
+  margin: 0;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.friendinggo-email-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.friendinggo-side { display: grid; gap: 18px; }
+.friendinggo-form { display: grid; gap: 16px; }
+
+.friendinggo-fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.friendinggo-fieldset legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.friendinggo-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.friendinggo-choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.friendinggo-choice.is-selected { border-color: var(--accent); background: var(--accent-soft); }
+.friendinggo-choice input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.friendinggo-choice span { display: grid; gap: 4px; }
+.friendinggo-choice small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.friendinggo-fieldset:disabled .friendinggo-choice { cursor: default; opacity: 0.7; }
+
+.friendinggo-audience-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 14px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.friendinggo-label-row { display: flex; justify-content: space-between; gap: 12px; }
+.friendinggo-label-row small { color: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.friendinggo-body-input { min-height: 280px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; }
+
+.friendinggo-merge-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.friendinggo-merge-tags code { font-size: 12px; }
+.friendinggo-problems { display: grid; gap: 4px; margin: 0; padding-left: 30px; }
+.friendinggo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.friendinggo-preview-body.is-stale .friendinggo-counts,
+.friendinggo-preview-body.is-stale .friendinggo-email-frame { opacity: 0.45; }
+.friendinggo-preview-body > .alert { margin-bottom: 12px; }
+.friendinggo-envelope { margin-bottom: 12px; }
+
+.friendinggo-email-frame {
+  display: block;
+  width: 100%;
+  min-height: 640px;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: #faf8f2;
+}
+
+.friendinggo-email-frame.is-content { min-height: 320px; background: #fff; }
+
+.friendinggo-draft-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.friendinggo-draft-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.friendinggo-draft-list li.is-open { border-color: var(--accent); }
+.friendinggo-draft-list strong { overflow-wrap: anywhere; }
+
+.friendinggo-content { margin-bottom: 18px; }
+.friendinggo-content summary { padding: 16px 22px; color: var(--text-soft); font-weight: 700; cursor: pointer; }
+.friendinggo-source { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+@media (max-width: 1180px) {
+  .friendinggo-email-layout { grid-template-columns: 1fr; }
+  .stat-grid.friendinggo-delivery-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1120px) {
+  .friendinggo-filter-bar { grid-template-columns: 1fr 1fr; }
+  .stat-grid.friendinggo-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .friendinggo-filter-bar,
+  .friendinggo-choices { grid-template-columns: 1fr; }
+  .friendinggo-filter-bar .row-actions { flex-wrap: wrap; }
+  .stat-grid.friendinggo-stats,
+  .stat-grid.friendinggo-delivery-stats,
+  .stat-grid.friendinggo-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .friendinggo-email-frame { min-height: 520px; }
+}

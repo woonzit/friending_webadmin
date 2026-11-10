@@ -13,7 +13,7 @@ import { PROFILE_TEXT_MODERATION_CONTRACT_READY } from "@/lib/contractReadiness"
 import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationNotice";
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail" | "friendingGo";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -47,6 +47,8 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   // Freelove port 2026-11-02: when each email (sign-in codes first) reached the inbox, beside the
   // support inbox where "my code never arrived" is reported.
   { href: "/mail-delivery", key: "mailDelivery", icon: "mail" },
+  // D-153: FriendingGO preorder sign-ups and the email sent to them, while Core serves admin_me.friendinggo.
+  { href: "/friendinggo", key: "friendingGo", icon: "friendingGo" },
   { href: "/help-cms", key: "helpCms", icon: "audit" },
   { href: "/configuration", key: "configuration", icon: "config" },
   { href: "/app-review", key: "appReview", icon: "appReview" },
@@ -97,6 +99,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   audit: <><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></>,
   // An envelope with a clock hand: when an email arrived, not the support conversation (`chat`).
   mail: <><path d="M14 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5"/><path d="m3 7 9 6 9-6"/><circle cx="18" cy="17.5" r="3.5"/><path d="M18 16v1.5l1 1"/></>,
+  // A cat's head: the FriendingGO cat tag people preorder.
+  friendingGo: <><path d="M5 12V4l4.5 3.5h5L19 4v8a7 7 0 0 1-14 0Z"/><path d="M9.5 12h.01M14.5 12h.01"/><path d="m11 15 1 .8 1-.8"/></>,
 };
 
 function NavIcon({ name }: { name: IconName }) {
@@ -113,6 +117,7 @@ export default function Shell({
   verificationConsoleReady,
   audienceVisibilityConsoleReady,
   profileTextModerationConsoleReady,
+  friendingGoConsoleReady,
   children,
 }: {
   adminEmail: string;
@@ -120,6 +125,7 @@ export default function Shell({
   verificationConsoleReady: boolean;
   audienceVisibilityConsoleReady: boolean;
   profileTextModerationConsoleReady: boolean;
+  friendingGoConsoleReady: boolean;
   children: React.ReactNode;
 }) {
   const nav = useTranslations("nav");
@@ -168,7 +174,8 @@ export default function Shell({
             && (item.key !== "persona" || personaConsoleReady)
             && (item.key !== "verificationSettings" || verificationConsoleReady)
             && (item.key !== "audienceVisibility" || audienceVisibilityConsoleReady)
-            && (item.key !== "textModeration" || profileTextModerationConsoleReady)).map((item) => {
+            && (item.key !== "textModeration" || profileTextModerationConsoleReady)
+            && (item.key !== "friendingGo" || friendingGoConsoleReady)).map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link
@@ -210,6 +217,7 @@ export default function Shell({
         verificationConsoleReady={verificationConsoleReady}
         audienceVisibilityConsoleReady={audienceVisibilityConsoleReady}
         profileTextModerationConsoleReady={profileTextModerationConsoleReady}
+        friendingGoConsoleReady={friendingGoConsoleReady}
       /></div>
     </div>
   );

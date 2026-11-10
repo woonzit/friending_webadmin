@@ -99,6 +99,10 @@ const RAISED_BODY_LIMITS: Partial<Record<(typeof ADMIN_ACTIONS)[number], number>
   // publication carry only a revision, so they keep the default ceiling.
   verification_method_save: 2_400_000,
   save_profile_verification_config: 512_000,
+  // D-153: a FriendingGO body of 50,000 characters and up to 5,000 recipient ids; the maximal body is
+  // built in tests/friendinggo.test.mts.
+  go_email_preview: 400_000,
+  go_email_send: 400_000,
 };
 
 test("the per-action body ceiling is raised only where it is named", () => {

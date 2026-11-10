@@ -10,6 +10,7 @@ import {
   AUDIENCE_VISIBILITY_IDENTITY_ACTIONS,
 } from "@/lib/audienceVisibilityAdmin";
 import { FEATURE_SWITCHES_ACTIONS } from "@/lib/featureSwitches";
+import { FRIENDINGGO_ACTIONS } from "@/lib/friendinggo";
 import { INTO_TAG_MODERATION_ACTIONS } from "@/lib/intoTagModeration";
 import { MODE_CARDS_ACTIONS } from "@/lib/modeCards";
 import { SECTION_TEASERS_ACTIONS } from "@/lib/sectionTeasers";
@@ -245,6 +246,7 @@ export const ADMIN_ACTIONS = [
   ...ACTIVE_APPEARANCE_ACTIONS,
   ...ACTIVE_MODE_CARDS_ACTIONS,
   ...ACTIVE_SECTION_TEASERS_ACTIONS,
+  ...FRIENDINGGO_ACTIONS,
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
@@ -559,6 +561,17 @@ export const ADMIN_ACTION_ACCESS = {
     section_teasers_get: "read",
     save_section_teasers: "write",
 
+  // D-153 FriendingGO preorders. The bridge also requires Core's `admin_me.friendinggo` block. The list
+  // and the preview are Core reads any active administrator may run (a viewer gets masked addresses and
+  // phones, and the bridge refuses an answer that does not mask them); a status change and every send
+  // mode (test, draft, send) are Core writes for `owner`/`admin`. The CSV export is a write too, but it
+  // never travels as an action: it has its own route, and `export` is refused here.
+  go_preorders: "read",
+  go_preorder_set_status: "write",
+  go_email_preview: "read",
+  go_email_send: "write",
+  go_email_campaigns: "read",
+
   admin_me: "read",
   dates_activity_list: "dates_read",
   dates_activity_detail: "dates_read",
@@ -736,6 +749,12 @@ const VERIFICATION_METHOD_BODY_LIMIT_BYTES = 2_400_000;
 // Core accepts 100 gestures with bilingual titles (180) and subtitles (700).
 // Maximum-length Hungarian text alone takes the catalogue past the default ceiling.
 const PROFILE_VERIFICATION_CONFIG_BODY_LIMIT_BYTES = 512_000;
+/**
+ * D-153. A FriendingGO preview or send carries a body of up to 50,000 characters (at most four bytes
+ * each, 200,000) and up to 5,000 recipient ids (27 bytes each as JSON, 135,000), plus a subject and a
+ * preheader: about 340,000 bytes at the caps. `tests/friendinggo.test.mts` builds that body.
+ */
+const FRIENDINGGO_EMAIL_BODY_LIMIT_BYTES = 400_000;
 
 /**
  * `save_signup_photo_config` deliberately does NOT appear below. Its `tips_json` carries at most 12
@@ -753,6 +772,8 @@ const ADMIN_ACTION_BODY_LIMIT: Readonly<Record<string, number>> = {
   appearance_rules_save: APPEARANCE_RULE_BODY_LIMIT_BYTES,
   verification_method_save: VERIFICATION_METHOD_BODY_LIMIT_BYTES,
   save_profile_verification_config: PROFILE_VERIFICATION_CONFIG_BODY_LIMIT_BYTES,
+  go_email_preview: FRIENDINGGO_EMAIL_BODY_LIMIT_BYTES,
+  go_email_send: FRIENDINGGO_EMAIL_BODY_LIMIT_BYTES,
   // A1: this is the effective guard on Apache 2.4.52 and therefore stays
   // pinned independently of the Verification capability projection.
   verification_badge_upload: MAX_VERIFICATION_BADGE_FORM_BYTES,
