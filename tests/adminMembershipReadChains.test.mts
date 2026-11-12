@@ -30,14 +30,32 @@ import { membershipClock } from "./support/adminMembershipClock.mts";
 // These are not mounted Next, real persistence or authenticated Core claims.
 const file = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const fixture = (path: string) => JSON.parse(file(`tests/fixtures/${path}.json`));
-const tree = (path: string) => ts.createSourceFile(path, file(path), ts.ScriptTarget.Latest, true);
+// Parsed and transpiled sources are kept for this file's run, keyed by the path AND the source text: the files are
+// read from disk every time, and a variant (a negative control's mutated copy) is parsed as itself, never as the
+// original. The trees are only read, never changed; every compile still runs in a fresh vm context.
+const parsedSources = new Map<string, ts.SourceFile>(), transpiledSources = new Map<string, string>();
+function parse(path: string, code: string, kind?: ts.ScriptKind): ts.SourceFile {
+  const key = `${kind ?? ""}\u0000${path}\u0000${code}`;
+  let parsed = parsedSources.get(key);
+  if (!parsed) { parsed = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true, kind); parsedSources.set(key, parsed); }
+  return parsed;
+}
+function transpile(source: string): string {
+  let output = transpiledSources.get(source);
+  if (output === undefined) {
+    output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+    transpiledSources.set(source, output);
+  }
+  return output;
+}
+const tree = (path: string) => parse(path, file(path));
 function functionSource(path: string, name: string) {
   const parsed = tree(path); let found: ts.FunctionDeclaration | undefined;
   const visit = (node: ts.Node) => { if (ts.isFunctionDeclaration(node) && node.name?.text === name) found = node; else ts.forEachChild(node, visit); };
   visit(parsed); assert.ok(found, name); return found.getText(parsed);
 }
 function compile(source: string, context: any) {
-  vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
+  vm.runInNewContext(transpile(source), context);
   return context.exports;
 }
 const caps = ["dates_external_event_manage", "dates_external_event_read", "dates_external_event_review", "dates_case_resolve"];
@@ -235,7 +253,7 @@ function assertRecoveryTopology(sources: Source[]) {
   const stateMethods = new Set(["subscribe", "getSnapshot", "getServerSnapshot", "getRecoveryEpoch", "getServerRecoveryEpoch"]);
   const calls: string[] = [], imports: string[] = [], reexports: string[] = [], observers: string[] = [], stateEffects: string[] = [];
   for (const source of sources) {
-    const parsed = ts.createSourceFile(source.path, source.code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const parsed = parse(source.path, source.code, ts.ScriptKind.TSX);
     const modulePath = (module: string) => (module.startsWith("@/") ? module.slice(2)
       : module.startsWith(".") ? posix.join(posix.dirname(source.path), module) : module).replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, "").replace(/\/index$/, "");
     const aliases = new Map(targets.map(name => [name, name]));

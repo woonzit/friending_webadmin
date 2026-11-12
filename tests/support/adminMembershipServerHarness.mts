@@ -41,22 +41,43 @@ export function serverReact(): { React: any; Flight: any } {
   }
   return rsc;
 }
-export async function serverModule(path: string, overrides: Record<string, unknown>) {
-  const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+type CompiledModule = { imports: { module: string; names: { local: string; imported: string }[] }[]; code: string };
+/**
+ * Each module's runtime imports and transpiled body, parsed once per test process and keyed by the path AND the
+ * source text, which is read from disk on every call: an edited file is compiled again, never served stale. The
+ * imports are still resolved against each call's own context, and every call runs in a fresh vm context.
+ */
+const compiledModules = new Map<string, CompiledModule>();
+export function compiledModule(path: string, source: string): CompiledModule {
+  const key = `${path}\u0000${source}`;
+  const known = compiledModules.get(key);
+  if (known) return known;
   const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-  const context: Record<string, any> = { exports: {}, Buffer, JSON, Object, File, FormData, URLSearchParams, AbortSignal, React, crypto: globalThis.crypto, NextRequest: class {},
-    process: { env: { WEBADMIN_SESSION_SECRET: secret } }, ...overrides };
+  const imports: CompiledModule["imports"] = [];
   for (const node of tree.statements) {
     if (!ts.isImportDeclaration(node) || node.importClause?.isTypeOnly || !node.importClause?.namedBindings || !ts.isNamedImports(node.importClause.namedBindings)) continue;
-    const module = (node.moduleSpecifier as ts.StringLiteral).text;
-    const missing = node.importClause.namedBindings.elements.filter((item) => !item.isTypeOnly && context[item.name.text] === undefined);
+    imports.push({ module: (node.moduleSpecifier as ts.StringLiteral).text, names: node.importClause.namedBindings.elements
+      .filter((item) => !item.isTypeOnly).map((item) => ({ local: item.name.text, imported: item.propertyName?.text ?? item.name.text })) });
+  }
+  const body = tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n");
+  const code = ts.transpileModule(body, { fileName: path, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText;
+  const compiled = { imports, code };
+  compiledModules.set(key, compiled);
+  return compiled;
+}
+export async function serverModule(path: string, overrides: Record<string, unknown>) {
+  const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
+  const compiled = compiledModule(path, source);
+  const context: Record<string, any> = { exports: {}, Buffer, JSON, Object, File, FormData, URLSearchParams, AbortSignal, React, crypto: globalThis.crypto, NextRequest: class {},
+    process: { env: { WEBADMIN_SESSION_SECRET: secret } }, ...overrides };
+  for (const { module, names } of compiled.imports) {
+    const missing = names.filter((item) => context[item.local] === undefined);
     if (!missing.length) continue;
     assert.ok(module.startsWith("@/lib/"), `unreviewed runtime dependency ${module}`);
     const actual = await import(new URL(`../../${module.slice(2)}.ts`, import.meta.url).href);
-    for (const item of missing) context[item.name.text] = actual[item.propertyName?.text ?? item.name.text];
+    for (const item of missing) context[item.local] = actual[item.imported];
   }
-  const body = tree.statements.filter((node) => !ts.isImportDeclaration(node)).map((node) => node.getText(tree)).join("\n");
-  vm.runInNewContext(ts.transpileModule(body, { fileName: path, compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText, context);
+  vm.runInNewContext(compiled.code, context);
   return context.exports;
 }
 export async function sessionHarness(answer: MembershipCase) {
