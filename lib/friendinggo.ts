@@ -53,7 +53,6 @@ export const FRIENDINGGO_AUDIENCES = ["selected", "all_active"] as const;
 export type FriendingGoAudience = (typeof FRIENDINGGO_AUDIENCES)[number];
 /** `resume` (Core round 3) finishes a `sending` campaign whose own request is gone, under a fresh request id. */
 export const FRIENDINGGO_SEND_MODES = ["test", "send", "save_draft", "resume"] as const;
-export type FriendingGoSendMode = (typeof FRIENDINGGO_SEND_MODES)[number];
 export const FRIENDINGGO_RECIPIENT_STATES = ["queued", "suppressed"] as const;
 export type FriendingGoRecipientState = (typeof FRIENDINGGO_RECIPIENT_STATES)[number];
 

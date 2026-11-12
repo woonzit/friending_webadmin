@@ -4,8 +4,7 @@ import {
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 
-/** Accepted D-019 Core ↔ Webadmin contract, including lead amendments A1–A6. */
-export const AUDIENCE_VISIBILITY_CONTRACT_VERSION = 1 as const;
+// Accepted D-019 Core ↔ Webadmin contract v1, including lead amendments A1–A6.
 export const AUDIENCE_VISIBILITY_GENDERS = ["man", "woman", "nonbinary"] as const;
 export const AUDIENCE_VISIBILITY_VALUES = ["male", "female", "both"] as const;
 export const AUDIENCE_VISIBILITY_CAPABILITIES = [

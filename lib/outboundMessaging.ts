@@ -10,7 +10,6 @@ import {
 
 /** Closed browser model for the accepted outbound-messaging contract v1. */
 
-export const OUTBOUND_MESSAGING_CONTRACT_VERSION = 1 as const;
 export const OUTBOUND_MESSAGING_MAX_RECIPIENTS = 100;
 export const OUTBOUND_MESSAGING_HISTORY_PAGE_SIZE = 25;
 export const OUTBOUND_MESSAGING_PREVIEW_SECONDS = 300;
@@ -61,11 +60,9 @@ export const OUTBOUND_MESSAGING_FAILURE_REASONS = [
 ] as const;
 export const OUTBOUND_MESSAGING_PUSH_MODES = ["fcm", "onesignal", "both"] as const;
 
-export type OutboundMessagingAction = (typeof OUTBOUND_MESSAGING_ACTIONS)[number];
 export type OutboundMessagingChannel = (typeof OUTBOUND_MESSAGING_CHANNELS)[number];
 export type OutboundChannelAvailability = (typeof OUTBOUND_MESSAGING_AVAILABILITY)[number];
 export type OutboundMessagingCapability = (typeof OUTBOUND_MESSAGING_CAPABILITIES)[number];
-export type OutboundMessageOutcome = (typeof OUTBOUND_MESSAGING_OUTCOMES)[number];
 export type OutboundHistoryStatus = (typeof OUTBOUND_MESSAGING_HISTORY_STATUSES)[number];
 export type OutboundSkippedReason = (typeof OUTBOUND_MESSAGING_SKIPPED_REASONS)[number];
 export type OutboundFailureReason = (typeof OUTBOUND_MESSAGING_FAILURE_REASONS)[number];

@@ -47,7 +47,6 @@ export const FRIENDING_START_POLICY_REVISION_MAX = 2_147_483_647 as const;
 /** The saver's e-mail, bounded as Core bounds an actor: UTF-8 bytes. */
 export const FRIENDING_START_POLICY_ACTOR_MAX_BYTES = 320 as const;
 
-export type FriendingStartPolicyAction = (typeof FRIENDING_START_POLICY_ACTIONS)[number];
 export type FriendingStartMethod = (typeof FRIENDING_START_METHODS)[number];
 
 /** What the operator edits: the two switches and nothing else. */

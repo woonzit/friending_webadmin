@@ -159,9 +159,7 @@ function reviewConsistent(row: { external_event_id: string; admin_review?: Dates
 // is absent: absent means "not AI-assisted" (`ai_assisted !== true`).
 const rowGuard = object({ ...rowShape, ai_assisted: optional(bool), ...reviewShape });
 export type DatesExternalRow = Parsed<typeof rowGuard>;
-/** The intake an event was published from, as Core's ledger recorded it: never the provider, never a person. */
 const intakeReferenceGuard = object({ intake_id: id("xin"), channel: oneOf(DATES_INTAKE_CHANNELS), event_index: integer(0) });
-export type DatesExternalIntakeReference = Parsed<typeof intakeReferenceGuard>;
 
 const envelope = { success: literal(true), status_code: literal(200), message: literal(200), status: literal(200), can_send: literal(0), server_now: epoch };
 const placeText = (minimum: number, maximum: number): Guard<string> => (value): value is string => text(minimum, maximum)(value)

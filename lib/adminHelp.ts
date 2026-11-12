@@ -587,8 +587,6 @@ export const ADMIN_HELP_PAGES = [
   },
 ] as const satisfies readonly AdminHelpPage[];
 
-export type AdminHelpPageKey = (typeof ADMIN_HELP_PAGES)[number]["key"];
-
 /**
  * Retired route files that only `redirect()` to a live screen (D-052/T-468).
  * They keep a place in the route census, but not a guide of their own: a guide

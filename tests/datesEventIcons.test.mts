@@ -13,7 +13,7 @@ import {
 } from "../lib/datesEventIconEditor.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { projectDatesAdminBody } from "../lib/datesAdminProjection.ts";
-import { EventIconPin } from "../components/DatesEventIconsConfiguration.tsx";
+import { EventIconPin } from "../components/DatesPinControls.tsx";
 
 // GENUINE: the bodies Core 81b7161b answered on the two icon routes (tests/fixtures/dates_event_icons_wire/provenance.txt).
 // Every use below goes through the bridge's projection first, as the browser receives them.

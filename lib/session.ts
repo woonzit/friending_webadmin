@@ -32,7 +32,6 @@ import {
 } from "@/lib/sessionCodec";
 
 export const ADMIN_COOKIE = "flwa_session";
-export { SESSION_MAX_AGE_SECONDS as COOKIE_MAX_AGE };
 
 export type AdminIdentity = {
   email: string;

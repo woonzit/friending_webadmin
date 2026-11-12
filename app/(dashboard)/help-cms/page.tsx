@@ -16,7 +16,6 @@ import {
   localesWire,
   type HelpArticle,
   type HelpBlock,
-  type HelpCategory,
   type HelpCmsPayload,
   type HelpLocale,
   type HelpRun,

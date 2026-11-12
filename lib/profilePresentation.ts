@@ -61,11 +61,6 @@ export type PresentationSourceIssue = {
  * empty PHP array) rather than being omitted; the parser reads absent, `[]` and
  * `{}` as the same "no vocabulary".
  */
-export type PresentationOptionVocabulary = {
-  labels: Record<string, LocalizedText>;
-  icons: Record<string, ManagedIcon>;
-};
-
 export type PresentationOptionRow = {
   key: string;
   labels: LocalizedText;

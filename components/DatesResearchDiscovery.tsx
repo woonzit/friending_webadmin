@@ -7,7 +7,7 @@ import { DATES_RESEARCH_DOMAIN_TYPES, type ResearchArea, type ResearchDefaults, 
   type ResearchEstimate, type ResearchLimits, type ResearchModelOptions, type ResearchModels } from "@/lib/datesResearchAdmin";
 import { researchAuditReason, researchDomainDraftIssues, researchDomainsValid } from "@/lib/datesResearchProxy";
 import { researchCost, researchDefaultValues } from "@/lib/datesResearchView";
-import { formatDate, formatNumber } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 
 type PolicyDraft = { research_models: ResearchModels; domains: ResearchDomain[] };
 const policyDraft = (row: ResearchDefaults): PolicyDraft => ({ research_models: { ...row.research_models ?? { openai: "", gemini: "" } }, domains: row.domains?.rows.map((entry) => ({ ...entry })) ?? [] });

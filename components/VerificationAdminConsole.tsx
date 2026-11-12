@@ -8,7 +8,6 @@ import VerificationMethodScopesTable from "@/components/VerificationMethodScopes
 import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import { type VerificationMethodAccess } from "@/lib/verificationMethod";
 import {
-  VERIFICATION_BADGE_SLOTS,
   VERIFICATION_FEATURE_KEYS,
   VERIFICATION_GATE_VARIANTS,
   VERIFICATION_LEVELS,

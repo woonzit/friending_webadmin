@@ -4,8 +4,7 @@ import {
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 
-/** Accepted Verification Policy v1 contract. Every vocabulary is closed. */
-export const VERIFICATION_CONTRACT_VERSION = 1 as const;
+// Accepted Verification Policy v1 contract. Every vocabulary is closed.
 export const VERIFICATION_METHODS = ["video", "persona"] as const;
 
 /**
@@ -100,7 +99,6 @@ export type VerificationLevel = (typeof VERIFICATION_LEVELS)[number];
 export type VerificationRequirement = (typeof VERIFICATION_REQUIREMENTS)[number];
 export type VerificationEffectiveRequirement = (typeof VERIFICATION_EFFECTIVE_REQUIREMENTS)[number];
 export type VerificationScopeKind = (typeof VERIFICATION_SCOPE_KINDS)[number];
-export type VerificationScopeFilter = (typeof VERIFICATION_SCOPE_FILTERS)[number];
 export type VerificationPolicyOperation = (typeof VERIFICATION_POLICY_OPERATIONS)[number];
 export type VerificationGateVariant = (typeof VERIFICATION_GATE_VARIANTS)[number];
 export type VerificationBadgeSlot = (typeof VERIFICATION_BADGE_SLOTS)[number];

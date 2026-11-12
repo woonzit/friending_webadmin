@@ -6,7 +6,6 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 /** Closed browser model for the canned-template Webadmin contract v1. */
 
-export const CANNED_TEMPLATE_CONTRACT_VERSION = 1 as const;
 export const CANNED_TEMPLATE_PAGE_SIZE = 50;
 
 export const CANNED_TEMPLATE_ACTIONS = [
@@ -21,7 +20,6 @@ export const CANNED_TEMPLATE_CAPABILITIES = [
   "canned_templates_write",
 ] as const;
 
-export type CannedTemplateAction = (typeof CANNED_TEMPLATE_ACTIONS)[number];
 export type CannedTemplateChannel = (typeof CANNED_TEMPLATE_CHANNELS)[number];
 export type CannedTemplateCapability = (typeof CANNED_TEMPLATE_CAPABILITIES)[number];
 export type CannedTemplateFormat = "sanitized_html" | "plain_text";

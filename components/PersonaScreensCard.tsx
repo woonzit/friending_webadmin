@@ -261,9 +261,6 @@ export default function PersonaScreensCard({ projection, locked }: Props) {
     [draft],
   );
   const issues = useMemo(() => (draft ? personaScreensDraftIssues(draft) : []), [draft]);
-  const dirty = console_ !== null
-    && document_ !== null
-    && !personaScreensDocumentsEqual(document_.copy_default, console_.copy_default);
   const editable = access.editable && !locked && !busy;
 
   function patch(screen: PersonaScreenKey, slot: PersonaScreenSlot, value: string) {

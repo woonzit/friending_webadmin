@@ -4,8 +4,7 @@ import {
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 
-/** Accepted T-214 Core ↔ Webadmin contract v1, including lead amendments A1–A7. */
-export const PROFILE_TEXT_MODERATION_CONTRACT_VERSION = 1 as const;
+// Accepted T-214 Core ↔ Webadmin contract v1, including lead amendments A1–A7.
 export const PROFILE_TEXT_MODERATION_FIELDS = ["headline", "about_me"] as const;
 export const PROFILE_TEXT_MODERATION_STATUSES = ["pending", "accepted", "denied"] as const;
 export const PROFILE_TEXT_MODERATION_DECISIONS = ["accepted", "denied"] as const;

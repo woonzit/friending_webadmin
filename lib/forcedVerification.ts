@@ -1,7 +1,5 @@
 import { getCountryDataList } from "countries-list";
-import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 import { wellFormedUtf16 } from "@/lib/appearanceRules";
-import { webadminDataSuccessEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
 /**
  * Mandatory verification + Waiting Room — the SHARED presentation layer of the
@@ -125,7 +123,6 @@ export function forcedStorefrontName(alpha3: string, locale: string): string {
  * edge it is also boundary whitespace, and the control refusal is reported first.
  */
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/;
-const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
 /**
  * PHP `trim()` strips only `" \t\n\r\0\x0B"`. JavaScript's `String.prototype.trim()`

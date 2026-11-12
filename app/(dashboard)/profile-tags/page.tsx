@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 import ProfileIconUploadField from "@/components/ProfileIconUploadField";

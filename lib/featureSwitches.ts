@@ -4,8 +4,7 @@ import {
   webadminErrorEnvelope,
 } from "@/lib/webadminEnvelope";
 
-/** Accepted Webadmin feature-switch family contract v1 (T-126, widened by T-659). */
-export const FEATURE_SWITCHES_CONTRACT_VERSION = 1 as const;
+// Accepted Webadmin feature-switch family contract v1 (T-126, widened by T-659).
 export const FEATURE_SWITCHES = ["hey", "footprints", "likes"] as const;
 export const FEATURE_SWITCHES_CAPABILITIES = [
   "feature_switches_read",

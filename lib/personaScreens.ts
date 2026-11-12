@@ -125,7 +125,6 @@ export const PERSONA_SCREENS_SAVED_KEYS = ["revision", "copy_default"] as const;
 export const PERSONA_SCREENS_REFERENCE_AUTHORITY = "ios:Localizable.strings:verification.screen.*";
 
 export const PERSONA_SCREENS_UNAVAILABLE_ERROR = "persona-screens-unavailable";
-export const PERSONA_SCREENS_CONFLICT_ERROR = "persona-screens-conflict";
 
 // ---------------------------------------------------------------------------
 // Types

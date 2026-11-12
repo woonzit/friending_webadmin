@@ -86,8 +86,6 @@ export type FootprintReportStatus = "open" | "resolved";
 export const FOOTPRINT_REPORT_NOTE_MAX = 500;
 /** The resolution note bound (`ModerationPolicy::normalizeReason`, 300 code points). */
 export const FOOTPRINT_RESOLUTION_NOTE_MAX = 300;
-/** `FootprintReportPolicy::MAX_QUEUE_LIMIT`; the console asks for smaller pages. */
-export const FOOTPRINT_REPORT_MAX_PAGE = 100;
 export const FOOTPRINT_REPORT_PAGE_SIZE = 50;
 
 export type FootprintState = {

@@ -25,7 +25,6 @@ import {
   waitingRoomHelpUrlDraftIssue,
   waitingRoomTextLength,
   type WaitingRoomCopy,
-  type WaitingRoomCopyDraft,
   type WaitingRoomCopyField,
   type WaitingRoomCopyKey,
   type WaitingRoomLocale,

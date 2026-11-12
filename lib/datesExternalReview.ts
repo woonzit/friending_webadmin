@@ -1,6 +1,6 @@
 import { createAdminIdempotencyKey } from "@/lib/datesAdmin";
 import {
-  DATES_EXTERNAL_CORRECTION_FIELDS, datesCommandOutcome, datesExternalRecheckInstructions, decodeDatesExternalCorrectionDecision,
+  datesCommandOutcome, datesExternalRecheckInstructions, decodeDatesExternalCorrectionDecision,
   decodeDatesExternalRecheckReceipt, decodeDatesExternalReviewReceipt, type DatesCommandOutcome, type DatesExternalCorrection,
   type DatesExternalCorrectionField, type DatesExternalRecheckReceipt, type DatesExternalReviewCommand, type DatesExternalRow,
 } from "@/lib/datesExternalAdmin";
@@ -194,9 +194,4 @@ export function datesExternalCorrectionPrefill(input: DatesExternalEditorInput, 
   }
   return { draft, applied, unapplied, venue: has("venue") && typeof proposed.venue === "string" ? proposed.venue : null,
     status: has("status") && typeof proposed.status === "string" ? proposed.status : null };
-}
-
-/** The proposed facts of a correction, in the member wire's order. */
-export function datesExternalCorrectionProposedFields(correction: DatesExternalCorrection): DatesExternalCorrectionField[] {
-  return DATES_EXTERNAL_CORRECTION_FIELDS.filter((key) => Object.hasOwn(correction.proposed, key));
 }

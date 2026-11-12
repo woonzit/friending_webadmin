@@ -9,8 +9,7 @@ import {
   type VerificationUserProjection,
 } from "@/lib/verificationAdmin";
 
-/** Accepted T-125 admin-granted verification contract v1. */
-export const ADMIN_GRANTED_VERIFICATION_CONTRACT_VERSION = 1 as const;
+// Accepted T-125 admin-granted verification contract v1.
 export const ADMIN_GRANTED_VERIFICATION_ACTIONS = [
   "verification_grant",
   "verification_revoke",

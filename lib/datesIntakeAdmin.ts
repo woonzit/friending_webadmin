@@ -117,8 +117,6 @@ export const DATES_INTAKE_MAX_IMAGES = 2;
 export const DATES_INTAKE_MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export const DATES_INTAKE_MAX_TEXT_GRAPHEMES = 500;
 export const DATES_INTAKE_MAX_URL_LENGTH = 2048;
-/** Core keeps a review lease for five minutes; the console renews it well inside that. */
-export const DATES_INTAKE_LEASE_SECONDS = 300;
 export const DATES_INTAKE_HEARTBEAT_SECONDS = 120;
 
 type Guard<T> = (value: unknown) => value is T;
@@ -336,8 +334,6 @@ const placeShape = { place_id: nullable(string(512)), name: nullable(string()), 
   timezone: nullable(string(80)) };
 const venueGuard = bound({ ...placeShape, website_domain: nullable(string(253)), business_status: nullable(string(64)) });
 const candidateGuard = bound({ ...placeShape, similarity: number, public_venue_warning: bool });
-export type DatesIntakeVenue = Parsed<typeof venueGuard>;
-export type DatesIntakeVenueCandidate = Parsed<typeof candidateGuard>;
 const witness = oneOf(DATES_INTAKE_WITNESS_VERDICTS);
 const validationGuard = bound({
   hard_fails: list(oneOf(DATES_INTAKE_HARD_FAILS), 100), warnings: list(oneOf(DATES_INTAKE_WARNINGS), 100), needs_more_info: bool,
@@ -351,7 +347,6 @@ const validationGuard = bound({
     dropped: list(bound({ field: string(64), reason: oneOf(DATES_INTAKE_LINK_DROP_REASONS) }), 50) }),
   venue: nullable(venueGuard), venue_similarity: number, venue_candidates: list(candidateGuard, 50),
 });
-export type DatesIntakeValidation = Parsed<typeof validationGuard>;
 const evidenceState = bound({ quoted: bool, verified: bool, denotes: nullable(bool), match: nullable(oneOf(DATES_INTAKE_EVIDENCE_MATCHES)),
   source: nullable(string(64)), quote: nullable(string()), model_confidence: nullable(number), confidence: nullable(number) });
 export type DatesIntakeEvidenceState = Parsed<typeof evidenceState>;

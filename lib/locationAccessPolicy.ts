@@ -38,7 +38,6 @@ export const LOCATION_ACCESS_POLICY_REVISION_MAX = 2_147_483_647 as const;
 /** Core's `LocationAccessPolicy::MAX_ACTOR_BYTES`, measured in UTF-8 bytes. */
 export const LOCATION_ACCESS_POLICY_ACTOR_MAX_BYTES = 320 as const;
 
-export type LocationAccessPolicyAction = (typeof LOCATION_ACCESS_POLICY_ACTIONS)[number];
 export type LocationAccessPolicyFlag = (typeof LOCATION_ACCESS_POLICY_FLAGS)[number];
 
 /** What the operator edits: the two switches and nothing else. */

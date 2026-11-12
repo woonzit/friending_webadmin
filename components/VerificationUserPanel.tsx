@@ -20,7 +20,6 @@ import {
   verificationUserDetailResponse,
   type VerificationAccess,
   type VerificationGrantPreviewData,
-  type VerificationLevel,
   type VerificationPendingMutation,
   type VerificationUserProjection,
 } from "@/lib/verificationAdmin";

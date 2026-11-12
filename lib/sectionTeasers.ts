@@ -42,8 +42,6 @@ export const SECTION_TEASERS_DESCRIPTION_MAX = 400 as const;
 export const SECTION_TEASERS_AUDIT_REASON_MAX = 300 as const;
 export const SECTION_TEASERS_REVISION_MAX = 2_147_483_647 as const;
 
-export const SECTION_TEASERS_TARGET = "section_teasers:v1" as const;
-
 /**
  * `admin_me` does NOT advertise a `section_teasers` capability block, exactly as
  * it does not advertise `mode_cards`. The two names Core checks are recorded
@@ -58,7 +56,6 @@ export const SECTION_TEASERS_CORE_EDIT_CAPABILITY = "section_teasers_edit" as co
 
 export type SectionTeaserKey = (typeof SECTION_TEASER_SECTIONS)[number];
 export type SectionTeaserLanguage = (typeof SECTION_TEASER_LANGUAGES)[number];
-export type SectionTeasersAction = (typeof SECTION_TEASERS_ACTIONS)[number];
 
 export type SectionTeaserText = Record<SectionTeaserLanguage, string>;
 

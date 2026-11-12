@@ -85,7 +85,6 @@ export const PHOTO_GESTURES_MAX = 100;
 export const PHOTO_GESTURE_TITLE_MAX = 180;
 export const PHOTO_GESTURE_SUBTITLE_MAX = 700;
 export const PHOTO_GESTURE_EXAMPLE_GENDERS = ["male", "female"] as const;
-export type PhotoGestureExampleGender = (typeof PHOTO_GESTURE_EXAMPLE_GENDERS)[number];
 
 export type ProfileVerificationPhotoGesture = {
   id: string;

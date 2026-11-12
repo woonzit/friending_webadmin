@@ -4,7 +4,7 @@ import { DATES_RESEARCH_FOLLOWUP_GROUPS, DATES_RESEARCH_FOLLOWUP_LIMIT_MAX, DATE
 import { datesIntakeId, DATES_INTAKE_REJECT_REASONS } from "@/lib/datesIntakeAdmin";
 import { DATES_RESEARCH_ACTIONS, DATES_RESEARCH_MODES, DATES_RESEARCH_SOURCE_TYPES, DATES_RESEARCH_RUN_KINDS,
   DATES_RESEARCH_VALUE_FIELDS, decodeResearchOverrides, decodeResearchValues, researchId, researchInteger, researchOneOf,
-  DATES_RESEARCH_DOMAIN_TYPES, decodeResearchModels, researchRecord, researchString, type DatesResearchAction } from "@/lib/datesResearchAdmin";
+  DATES_RESEARCH_DOMAIN_TYPES, decodeResearchModels, researchRecord, researchString } from "@/lib/datesResearchAdmin";
 
 export const DATES_RESEARCH_READ_CAPABILITY = "dates_external_event_review";
 export const DATES_RESEARCH_WRITE_CAPABILITY = "dates_external_event_manage";
@@ -180,4 +180,3 @@ export function normalizeResearchBatchBody(body: Record<string, unknown>): Recor
     && keys(body.confirmations, ["source", "public_venue", "timezone", "content_safe"])
     && ["source", "public_venue", "timezone", "content_safe"].every((key) => body.confirmations && (body.confirmations as Record<string, unknown>)[key] === true) ? body : null;
 }
-export function isResearchAction(action: string): action is DatesResearchAction { return (DATES_RESEARCH_ACTIONS as readonly string[]).includes(action); }

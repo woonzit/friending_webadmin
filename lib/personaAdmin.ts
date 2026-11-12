@@ -23,8 +23,6 @@ export const PERSONA_ADMIN_ACTIONS = [
   "admin_revoke_fake_persona",
 ] as const;
 
-export type PersonaAdminAction = (typeof PERSONA_ADMIN_ACTIONS)[number];
-
 export const PERSONA_ADMIN_CAPABILITY_ACTIONS = [
   "apply_fake",
   "revoke_fake",

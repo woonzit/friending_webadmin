@@ -15,9 +15,6 @@ import {
   EVENT_ICON_REASON_MAX, EVENT_ICON_REASON_MIN, eventIconCatalog, type DatesEventIcon,
 } from "@/lib/datesEventIcons";
 
-// The pin is drawn by the controls the two catalogue editors share; it stays importable from here.
-export { EventIconPin };
-
 type ActivityType = DatesEventIcon["activity_type"];
 /** The quick colours. The first one is the default orange: it stands for "no custom colour", not for a custom orange. */
 const SWATCHES = [

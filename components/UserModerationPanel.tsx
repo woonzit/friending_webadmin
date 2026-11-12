@@ -226,7 +226,6 @@ export default function UserModerationPanel({ uid }: { uid: number }) {
     );
   }
 
-  const restricted = status.banned || status.suspended;
   const pillClass = status.banned ? "is-banned" : status.suspended ? "is-suspended" : "is-active";
   const pillLabel = status.banned ? t("stateBanned") : status.suspended ? t("stateSuspendedShort") : t("stateActive");
   const minutesValue = customOpen && customMinutes.trim() !== "" ? customMinutes.trim() : String(preset);

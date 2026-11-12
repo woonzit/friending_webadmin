@@ -43,7 +43,6 @@ export const MODE_CARDS_TARGET = "mode_cards:v1" as const;
 
 export type ModeCardKey = (typeof MODE_CARDS)[number];
 export type ModeCardLanguage = (typeof MODE_CARD_LANGUAGES)[number];
-export type ModeCardsAction = (typeof MODE_CARDS_ACTIONS)[number];
 
 export type ModeCardText = Record<ModeCardLanguage, string>;
 export type ModeCardIcon = { url: string; mime: typeof MODE_CARDS_ICON_MIME };
