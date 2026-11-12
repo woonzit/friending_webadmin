@@ -15,9 +15,14 @@ import {
   type SupportConversation,
   type SupportThreadRow,
 } from "@/lib/supportInbox";
-
-const THREAD_POLL_MS = 5_000;
-const MESSAGE_POLL_MS = 3_000;
+import {
+  latestReadGuard,
+  startSupportPoll,
+  SUPPORT_MESSAGE_POLL_MS,
+  SUPPORT_THREAD_POLL_MS,
+  type SupportPoll,
+  type SupportPollOutcome,
+} from "@/lib/supportInboxPoll";
 
 function timeLabel(timestamp: number, locale: string): string {
   if (timestamp <= 0) return "";
@@ -116,38 +121,57 @@ export default function SupportInboxPage() {
   const activeConversationLoadRef = useRef<number | null>(null);
   const selectedRef = useRef(0);
   selectedRef.current = selectedUid;
+  // lib/supportInboxPoll: one poll per stream; an explicit load puts it back to its base cadence.
+  const threadPollRef = useRef<SupportPoll | null>(null);
+  const messagePollRef = useRef<SupportPoll | null>(null);
+  const threadReads = useRef(latestReadGuard());
+  const threadsSeenRef = useRef("");
 
-  const loadThreads = useCallback(async () => {
+  const readThreads = useCallback(async (): Promise<SupportPollOutcome> => {
+    const isLatest = threadReads.current.begin();
     const response = await adminCall("support_threads", { limit: 100 });
+    // D2: an answer that lands after a newer read started is not used.
+    if (!isLatest()) return "unchanged";
     const parsed = response?.success ? supportThreads(response) : null;
     if (!parsed) {
       setState((current) => (current === "ready" ? current : "error"));
-      return;
+      return "failed";
     }
-    setMediaEnabled(supportMediaEnabled(response));
+    const media = supportMediaEnabled(response);
+    setMediaEnabled(media);
     setThreads(parsed);
     setState("ready");
+    const seen = JSON.stringify([media, parsed]);
+    const changed = seen !== threadsSeenRef.current;
+    threadsSeenRef.current = seen;
+    return changed ? "changed" : "unchanged";
   }, []);
 
-  const loadConversation = useCallback(async (uid: number, generation: number) => {
-    if (uid <= 0 || activeConversationLoadRef.current === generation) return;
+  /** Retry and the reads after a send: read now, then poll at the base cadence again. */
+  const loadThreads = useCallback(async () => {
+    threadPollRef.current?.reset();
+    await readThreads();
+  }, [readThreads]);
+
+  const readConversation = useCallback(async (uid: number, generation: number): Promise<SupportPollOutcome> => {
+    if (uid <= 0 || activeConversationLoadRef.current === generation) return "unchanged";
     activeConversationLoadRef.current = generation;
     try {
       let current = conversationRef.current;
       let messages = current?.messages ?? [];
       let cursor = messages.reduce((maximum, message) => Math.max(maximum, message.smid), 0);
+      // A thread's first read, or one that brings a message or moves Core's last
+      // message id, is a change: the poll keeps its base cadence.
+      let changed = current === null;
 
       // Core pages support history at 200 rows. Drain bounded pages now and
       // continue from the received cursor on the next poll if a huge thread
       // exceeds this per-pass cap.
       for (let page = 0; page < 25; page += 1) {
         const response = await adminCall("support_messages", { uid, since: cursor });
+        if (selectedRef.current !== uid || conversationGenerationRef.current !== generation) return "unchanged";
         const parsed = response?.success ? supportConversation(response) : null;
-        if (
-          !parsed
-          || selectedRef.current !== uid
-          || conversationGenerationRef.current !== generation
-        ) return;
+        if (!parsed) return changed ? "changed" : "failed";
 
         const confirmedRequestIDs = new Set(
           parsed.messages.map((message) => message.requestId).filter(Boolean),
@@ -174,6 +198,7 @@ export default function SupportInboxPage() {
 
         const bySMID = new Map(messages.map((message) => [message.smid, message]));
         parsed.messages.forEach((message) => bySMID.set(message.smid, message));
+        if (bySMID.size !== messages.length || parsed.lastSmid !== current?.lastSmid) changed = true;
         messages = [...bySMID.values()].sort((left, right) => left.smid - right.smid);
         current = { ...parsed, messages };
         conversationRef.current = current;
@@ -188,7 +213,7 @@ export default function SupportInboxPage() {
         cursor = received;
       }
 
-      if (!current) return;
+      if (!current) return "unchanged";
       const receivedThrough = current.messages.reduce(
         (maximum, message) => Math.max(maximum, message.smid),
         0,
@@ -205,6 +230,7 @@ export default function SupportInboxPage() {
       window.requestAnimationFrame(() => {
         listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
       });
+      return changed ? "changed" : "unchanged";
     } finally {
       if (activeConversationLoadRef.current === generation) {
         activeConversationLoadRef.current = null;
@@ -212,11 +238,22 @@ export default function SupportInboxPage() {
     }
   }, []);
 
+  /** The reads after a send: read now, then poll at the base cadence again. */
+  const loadConversation = useCallback(async (uid: number, generation: number) => {
+    messagePollRef.current?.reset();
+    await readConversation(uid, generation);
+  }, [readConversation]);
+
+  // The first read is at once, as before; the poll then reads again only after
+  // the previous read settled, pauses in a hidden tab and slows while nothing changes.
   useEffect(() => {
-    void loadThreads();
-    const timer = window.setInterval(() => void loadThreads(), THREAD_POLL_MS);
-    return () => window.clearInterval(timer);
-  }, [loadThreads]);
+    const poll = startSupportPoll(readThreads, SUPPORT_THREAD_POLL_MS);
+    threadPollRef.current = poll;
+    return () => {
+      poll.stop();
+      if (threadPollRef.current === poll) threadPollRef.current = null;
+    };
+  }, [readThreads]);
 
   useEffect(() => {
     if (selectedUid <= 0) return;
@@ -225,13 +262,13 @@ export default function SupportInboxPage() {
     conversationRef.current = null;
     setConversation(null);
     setSendError("");
-    void loadConversation(selectedUid, generation);
-    const timer = window.setInterval(
-      () => void loadConversation(selectedUid, generation),
-      MESSAGE_POLL_MS,
-    );
-    return () => window.clearInterval(timer);
-  }, [selectedUid, loadConversation]);
+    const poll = startSupportPoll(() => readConversation(selectedUid, generation), SUPPORT_MESSAGE_POLL_MS);
+    messagePollRef.current = poll;
+    return () => {
+      poll.stop();
+      if (messagePollRef.current === poll) messagePollRef.current = null;
+    };
+  }, [selectedUid, readConversation]);
 
   async function sendText() {
     const body = draft.trim();
