@@ -1,0 +1,27 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "request_id": "6a000000-0000-4000-8000-000000000003",
+        "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000006",
+        "channel": "sms",
+        "requested_count": 1,
+        "sent": 0,
+        "queued": 1,
+        "skipped": 0,
+        "failed": 0,
+        "results": [
+            {
+                "uid": 4201,
+                "message_id": "b4a1539af25f8a8bf64cb592",
+                "outcome": "queued",
+                "reason": null
+            }
+        ],
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

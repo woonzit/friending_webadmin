@@ -1,0 +1,38 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "outbound_messages_history_read"
+            ]
+        },
+        "evaluated_at": 1790000021,
+        "message": {
+            "message_id": "47fc27d4c81cd0c18ff4edce",
+            "request_id": "6a000000-0000-4000-8000-000000000006",
+            "uid": 4201,
+            "channel": "push",
+            "format": "plain_text",
+            "subject": "Your profile",
+            "body": "Add a photo so people can recognize you.",
+            "content_sha256": "938d17cf67b3a8956d21483b3a8059920b660c1fac112fe7d11f5e0e8b57b4b2",
+            "template": {
+                "template_id": "650000000000000000004203",
+                "revision": 2
+            },
+            "status": "queued",
+            "status_reason": null,
+            "push_mode": null,
+            "created_at": 1790000007,
+            "updated_at": 1790000007,
+            "completed_at": null,
+            "sent_by": "admin@friending.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

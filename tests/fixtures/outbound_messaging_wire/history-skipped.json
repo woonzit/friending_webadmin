@@ -1,0 +1,40 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "outbound_messages_history_read"
+            ]
+        },
+        "uid": 4203,
+        "evaluated_at": 1790000021,
+        "messages": [
+            {
+                "message_id": "c6d38a22e143232d5474e86e",
+                "request_id": "6a000000-0000-4000-8000-000000000008",
+                "uid": 4203,
+                "channel": "email",
+                "format": "sanitized_html",
+                "subject": "Friending support",
+                "body_excerpt": "Hello, your support request was answered. Thank you for your patience.",
+                "content_sha256": "fbb214fd6e2388ad14747b67f197e3bdd52e816240f8ab8bbd853954bd641dcb",
+                "template": null,
+                "status": "skipped",
+                "status_reason": "opted_out",
+                "push_mode": null,
+                "created_at": 1790000009,
+                "updated_at": 1790000009,
+                "completed_at": 1790000009,
+                "sent_by": "admin@friending.com"
+            }
+        ],
+        "next_cursor": null,
+        "total": 1
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

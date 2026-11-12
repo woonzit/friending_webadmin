@@ -6022,7 +6022,9 @@
       "readFailed": "Core could not read outbound state safely. Try the same read again.",
       "writeFailed": "The send result is uncertain. Retain the exact identity and inspect authoritative history.",
       "sessionInvalid": "Your administrator session or membership is no longer valid.",
-      "generic": "The outbound operation failed safely. No success, empty state or delivery has been assumed."
+      "generic": "The outbound operation failed safely. No success, empty state or delivery has been assumed.",
+      "coreUnavailable": "Core did not answer in time, or its answer could not be read. Nothing has been assumed.",
+      "membershipUnconfirmed": "Your administrator membership could not be confirmed just now. Try again shortly."
     }
   },
   "audienceVisibilityAdmin": {

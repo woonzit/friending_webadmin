@@ -6022,7 +6022,9 @@
       "readFailed": "A Core nem tudta biztonságosan olvasni a kimenő állapotot. Próbáld újra ugyanazt az olvasást.",
       "writeFailed": "A küldés eredménye bizonytalan. Őrizd meg a pontos azonosságot, és vizsgáld meg a hiteles előzményt.",
       "sessionInvalid": "Az adminisztrátori munkameneted vagy tagságod már nem érvényes.",
-      "generic": "A kimenő művelet biztonságosan meghiúsult. A felület nem feltételez sikert, üres állapotot vagy kézbesítést."
+      "generic": "A kimenő művelet biztonságosan meghiúsult. A felület nem feltételez sikert, üres állapotot vagy kézbesítést.",
+      "coreUnavailable": "A Core nem válaszolt időben, vagy a válasza nem olvasható. Semmit nem feltételeztünk.",
+      "membershipUnconfirmed": "Az adminisztrátori tagságod most nem erősíthető meg. Próbáld újra hamarosan."
     }
   },
   "audienceVisibilityAdmin": {

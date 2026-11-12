@@ -160,10 +160,16 @@ export type OutboundMessageSendData = {
   replayed: boolean;
 };
 
-type OutboundPendingSend = {
+/**
+ * A send whose outcome is not observed yet: the caller-minted request id with exactly what it was
+ * minted for (the whole payload), who minted it and when (epoch seconds, the browser's clock).
+ */
+export type OutboundPendingSend = {
   version: 1;
   action: "send";
   payload: OutboundSendPayload;
+  operator: string;
+  stored_at: number;
 };
 
 type OutboundHistoryRequest = {
@@ -430,14 +436,22 @@ function channelAvailability(value: unknown): Record<OutboundMessagingChannel, O
   return raw && email && sms && push ? { email, sms, push } : null;
 }
 
+/**
+ * A member's codename as Core projects it: empty, or the D-043 atom (`MemberIntegrationPolicy::
+ * LEGACY_CODENAME_PATTERN`). A native codename is lower-case; an imported member keeps the byte-exact
+ * legacy atom, mixed case included.
+ */
+const CODENAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/u;
+
 function recipientPreview(value: unknown): OutboundRecipientPreview | null {
   const raw = requiredObject(value, ["uid", "display_name", "codename", "channels"]);
   const uid = positiveUid(raw?.uid);
   const displayName = canonicalWireText(raw?.display_name, 0, 120, "text");
-  const codename = canonicalWireText(raw?.codename, 0, 64, "text");
+  const codename = raw?.codename === "" || (typeof raw?.codename === "string" && CODENAME.test(raw.codename))
+    ? raw.codename as string
+    : null;
   const channels = channelAvailability(raw?.channels);
-  return raw && uid !== null && displayName !== null && codename !== null
-    && codename === codename.toLowerCase() && channels
+  return raw && uid !== null && displayName !== null && codename !== null && channels
     ? { uid, display_name: displayName, codename, channels }
     : null;
 }
@@ -661,17 +675,27 @@ function structuralSendPayload(value: unknown): OutboundSendPayload | null {
   };
 }
 
-export function outboundPendingSend(payload: OutboundSendPayload): OutboundPendingSend {
-  return { version: 1, action: "send", payload: { ...payload } };
+/** The pending record of a payload, stamped with its operator and time; null when either is not canonical. */
+export function outboundPendingSend(
+  payload: OutboundSendPayload,
+  operatorValue: unknown,
+  nowSeconds: number,
+): OutboundPendingSend | null {
+  const exact = structuralSendPayload(payload);
+  const operator = canonicalEmail(typeof operatorValue === "string" ? operatorValue.trim().toLowerCase() : null);
+  const storedAt = Math.floor(nowSeconds);
+  return exact && operator && Number.isSafeInteger(storedAt) && storedAt > 0
+    ? { version: 1, action: "send", payload: exact, operator, stored_at: storedAt }
+    : null;
 }
 
 export function outboundPendingSendValue(value: unknown): OutboundPendingSend | null {
   // Persisted retry identity remains exact so replay cannot acquire new semantics.
-  const raw = exactObject(value, ["version", "action", "payload"]);
+  const raw = exactObject(value, ["version", "action", "payload", "operator", "stored_at"]);
   const payload = structuralSendPayload(raw?.payload);
-  return raw?.version === 1 && raw.action === "send" && payload
-    ? outboundPendingSend(payload)
-    : null;
+  if (raw?.version !== 1 || raw.action !== "send" || !payload
+    || canonicalEmail(raw.operator) === null || !Number.isSafeInteger(raw.stored_at)) return null;
+  return outboundPendingSend(payload, raw.operator, raw.stored_at as number);
 }
 
 export function outboundPendingStorageKey(uidValue: unknown): string | null {
@@ -820,9 +844,15 @@ function historyTemplate(value: unknown): OutboundHistoryTemplate | null {
   return templateId && revision !== null ? { template_id: templateId, revision } : null;
 }
 
+/**
+ * Core's `bodyExcerpt`: the visible text trimmed, every whitespace run collapsed to one space, THEN cut
+ * to 500 scalars. A cut can therefore end on the single space of a collapsed run; nothing else may.
+ */
 function canonicalExcerpt(value: unknown): string | null {
-  const text = canonicalWireText(value, 0, 500, "body");
-  return text !== null && text.replace(/\s+/gu, " ") === text ? text : null;
+  if (typeof value !== "string") return null;
+  const cutAtSpace = scalarLength(value) === 500 && value.endsWith(" ");
+  const text = canonicalWireText(cutAtSpace ? value.slice(0, -1) : value, 0, 500, "body");
+  return text !== null && text.replace(/\s+/gu, " ") === text ? value : null;
 }
 
 type HistoryMetadata = Omit<OutboundHistoryEntry, "body_excerpt">;
@@ -846,8 +876,12 @@ function historyMetadata(value: Record<string, unknown>, expectedUid: number): H
   const skippedReason = oneOf(value.status_reason, OUTBOUND_MESSAGING_SKIPPED_REASONS);
   const failureReason = oneOf(value.status_reason, OUTBOUND_MESSAGING_FAILURE_REASONS);
   let statusReason: OutboundHistoryReason | null = null;
-  if (status === "failed") statusReason = failureReason;
-  else if (status === "skipped" || status === "suppressed") statusReason = skippedReason;
+  // Core's projector (OutboundMessageHistoryService): `skipped` carries an availability reason; a
+  // `failed` or `suppressed` row carries a delivery reason (an expired email or SMS is `suppressed`
+  // with `delivery_expired`, a push without a target `suppressed` with `channel_absent`), and a
+  // terminal aggregate may carry either kind.
+  if (status === "skipped") statusReason = skippedReason;
+  else if (status === "failed" || status === "suppressed") statusReason = failureReason ?? skippedReason;
   else if (value.status_reason !== null) return null;
   if (!status || ((status === "failed" || status === "skipped" || status === "suppressed") && !statusReason)) return null;
   const pushMode = value.push_mode === null ? null : oneOf(value.push_mode, OUTBOUND_MESSAGING_PUSH_MODES);
@@ -1038,13 +1072,48 @@ export async function outboundHistoryDetailResponse(
     : null;
 }
 
+/** What a history row can never change: the admitted message itself. */
+const IMMUTABLE_HISTORY_FIELDS = [
+  "message_id", "request_id", "uid", "channel", "format", "subject", "content_sha256", "template", "created_at", "sent_by",
+] as const;
+
+/**
+ * Whether a detail read is the message the list row shows. Only the admitted message is compared: its
+ * delivery state (status, reason, push mode, times) is current state and may have moved on between the
+ * two reads, so the detail's newer state is not a mismatch.
+ */
 export function outboundHistoryDetailMatchesEntry(
   detail: OutboundHistoryDetailEntry,
   row: OutboundHistoryEntry,
 ): boolean {
-  const { body: _body, ...detailMetadata } = detail;
-  const { body_excerpt: _excerpt, ...rowMetadata } = row;
-  return JSON.stringify(detailMetadata) === JSON.stringify(rowMetadata);
+  return IMMUTABLE_HISTORY_FIELDS.every((key) => JSON.stringify(detail[key]) === JSON.stringify(row[key]));
+}
+
+/** The list row carrying the detail's (newer) delivery state; null when the detail is another message. */
+export function outboundHistoryRowWithDetailState(
+  row: OutboundHistoryEntry,
+  detail: OutboundHistoryDetailEntry,
+): OutboundHistoryEntry | null {
+  if (!outboundHistoryDetailMatchesEntry(detail, row)) return null;
+  return {
+    ...row,
+    status: detail.status,
+    status_reason: detail.status_reason,
+    push_mode: detail.push_mode,
+    updated_at: detail.updated_at,
+    completed_at: detail.completed_at,
+  };
+}
+
+/** The history row Core admitted for a pending send, which settles it; null while history does not show one. */
+export function outboundPendingObserved(
+  history: OutboundMessageHistoryData,
+  pending: OutboundPendingSend,
+): OutboundHistoryEntry | null {
+  const uids = parseOutboundUidList(pending.payload.uids);
+  if (!uids || !uids.includes(history.uid)) return null;
+  return history.messages.find((row) => row.request_id === pending.payload.request_id
+    && row.channel === pending.payload.type) ?? null;
 }
 
 export function outboundHistoryEmailPreviewDocument(
@@ -1154,14 +1223,32 @@ export const OUTBOUND_MESSAGING_ERROR_STATUSES: Record<
   "admin-write-required": 403,
 };
 
-type OutboundMessagingErrorKey =
+/**
+ * The Webadmin bridge's own refusals (app/api/admin/[action]/route.ts, lib/adminClient.ts). They come
+ * at a variable HTTP status, so only their name is matched.
+ */
+export const OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS = {
+  "core-timeout": "coreUnavailable",
+  "core-unavailable": "coreUnavailable",
+  "invalid-core-response": "coreUnavailable",
+  "admin-request-outcome-unknown": "coreUnavailable",
+  "admin-membership-unconfirmed": "membershipUnconfirmed",
+  "invalid-input": "parameterInvalid",
+  "too-large": "parameterInvalid",
+  "auth-required": "sessionInvalid",
+} as const;
+
+export type OutboundMessagingErrorKey =
   | (typeof OUTBOUND_MESSAGING_ERROR_KEYS)[keyof typeof OUTBOUND_MESSAGING_ERROR_KEYS]
+  | (typeof OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS)[keyof typeof OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS]
   | "generic";
 
-const ERROR_KEY_MAP = new Map<string, OutboundMessagingErrorKey>(
-  Object.entries(OUTBOUND_MESSAGING_ERROR_KEYS),
-);
+const ERROR_KEY_MAP = new Map<string, OutboundMessagingErrorKey>([
+  ...Object.entries(OUTBOUND_MESSAGING_ERROR_KEYS),
+  ...Object.entries(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS),
+]);
 
+/** A send refused with one of these may or may not have been admitted: the pending identity is kept. */
 const RETAIN_PENDING_ERRORS: ReadonlySet<string | null> = new Set([
   null,
   "outbound-message-request-in-progress",
@@ -1171,23 +1258,165 @@ const RETAIN_PENDING_ERRORS: ReadonlySet<string | null> = new Set([
   "outbound-message-stored-invalid",
   "outbound-message-read-failed",
   "outbound-message-write-failed",
+  // The answer was lost or unreadable after the bridge may have forwarded the send.
+  "core-timeout",
+  "core-unavailable",
+  "invalid-core-response",
+  "admin-request-outcome-unknown",
+  "admin-membership-unconfirmed",
 ]);
 
 export function outboundMessagingErrorKey(value: unknown): OutboundMessagingErrorKey {
   return typeof value === "string" ? ERROR_KEY_MAP.get(value) ?? "generic" : "generic";
 }
 
+/**
+ * The refusal an answer names: a Core refusal at exactly its contract status (with or without the
+ * contract's `data`, which only `outbound-message-recipient-conflict` carries), or a bridge refusal by
+ * name. Null for anything else, which is an unknown outcome.
+ */
 export function outboundMessagingErrorResponse(value: unknown): string | null {
-  const envelope = webadminErrorEnvelope(value) ?? adminBridgeErrorEnvelope(value);
-  if (!envelope) return null;
-  const status = OUTBOUND_MESSAGING_ERROR_STATUSES[
-    envelope.error as keyof typeof OUTBOUND_MESSAGING_ERROR_STATUSES
-  ];
-  return status !== undefined && envelope.status_code === status ? envelope.error : null;
+  const core = webadminErrorEnvelope(value) ?? webadminErrorEnvelope(value, "required");
+  if (core) {
+    const status = OUTBOUND_MESSAGING_ERROR_STATUSES[core.error as keyof typeof OUTBOUND_MESSAGING_ERROR_STATUSES];
+    return status !== undefined && core.status_code === status ? core.error : null;
+  }
+  const bridge = adminBridgeErrorEnvelope(value);
+  if (!bridge) return null;
+  const status = OUTBOUND_MESSAGING_ERROR_STATUSES[bridge.error as keyof typeof OUTBOUND_MESSAGING_ERROR_STATUSES];
+  if (status !== undefined) return bridge.status_code === status ? bridge.error : null;
+  return Object.hasOwn(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS, bridge.error) ? bridge.error : null;
 }
 
 export function outboundMessagingShouldRetainSend(error: string | null): boolean {
   return error === null
-    || !Object.prototype.hasOwnProperty.call(OUTBOUND_MESSAGING_ERROR_STATUSES, error)
-    || RETAIN_PENDING_ERRORS.has(error);
+    || RETAIN_PENDING_ERRORS.has(error)
+    || !(Object.hasOwn(OUTBOUND_MESSAGING_ERROR_STATUSES, error)
+      || Object.hasOwn(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS, error));
+}
+
+/** What one answer to a send means for its pending identity. */
+export type OutboundSendOutcome =
+  /** Core admitted the send (or replayed its admission): settled. */
+  | { kind: "sent"; data: OutboundMessageSendData }
+  /** A definite refusal: nothing was admitted under this request id, which is settled. */
+  | { kind: "refused"; error: string; key: OutboundMessagingErrorKey }
+  /** Not known: the same request id and material are kept and only ever sent again unchanged. */
+  | { kind: "unknown"; error: string | null; key: OutboundMessagingErrorKey };
+
+export function outboundSendOutcome(response: unknown, payload: OutboundSendPayload): OutboundSendOutcome {
+  const data = outboundSendResponse(response, payload);
+  if (data) return { kind: "sent", data };
+  const error = outboundMessagingErrorResponse(response);
+  const key = outboundMessagingErrorKey(error);
+  return error !== null && !outboundMessagingShouldRetainSend(error)
+    ? { kind: "refused", error, key }
+    : { kind: "unknown", error, key };
+}
+
+// ------------------------------------------------------------------ Core's admin_me capability block
+
+/**
+ * `admin_me.outbound_messaging` (Core `OutboundMessagePolicy::capabilities`): exactly
+ * `{contract_version: 1, contract_ready: true, capabilities}` with the sorted closed capabilities, which
+ * always include the history read. `absent`: Core serves no version-1 surface (no block, not ready, or
+ * another version), so the console has no panel. `invalid`: the block cannot be read, which confirms nothing.
+ */
+export type OutboundMessagingAccess =
+  | { kind: "ready"; canSend: boolean }
+  | { kind: "absent" }
+  | { kind: "invalid" };
+
+export function outboundMessagingAccess(membership: unknown): OutboundMessagingAccess {
+  const root = object(membership);
+  if (!root) return { kind: "invalid" };
+  if (!Object.hasOwn(root, "outbound_messaging") || root.outbound_messaging === undefined) return { kind: "absent" };
+  const block = object(root.outbound_messaging);
+  if (!block) return { kind: "invalid" };
+  if (block.contract_version !== 1 || block.contract_ready === false) {
+    return typeof block.contract_version === "number" && typeof block.contract_ready === "boolean"
+      ? { kind: "absent" }
+      : { kind: "invalid" };
+  }
+  if (block.contract_ready !== true) return { kind: "invalid" };
+  const principal = outboundMessagingPrincipal({ role: "viewer", capabilities: block.capabilities });
+  return principal ? { kind: "ready", canSend: outboundMessagingCanSend(principal) } : { kind: "invalid" };
+}
+
+const HISTORY_ACTIONS: ReadonlySet<string> = new Set(["user_history", "user_history_detail"]);
+
+/**
+ * The bridge's capability gate: null for any other action; for an outbound action, whether Core's own
+ * block grants it (history reads need the history capability, preview and send the send capability).
+ */
+export function outboundMessagingProxyCapabilityAuthorized(action: string, membership: unknown): boolean | null {
+  if (!ACTION_SET.has(action)) return null;
+  const access = outboundMessagingAccess(membership);
+  return access.kind === "ready" && (HISTORY_ACTIONS.has(action) || access.canSend);
+}
+
+// ------------------------------------------------------------------ the bridge's projection of Core's answers
+
+const LEGACY_TRIO = { message: 200, status: 200, can_send: 0 } as const;
+
+/**
+ * What the bridge hands the browser for one forwarded outbound action: a success only as this module
+ * parsed it (closed fields, rebuilt), a refusal only as a known name at its contract status, the
+ * recipient conflict with its parsed fresh preview. Null for anything else, which the bridge answers as
+ * `invalid-core-response`: no unparsed Core field (an address, a phone number, a token, a provider
+ * identifier) ever reaches the browser.
+ */
+export async function normalizeOutboundMessagingResponse(
+  action: string,
+  response: unknown,
+  body: Record<string, unknown>,
+): Promise<{ status_code: number; body: Record<string, unknown> } | null> {
+  if (!ACTION_SET.has(action)) return null;
+  const raw = object(response);
+  if (raw?.success === true) {
+    let data: unknown = null;
+    if (action === "outbound_message_preview") {
+      const request = structuralPreviewPayload({ ...body });
+      data = request ? outboundRecipientPreviewResponse(response, request) : null;
+    } else if (action === "send_message") {
+      const request = structuralSendPayload({ ...body });
+      data = request ? outboundSendResponse(response, request) : null;
+    } else if (action === "user_history") {
+      const request = structuralHistoryPayload({ ...body });
+      data = request ? outboundHistoryResponse(response, request) : null;
+    } else {
+      const request = structuralHistoryDetailPayload({ ...body });
+      data = request ? await outboundHistoryDetailResponse(response, request) : null;
+    }
+    return data ? { status_code: 200, body: { success: true, status_code: 200, ...LEGACY_TRIO, data } } : null;
+  }
+  const error = outboundMessagingErrorResponse(response);
+  const envelope = webadminErrorEnvelope(response) ?? webadminErrorEnvelope(response, "required");
+  if (!envelope || error === null || envelope.error !== error) return null;
+  const refusal = { success: false, status_code: envelope.status_code, error, ...LEGACY_TRIO };
+  if (error !== "outbound-message-recipient-conflict") return { status_code: envelope.status_code, body: refusal };
+  const send = action === "send_message" ? structuralSendPayload({ ...body }) : null;
+  const uids = send ? parseOutboundUidList(send.uids) : null;
+  const conflict = uids ? outboundRecipientConflictResponse(response, uids) : null;
+  return conflict ? { status_code: envelope.status_code, body: { ...refusal, data: conflict } } : null;
+}
+
+// ------------------------------------------------------------------ the preview's lifetime on the browser's clock
+
+/** A preview is not used for a send in its last seconds, so the send still reaches Core inside its lifetime. */
+export const OUTBOUND_PREVIEW_SAFETY_SECONDS = 15;
+
+/**
+ * Core's clock now, in seconds, as far as this preview tells it: its `evaluated_at` plus the time that has
+ * passed on this browser since it arrived. The browser's own clock may be skewed against Core's; the
+ * elapsed time is not.
+ */
+export function outboundPreviewCoreNow(preview: OutboundRecipientPreviewData, receivedAtMs: number, nowMs: number): number {
+  return preview.evaluated_at + Math.max(0, Math.floor((nowMs - receivedAtMs) / 1000));
+}
+
+/** Milliseconds this preview may still be used for a send (0 when it may not). */
+export function outboundPreviewMsLeft(preview: OutboundRecipientPreviewData, receivedAtMs: number, nowMs: number): number {
+  const lifetimeMs = (preview.expires_at - preview.evaluated_at - OUTBOUND_PREVIEW_SAFETY_SECONDS) * 1000;
+  return Math.max(0, lifetimeMs - Math.max(0, nowMs - receivedAtMs));
 }

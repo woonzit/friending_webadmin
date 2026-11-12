@@ -1,0 +1,38 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "outbound_messages_history_read"
+            ]
+        },
+        "evaluated_at": 1790000021,
+        "message": {
+            "message_id": "b51583b04c13149849d63025",
+            "request_id": "6a000000-0000-4000-8000-000000000002",
+            "uid": 4201,
+            "channel": "email",
+            "format": "sanitized_html",
+            "subject": "Welcome back to Friending",
+            "body": "<p>We are glad to see you again on <strong>Friending</strong>.</p>",
+            "content_sha256": "b3480e249635044a7fbf8006999f1bdf70d8a0f08c7cc24561bc0927decdad75",
+            "template": {
+                "template_id": "650000000000000000004201",
+                "revision": 3
+            },
+            "status": "queued",
+            "status_reason": null,
+            "push_mode": null,
+            "created_at": 1790000003,
+            "updated_at": 1790000003,
+            "completed_at": null,
+            "sent_by": "admin@friending.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

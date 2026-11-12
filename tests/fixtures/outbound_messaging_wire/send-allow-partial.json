@@ -1,0 +1,51 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "request_id": "6a000000-0000-4000-8000-000000000008",
+        "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000011",
+        "channel": "email",
+        "requested_count": 5,
+        "sent": 0,
+        "queued": 1,
+        "skipped": 4,
+        "failed": 0,
+        "results": [
+            {
+                "uid": 4201,
+                "message_id": "66a10bba80d90fcf1369c5d7",
+                "outcome": "queued",
+                "reason": null
+            },
+            {
+                "uid": 4202,
+                "message_id": null,
+                "outcome": "skipped",
+                "reason": "channel_absent"
+            },
+            {
+                "uid": 4203,
+                "message_id": null,
+                "outcome": "skipped",
+                "reason": "opted_out"
+            },
+            {
+                "uid": 4204,
+                "message_id": null,
+                "outcome": "skipped",
+                "reason": "banned"
+            },
+            {
+                "uid": 4205,
+                "message_id": null,
+                "outcome": "skipped",
+                "reason": "not_migrated"
+            }
+        ],
+        "replayed": false
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

@@ -10,6 +10,7 @@ import {
 import {
   OUTBOUND_MESSAGING_ACTIONS,
   OUTBOUND_MESSAGING_AVAILABILITY,
+  OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS,
   OUTBOUND_MESSAGING_CAPABILITIES,
   OUTBOUND_MESSAGING_CHANNELS,
   OUTBOUND_MESSAGING_ERROR_KEYS,
@@ -30,6 +31,7 @@ import {
   outboundHistoryEmailPreviewDocument,
   outboundHistoryPayload,
   outboundHistoryResponse,
+  outboundHistoryRowWithDetailState,
   outboundMessageDraftMaterial,
   outboundMessagingCanSend,
   outboundMessagingErrorKey,
@@ -214,7 +216,8 @@ test("preview parsing ignores additions but fails closed on partial, loose, reor
     (raw) => { object(data(raw).limits).window_seconds = 301; },
     (raw) => { object(object(data(raw).limits).overall).remaining = 379; },
     (raw) => { object((data(raw).recipients as JsonObject[])[0]).display_name = " Ada "; },
-    (raw) => { object((data(raw).recipients as JsonObject[])[0]).codename = "Ada"; },
+    (raw) => { object((data(raw).recipients as JsonObject[])[0]).codename = "-ada"; },
+    (raw) => { object((data(raw).recipients as JsonObject[])[0]).codename = "ada lovelace"; },
     (raw) => { object(object((data(raw).recipients as JsonObject[])[0]).channels).push = "unknown"; },
   ];
   for (const mutate of mutations) {
@@ -223,6 +226,10 @@ test("preview parsing ignores additions but fails closed on partial, loose, reor
     assert.equal(outboundRecipientPreviewResponse(raw, request), null, mutate.toString());
   }
   assert.equal(outboundRecipientPreviewResponse(fixtures.preview_one, outboundPreviewPayload([43])!), null);
+  // Core (D-043): an imported member keeps the byte-exact legacy codename atom, mixed case included.
+  const imported = clone(fixtures.preview_one);
+  object((data(imported).recipients as JsonObject[])[0]).codename = "Hana4208";
+  assert.equal(outboundRecipientPreviewResponse(imported, request)?.recipients[0].codename, "Hana4208");
 
   const reordered = clone(fixtures.preview_all_states);
   (data(reordered).recipients as unknown[]).reverse();
@@ -315,13 +322,23 @@ test("send material is preview-bound, expiry-bound, durable, and structurally ex
   assert.equal(outboundSendPayload(preview, [42], pushDraft(), REQUEST_ID, preview.expires_at).ok, false);
   assert.equal(outboundSendPayload(preview, [42], pushDraft(), "not-v4", NOW).ok, false);
 
-  const pending = outboundPendingSend(result.value);
+  const pending = outboundPendingSend(result.value, " Operator@Example.test ", 1_787_680_120.9);
+  assert.ok(pending);
+  assert.deepEqual(pending, {
+    version: 1, action: "send", payload: result.value, operator: "operator@example.test", stored_at: 1_787_680_120,
+  }, "the identity is stored with exactly what it was minted for, by whom and when");
   assert.deepEqual(outboundPendingSendValue(JSON.parse(JSON.stringify(pending))), pending);
   assert.equal(outboundPendingSendValue({ ...pending, provider_receipt: "private" }), null);
   assert.equal(outboundPendingSendValue({
     ...pending,
     payload: { ...pending.payload, admin_email: "attacker@example.test" },
   }), null);
+  for (const changed of [{ operator: "Operator@example.test" }, { operator: "nobody" }, { stored_at: 1.5 }, { stored_at: 0 }, { version: 2 }]) {
+    assert.equal(outboundPendingSendValue({ ...pending, ...changed }), null, JSON.stringify(changed));
+  }
+  const { operator: _operator, stored_at: _storedAt, ...withoutStamp } = pending;
+  assert.equal(outboundPendingSendValue(withoutStamp), null, "a record without its operator and time is not adopted");
+  assert.equal(outboundPendingSend(result.value, "not-an-address", NOW), null);
   assert.equal(outboundPendingStorageKey(42), "friending.outbound-messaging.uid-42.pending-send.v1");
   assert.equal(outboundPendingStorageKey(0), null);
 });
@@ -679,6 +696,7 @@ test("user-detail shell, safe previews, locales, and seven Help sections stay bo
   assert.deepEqual(Object.keys(enMessaging).sort(), Object.keys(huMessaging).sort());
   const expectedErrorKeys = new Set([
     ...Object.values(OUTBOUND_MESSAGING_ERROR_KEYS),
+    ...Object.values(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS),
     "generic",
   ]);
   assert.deepEqual(new Set(Object.keys(object(enMessaging.errors))), expectedErrorKeys);
@@ -713,4 +731,61 @@ test("user-detail shell, safe previews, locales, and seven Help sections stay bo
   ]) {
     assert.ok(object(object(object(object(en.adminHelp).pages).userDetail).sections)[key]);
   }
+});
+
+test("history follows Core's projector: delivery reasons on suppressed and failed rows, an excerpt cut on a space", () => {
+  const request = outboundHistoryPayload(42);
+  assert.ok(request);
+  const row = (raw: JsonObject, index: number) => object((data(raw).messages as JsonObject[])[index]);
+  // OutboundMessageHistoryService::directDelivery: an expired email or SMS outbox row is `suppressed` / `delivery_expired`.
+  const expired = clone(fixtures.history_page);
+  Object.assign(row(expired, 1), { status: "suppressed", status_reason: "delivery_expired" });
+  assert.equal(outboundHistoryResponse(expired, request)?.messages[1].status_reason, "delivery_expired");
+  // pushDelivery: a push without a target is `suppressed` / `channel_absent`.
+  const noTarget = clone(fixtures.history_page);
+  Object.assign(row(noTarget, 2), { status: "suppressed", status_reason: "channel_absent" });
+  assert.equal(outboundHistoryResponse(noTarget, request)?.messages[2].status_reason, "channel_absent");
+  // terminalDelivery: a terminal `failed` aggregate may carry an availability reason.
+  const terminal = clone(fixtures.history_page);
+  Object.assign(row(terminal, 1), { status: "failed", status_reason: "opted_out" });
+  assert.ok(outboundHistoryResponse(terminal, request));
+  for (const [status, reason] of [["skipped", "delivery_failed"], ["sent", "delivery_failed"], ["suppressed", null], ["failed", "unknown"]] as const) {
+    const raw = clone(fixtures.history_page);
+    Object.assign(row(raw, 1), { status, status_reason: reason });
+    assert.equal(outboundHistoryResponse(raw, request), null, `${status}/${reason}`);
+  }
+  // OutboundMessagePolicy::bodyExcerpt collapses whitespace and only then cuts at 500 scalars.
+  const cut = `${"word ".repeat(100)}`.slice(0, 500);
+  assert.equal(cut.length, 500);
+  assert.ok(cut.endsWith(" "));
+  const atSpace = clone(fixtures.history_page);
+  row(atSpace, 0).body_excerpt = cut;
+  assert.equal(outboundHistoryResponse(atSpace, request)?.messages[0].body_excerpt, cut);
+  for (const excerpt of [cut.slice(1), `${cut.slice(0, 498)}  `, ` ${cut.slice(0, 499)}`]) {
+    const raw = clone(fixtures.history_page);
+    row(raw, 0).body_excerpt = excerpt;
+    assert.equal(outboundHistoryResponse(raw, request), null, JSON.stringify(excerpt.slice(-3)));
+  }
+});
+
+test("the recipient conflict, which carries Core's fresh preview, is a refusal the page recognizes", () => {
+  assert.equal(outboundMessagingErrorResponse(fixtures.recipient_conflict), "outbound-message-recipient-conflict");
+  assert.equal(outboundMessagingShouldRetainSend("outbound-message-recipient-conflict"), false);
+  const loose = clone(fixtures.recipient_conflict);
+  loose.status_code = 422;
+  assert.equal(outboundMessagingErrorResponse(loose), null);
+  assert.equal(outboundMessagingErrorResponse({ success: false, status_code: 504, error: "core-timeout" }), "core-timeout");
+  assert.equal(outboundMessagingErrorResponse({ success: false, status_code: 504, error: "core-something" }), null);
+});
+
+test("a detail is the listed message when the admitted message matches; its delivery state may be newer", async () => {
+  const history = outboundHistoryResponse(fixtures.history_page, outboundHistoryPayload(42)!)!;
+  const moved = clone(fixtures.history_detail_email);
+  Object.assign(object(data(moved).message), { updated_at: 1_787_680_900, completed_at: 1_787_680_900 });
+  const detail = (await outboundHistoryDetailResponse(moved, outboundHistoryDetailPayload(42, "64f000000000000000000001")!))!.message;
+  assert.equal(outboundHistoryDetailMatchesEntry(detail, history.messages[0]), true);
+  assert.equal(outboundHistoryRowWithDetailState(history.messages[0], detail)?.updated_at, 1_787_680_900);
+  assert.equal(outboundHistoryRowWithDetailState(history.messages[0], detail)?.body_excerpt, history.messages[0].body_excerpt);
+  assert.equal(outboundHistoryDetailMatchesEntry({ ...detail, subject: "Another subject" }, history.messages[0]), false);
+  assert.equal(outboundHistoryRowWithDetailState(history.messages[1], detail), null);
 });

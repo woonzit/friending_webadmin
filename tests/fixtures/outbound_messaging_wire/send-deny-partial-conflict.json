@@ -1,0 +1,61 @@
+{
+    "success": false,
+    "status_code": 409,
+    "error": "outbound-message-recipient-conflict",
+    "data": {
+        "contract_version": 1,
+        "preview": {
+            "contract_version": 1,
+            "principal": {
+                "role": "admin",
+                "capabilities": [
+                    "outbound_messages_history_read",
+                    "outbound_messages_send"
+                ]
+            },
+            "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000012",
+            "evaluated_at": 1790000010,
+            "expires_at": 1790000310,
+            "requested_count": 2,
+            "recipients": [
+                {
+                    "uid": 4201,
+                    "display_name": "Ada",
+                    "codename": "ada4201",
+                    "channels": {
+                        "email": "available",
+                        "sms": "available",
+                        "push": "available"
+                    }
+                },
+                {
+                    "uid": 4203,
+                    "display_name": "Cora",
+                    "codename": "cora4203",
+                    "channels": {
+                        "email": "opted_out",
+                        "sms": "opted_out",
+                        "push": "opted_out"
+                    }
+                }
+            ],
+            "limits": {
+                "max_recipients_per_request": 100,
+                "window_seconds": 300,
+                "overall": {
+                    "limit": 500,
+                    "used": 8,
+                    "remaining": 492
+                },
+                "sms_push": {
+                    "limit": 200,
+                    "used": 5,
+                    "remaining": 195
+                }
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

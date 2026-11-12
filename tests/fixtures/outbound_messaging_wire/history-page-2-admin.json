@@ -1,0 +1,80 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "outbound_messages_history_read",
+                "outbound_messages_send"
+            ]
+        },
+        "uid": 4201,
+        "evaluated_at": 1790000021,
+        "messages": [
+            {
+                "message_id": "b4a1539af25f8a8bf64cb592",
+                "request_id": "6a000000-0000-4000-8000-000000000003",
+                "uid": 4201,
+                "channel": "sms",
+                "format": "plain_text",
+                "subject": "",
+                "body_excerpt": "Friending support: your request was answered.",
+                "content_sha256": "9c80d06a1a37f30822adfb13f64e20d7985c79f5f9ea8ed33e15cd75cd76aea6",
+                "template": null,
+                "status": "failed",
+                "status_reason": "delivery_failed",
+                "push_mode": null,
+                "created_at": 1790000004,
+                "updated_at": 1790000004,
+                "completed_at": 1790000004,
+                "sent_by": "admin@friending.com"
+            },
+            {
+                "message_id": "b51583b04c13149849d63025",
+                "request_id": "6a000000-0000-4000-8000-000000000002",
+                "uid": 4201,
+                "channel": "email",
+                "format": "sanitized_html",
+                "subject": "Welcome back to Friending",
+                "body_excerpt": "We are glad to see you again on Friending.",
+                "content_sha256": "b3480e249635044a7fbf8006999f1bdf70d8a0f08c7cc24561bc0927decdad75",
+                "template": {
+                    "template_id": "650000000000000000004201",
+                    "revision": 3
+                },
+                "status": "queued",
+                "status_reason": null,
+                "push_mode": null,
+                "created_at": 1790000003,
+                "updated_at": 1790000003,
+                "completed_at": null,
+                "sent_by": "admin@friending.com"
+            },
+            {
+                "message_id": "47ce0761405f31e5f91bab4b",
+                "request_id": "6a000000-0000-4000-8000-000000000001",
+                "uid": 4201,
+                "channel": "email",
+                "format": "sanitized_html",
+                "subject": "Friending support",
+                "body_excerpt": "Hello, your support request was answered. Thank you for your patience.",
+                "content_sha256": "fbb214fd6e2388ad14747b67f197e3bdd52e816240f8ab8bbd853954bd641dcb",
+                "template": null,
+                "status": "sent",
+                "status_reason": null,
+                "push_mode": null,
+                "created_at": 1790000002,
+                "updated_at": 1790000002,
+                "completed_at": 1790000002,
+                "sent_by": "admin@friending.com"
+            }
+        ],
+        "next_cursor": null,
+        "total": 7
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

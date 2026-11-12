@@ -1,0 +1,8 @@
+{
+    "contract_version": 1,
+    "contract_ready": true,
+    "capabilities": [
+        "outbound_messages_history_read",
+        "outbound_messages_send"
+    ]
+}

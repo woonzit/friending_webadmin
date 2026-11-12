@@ -1,0 +1,47 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "outbound_messages_history_read",
+                "outbound_messages_send"
+            ]
+        },
+        "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000003",
+        "evaluated_at": 1790000001,
+        "expires_at": 1790000301,
+        "requested_count": 1,
+        "recipients": [
+            {
+                "uid": 4208,
+                "display_name": "Hana",
+                "codename": "Hana4208",
+                "channels": {
+                    "email": "available",
+                    "sms": "opted_out",
+                    "push": "channel_absent"
+                }
+            }
+        ],
+        "limits": {
+            "max_recipients_per_request": 100,
+            "window_seconds": 300,
+            "overall": {
+                "limit": 500,
+                "used": 0,
+                "remaining": 500
+            },
+            "sms_push": {
+                "limit": 200,
+                "used": 0,
+                "remaining": 200
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

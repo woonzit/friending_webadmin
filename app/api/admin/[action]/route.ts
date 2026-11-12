@@ -66,7 +66,11 @@ import {
   personaScreensProxyCapabilityAuthorized,
 } from "@/lib/personaScreens";
 import { normalizeCannedTemplateProxyBody } from "@/lib/cannedTemplates";
-import { normalizeOutboundMessagingProxyBody } from "@/lib/outboundMessaging";
+import {
+  normalizeOutboundMessagingProxyBody,
+  normalizeOutboundMessagingResponse,
+  outboundMessagingProxyCapabilityAuthorized,
+} from "@/lib/outboundMessaging";
 import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import { normalizeManagedSettingsProxyBody } from "@/lib/sectionAvailability";
 import { readAdminSession } from "@/lib/session";
@@ -205,6 +209,14 @@ export async function POST(
   // D-153: the five FriendingGO routes exist only while Core serves `admin_me.friendinggo` v1.
   if (friendingGoProxyCapabilityAuthorized(action, membership.data) === false) {
     return bridgeError("friendinggo-capability-required", 403);
+  }
+  // The four outbound-message routes follow Core's `admin_me.outbound_messaging` v1 block, never the role
+  // alone: history reads need its history capability, the preview and the send its send capability. The
+  // refusal is Core's own name for the missing capability.
+  if (outboundMessagingProxyCapabilityAuthorized(action, membership.data) === false) {
+    return bridgeError(action === "user_history" || action === "user_history_detail"
+      ? "outbound-message-history-read-required"
+      : "outbound-message-send-required", 403);
   }
   if (!isAdminBridgeActionAuthorized(
     action,
@@ -501,6 +513,15 @@ export async function POST(
     const refusal = normalizeFriendingGoRefusal(result.data, result.status);
     if (!refusal) return bridgeError("invalid-core-response", 502);
     return NextResponse.json(refusal, { status: result.status, headers: NO_STORE_HEADERS });
+  }
+  if (normalizedOutboundBody !== undefined) {
+    // Outbound messaging: only the parsed answer to the request that was forwarded (closed fields, the
+    // detail's body hash-checked), or a known refusal at its contract status; never Core's raw body, so
+    // no address, phone number, token or provider identifier can reach the browser. Anything else is
+    // unknown, which a pending send keeps.
+    const projected = await normalizeOutboundMessagingResponse(action, result.data, normalizedOutboundBody);
+    if (!projected) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(projected.body, { status: result.status || 502, headers: NO_STORE_HEADERS });
   }
   if (isDatesAdminRoute(action)) {
     // The browser never receives a raw Core body of a Dates route: only the fields this console names. A key on the

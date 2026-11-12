@@ -81,6 +81,21 @@ removed; the other 61 byte-identical). Re-vendoring is the step of the host mode
 (`D=tests/fixtures/go_preorders_wire`); replace the five `PIN` values and review every moved body. When Core
 publishes, re-pin to the published commit with the same set digest, as the reachability rule says.
 
+## Outbound messaging corpus (2026-11-12)
+
+`outbound_messaging_wire` (contract `outbound-messaging-webadmin-v1`, Core `docs/OUTBOUND_MESSAGING_WEBADMIN_V1.md`)
+is copied byte for byte from the git objects of the Core lane tip `1eb790b17a3f94ce405fc9ff4a636937c2f4e56c`
+(branch `claude/outbound-verify-20261112`, not yet on Core `main`); its manifest records scoped source
+`1b3fba21a2e95717a1e224441cf2d227fe413393`, an ancestor of that tip. 51 bodies, captured through Core's route
+table with the bridge's exact form fields for an owner, an admin, a viewer, a revoked operator and a wrong server
+secret; three of them are the `admin_me.outbound_messaging` block, extracted. `fixture_set_sha256`
+`cdc9b1b9995d681752e3d1354a81b34d799392620925388944cd388398269274`; the pin is the `PIN` block of
+`tests/outboundMessagingWire.test.mts`, which checks every body against its manifest sha256 and the directory
+against the manifest's list, and decodes every body with the console's decoders and the bridge's projection.
+The hand-written `outbound_messaging_contract_v1.json` (2026-08-26) stays only for the unit tests that mutate
+its synthetic values; its seven bodies have Core's shape. When Core publishes, re-pin to the published commit
+with the same set digest, as the reachability rule says.
+
 ## AreYouIn port (2026-11-02, current for six corpora)
 
 Six corpora are re-vendored byte for byte (git objects, `git archive`) from Core branch

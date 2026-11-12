@@ -1,0 +1,35 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "outbound_messages_history_read"
+            ]
+        },
+        "evaluated_at": 1790000021,
+        "message": {
+            "message_id": "b4a1539af25f8a8bf64cb592",
+            "request_id": "6a000000-0000-4000-8000-000000000003",
+            "uid": 4201,
+            "channel": "sms",
+            "format": "plain_text",
+            "subject": "",
+            "body": "Friending support: your request was answered.",
+            "content_sha256": "9c80d06a1a37f30822adfb13f64e20d7985c79f5f9ea8ed33e15cd75cd76aea6",
+            "template": null,
+            "status": "failed",
+            "status_reason": "delivery_failed",
+            "push_mode": null,
+            "created_at": 1790000004,
+            "updated_at": 1790000004,
+            "completed_at": 1790000004,
+            "sent_by": "admin@friending.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

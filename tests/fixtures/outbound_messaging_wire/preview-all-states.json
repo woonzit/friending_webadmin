@@ -1,0 +1,97 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "admin",
+            "capabilities": [
+                "outbound_messages_history_read",
+                "outbound_messages_send"
+            ]
+        },
+        "preview_id": "aaaaaaaa-aaaa-4aaa-8aaa-000000000001",
+        "evaluated_at": 1790000001,
+        "expires_at": 1790000301,
+        "requested_count": 6,
+        "recipients": [
+            {
+                "uid": 4201,
+                "display_name": "Ada",
+                "codename": "ada4201",
+                "channels": {
+                    "email": "available",
+                    "sms": "available",
+                    "push": "available"
+                }
+            },
+            {
+                "uid": 4202,
+                "display_name": "Bela",
+                "codename": "bela4202",
+                "channels": {
+                    "email": "channel_absent",
+                    "sms": "channel_absent",
+                    "push": "channel_absent"
+                }
+            },
+            {
+                "uid": 4203,
+                "display_name": "Cora",
+                "codename": "cora4203",
+                "channels": {
+                    "email": "opted_out",
+                    "sms": "opted_out",
+                    "push": "opted_out"
+                }
+            },
+            {
+                "uid": 4204,
+                "display_name": "Dani",
+                "codename": "dani4204",
+                "channels": {
+                    "email": "banned",
+                    "sms": "banned",
+                    "push": "banned"
+                }
+            },
+            {
+                "uid": 4205,
+                "display_name": "Eli",
+                "codename": "eli4205",
+                "channels": {
+                    "email": "not_migrated",
+                    "sms": "not_migrated",
+                    "push": "not_migrated"
+                }
+            },
+            {
+                "uid": 4206,
+                "display_name": "Fern",
+                "codename": "fern4206",
+                "channels": {
+                    "email": "available",
+                    "sms": "opted_out",
+                    "push": "available"
+                }
+            }
+        ],
+        "limits": {
+            "max_recipients_per_request": 100,
+            "window_seconds": 300,
+            "overall": {
+                "limit": 500,
+                "used": 0,
+                "remaining": 500
+            },
+            "sms_push": {
+                "limit": 200,
+                "used": 0,
+                "remaining": 200
+            }
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}

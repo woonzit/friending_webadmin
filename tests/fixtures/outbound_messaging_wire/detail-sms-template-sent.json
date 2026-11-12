@@ -1,0 +1,38 @@
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "contract_version": 1,
+        "principal": {
+            "role": "viewer",
+            "capabilities": [
+                "outbound_messages_history_read"
+            ]
+        },
+        "evaluated_at": 1790000021,
+        "message": {
+            "message_id": "a5693da065937ef693a3c28e",
+            "request_id": "6a000000-0000-4000-8000-000000000004",
+            "uid": 4201,
+            "channel": "sms",
+            "format": "plain_text",
+            "subject": "",
+            "body": "Friending: please finish verifying your profile in the app.",
+            "content_sha256": "d30dea091f4733c238497b741b21e5406e3a92e2baa1b811f5408411a21e3607",
+            "template": {
+                "template_id": "650000000000000000004202",
+                "revision": 1
+            },
+            "status": "sent",
+            "status_reason": null,
+            "push_mode": null,
+            "created_at": 1790000005,
+            "updated_at": 1790000005,
+            "completed_at": 1790000005,
+            "sent_by": "admin@friending.com"
+        }
+    },
+    "message": 200,
+    "status": 200,
+    "can_send": 0
+}
