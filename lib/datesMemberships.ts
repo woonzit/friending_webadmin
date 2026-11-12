@@ -26,14 +26,14 @@
  * to the host's removal only. Where Core's list for the host falls back on
  * "the host" without a host on the row, this page names nobody.
  */
-export type DatesMembershipActor = { kind: "host"; uid: number } | { kind: "moderation" } | { kind: "unknown" };
-export type DatesMembershipStanding =
+type DatesMembershipActor = { kind: "host"; uid: number } | { kind: "moderation" } | { kind: "unknown" };
+type DatesMembershipStanding =
   /** `by_uid`: the host who placed the ban; `null` when the row does not name one. */
   | { state: "banned"; at: number; by_uid: number | null; note: string | null }
   /** `at`: `null` when the row has no time of the removal. */
   | { state: "removed"; at: number | null; by: DatesMembershipActor; note: string | null };
 /** A ban that was lifted: when and by whom, and when it had been placed. */
-export type DatesMembershipLiftedBan = { at: number; by_uid: number | null; banned_at: number };
+type DatesMembershipLiftedBan = { at: number; by_uid: number | null; banned_at: number };
 export type DatesMembershipRow = {
   /** `null`: the row does not carry a member id the page can print. */
   uid: number | null;
@@ -44,7 +44,7 @@ export type DatesMembershipRow = {
   /** The removal and ban facts of this row were served and cannot be read: `standing` and `lifted` say nothing. */
   unreadable: boolean;
 };
-export type DatesMemberships = {
+type DatesMemberships = {
   rows: DatesMembershipRow[];
   /**
    * How many of the listed members stand removed and how many banned; `null`
@@ -55,8 +55,8 @@ export type DatesMemberships = {
 };
 
 /** Core's limit of a host's note (DatesHostModerationPolicy::NOTE_LIMIT), in graphemes. */
-export const DATES_MEMBERSHIP_NOTE_MAX = 200;
-export const DATES_MEMBERSHIP_BAN_STATES = ["active", "lifted"] as const;
+const DATES_MEMBERSHIP_NOTE_MAX = 200;
+const DATES_MEMBERSHIP_BAN_STATES = ["active", "lifted"] as const;
 
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const epoch = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 8_640_000_000_000;

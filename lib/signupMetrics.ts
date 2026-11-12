@@ -14,8 +14,8 @@ export function registrationRange(period: RegistrationPeriod, asOf: number): Rec
   return { registered_after: asOf - seconds, registered_before: asOf };
 }
 
-export type SignupCohort = { total: number; persona_verified: number };
-export type SignupMetrics = {
+type SignupCohort = { total: number; persona_verified: number };
+type SignupMetrics = {
   schema_version: 1;
   as_of: number;
   last_24h: SignupCohort;

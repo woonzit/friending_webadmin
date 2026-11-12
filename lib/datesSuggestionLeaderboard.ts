@@ -35,7 +35,7 @@ export const LEADERBOARD_SCOPE_OVERRIDES = "dates_suggestion_leaderboard_scope_o
  * operator has not chosen yet.
  */
 export const LEADERBOARD_SETTING_KEYS = [LEADERBOARD_SCOPE, LEADERBOARD_SCOPE_OVERRIDES, LEADERBOARD_ENABLED, LEADERBOARD_ENABLED_OVERRIDES] as const;
-export type LeaderboardSettingKey = (typeof LEADERBOARD_SETTING_KEYS)[number];
+type LeaderboardSettingKey = (typeof LEADERBOARD_SETTING_KEYS)[number];
 export const isLeaderboardSettingKey = (key: unknown): key is LeaderboardSettingKey => typeof key === "string" && (LEADERBOARD_SETTING_KEYS as readonly string[]).includes(key);
 
 /** `country`: everyone who submitted a published event in that country. `city`: the board of the member's current city. */
@@ -45,7 +45,7 @@ export const LEADERBOARD_REASON_MIN = 3;
 export const LEADERBOARD_REASON_MAX = 1000;
 const MAX_OVERRIDES = 512;
 
-export type LeaderboardValues = {
+type LeaderboardValues = {
   enabled: boolean;
   scope: LeaderboardScope;
   enabledOverrides: Readonly<Record<string, boolean>>;
@@ -157,7 +157,7 @@ export function leaderboardDraftValues(draft: LeaderboardDraft): LeaderboardValu
     scopeOverrides: Object.fromEntries(rows.map(row => [row.storefront, row.scope])) };
 }
 
-export type LeaderboardDraftIssue = "storefront" | "duplicateStorefront" | "vocabulary";
+type LeaderboardDraftIssue = "storefront" | "duplicateStorefront" | "vocabulary";
 /**
  * Why the rows cannot be saved, or `null`. `known` is Core's storefront
  * vocabulary; without it (`null`: it could not be read) a country cannot be
@@ -226,7 +226,7 @@ function applied(authority: LeaderboardAuthority, command: LeaderboardCommand): 
   return { values, revisions: { ...authority.revisions, [command.key]: command.expected_revision + 1 }, invalid: authority.invalid.filter(key => key !== command.key) };
 }
 
-export type LeaderboardOutcome =
+type LeaderboardOutcome =
   | { kind: "saved" }
   /** `key` was refused, nothing of it was written; `saved` are the rows this save had already written. */
   | { kind: "refused"; error: string; key: LeaderboardSettingKey; saved: readonly LeaderboardSettingKey[] }
@@ -317,7 +317,7 @@ export function leaderboardEditorReducer(state: LeaderboardEditorState, action: 
   }
 }
 
-export type LeaderboardSaveBlock = "readOnly" | "clean" | "reason" | LeaderboardDraftIssue;
+type LeaderboardSaveBlock = "readOnly" | "clean" | "reason" | LeaderboardDraftIssue;
 /** Why nothing can be saved now, or `null`. */
 export function leaderboardSaveBlock(state: LeaderboardEditorState, canManage: boolean, known: ReadonlySet<string> | null): LeaderboardSaveBlock | null {
   if (!canManage) return "readOnly";

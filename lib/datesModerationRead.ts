@@ -219,18 +219,18 @@ export function datesLegalHoldReceipt(value: unknown, caseId: string, action: un
     && (action !== "place" || (epoch(reviewAt) && Number(reviewAt) > 0));
 }
 
-export const DATES_LEGAL_HOLD_CHANGES = ["placed", "amended", "unchanged", "released"] as const;
-export type DatesLegalHoldChange = typeof DATES_LEGAL_HOLD_CHANGES[number];
+const DATES_LEGAL_HOLD_CHANGES = ["placed", "amended", "unchanged", "released"] as const;
+type DatesLegalHoldChange = typeof DATES_LEGAL_HOLD_CHANGES[number];
 /**
  * A file a placed hold could no longer preserve (Core e5f36ebd, DatesPhotoCleanupService::guardHold and the
  * whole-activity photo purge): its deletion was already claimed (`deleting`) or finished (`completed`). `photo` is one
  * file of the activity (`photo_id`: the file's name, or `null` when Core could not name it); `activity_photos` is every
  * photo of the activity, `photo_id` then always `null`. Core serves `at: null`.
  */
-export type DatesHoldMediaUnavailable = {
+type DatesHoldMediaUnavailable = {
   scope: "photo" | "activity_photos"; activity_id: string; photo_id: string | null; state: "deleting" | "completed"; at: number | null;
 };
-export type DatesLegalHoldCommandReceipt = {
+type DatesLegalHoldCommandReceipt = {
   /** What the command did (T-891, served to a request with `expected_revision`); `null` from a Core that does not say. */
   hold_change: DatesLegalHoldChange | null;
   /** The case revision after the command; `null` when not served. */
@@ -302,7 +302,7 @@ export function datesTrailEvidenceReceipt(value: unknown, caseId: string, captur
     && value.captured_from === capturedFrom && value.captured_to === capturedTo;
 }
 
-export type DatesTrailEvidenceCommandReceipt = {
+type DatesTrailEvidenceCommandReceipt = {
   /** The window had been captured: the same snapshot, nothing stored (T-891, with the selector); `null` when not served. */
   existing: boolean | null;
   /** The case revision after the command; `null` when not served. */

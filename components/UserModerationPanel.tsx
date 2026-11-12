@@ -7,7 +7,7 @@ import { adminMembershipFailureText } from "@/lib/adminMembershipFailureText";
 import { formatDate } from "@/lib/format";
 
 // Wire mirror of Core's ModerationPolicy::statusWire + the service extras.
-export type ModerationStatus = {
+type ModerationStatus = {
   banned: boolean;
   ban_reason: string;
   banned_at: number;
@@ -48,7 +48,7 @@ export function parseModerationStatus(value: unknown): ModerationStatus | null {
 }
 
 /** Whole units of the time left until `until`; null when lapsed/indefinite. */
-export function remainingParts(until: number, nowMs: number): { d: number; h: number; m: number } | null {
+function remainingParts(until: number, nowMs: number): { d: number; h: number; m: number } | null {
   if (!Number.isFinite(until) || until <= 0) return null;
   const left = until * 1000 - nowMs;
   if (left <= 0) return null;

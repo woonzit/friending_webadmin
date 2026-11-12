@@ -14,7 +14,7 @@ export type NormalizedAdminImage = {
   height: number;
 };
 
-export type AdminImageErrorCode =
+type AdminImageErrorCode =
   | "image-invalid"
   | "image-format-invalid"
   | "image-dimensions-invalid"

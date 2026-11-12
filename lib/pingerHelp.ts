@@ -12,7 +12,7 @@ export const PINGER_HELP_SECTIONS = {
 
 export type PingerHelpSection = keyof typeof PINGER_HELP_SECTIONS;
 
-export type PingerAvailability = "off" | "globalOff" | "unknown" | "on";
+type PingerAvailability = "off" | "globalOff" | "unknown" | "on";
 
 /**
  * Whether the SAVED configuration lets members send a Hey. Core refuses a send

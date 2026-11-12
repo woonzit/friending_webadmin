@@ -1,6 +1,6 @@
 export const MAX_ADMIN_PROFILE_ICON_BYTES = 2 * 1024 * 1024;
 
-export type AdminProfileIconMime = "image/png" | "image/svg+xml";
+type AdminProfileIconMime = "image/png" | "image/svg+xml";
 
 export class AdminProfileIconError extends Error {
   constructor(
@@ -11,7 +11,7 @@ export class AdminProfileIconError extends Error {
   }
 }
 
-export type ValidatedAdminProfileIcon = {
+type ValidatedAdminProfileIcon = {
   buffer: Buffer;
   mime: AdminProfileIconMime;
   sizeBytes: number;

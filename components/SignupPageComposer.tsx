@@ -54,7 +54,7 @@ function dragData(event: DragEvent, identity: string) {
   event.dataTransfer.setData("text/plain", identity);
 }
 
-export type SignupPageComposerProps = {
+type SignupPageComposerProps = {
   layout: SignupPageLayout;
   eligibleFields: SignupEligibleField[];
   systemQuestions: SignupSystemQuestion[];

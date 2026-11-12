@@ -19,8 +19,8 @@ import {
   type WelcomeMessageValue,
 } from "@/lib/welcomeMessageConfiguration";
 
-export type WelcomeMessagePhase = "loading" | "ready" | "corrupt" | "error";
-export type WelcomeMessageNotice = {
+type WelcomeMessagePhase = "loading" | "ready" | "corrupt" | "error";
+type WelcomeMessageNotice = {
   tone: "success" | "error";
   key: "saved" | "invalid" | "writeRequired" | "refused" | "notApplied";
   error?: string;

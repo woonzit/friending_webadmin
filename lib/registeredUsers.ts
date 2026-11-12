@@ -17,7 +17,7 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-export type RegisteredUserSignup = {
+type RegisteredUserSignup = {
   /** Null when the row carries no known platform value (never guessed as "unknown"). */
   platform: SignupPlatform | null;
   /** Imported from the old Friending app by the member integration (`member_import`). */
@@ -33,7 +33,7 @@ export function registeredUserSignup(row: unknown): RegisteredUserSignup {
 }
 
 /** The Registered users account-type filter (`demo_mode`), also readable from `?type=`. */
-export const ACCOUNT_TYPE_FILTERS = ["all", "real", "demo"] as const;
+const ACCOUNT_TYPE_FILTERS = ["all", "real", "demo"] as const;
 export type AccountTypeFilter = (typeof ACCOUNT_TYPE_FILTERS)[number];
 
 export function accountTypeFilterFrom(value: string | null | undefined): AccountTypeFilter {
@@ -72,7 +72,7 @@ export function phoneCheckFilterFrom(value: unknown): PhoneCheckFilter {
     : "all";
 }
 
-export type RegisteredUserPhoneCheck = {
+type RegisteredUserPhoneCheck = {
   /** Only a stored `phone_is_verified === true` proves the phone. */
   verified: boolean;
   /** The countries the proof covers, e.g. "US/CA" or "HU"; "" when unproven or unknown. */

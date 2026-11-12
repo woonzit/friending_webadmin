@@ -12,9 +12,9 @@ type TextRequest = {
   text(): Promise<string>;
 };
 
-export const AUTH_BODY_MAX_BYTES = 4_096;
+const AUTH_BODY_MAX_BYTES = 4_096;
 
-export type BoundedJsonObject =
+type BoundedJsonObject =
   | { kind: "ok"; value: Record<string, unknown> }
   | { kind: "invalid" }
   | { kind: "too-large" };
@@ -52,17 +52,17 @@ export async function readBoundedJsonObject(
   }
 }
 
-export type ThrottleRule = {
+type ThrottleRule = {
   limit: number;
   windowSeconds: number;
 };
 
-export type ThrottleDecision = {
+type ThrottleDecision = {
   allowed: boolean;
   retryAfterSeconds: number;
 };
 
-export type RequestThrottle = {
+type RequestThrottle = {
   check(key: string, nowSeconds?: number): ThrottleDecision;
   size(): number;
 };
@@ -75,7 +75,7 @@ export type RequestThrottle = {
  * evicted, because a fixed window length makes insertion order the same as
  * expiry order.
  */
-export const THROTTLE_MAX_KEYS = 4096;
+const THROTTLE_MAX_KEYS = 4096;
 
 export function createRequestThrottle(
   rule: ThrottleRule,
@@ -135,8 +135,8 @@ export function createRequestThrottle(
  * Closing that needs the Core-side change of scoping the ban to the failing
  * source rather than to the account it names.
  */
-export const REQUEST_CODE_CALLER_RULE: ThrottleRule = { limit: 5, windowSeconds: 600 };
-export const VERIFY_CODE_CALLER_RULE: ThrottleRule = { limit: 10, windowSeconds: 600 };
+const REQUEST_CODE_CALLER_RULE: ThrottleRule = { limit: 5, windowSeconds: 600 };
+const VERIFY_CODE_CALLER_RULE: ThrottleRule = { limit: 10, windowSeconds: 600 };
 export const AUTH_ADDRESS_RULE: ThrottleRule = { limit: 40, windowSeconds: 600 };
 
 /**
@@ -172,7 +172,7 @@ export function throttleKey(address: string, email: string): string {
   return `${address}|${email}`;
 }
 
-export type LoginFailure = {
+type LoginFailure = {
   status: number;
   error: string;
 };
@@ -231,8 +231,8 @@ export function requestCodeFailure(status: number, rawError: unknown): LoginFail
  * emits — including an absent one — fails closed here. This is the same rule the
  * generic bridge applies through `lib/adminActions.ts`; the two must not drift.
  */
-export const ADMIN_ROLES = ["owner", "admin", "viewer"] as const;
-export const ADMIN_WRITE_ROLES = ["owner", "admin"] as const;
+const ADMIN_ROLES = ["owner", "admin", "viewer"] as const;
+const ADMIN_WRITE_ROLES = ["owner", "admin"] as const;
 
 export function isAdminWriteRole(value: unknown): boolean {
   const role = String(value ?? "").trim().toLowerCase();

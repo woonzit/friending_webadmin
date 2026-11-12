@@ -10,11 +10,11 @@ import {
 
 /** Closed browser model for the accepted outbound-messaging contract v1. */
 
-export const OUTBOUND_MESSAGING_MAX_RECIPIENTS = 100;
-export const OUTBOUND_MESSAGING_HISTORY_PAGE_SIZE = 25;
-export const OUTBOUND_MESSAGING_PREVIEW_SECONDS = 300;
-export const OUTBOUND_MESSAGING_OVERALL_LIMIT = 500;
-export const OUTBOUND_MESSAGING_SMS_PUSH_LIMIT = 200;
+const OUTBOUND_MESSAGING_MAX_RECIPIENTS = 100;
+const OUTBOUND_MESSAGING_HISTORY_PAGE_SIZE = 25;
+const OUTBOUND_MESSAGING_PREVIEW_SECONDS = 300;
+const OUTBOUND_MESSAGING_OVERALL_LIMIT = 500;
+const OUTBOUND_MESSAGING_SMS_PUSH_LIMIT = 200;
 
 export const OUTBOUND_MESSAGING_ACTIONS = [
   "outbound_message_preview",
@@ -62,14 +62,14 @@ export const OUTBOUND_MESSAGING_PUSH_MODES = ["fcm", "onesignal", "both"] as con
 
 export type OutboundMessagingChannel = (typeof OUTBOUND_MESSAGING_CHANNELS)[number];
 export type OutboundChannelAvailability = (typeof OUTBOUND_MESSAGING_AVAILABILITY)[number];
-export type OutboundMessagingCapability = (typeof OUTBOUND_MESSAGING_CAPABILITIES)[number];
+type OutboundMessagingCapability = (typeof OUTBOUND_MESSAGING_CAPABILITIES)[number];
 export type OutboundHistoryStatus = (typeof OUTBOUND_MESSAGING_HISTORY_STATUSES)[number];
 export type OutboundSkippedReason = (typeof OUTBOUND_MESSAGING_SKIPPED_REASONS)[number];
 export type OutboundFailureReason = (typeof OUTBOUND_MESSAGING_FAILURE_REASONS)[number];
 export type OutboundHistoryReason = OutboundSkippedReason | OutboundFailureReason;
-export type OutboundPushMode = (typeof OUTBOUND_MESSAGING_PUSH_MODES)[number];
+type OutboundPushMode = (typeof OUTBOUND_MESSAGING_PUSH_MODES)[number];
 export type OutboundContentSource = "custom" | "template";
-export type OutboundMessageFormat = "sanitized_html" | "plain_text";
+type OutboundMessageFormat = "sanitized_html" | "plain_text";
 
 export type OutboundMessagingPrincipal = {
   role: "viewer" | "admin" | "owner";
@@ -160,26 +160,26 @@ export type OutboundMessageSendData = {
   replayed: boolean;
 };
 
-export type OutboundPendingSend = {
+type OutboundPendingSend = {
   version: 1;
   action: "send";
   payload: OutboundSendPayload;
 };
 
-export type OutboundHistoryRequest = {
+type OutboundHistoryRequest = {
   contract_version: 1;
   uid: number;
   page_size: number;
   cursor: string;
 };
 
-export type OutboundHistoryDetailRequest = {
+type OutboundHistoryDetailRequest = {
   contract_version: 1;
   uid: number;
   message_id: string;
 };
 
-export type OutboundHistoryTemplate = {
+type OutboundHistoryTemplate = {
   template_id: string;
   revision: number;
 };
@@ -224,12 +224,12 @@ export type OutboundMessageHistoryDetailData = {
   message: OutboundHistoryDetailEntry;
 };
 
-export type OutboundRecipientConflictData = {
+type OutboundRecipientConflictData = {
   contract_version: 1;
   preview: OutboundRecipientPreviewData;
 };
 
-export type OutboundMessageDraftError =
+type OutboundMessageDraftError =
   | "channel"
   | "contentSource"
   | "templateId"
@@ -243,7 +243,7 @@ export type OutboundMessageDraftError =
   | "uids"
   | "requestId";
 
-export type OutboundMessageResult<T> =
+type OutboundMessageResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: OutboundMessageDraftError };
 
@@ -403,7 +403,7 @@ function structuralPreviewPayload(value: unknown): OutboundPreviewRequest | null
     : null;
 }
 
-export function outboundMessagingPrincipal(value: unknown): OutboundMessagingPrincipal | null {
+function outboundMessagingPrincipal(value: unknown): OutboundMessagingPrincipal | null {
   const raw = requiredObject(value, ["role", "capabilities"]);
   const role = oneOf(raw?.role, ["viewer", "admin", "owner"] as const);
   if (!raw || !role || !Array.isArray(raw.capabilities)) return null;
@@ -451,7 +451,7 @@ function rateBucket(value: unknown, limit: number): OutboundRateBucket | null {
     : null;
 }
 
-export function outboundRecipientPreviewData(
+function outboundRecipientPreviewData(
   value: unknown,
   expectedUids?: readonly number[],
 ): OutboundRecipientPreviewData | null {
@@ -879,7 +879,7 @@ function historyMetadata(value: Record<string, unknown>, expectedUid: number): H
   };
 }
 
-export function outboundHistoryEntry(value: unknown, expectedUid: number): OutboundHistoryEntry | null {
+function outboundHistoryEntry(value: unknown, expectedUid: number): OutboundHistoryEntry | null {
   const raw = requiredObject(value, [
     "message_id",
     "request_id",
@@ -914,7 +914,7 @@ function historyRowsAreOrdered(rows: readonly OutboundHistoryEntry[]): boolean {
   return true;
 }
 
-export function outboundHistoryData(
+function outboundHistoryData(
   value: unknown,
   expected: OutboundHistoryRequest,
 ): OutboundMessageHistoryData | null {
@@ -1154,7 +1154,7 @@ export const OUTBOUND_MESSAGING_ERROR_STATUSES: Record<
   "admin-write-required": 403,
 };
 
-export type OutboundMessagingErrorKey =
+type OutboundMessagingErrorKey =
   | (typeof OUTBOUND_MESSAGING_ERROR_KEYS)[keyof typeof OUTBOUND_MESSAGING_ERROR_KEYS]
   | "generic";
 

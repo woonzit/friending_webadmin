@@ -13,9 +13,9 @@ export type SignupPlatform = (typeof SIGNUP_PLATFORMS)[number];
 export type SignupPlatformFilter = SignupPlatform | "all";
 export const REGISTRATION_STATS_RANGES = [30, 90] as const;
 export type RegistrationStatsRange = (typeof REGISTRATION_STATS_RANGES)[number];
-export const REGISTRATION_STATS_TIMEZONE = "Europe/Budapest";
+const REGISTRATION_STATS_TIMEZONE = "Europe/Budapest";
 
-export type RegistrationCountry = { country_code: string; count: number };
+type RegistrationCountry = { country_code: string; count: number };
 export type RegistrationBlock = {
   registered: number;
   accounts: number;
@@ -61,7 +61,7 @@ function record(value: unknown): Record<string, unknown> | null {
 
 const count = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
 
-export function isSignupPlatform(value: unknown): value is SignupPlatform {
+function isSignupPlatform(value: unknown): value is SignupPlatform {
   return typeof value === "string" && (SIGNUP_PLATFORMS as readonly string[]).includes(value);
 }
 

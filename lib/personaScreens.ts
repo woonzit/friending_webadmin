@@ -60,7 +60,7 @@ export const PERSONA_SCREENS_ACTIONS = [
   "persona_screens_console",
   "persona_screens_save",
 ] as const;
-export type PersonaScreensAction = (typeof PERSONA_SCREENS_ACTIONS)[number];
+type PersonaScreensAction = (typeof PERSONA_SCREENS_ACTIONS)[number];
 
 export const PERSONA_SCREEN_KEYS = ["pre", "success", "failed"] as const;
 export type PersonaScreenKey = (typeof PERSONA_SCREEN_KEYS)[number];
@@ -108,8 +108,8 @@ export const PERSONA_SCREENS_CONTRACT_VERSION = 1;
 /** Contract §9: this family's OWN revision, seeded 1 — never the forced-verification counter. */
 export const PERSONA_SCREENS_REVISION_MAX = 9_007_199_254_740_991;
 
-export const PERSONA_SCREENS_DOCUMENT_KEYS = ["copy_default"] as const;
-export const PERSONA_SCREENS_CONSOLE_KEYS = [
+const PERSONA_SCREENS_DOCUMENT_KEYS = ["copy_default"] as const;
+const PERSONA_SCREENS_CONSOLE_KEYS = [
   "revision",
   "copy_default",
   "compiled_reference",
@@ -119,7 +119,7 @@ export const PERSONA_SCREENS_CONSOLE_KEYS = [
   "languages",
   "slot_byte_limits",
 ] as const;
-export const PERSONA_SCREENS_SAVED_KEYS = ["revision", "copy_default"] as const;
+const PERSONA_SCREENS_SAVED_KEYS = ["revision", "copy_default"] as const;
 
 /** Contract §7: the label for the mirror, so the console can say where the reference came from. */
 export const PERSONA_SCREENS_REFERENCE_AUTHORITY = "ios:Localizable.strings:verification.screen.*";
@@ -131,8 +131,8 @@ export const PERSONA_SCREENS_UNAVAILABLE_ERROR = "persona-screens-unavailable";
 // ---------------------------------------------------------------------------
 
 /** Any subset — a slot appears only where an operator stored something. */
-export type PersonaScreenExternalLink = Partial<Record<PersonaScreenExternalLinkField, string>>;
-export type PersonaScreenSlotMap = Partial<Record<PersonaScreenSlot, string>> & {
+type PersonaScreenExternalLink = Partial<Record<PersonaScreenExternalLinkField, string>>;
+type PersonaScreenSlotMap = Partial<Record<PersonaScreenSlot, string>> & {
   /** PRE-only. A valid one-field object is retained but publishes no button. */
   external_link?: PersonaScreenExternalLink;
 };
@@ -158,11 +158,11 @@ export type PersonaScreensConsole = {
   slot_byte_limits: Record<PersonaScreenSlot, number>;
 };
 
-export type PersonaScreensDocument = { copy_default: PersonaScreensCopyDefault };
-export type PersonaScreensSaved = { revision: number; copy_default: PersonaScreensCopyDefault };
+type PersonaScreensDocument = { copy_default: PersonaScreensCopyDefault };
+type PersonaScreensSaved = { revision: number; copy_default: PersonaScreensCopyDefault };
 
 /** Core's `admin_me.persona_screens` projection (contract §5). */
-export type PersonaScreensAdminMe = {
+type PersonaScreensAdminMe = {
   contract_version: number;
   contract_ready: boolean;
   actions: PersonaScreensAction[];
@@ -226,7 +226,7 @@ const CONTROL_CHARACTERS =
 
 /** Core's PHP `trim()` character set, which is not JavaScript's. */
 const PHP_TRIM_EDGE = /^[ \t\n\r\0\x0B]+|[ \t\n\r\0\x0B]+$/g;
-export function personaScreenTrim(value: string): string {
+function personaScreenTrim(value: string): string {
   return value.replace(PHP_TRIM_EDGE, "");
 }
 
@@ -334,7 +334,7 @@ function parseReadableExternalLink(value: unknown): PersonaScreenExternalLink | 
  * the contract describes, and adopting it would put an unowned string in front
  * of an operator as if it were theirs.
  */
-export function parsePersonaScreensCopyDefault(value: unknown): PersonaScreensCopyDefault | null {
+function parsePersonaScreensCopyDefault(value: unknown): PersonaScreensCopyDefault | null {
   const languages = record(value);
   if (!languages) return null;
   const result: PersonaScreensCopyDefault = {};
@@ -373,7 +373,7 @@ export function parsePersonaScreensCopyDefault(value: unknown): PersonaScreensCo
 }
 
 /** The complete two-language mirror. Anything short of complete is not a reference. */
-export function parsePersonaScreensReference(value: unknown): PersonaScreensReference | null {
+function parsePersonaScreensReference(value: unknown): PersonaScreensReference | null {
   const languages = record(value);
   if (!languages || !exactKeys(languages, PERSONA_SCREEN_LANGUAGES)) return null;
   const reference = {} as PersonaScreensReference;
@@ -405,7 +405,7 @@ function parseClosedList<T extends string>(value: unknown, expected: readonly T[
     : null;
 }
 
-export function parsePersonaScreensConsole(value: unknown): PersonaScreensConsole | null {
+function parsePersonaScreensConsole(value: unknown): PersonaScreensConsole | null {
   const source = record(value);
   if (!source || !exactKeys(source, PERSONA_SCREENS_CONSOLE_KEYS)) return null;
   const revision = parseRevision(source.revision);
@@ -441,7 +441,7 @@ export function parsePersonaScreensConsole(value: unknown): PersonaScreensConsol
   };
 }
 
-export function parsePersonaScreensSaved(value: unknown): PersonaScreensSaved | null {
+function parsePersonaScreensSaved(value: unknown): PersonaScreensSaved | null {
   const source = record(value);
   if (!source || !exactKeys(source, PERSONA_SCREENS_SAVED_KEYS)) return null;
   const revision = parseRevision(source.revision);
@@ -464,7 +464,7 @@ export function parsePersonaScreensSaved(value: unknown): PersonaScreensSaved | 
  * is absent; there is no compiled link to fall back to. Empty strings never
  * reach the wire in either case.
  */
-export type PersonaScreensLanguageDraft =
+type PersonaScreensLanguageDraft =
   Record<PersonaScreenKey, Record<PersonaScreenSlot, string>> & {
     external_link: Record<PersonaScreenExternalLinkField, string>;
   };
@@ -624,7 +624,7 @@ export function personaScreensCompiledSlotCounts(
 // feedback, but Core's answer is authoritative and names the control)
 // ---------------------------------------------------------------------------
 
-export type PersonaScreenSlotIssue =
+type PersonaScreenSlotIssue =
   | "overCap"
   | "untrimmed"
   | "boundaryWhitespace"
@@ -682,19 +682,19 @@ export function personaScreenExternalLinkFieldIssue(
   return null;
 }
 
-export type PersonaScreenSlotAddress = {
+type PersonaScreenSlotAddress = {
   language: PersonaScreenLanguage;
   screen: PersonaScreenKey;
   slot: PersonaScreenSlot;
 };
 
-export type PersonaScreenExternalLinkFieldAddress = {
+type PersonaScreenExternalLinkFieldAddress = {
   language: PersonaScreenLanguage;
   screen: "pre";
   externalLinkField: PersonaScreenExternalLinkField;
 };
 
-export type PersonaScreenFieldAddress =
+type PersonaScreenFieldAddress =
   | PersonaScreenSlotAddress
   | PersonaScreenExternalLinkFieldAddress;
 
@@ -705,7 +705,7 @@ export function personaScreenFieldPath(address: PersonaScreenFieldAddress): stri
     : `copy_default.${address.language}.${address.screen}.${address.slot}`;
 }
 
-export type PersonaScreenDraftIssue = PersonaScreenFieldAddress & {
+type PersonaScreenDraftIssue = PersonaScreenFieldAddress & {
   issue: PersonaScreenSlotIssue;
 };
 
@@ -777,7 +777,7 @@ function readableExternalLinkPair(value: unknown): { label: string; url: string 
   return label === null || url === null ? null : { label, url };
 }
 
-export type PersonaScreensPublishedBlock = {
+type PersonaScreensPublishedBlock = {
   contract_version: number;
   lang: PersonaScreenLanguage;
   screens: PersonaScreenMap;
@@ -824,8 +824,8 @@ export function personaScreensForLanguage(
   return copyDefault[language] ?? {};
 }
 
-export type PersonaScreenPreviewSource = "operator" | "compiled";
-export type PersonaScreenPreviewSlot = { text: string; source: PersonaScreenPreviewSource };
+type PersonaScreenPreviewSource = "operator" | "compiled";
+type PersonaScreenPreviewSlot = { text: string; source: PersonaScreenPreviewSource };
 export type PersonaScreenPreview = Record<PersonaScreenSlot, PersonaScreenPreviewSlot>;
 
 /**
@@ -861,7 +861,7 @@ export function personaScreenPreview(
 // refusal maps split by envelope source, everything else uncertain)
 // ---------------------------------------------------------------------------
 
-export type PersonaScreensRefusal = {
+type PersonaScreensRefusal = {
   ok: false;
   kind: "refused";
   error: string;
@@ -871,8 +871,8 @@ export type PersonaScreensRefusal = {
   /** 422 only: the exact control Core refused, e.g. `copy_default.hu.pre.headline`. */
   field: string | null;
 };
-export type PersonaScreensUncertain = { ok: false; kind: "uncertain"; error: string };
-export type PersonaScreensDecode<T> =
+type PersonaScreensUncertain = { ok: false; kind: "uncertain"; error: string };
+type PersonaScreensDecode<T> =
   { ok: true; value: T } | PersonaScreensRefusal | PersonaScreensUncertain;
 
 /**
@@ -903,7 +903,7 @@ export const PERSONA_SCREENS_CORE_UNCERTAIN_STATUSES: ReadonlyMap<string, number
 ]);
 
 /** Closed bridge refusal vocabulary (`app/api/admin/[action]/route.ts`), answered before Core is called. */
-export const PERSONA_SCREENS_BRIDGE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+const PERSONA_SCREENS_BRIDGE_REFUSAL_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ["invalid-input", 400],
   ["auth-required", 401],
   ["bad-origin", 403],
@@ -914,7 +914,7 @@ export const PERSONA_SCREENS_BRIDGE_REFUSAL_STATUSES: ReadonlyMap<string, number
 ]);
 
 /** The bridge's transport trio: Core was called and its answer is unknown. */
-export const PERSONA_SCREENS_BRIDGE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
+const PERSONA_SCREENS_BRIDGE_UNCERTAIN_STATUSES: ReadonlyMap<string, number> = new Map<string, number>([
   ["core-timeout", 504],
   ["core-unavailable", 502],
   ["invalid-core-response", 502],
@@ -1068,7 +1068,7 @@ export function personaScreensProjectionFrom(membership: unknown): PersonaScreen
   return value === null ? { kind: "unreadable" } : { kind: "ok", value };
 }
 
-export function isPersonaScreensAction(action: string): action is PersonaScreensAction {
+function isPersonaScreensAction(action: string): action is PersonaScreensAction {
   return (PERSONA_SCREENS_ACTIONS as readonly string[]).includes(action);
 }
 

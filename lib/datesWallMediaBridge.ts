@@ -18,7 +18,7 @@ import { isTrustedAdminRequest } from "@/lib/requestGuard";
  * refusal - never a storage URL.
  */
 type HeaderReader = { get(name: string): string | null };
-export type DatesWallMediaDeps = {
+type DatesWallMediaDeps = {
   session: () => Promise<{ email: string } | null>;
   core: (action: string, payload: Record<string, unknown>, timeoutMs?: number, options?: CoreCallOptions) => Promise<{ status: number; data: unknown }>;
   binary: (action: string, payload: Record<string, unknown>, range: string | null, timeoutMs?: number, signal?: AbortSignal) => Promise<Response | null>;

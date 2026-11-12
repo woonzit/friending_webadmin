@@ -16,19 +16,19 @@ export const FEATURE_SWITCHES_ACTIONS = [
 ] as const;
 
 export const FEATURE_SWITCHES_REASON_MAX = 300 as const;
-export const FEATURE_SWITCHES_REVISION_MAX = 2_147_483_647 as const;
+const FEATURE_SWITCHES_REVISION_MAX = 2_147_483_647 as const;
 
 export type FeatureSwitch = (typeof FEATURE_SWITCHES)[number];
-export type FeatureSwitchesCapability = (typeof FEATURE_SWITCHES_CAPABILITIES)[number];
+type FeatureSwitchesCapability = (typeof FEATURE_SWITCHES_CAPABILITIES)[number];
 export type FeatureSwitchesAction = (typeof FEATURE_SWITCHES_ACTIONS)[number];
 export type FeatureSwitchesRole = "viewer" | "admin" | "owner";
 
-export type FeatureSwitchesPrincipal = {
+type FeatureSwitchesPrincipal = {
   role: FeatureSwitchesRole;
   capabilities: FeatureSwitchesCapability[];
 };
 
-export type FeatureSwitchesAdminMe = {
+type FeatureSwitchesAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   /** Rendering hints only; mutations bind the revision from `feature_switches_get`. */
@@ -41,7 +41,7 @@ export type FeatureSwitchesAdminMe = {
   actions: FeatureSwitchesAction[];
 };
 
-export type FeatureSwitchState = {
+type FeatureSwitchState = {
   enabled: boolean;
   updated_at: number;
   updated_by: string;
@@ -56,18 +56,18 @@ export type FeatureSwitchesState = {
   revision: number;
 };
 
-export type FeatureSwitchesMutation = FeatureSwitchesState & {
+type FeatureSwitchesMutation = FeatureSwitchesState & {
   no_change: boolean;
   replayed: boolean;
 };
 
-export type FeatureSwitchesConflict = {
+type FeatureSwitchesConflict = {
   current: FeatureSwitchesState;
 };
 
 type JsonObject = Record<string, unknown>;
 
-export type FeatureSwitchesSetPayload = JsonObject & {
+type FeatureSwitchesSetPayload = JsonObject & {
   contract_version: 1;
   switch: FeatureSwitch;
   enabled: "true" | "false";
@@ -221,7 +221,7 @@ export function featureSwitchesAdminMe(value: unknown): FeatureSwitchesAdminMe |
   };
 }
 
-export const FEATURE_SWITCHES_ACTION_CAPABILITY: Record<
+const FEATURE_SWITCHES_ACTION_CAPABILITY: Record<
   FeatureSwitchesAction,
   FeatureSwitchesCapability
 > = {

@@ -33,7 +33,7 @@ import {
 
 export const ADMIN_COOKIE = "flwa_session";
 
-export type AdminIdentity = {
+type AdminIdentity = {
   email: string;
   role: string;
   personaConsoleReady: boolean;
@@ -61,7 +61,7 @@ export type AdminIdentity = {
   friendingGoConsoleReady: boolean;
 };
 
-export type AdminWriter =
+type AdminWriter =
   | {
       ok: true;
       session: SessionPayload;

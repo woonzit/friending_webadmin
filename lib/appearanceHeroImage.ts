@@ -1,7 +1,7 @@
 export const HERO_IMAGE_MIN_ASPECT_RATIO = 1.75;
 export const HERO_IMAGE_MAX_ASPECT_RATIO = 2;
 
-export type HeroImageRatioClassification =
+type HeroImageRatioClassification =
   | "within-range"
   | "crop-top-bottom"
   | "crop-left-right"

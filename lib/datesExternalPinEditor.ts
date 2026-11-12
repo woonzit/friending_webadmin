@@ -25,14 +25,14 @@ import {
  * field of its own, the colour of every pin without a colour of its own.
  */
 
-export type ExternalPinProblem = { key: string; field: EventIconField; code: EventIconProblemCode };
+type ExternalPinProblem = { key: string; field: EventIconField; code: EventIconProblemCode };
 /** Every field Core's catalogue validation would refuse, by type and field. Empty: the catalogue may be sent. */
 export function externalPinProblems(pins: readonly DatesExternalPinFields[]): ExternalPinProblem[] {
   return pins.flatMap(pin => pinRowProblems(pin).map(problem => ({ key: pin.key, ...problem })));
 }
 
 export type ExternalPinCommand = { pins: string; default_marker_background_color: string; expected_revision: number; reason: string; idempotency_key: string };
-export type ExternalPinOutcome = { kind: "saved" } | { kind: "refused"; error: string } | { kind: "unknown" };
+type ExternalPinOutcome = { kind: "saved" } | { kind: "refused"; error: string } | { kind: "unknown" };
 export type ExternalPinEditorState = {
   pins: DatesExternalPin[];
   /** The catalogue's default colour as it is edited: always a colour (a half-typed one stays in the field). */
@@ -119,7 +119,7 @@ export function externalPinEditorReducer(state: ExternalPinEditorState, action: 
   }
 }
 
-export type ExternalPinSaveBlock = "readOnly" | "clean" | "problems" | "reason";
+type ExternalPinSaveBlock = "readOnly" | "clean" | "problems" | "reason";
 /** Why nothing can be saved now, or `null`. `draftInvalid`: a field holds text that is not a value yet (a HEX field). */
 export function externalPinSaveBlock(state: ExternalPinEditorState, canManage: boolean, draftInvalid = false): ExternalPinSaveBlock | null {
   if (!canManage) return "readOnly";

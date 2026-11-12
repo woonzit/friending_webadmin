@@ -43,9 +43,9 @@ export type AdminHelpConsoleReadiness = {
   friendingGoConsoleReady: boolean;
 };
 
-export type AdminHelpConsoleReadyKey = keyof AdminHelpConsoleReadiness;
+type AdminHelpConsoleReadyKey = keyof AdminHelpConsoleReadiness;
 
-export type AdminHelpPage = {
+type AdminHelpPage = {
   key: string;
   route: string;
   sections: readonly string[];
@@ -611,7 +611,7 @@ export function adminHelpPageForPath(pathname: string): AdminHelpPage | null {
 }
 
 /** Fail-closed: an undeclared gate is open, a declared one must be satisfied. */
-export function adminHelpPageReachable(
+function adminHelpPageReachable(
   page: AdminHelpPage,
   readiness: AdminHelpConsoleReadiness,
 ): boolean {

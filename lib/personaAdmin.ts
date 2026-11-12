@@ -51,7 +51,7 @@ export type PersonaAdminCapabilities = {
   actions: PersonaAdminCapabilityAction[];
 };
 
-export const PERSONA_START_BOOLEAN_KEYS = [
+const PERSONA_START_BOOLEAN_KEYS = [
   "active",
   "progress_active",
   "trust_active",
@@ -59,9 +59,9 @@ export const PERSONA_START_BOOLEAN_KEYS = [
   "skip_active",
 ] as const;
 
-export const PERSONA_START_NUMBER_KEYS = ["progress_value"] as const;
+const PERSONA_START_NUMBER_KEYS = ["progress_value"] as const;
 
-export const PERSONA_START_INTEGER_KEYS = [
+const PERSONA_START_INTEGER_KEYS = [
   "header_brand_size",
   "title_size",
   "subtitle_size",
@@ -77,7 +77,7 @@ export const PERSONA_START_INTEGER_KEYS = [
   "skip_title_size",
 ] as const;
 
-export const PERSONA_START_STRING_KEYS = [
+const PERSONA_START_STRING_KEYS = [
   "header_logo_url",
   "header_brand_text",
   "header_brand_color",
@@ -149,9 +149,9 @@ export const PERSONA_START_STRING_KEYS = [
   "page_bg_color",
 ] as const;
 
-export type PersonaStartBooleanKey = (typeof PERSONA_START_BOOLEAN_KEYS)[number];
-export type PersonaStartNumberKey = (typeof PERSONA_START_NUMBER_KEYS)[number];
-export type PersonaStartIntegerKey = (typeof PERSONA_START_INTEGER_KEYS)[number];
+type PersonaStartBooleanKey = (typeof PERSONA_START_BOOLEAN_KEYS)[number];
+type PersonaStartNumberKey = (typeof PERSONA_START_NUMBER_KEYS)[number];
+type PersonaStartIntegerKey = (typeof PERSONA_START_INTEGER_KEYS)[number];
 export type PersonaStartStringKey = (typeof PERSONA_START_STRING_KEYS)[number];
 export type PersonaStartFieldKey =
   | PersonaStartBooleanKey
@@ -167,7 +167,7 @@ export type PersonaStartConfig = {
   [Key in PersonaStartStringKey]: string;
 };
 
-export type PersonaStartSectionKey =
+type PersonaStartSectionKey =
   | "general"
   | "header"
   | "title"
@@ -332,7 +332,7 @@ const STRING_KEY_SET: ReadonlySet<string> = new Set(PERSONA_START_STRING_KEYS);
 const FIELD_KEY_SET: ReadonlySet<string> = new Set(PERSONA_START_FIELD_KEYS);
 const PERSONA_ACTION_SET: ReadonlySet<string> = new Set(PERSONA_ADMIN_ACTIONS);
 
-export type PersonaStartFieldKind =
+type PersonaStartFieldKind =
   | "boolean"
   | "progress"
   | "size"
@@ -500,7 +500,7 @@ function configFrom(value: unknown, normalize: boolean): PersonaStartConfig | nu
   return output as PersonaStartConfig;
 }
 
-export function personaStartConfig(value: unknown): PersonaStartConfig | null {
+function personaStartConfig(value: unknown): PersonaStartConfig | null {
   return configFrom(value, false);
 }
 
@@ -522,7 +522,7 @@ export function personaStartDraftWithValue(
   return next as PersonaStartConfig;
 }
 
-export type PersonaStartPatch = {
+type PersonaStartPatch = {
   normalized: PersonaStartConfig;
   fields: PersonaStartFieldKey[];
   payload: Record<string, string | number | boolean>;
@@ -590,7 +590,7 @@ export type PersonaStartConfigResource = {
   config: PersonaStartConfig;
 };
 
-export type PersonaStartConfigMutation = PersonaStartConfigResource & {
+type PersonaStartConfigMutation = PersonaStartConfigResource & {
   replayed: boolean;
 };
 
@@ -786,7 +786,7 @@ const PERSONA_MUTATION_ACTION_SET: ReadonlySet<string> = new Set(
   PERSONA_ADMIN_MUTATION_ACTIONS,
 );
 
-export type PersonaProxyPayload = Record<string, string | number | boolean>;
+type PersonaProxyPayload = Record<string, string | number | boolean>;
 
 function normalizedPersonaMutationBase(
   source: Record<string, unknown> | null,
@@ -920,14 +920,14 @@ export async function personaPersistBeforeMutation<T>(
   return { ok: true, response: await mutate() };
 }
 
-export type PersonaMemberMutation = {
+type PersonaMemberMutation = {
   contract_version: 1;
   uid: number;
   revision: number;
   replayed: boolean;
 };
 
-export type PersonaForceMutation = PersonaMemberMutation & {
+type PersonaForceMutation = PersonaMemberMutation & {
   verify_image_url: string;
 };
 
@@ -1058,12 +1058,12 @@ export const PERSONA_ADMIN_BRIDGE_ERROR_STATUSES = {
   "invalid-core-response": 502,
 } as const;
 
-export const PERSONA_ADMIN_ERROR_STATUSES = {
+const PERSONA_ADMIN_ERROR_STATUSES = {
   ...PERSONA_ADMIN_CORE_ERROR_STATUSES,
   ...PERSONA_ADMIN_BRIDGE_ERROR_STATUSES,
 } as const;
 
-export type PersonaAdminError = keyof typeof PERSONA_ADMIN_ERROR_STATUSES;
+type PersonaAdminError = keyof typeof PERSONA_ADMIN_ERROR_STATUSES;
 
 export const PERSONA_ADMIN_ERROR_KEYS = Object.keys(
   PERSONA_ADMIN_ERROR_STATUSES,
@@ -1079,13 +1079,13 @@ type PersonaAdminFailureBase = {
   error: PersonaAdminError;
 };
 
-export type PersonaAdminCoreFailure = PersonaAdminFailureBase & {
+type PersonaAdminCoreFailure = PersonaAdminFailureBase & {
   message: 200;
   status: 200;
   can_send: 0;
 };
 
-export type PersonaAdminBridgeFailure = PersonaAdminFailureBase & {
+type PersonaAdminBridgeFailure = PersonaAdminFailureBase & {
   message?: never;
   status?: never;
   can_send?: never;
@@ -1119,20 +1119,20 @@ export function personaAdminFailureResponse(value: unknown): PersonaAdminFailure
     : null;
 }
 
-export type PersonaConfigConflict = {
+type PersonaConfigConflict = {
   kind: "config";
   contract_version: 1;
   resource_revision: number;
 };
 
-export type PersonaMemberConflict = {
+type PersonaMemberConflict = {
   kind: "member";
   contract_version: 1;
   uid: number;
   revision: number;
 };
 
-export type PersonaConflict = PersonaConfigConflict | PersonaMemberConflict;
+type PersonaConflict = PersonaConfigConflict | PersonaMemberConflict;
 
 /** Only `persona-conflict` may carry one of these two authoritative rows. */
 export function personaConflictResponse(value: unknown): PersonaConflict | null {
@@ -1177,7 +1177,7 @@ export function personaShouldRetainMutation(value: unknown): boolean {
 
 export type PersonaTarget = { uid: number; displayName: string; revision: number };
 
-export type PersonaTargetLookupData = {
+type PersonaTargetLookupData = {
   uid: number;
   display_name: string;
   revision: number;
@@ -1240,7 +1240,7 @@ export function personaTargetLookupResponse(value: unknown): PersonaTarget | nul
     : null;
 }
 
-export type PersonaHighlightPart = { text: string; highlighted: boolean };
+type PersonaHighlightPart = { text: string; highlighted: boolean };
 
 export function personaHighlightParts(
   template: string,

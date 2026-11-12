@@ -9,7 +9,7 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 export const REPORTED_CONTENT_CONTRACT_VERSION = 1;
 export const REPORTED_CONTENT_PAGE_SIZE = 50;
 
-export const REPORTED_CONTENT_STATUSES = [
+const REPORTED_CONTENT_STATUSES = [
   "pending",
   "confirmed",
   "rejected",
@@ -18,36 +18,36 @@ export const REPORTED_CONTENT_STATUS_FILTERS = [
   ...REPORTED_CONTENT_STATUSES,
   "all",
 ] as const;
-export const REPORTED_CONTENT_TARGET_TYPES = ["user", "chat"] as const;
+const REPORTED_CONTENT_TARGET_TYPES = ["user", "chat"] as const;
 export const REPORTED_CONTENT_TARGET_FILTERS = [
   ...REPORTED_CONTENT_TARGET_TYPES,
   "all",
 ] as const;
 export const REPORTED_CONTENT_DECISIONS = ["confirmed", "rejected"] as const;
-export const REPORTED_CONTENT_CAPABILITIES = [
+const REPORTED_CONTENT_CAPABILITIES = [
   "reported_content_decide",
   "reported_content_read",
 ] as const;
 
-export type ReportedContentStatus = (typeof REPORTED_CONTENT_STATUSES)[number];
+type ReportedContentStatus = (typeof REPORTED_CONTENT_STATUSES)[number];
 export type ReportedContentStatusFilter = (typeof REPORTED_CONTENT_STATUS_FILTERS)[number];
-export type ReportedContentTargetType = (typeof REPORTED_CONTENT_TARGET_TYPES)[number];
+type ReportedContentTargetType = (typeof REPORTED_CONTENT_TARGET_TYPES)[number];
 export type ReportedContentTargetFilter = (typeof REPORTED_CONTENT_TARGET_FILTERS)[number];
 export type ReportedContentDecision = (typeof REPORTED_CONTENT_DECISIONS)[number];
-export type ReportedContentCapability = (typeof REPORTED_CONTENT_CAPABILITIES)[number];
+type ReportedContentCapability = (typeof REPORTED_CONTENT_CAPABILITIES)[number];
 
 export type ReportedContentPrincipal = {
   role: "viewer" | "admin" | "owner";
   capabilities: ReportedContentCapability[];
 };
 
-export type ReportedContentIdentity = {
+type ReportedContentIdentity = {
   uid: number;
   display_name: string;
   username: string;
 };
 
-export type ReportedContentSubject =
+type ReportedContentSubject =
   | { kind: "profile"; summary: string }
   | {
       kind: "chat_message";
@@ -58,7 +58,7 @@ export type ReportedContentSubject =
       has_restricted_evidence: boolean;
     };
 
-export type ReportedContentResolution = null | {
+type ReportedContentResolution = null | {
   decision: ReportedContentDecision;
   reason: string;
   decided_at: number;
@@ -113,7 +113,7 @@ export type ReportedContentPendingDecision = {
   requestId: string;
 };
 
-export type ReportedContentDecisionPayload = {
+type ReportedContentDecisionPayload = {
   contract_version: 1;
   report_id: string;
   action: ReportedContentDecision;
@@ -367,7 +367,7 @@ export function reportedContentReportsAreOrdered(
 }
 
 /** Decode the version-1 `moderation_reported_list` data object. */
-export function reportedContentListData(value: unknown): ReportedContentListData | null {
+function reportedContentListData(value: unknown): ReportedContentListData | null {
   const raw = requiredObject(value, [
     "contract_version",
     "principal",
@@ -442,7 +442,7 @@ export function reportedContentListResponse(value: unknown): ReportedContentList
     : null;
 }
 
-export function reportedContentActionData(value: unknown): ReportedContentActionData | null {
+function reportedContentActionData(value: unknown): ReportedContentActionData | null {
   const raw = requiredObject(value, ["contract_version", "report", "replayed"]);
   const report = reportedContentReport(raw?.report);
   return raw?.contract_version === 1
@@ -525,7 +525,7 @@ export const REPORTED_CONTENT_ERROR_STATUSES: Record<
   "admin-write-required": 403,
 };
 
-export type ReportedContentErrorKey =
+type ReportedContentErrorKey =
   | (typeof REPORTED_CONTENT_ERROR_KEYS)[keyof typeof REPORTED_CONTENT_ERROR_KEYS]
   | "generic";
 
@@ -697,7 +697,7 @@ export function reportedContentPendingStorageKey(reportIdValue: string): string 
   return `friending.reported-content.pending-decision.v1:${reportIdValue}`;
 }
 
-export type ReportedContentPersistedMutation<T> =
+type ReportedContentPersistedMutation<T> =
   | { ok: true; response: T }
   | { ok: false };
 

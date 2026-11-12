@@ -21,12 +21,12 @@ import {
 
 export type EventIconField = "name_en" | "name_hu" | "emoji" | "order" | "marker_background_color";
 export type EventIconProblemCode = "required" | "tooLong" | "invalid";
-export type EventIconProblem = { key: string; field: EventIconField; code: EventIconProblemCode };
+type EventIconProblem = { key: string; field: EventIconField; code: EventIconProblemCode };
 
 const graphemes = (value: string) => [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(value)].length;
 
 /** The row as it is sent: exactly the ten contract keys, names and emoji without surrounding whitespace. */
-export function eventIconForSave(icon: DatesEventIcon): DatesEventIcon {
+function eventIconForSave(icon: DatesEventIcon): DatesEventIcon {
   return { key: icon.key, activity_type: icon.activity_type, emoji: icon.emoji.trim(), image_url: icon.image_url,
     marker_background_color: icon.marker_background_color, name_en: normalizeEventIconName(icon.name_en),
     name_hu: normalizeEventIconName(icon.name_hu), enabled: icon.enabled, is_default: icon.is_default, order: icon.order };
@@ -41,7 +41,7 @@ function nameProblem(value: string): EventIconProblemCode | null {
 }
 
 /** The fields a member icon and a third-party pin have in common, and with them the rules below. */
-export type PinRowFields = Pick<DatesEventIcon, "name_en" | "name_hu" | "emoji" | "image_url" | "order" | "marker_background_color">;
+type PinRowFields = Pick<DatesEventIcon, "name_en" | "name_hu" | "emoji" | "image_url" | "order" | "marker_background_color">;
 /** What Core's catalogue validation would refuse in one row, by field (lib/datesExternalPinEditor.ts applies the same rules). */
 export function pinRowProblems(row: PinRowFields): { field: EventIconField; code: EventIconProblemCode }[] {
   const problems: { field: EventIconField; code: EventIconProblemCode }[] = [];
@@ -63,7 +63,7 @@ export function eventIconProblems(icons: readonly DatesEventIcon[]): EventIconPr
 }
 
 export type EventIconCommand = { icons: string; expected_revision: number; reason: string; idempotency_key: string };
-export type EventIconOutcome = { kind: "saved" } | { kind: "refused"; error: string } | { kind: "unknown" };
+type EventIconOutcome = { kind: "saved" } | { kind: "refused"; error: string } | { kind: "unknown" };
 export type EventIconEditorState = {
   icons: DatesEventIcon[];
   /** `null`: no catalogue was ever read; there is nothing to show or save. */
@@ -163,7 +163,7 @@ export function eventIconEditorReducer(state: EventIconEditorState, action: Even
   }
 }
 
-export type EventIconSaveBlock = "readOnly" | "clean" | "problems" | "reason";
+type EventIconSaveBlock = "readOnly" | "clean" | "problems" | "reason";
 /** Why nothing can be saved now, or `null`. `draftInvalid`: a field holds text that is not a value yet (the HEX field). */
 export function eventIconSaveBlock(state: EventIconEditorState, canManage: boolean, draftInvalid = false): EventIconSaveBlock | null {
   if (!canManage) return "readOnly";

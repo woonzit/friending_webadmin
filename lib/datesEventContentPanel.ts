@@ -35,7 +35,7 @@ export type EventReviewTarget =
   | { kind: "activity"; id: string }
   | { kind: EventContentRowKind; id: string; reply: boolean; author_uid: number | null; excerpt: string; cut: boolean };
 
-export type EventContentRead =
+type EventContentRead =
   /** No read was asked for. */
   | { status: "idle" }
   /** The read of the newest ticket is on its way. `more`: the next page of the list that is shown. */
@@ -47,7 +47,7 @@ export type EventContentRead =
    */
   | { status: "failed"; more: boolean; problem: EventContentProblem };
 
-export type EventReviewCommand =
+type EventReviewCommand =
   | { status: "idle" }
   /** Sent and not answered. `attempts`: how often this very request has gone out. */
   | { status: "sending"; request: EventReviewRequest; attempts: number }

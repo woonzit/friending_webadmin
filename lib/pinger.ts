@@ -13,7 +13,7 @@ export const PINGER_COPY_KEYS = [
 ] as const;
 
 export type PingerCopyKey = (typeof PINGER_COPY_KEYS)[number];
-export type PingerLocalizedCopy = { en: string; hu: string };
+type PingerLocalizedCopy = { en: string; hu: string };
 
 export type PingerConfiguration = {
   schemaVersion: 1;
@@ -52,7 +52,7 @@ export type PingerLimits = {
   copyMaxLength: number;
 };
 
-export type PingerAdminPayload = {
+type PingerAdminPayload = {
   configuration: PingerConfiguration;
   audit: PingerAuditRow[];
   limits: PingerLimits;

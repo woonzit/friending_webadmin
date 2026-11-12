@@ -29,7 +29,7 @@ export async function readUserContent(call: UserContentCall, uid: number): Promi
   return { headline: profile.headline, about: profile.about_me, revision };
 }
 
-export type UserContentSaveResult =
+type UserContentSaveResult =
   | { kind: "saved"; content: UserContent }
   | { kind: "conflict"; current: UserContent | null }
   | { kind: "failed"; errorKey: "contentRevisionInvalid" | "contentInvalid" | "contentSaveFailed" | "contentResponseInvalid" | "contentOutcomeUnknown" };

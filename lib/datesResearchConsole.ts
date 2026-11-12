@@ -6,7 +6,7 @@ import { decodeResearchArea, decodeResearchBatchReceipt, decodeResearchBatchRows
 import { DATES_RESEARCH_READ_CAPABILITY, DATES_RESEARCH_WRITE_CAPABILITY, normalizeDatesResearchProxyBody, researchSourceCanonicalUrl } from "@/lib/datesResearchProxy";
 import { decodeResearchFollowupList, decodeResearchFollowupState, researchFollowupNote, type ResearchFollowupList } from "@/lib/datesResearchFollowups";
 
-export type ResearchSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
+type ResearchSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
 export type ResearchRead<T> = { kind: "ready"; value: T; operator: DatesAdminPrincipal; manage: boolean }
   | { kind: "unavailable" | "denied" | "unconfirmed" } | { kind: "refused"; error: string };
 export async function readResearchOverview(send: ResearchSend, signal?: AbortSignal): Promise<ResearchRead<ResearchOverview>> {
@@ -42,7 +42,7 @@ export async function readResearchRun(send: ResearchSend, runId: string, signal?
   try { return decodeResearchRunDetail(await send("dates_event_research_run_detail", { run_id: runId }, signal), runId); } catch { return null; }
 }
 export type ResearchCommand = { actor: string; action: DatesResearchAction; body: Record<string, unknown> };
-export type ResearchRetryIssue = "actor_changed" | "unconfirmed" | "not_authorized";
+type ResearchRetryIssue = "actor_changed" | "unconfirmed" | "not_authorized";
 /** Fresh session-bound membership read immediately before retry, never a browser-owned actor selector. */
 export async function confirmResearchRetryActor(send: ResearchSend, command: ResearchCommand): Promise<ResearchRetryIssue | null> {
   try {

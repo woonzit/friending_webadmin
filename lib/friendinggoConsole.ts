@@ -116,7 +116,7 @@ export function friendingGoSelection(value: unknown): FriendingGoSelected[] | nu
 }
 
 /** Ids as the wire carries them: unique, sorted. */
-export function friendingGoSelectionIds(selection: readonly FriendingGoSelected[]): string[] {
+function friendingGoSelectionIds(selection: readonly FriendingGoSelected[]): string[] {
   return [...new Set(selection.map((person) => person.id))].sort();
 }
 
@@ -171,7 +171,7 @@ export type FriendingGoComposerProblem =
   | "directTooMany"
   | "tooMany";
 
-export type FriendingGoComposerResult =
+type FriendingGoComposerResult =
   | { ok: true; value: FriendingGoEmailContent }
   | { ok: false; problems: FriendingGoComposerProblem[] };
 
@@ -199,7 +199,7 @@ export function friendingGoComposerContent(
 }
 
 /** The wording alone is enough for a test send, which goes to the operator's own address. */
-export function friendingGoComposerWording(composer: FriendingGoComposer):
+function friendingGoComposerWording(composer: FriendingGoComposer):
   { ok: true; value: Pick<FriendingGoEmailContent, "kind" | "subject" | "preheader" | "body_html"> } | { ok: false; problems: FriendingGoComposerProblem[] } {
   const subject = friendingGoSubject(composer.subject);
   const preheader = friendingGoPreheader(composer.preheader);
@@ -299,10 +299,10 @@ export function friendingGoPendingStatus(value: unknown): FriendingGoPendingStat
  */
 export const FRIENDINGGO_SEND_LIMITS = { slices: 120, stalls: 3, waitBudgetSeconds: 180, timeoutWaitSeconds: 2, continueDelayMs: 300 } as const;
 
-export type FriendingGoSendLoop = { slices: number; stalls: number; waited: number; processed: number };
+type FriendingGoSendLoop = { slices: number; stalls: number; waited: number; processed: number };
 export const FRIENDINGGO_SEND_LOOP_START: FriendingGoSendLoop = { slices: 0, stalls: 0, waited: 0, processed: -1 };
 
-export type FriendingGoSendStep =
+type FriendingGoSendStep =
   /** A test, a draft, or a send / resume Core answered `sent`: the command is settled. */
   | { kind: "done"; result: FriendingGoSendResult }
   /** Core answered `sending`: call again with the SAME command. */
@@ -416,9 +416,9 @@ export async function runFriendingGoEmailCommand(stored: FriendingGoPendingEmail
 
 // ------------------------------------------------------------------ the composer's decisions, pure
 
-export type FriendingGoPreviewed = { key: string; counts: { selected: number; sendable: number }; cap: number } | null;
+type FriendingGoPreviewed = { key: string; counts: { selected: number; sendable: number }; cap: number } | null;
 
-export type FriendingGoBuild =
+type FriendingGoBuild =
   | { ok: true; command: FriendingGoSendBody }
   | { ok: false; reason: "problems" | "stalePreview" | "overCap" | "nothingToSend" };
 
@@ -447,7 +447,7 @@ export function friendingGoBuildCommand(
   return { ok: true, command: { mode, ...content.value, campaign_id: composer.campaignId, request_id: requestId, expected_sendable: previewed.counts.sendable } };
 }
 
-export type FriendingGoHydration =
+type FriendingGoHydration =
   | { kind: "continue"; pending: FriendingGoPendingEmail }
   | { kind: "pending"; pending: FriendingGoPendingEmail }
   | { kind: "openDraft"; id: string }

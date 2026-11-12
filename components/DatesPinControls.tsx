@@ -15,9 +15,9 @@ import {
  */
 
 /** What a pin shows: the icon on its plate and the colour behind it (`null`: the default of its kind). */
-export type PinArt = { emoji: string; image_url: string | null; marker_background_color: string | null };
+type PinArt = { emoji: string; image_url: string | null; marker_background_color: string | null };
 /** A member event's pin is a teardrop; a third-party event's has a rounded-square head on the same pointer. */
-export type PinShape = "member" | "external";
+type PinShape = "member" | "external";
 /**
  * The outlines, in a 48 x 60 box with the tip at the same point. The member
  * pin's head is a circle of diameter 43. The external pin's head is the
@@ -128,7 +128,7 @@ export function PinArtRow({ id, emoji, imageUrl, error, uploadFailed, labels, on
   );
 }
 
-export type PinColorDraft = {
+type PinColorDraft = {
   /** What the HEX field shows: the text being typed, else the colour. */
   hexText: string;
   /** The HEX field holds text that is not a colour (yet). The edited colour stays what it was meanwhile. */

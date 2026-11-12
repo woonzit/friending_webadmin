@@ -7,14 +7,14 @@ const MAX_SOURCE_EDGE = 6000;
 const MAX_INPUT_PIXELS = 32_000_000;
 const MIN_DIMENSION = 32;
 
-export type NormalizedSupportImage = {
+type NormalizedSupportImage = {
   buffer: Buffer;
   mime: "image/jpeg";
   width: number;
   height: number;
 };
 
-export type SupportImageErrorCode =
+type SupportImageErrorCode =
   | "support-image-invalid"
   | "support-image-format-invalid"
   | "support-image-dimensions-invalid"

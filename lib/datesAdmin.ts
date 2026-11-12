@@ -21,14 +21,14 @@ export type DatesExternalMessageMetadata = {
  * moment it was opened), then decided once (`state: "handled"`, the decision,
  * the host and the moment). It never closes the case.
  */
-export type DatesHostReview = { state: string; decision: string | null; by_uid: number | null; at: number | null };
+type DatesHostReview = { state: string; decision: string | null; by_uid: number | null; at: number | null };
 /**
  * One host's review with the event it is of (Core `host_reviews[]`, the one
  * rule for every case). A case about content has at most one. A case about a
  * MEMBER is one case for the whole app, whatever events the member was
  * reported in, and has one per event whose host was shown it.
  */
-export type DatesHostReviewEntry = DatesHostReview & { activity_id: string };
+type DatesHostReviewEntry = DatesHostReview & { activity_id: string };
 
 export type DatesCaseSummary = {
   case_id: string;
@@ -498,7 +498,7 @@ export function datesSettingEditable(type: unknown): boolean {
 
 /** T-865 P2a: the model ids of the event AI. Core validates their shape; there is no closed list. */
 export const DATES_AI_MODEL_SETTING_KEYS = ["dates_ai_openai_model", "dates_ai_openai_adjudication_model", "dates_ai_gemini_model"] as const;
-export const DATES_TICKET_DOMAINS_SETTING_KEY = "dates_event_ticket_domains";
+const DATES_TICKET_DOMAINS_SETTING_KEY = "dates_event_ticket_domains";
 
 /** Core's shape of a provider's model id (DatesEventIntakeSettings::modelId). */
 export function datesModelIdValid(value: string): boolean {
@@ -515,7 +515,7 @@ export function datesStringListFromInput(raw: string): string[] {
   return raw.split(/[\n,]/).map((item) => item.trim()).filter((item) => item !== "");
 }
 
-export type DatesStringListProblem = "count" | "duplicate" | "value" | "length" | "host";
+type DatesStringListProblem = "count" | "duplicate" | "value" | "length" | "host";
 
 /**
  * What Core would refuse in a `string_list`, as far as the row itself says:
@@ -663,7 +663,7 @@ export function isDatesExternalMessageCase(value: Pick<DatesCaseSummary, "queue"
 }
 
 export const DATES_CASE_TARGET_KINDS = ["wall_post", "wall_comment", "event_wall", "activity_chat", "direct_chat"] as const;
-export type DatesCaseTargetKind = typeof DATES_CASE_TARGET_KINDS[number];
+type DatesCaseTargetKind = typeof DATES_CASE_TARGET_KINDS[number];
 
 /**
  * Which of the wall's two collections an id is of: `wpo_` a post, `wco_` a
@@ -712,7 +712,7 @@ export const DATES_HOST_DECISIONS = ["kept", "content_removed", "member_removed"
  * decided.
  */
 export const DATES_CASE_HOST_STATES = ["not_shown", "shown", "waiting", ...DATES_HOST_DECISIONS] as const;
-export type DatesCaseHostState = typeof DATES_CASE_HOST_STATES[number];
+type DatesCaseHostState = typeof DATES_CASE_HOST_STATES[number];
 /**
  * A state or decision this console has no name for is handed back as it is
  * (`unnamed`), to be printed as a machine key like the status and severity
@@ -774,7 +774,7 @@ export function datesExternalReviewAllowed(value: Pick<DatesCaseSummary, "target
  * waiting submission. Core serves no flag for it on the case row, so the page knows it only from that refusal; a Core
  * before that release never sends it.
  */
-export type DatesResolutionContext = { hostUnavailable?: boolean };
+type DatesResolutionContext = { hostUnavailable?: boolean };
 
 /** A pre-publication case of a member's activity: the review of a first publication or of a waiting replacement. */
 export function isDatesActivitySubmissionCase(value: Pick<DatesCaseSummary, "queue" | "case_kind" | "target_type">): boolean {
@@ -886,7 +886,7 @@ export function datesCaseClaimableByRole(
  * - "ready": both, each a boolean.
  * - "invalid": anything else. It is said that the state could not be read, never shown as "no conflict".
  */
-export type DatesActivityConflict =
+type DatesActivityConflict =
   | { status: "unsupported" }
   | { status: "ready"; conflict: boolean; audit_reasons_withheld: boolean }
   | { status: "invalid" };

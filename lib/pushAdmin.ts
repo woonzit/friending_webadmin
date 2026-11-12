@@ -5,7 +5,7 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 
 export const PUSH_DELIVERY_MODES = ["fcm", "onesignal", "both"] as const;
 
-export type PushDeliveryMode = (typeof PUSH_DELIVERY_MODES)[number];
+type PushDeliveryMode = (typeof PUSH_DELIVERY_MODES)[number];
 
 export type PushDeliverySetting = {
   value: PushDeliveryMode;

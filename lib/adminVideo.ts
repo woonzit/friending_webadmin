@@ -9,7 +9,7 @@ export class AdminVideoError extends Error {
   }
 }
 
-export type ValidatedAdminVideo = {
+type ValidatedAdminVideo = {
   buffer: Buffer;
   mime: "video/mp4" | "video/webm";
   sizeBytes: number;

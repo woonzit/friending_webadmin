@@ -19,7 +19,7 @@ import {
  * console shows what the read carries and never sends it back.
  */
 export const EXTERNAL_PIN_KEYS = ["sport", "music", "party", "festival", "arts", "learning", "market", "food", "community", "outdoor", "other"] as const;
-export type DatesExternalPinKey = (typeof EXTERNAL_PIN_KEYS)[number];
+type DatesExternalPinKey = (typeof EXTERNAL_PIN_KEYS)[number];
 /** Core's code default of the catalogue colour (`DatesExternalPins::DEFAULT_MARKER_COLOR`): what "reset" puts back. */
 export const DEFAULT_EXTERNAL_PIN_COLOR = "#6D5BD0";
 
@@ -77,13 +77,13 @@ export function externalPinCatalog(value: unknown): DatesExternalPinCatalog | nu
 }
 
 /** The row as it is sent: exactly the seven editable keys, names and emoji without surrounding whitespace. */
-export function externalPinForSave(pin: DatesExternalPinFields): DatesExternalPinFields {
+function externalPinForSave(pin: DatesExternalPinFields): DatesExternalPinFields {
   return { key: pin.key, emoji: pin.emoji.trim(), image_url: pin.image_url, marker_background_color: pin.marker_background_color,
     name_en: normalizeEventIconName(pin.name_en), name_hu: normalizeEventIconName(pin.name_hu), order: pin.order };
 }
 export const serializeExternalPins = (pins: readonly DatesExternalPinFields[]): string => JSON.stringify(pins.map(externalPinForSave));
 
-export type ExternalPinSaveRequest = { pins: string; default_marker_background_color: string; expected_revision: number };
+type ExternalPinSaveRequest = { pins: string; default_marker_background_color: string; expected_revision: number };
 
 /**
  * Core's answer as the receipt of this very save: the stored catalogue one

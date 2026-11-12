@@ -1,4 +1,4 @@
-export const INVITE_DELIVERY_MODES = ["server_sms", "device_sms"] as const;
+const INVITE_DELIVERY_MODES = ["server_sms", "device_sms"] as const;
 export type InviteDeliveryMode = (typeof INVITE_DELIVERY_MODES)[number];
 
 export const INVITE_REQUIRED_LANGUAGES = ["en", "hu"] as const;
@@ -7,12 +7,12 @@ export const INVITE_OVERRIDE_MAX_COUNT = 250;
 
 export type InviteMessages = Record<string, string>;
 
-export type InviteGlobalRule = {
+type InviteGlobalRule = {
   mode: InviteDeliveryMode;
   messages: InviteMessages;
 };
 
-export type InviteStorefrontOverride = {
+type InviteStorefrontOverride = {
   storefront: string;
   mode: InviteDeliveryMode;
   active: boolean;
@@ -35,15 +35,15 @@ export type InviteConfiguration = {
  * configuration form keeps working. Every rule below the `attribution` key stays fail-closed.
  */
 export const INVITE_ATTRIBUTION_CHANNELS = ["device_sms", "server_sms"] as const;
-export type InviteAttributionChannel = (typeof INVITE_ATTRIBUTION_CHANNELS)[number];
+type InviteAttributionChannel = (typeof INVITE_ATTRIBUTION_CHANNELS)[number];
 
-export type InviteAttributionChannelCounts = {
+type InviteAttributionChannelCounts = {
   recorded: number;
   converted: number;
   expiring_within_7d: number;
 };
 
-export type InviteAttributionTotals = {
+type InviteAttributionTotals = {
   recorded: number;
   converted: number;
   senders: number;
@@ -52,7 +52,7 @@ export type InviteAttributionTotals = {
   by_channel: Record<InviteAttributionChannel, InviteAttributionChannelCounts>;
 };
 
-export type InviteAttributionSender = {
+type InviteAttributionSender = {
   uid: number;
   display_name: string;
   recorded: number;
@@ -70,7 +70,7 @@ export type InviteAttributionSummary = {
   truncated: boolean;
 };
 
-export type InviteConfigurationPayload = {
+type InviteConfigurationPayload = {
   configuration: InviteConfiguration;
   modes: InviteDeliveryMode[];
   placeholders: string[];

@@ -46,7 +46,7 @@ export type ProfileField = {
   values?: string[];
 };
 
-export type ProfileSegment = {
+type ProfileSegment = {
   key: string;
   labels: LocalizedText;
 };
@@ -63,7 +63,7 @@ export type ProfileSectionItem = {
   key: string;
 };
 
-export type ProfileSection = {
+type ProfileSection = {
   key: "main_data" | "more_about_you" | "lets_go_deeper";
   labels: LocalizedText;
   subtitles: LocalizedText;
@@ -72,7 +72,7 @@ export type ProfileSection = {
   items: ProfileSectionItem[];
 };
 
-export type ProfileBuiltinItem = {
+type ProfileBuiltinItem = {
   key: string;
   labels: LocalizedText;
   value_type: string;
@@ -88,7 +88,7 @@ export type ProfileSectionLayout = {
   builtin_items: ProfileBuiltinItem[];
 };
 
-export type UserProfileSectionItem =
+type UserProfileSectionItem =
   | { kind: "field"; key: string }
   | {
       kind: "builtin";
@@ -101,13 +101,13 @@ export type UserProfileSectionItem =
       display_value: string;
     };
 
-export type UserProfileSectionVisibility = {
+type UserProfileSectionVisibility = {
   share_enabled: boolean;
   audience_note: string;
   hidden?: boolean;
 };
 
-export type UserProfileSection = {
+type UserProfileSection = {
   key: string;
   title: string;
   subtitle: string;
@@ -167,7 +167,7 @@ export type UserProfileFields = {
   fields: ProfileField[];
 };
 
-export type IdentityOption = {
+type IdentityOption = {
   key: string;
   labels: LocalizedText;
   audiences: string[];

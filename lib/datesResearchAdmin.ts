@@ -21,15 +21,15 @@ export const DATES_RESEARCH_CANDIDATE_OUTCOMES = ["imported", "would_import", "d
 
 export const DATES_RESEARCH_DROP_REASONS = ["past_date", "outside_window", "outside_area", "known_url", "no_event_page", "fetch_failed", "validation_failed", "over_cap", "robots_disallowed", "blocked_domain"] as const;
 export const DATES_RESEARCH_DOMAIN_TYPES = ["official", "aggregator", "blocked"] as const;
-export const DATES_RESEARCH_PAUSE_REASONS = ["reservation_exceeded", "tool_bound_exceeded"] as const;
+const DATES_RESEARCH_PAUSE_REASONS = ["reservation_exceeded", "tool_bound_exceeded"] as const;
 export const DATES_RESEARCH_BATCH_OUTCOMES = ["published", "rejected", "refused"] as const;
 export const DATES_RESEARCH_VALUE_FIELDS = ["cadence_hours", "scope", "member_threshold", "target_events", "window_days", "autopublish"] as const;
-export const DATES_RESEARCH_LIMIT_FIELDS = ["cadence_hours", "radius_km", "member_threshold", "target_events", "window_days", "max_events"] as const;
+const DATES_RESEARCH_LIMIT_FIELDS = ["cadence_hours", "radius_km", "member_threshold", "target_events", "window_days", "max_events"] as const;
 
-export type ResearchMode = typeof DATES_RESEARCH_MODES[number];
+type ResearchMode = typeof DATES_RESEARCH_MODES[number];
 export type ResearchSourceType = typeof DATES_RESEARCH_SOURCE_TYPES[number];
-export type ResearchRunStatus = typeof DATES_RESEARCH_RUN_STATUSES[number];
-export type ResearchDropReason = typeof DATES_RESEARCH_DROP_REASONS[number];
+type ResearchRunStatus = typeof DATES_RESEARCH_RUN_STATUSES[number];
+type ResearchDropReason = typeof DATES_RESEARCH_DROP_REASONS[number];
 export type ResearchScope = { kind: "city"; radius_km: null } | { kind: "radius"; radius_km: number };
 export type ResearchValues = { cadence_hours: number; scope: ResearchScope; member_threshold: number; target_events: number; window_days: number; autopublish: boolean };
 export type ResearchOverrides = { [K in keyof ResearchValues]: ResearchValues[K] | null };
@@ -42,8 +42,8 @@ export type ResearchLimits = { [K in typeof DATES_RESEARCH_LIMIT_FIELDS[number]]
   batch_intakes?: { min: number; max: number }; domains?: { min: number; max: number } | null;
 };
 export type ResearchCenter = { latitude: number; longitude: number };
-export type ResearchBounds = { southwest: ResearchCenter; northeast: ResearchCenter };
-export type ResearchLastRun = { run_id: string; status: ResearchRunStatus; finished_at: number | null; found: number; imported: number };
+type ResearchBounds = { southwest: ResearchCenter; northeast: ResearchCenter };
+type ResearchLastRun = { run_id: string; status: ResearchRunStatus; finished_at: number | null; found: number; imported: number };
 export type ResearchArea = {
   area_id: string; revision: number; label: string; place_id: string; country_code: string; center: ResearchCenter; bounds: ResearchBounds | null;
   mode: ResearchMode; proposed: boolean; overrides: ResearchOverrides; effective: ResearchValues;
@@ -57,26 +57,26 @@ export type ResearchSource = {
   stock: { upcoming: number; max: number; missing: number }; last_check: ResearchLastRun | null; next_check_at: number | null; month_cost_micro_usd: number;
 };
 export type ResearchBudget = { month: string; cap_micro_usd: number; spent_micro_usd: number; reserved_micro_usd: number; research_spent_micro_usd: number; research_stop_at_micro_usd: number; research_paused: boolean };
-export type ResearchEstimateComponent = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: "unmeasured" | "last_completed_run"; last_run_id: string | null; last_run_cost_micro_usd: number | null };
+type ResearchEstimateComponent = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: "unmeasured" | "last_completed_run"; last_run_id: string | null; last_run_cost_micro_usd: number | null };
 export type ResearchEstimate = { monthly_checks: number; monthly_cost_micro_usd: number | null; basis: string; area?: ResearchEstimateComponent | null; source?: ResearchEstimateComponent | null };
 export type ResearchDiscoveryAdmission = { openai_admitted: boolean; openai_reason: null; gemini_admitted: false; gemini_reason: "unbounded_search_queries";
   pause: { reason: typeof DATES_RESEARCH_PAUSE_REASONS[number]; run_id: string; at: number } | null };
-export type ResearchToolUsage = { requested_cap: number; echoed_cap: number | null; tool_items: number; action_counts: Record<"search" | "open_page" | "find_in_page" | "unknown", number> };
-export type ResearchUnreadable = { index: number; id: string | null };
+type ResearchToolUsage = { requested_cap: number; echoed_cap: number | null; tool_items: number; action_counts: Record<"search" | "open_page" | "find_in_page" | "unknown", number> };
+type ResearchUnreadable = { index: number; id: string | null };
 export type ResearchRows<T> = { rows: T[]; unreadable: ResearchUnreadable[] };
 export type ResearchOverview = {
   defaults: ResearchDefaults | null; areas: ResearchRows<ResearchArea>; sources: ResearchRows<ResearchSource>;
   budget: ResearchBudget; estimate: ResearchEstimate; limits: ResearchLimits; server_now: number;
   research_model_options?: ResearchModelOptions | null; discovery_admission?: ResearchDiscoveryAdmission | null;
 };
-export type ResearchRun = {
+type ResearchRun = {
   run_id: string; kind: typeof DATES_RESEARCH_RUN_KINDS[number]; dry_run: boolean; trigger: typeof DATES_RESEARCH_RUN_TRIGGERS[number];
   source_id: string | null; area_id: string | null; status: ResearchRunStatus; found: number; imported: number; duplicates: number;
   dropped: { reason: ResearchDropReason; count: number }[]; cost_micro_usd: number; started_at: number | null; finished_at: number | null;
   source_revision_before?: number | null; source_revision_after?: number | null; area_revision_before?: number | null; area_revision_after?: number | null;
   discovery_tool_usage?: ResearchToolUsage | null;
 };
-export type ResearchCandidate = { title: string; date_text: string; url_host: string;
+type ResearchCandidate = { title: string; date_text: string; url_host: string;
   outcome: typeof DATES_RESEARCH_CANDIDATE_OUTCOMES[number]; reason: ResearchDropReason | null; intake_id: string | null;
   /** D-149: why the system closed the candidate's intake, served with the external admin contract selector v2 (lib/datesSystemClosure.ts). Absent: not served. */
   system_closure?: DatesSystemClosure | null;
@@ -107,7 +107,7 @@ export type ResearchRunDetail = { run: ResearchRun; candidates: ResearchRows<Res
 export type ResearchBatchResult = { intake_id: string; outcome: typeof DATES_RESEARCH_BATCH_OUTCOMES[number]; refusal: string | null; external_event_id: string | null };
 
 export const researchRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
-export const researchNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+const researchNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 export const researchInteger = (value: unknown, minimum = 0): value is number => researchNumber(value) && Number.isSafeInteger(value) && value >= minimum;
 export const researchString = (value: unknown): value is string => typeof value === "string";
 export const researchId = (value: unknown): value is string => researchString(value) && value !== "";
@@ -125,7 +125,7 @@ export function researchSuccess(value: unknown): value is Record<string, unknown
     && (!Object.hasOwn(value, "can_send") || value.can_send === 0);
 }
 
-export function decodeResearchScope(value: unknown): ResearchScope | null {
+function decodeResearchScope(value: unknown): ResearchScope | null {
   if (!researchRecord(value)) return null;
   if (value.kind === "city" && (value.radius_km === null || value.radius_km === undefined)) return { kind: "city", radius_km: null };
   return value.kind === "radius" && researchNumber(value.radius_km) && value.radius_km > 0 ? { kind: "radius", radius_km: value.radius_km } : null;
@@ -163,7 +163,7 @@ export function decodeResearchDefaults(value: unknown): ResearchDefaults | null 
 export function decodeResearchModels(value: unknown): ResearchModels | null {
   return researchRecord(value) && researchId(value.openai) && researchId(value.gemini) ? { openai: value.openai, gemini: value.gemini } : null;
 }
-export function decodeResearchDomain(value: unknown): ResearchDomain | null {
+function decodeResearchDomain(value: unknown): ResearchDomain | null {
   return researchRecord(value) && researchId(value.domain) && researchOneOf(value.type, DATES_RESEARCH_DOMAIN_TYPES) ? { domain: value.domain, type: value.type } : null;
 }
 function modelOptions(value: unknown): ResearchModelOptions | null {
@@ -288,7 +288,7 @@ export function decodeResearchOverview(value: unknown): ResearchOverview | null 
     ...(Object.hasOwn(value, "research_model_options") ? { research_model_options: modelOptions(value.research_model_options) } : {}),
     ...(Object.hasOwn(value, "discovery_admission") ? { discovery_admission: discoveryAdmission(value.discovery_admission) } : {}) };
 }
-export function decodeResearchRun(value: unknown): ResearchRun | null {
+function decodeResearchRun(value: unknown): ResearchRun | null {
   if (!researchRecord(value) || !researchId(value.run_id) || !researchOneOf(value.kind, DATES_RESEARCH_RUN_KINDS) || !boolean(value.dry_run)
     || !researchOneOf(value.trigger, DATES_RESEARCH_RUN_TRIGGERS) || !nullable(value.source_id, researchId) || !nullable(value.area_id, researchId)
     || !researchOneOf(value.status, DATES_RESEARCH_RUN_STATUSES) || !fieldNumbers(value, ["found", "imported", "duplicates", "cost_micro_usd"])
@@ -334,7 +334,7 @@ export function decodeResearchRunDetail(value: unknown, runId: string): Research
   const run = decodeResearchRun(value.run);
   return run && run.run_id === runId ? { run, candidates: rowList(researchRecord(value.run) ? value.run.candidates : undefined, candidate, "") } : null;
 }
-export function decodeResearchBatchResult(value: unknown): ResearchBatchResult | null {
+function decodeResearchBatchResult(value: unknown): ResearchBatchResult | null {
   if (!researchRecord(value) || !researchId(value.intake_id) || !researchOneOf(value.outcome, DATES_RESEARCH_BATCH_OUTCOMES)
     || !nullable(value.refusal, researchString) || !nullable(value.external_event_id, researchId)) return null;
   return { intake_id: value.intake_id, outcome: value.outcome, refusal: value.refusal, external_event_id: value.external_event_id };

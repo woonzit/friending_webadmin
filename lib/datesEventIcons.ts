@@ -49,7 +49,7 @@ export const normalizeEventIconName = (v: string): string => v.trim();
 export const validEventIconEmoji = (v: unknown): v is string => typeof v === "string" && (v === "" ||
   (new TextEncoder().encode(v).length <= 64 && graphemes(v) === 1
     && /[\p{So}\u2600-\u27bf\u{1f000}-\u{1faff}]/u.test(v) && !/[\x00-\x1f\x7f<>]/.test(v)));
-export const validEventIconKey = (v: unknown): v is string => typeof v === "string" && /^[a-z][a-z0-9_-]{0,47}$/.test(v);
+const validEventIconKey = (v: unknown): v is string => typeof v === "string" && /^[a-z][a-z0-9_-]{0,47}$/.test(v);
 export const validEventIconOrder = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0 && (v as number) <= EVENT_ICON_ORDER_MAX;
 export function eventIconImageURL(v: unknown): v is string {
   return typeof v === "string" && v.length <= 1024

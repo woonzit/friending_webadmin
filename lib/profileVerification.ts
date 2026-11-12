@@ -1,6 +1,6 @@
 /** Typed browser boundary for Profile Video Verification V1. */
 
-export const PROFILE_VERIFICATION_SCHEMA_VERSION = 1;
+const PROFILE_VERIFICATION_SCHEMA_VERSION = 1;
 export const PROFILE_VERIFICATION_BADGE_STATUSES = [
   "not_started",
   "pending",
@@ -73,7 +73,7 @@ export const PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS = {
   status_new_video_requested_subtitle: 500,
   consent_body: 1800,
 } as const;
-export type ProfileVerificationPhotoFlowField = keyof typeof PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS;
+type ProfileVerificationPhotoFlowField = keyof typeof PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS;
 export const PROFILE_VERIFICATION_PHOTO_FLOW_KEYS = Object.keys(
   PROFILE_VERIFICATION_PHOTO_FLOW_FIELDS,
 ) as ProfileVerificationPhotoFlowField[];
@@ -86,7 +86,7 @@ export const PHOTO_GESTURE_TITLE_MAX = 180;
 export const PHOTO_GESTURE_SUBTITLE_MAX = 700;
 export const PHOTO_GESTURE_EXAMPLE_GENDERS = ["male", "female"] as const;
 
-export type ProfileVerificationPhotoGesture = {
+type ProfileVerificationPhotoGesture = {
   id: string;
   title: ProfileVerificationLocalizedText;
   subtitle: ProfileVerificationLocalizedText;
@@ -98,17 +98,17 @@ export type ProfileVerificationPhotoGesture = {
  * Which capture produced a state, case, submission or queue row (Core
  * `PhotoVerificationPolicy::MODES`); a row written before D-135 is `video`.
  */
-export const PROFILE_VERIFICATION_MODES = ["video", "photo"] as const;
-export type ProfileVerificationMode = (typeof PROFILE_VERIFICATION_MODES)[number];
+const PROFILE_VERIFICATION_MODES = ["video", "photo"] as const;
+type ProfileVerificationMode = (typeof PROFILE_VERIFICATION_MODES)[number];
 
 /** The closed evidence vocabulary of `profile_verification_evidence` (manifest `evidence_kinds`). */
-export const PROFILE_VERIFICATION_PHOTO_KINDS = [
+const PROFILE_VERIFICATION_PHOTO_KINDS = [
   "photo_1", "photo_2", "photo_3", "photo_4", "photo_5",
   "photo_6", "photo_7", "photo_8", "photo_9", "photo_10",
 ] as const;
-export type ProfileVerificationPhotoKind = (typeof PROFILE_VERIFICATION_PHOTO_KINDS)[number];
+type ProfileVerificationPhotoKind = (typeof PROFILE_VERIFICATION_PHOTO_KINDS)[number];
 export const PROFILE_VERIFICATION_EVIDENCE_KINDS = ["video", "avatar_snapshot", ...PROFILE_VERIFICATION_PHOTO_KINDS] as const;
-export type ProfileVerificationEvidenceKind = (typeof PROFILE_VERIFICATION_EVIDENCE_KINDS)[number];
+type ProfileVerificationEvidenceKind = (typeof PROFILE_VERIFICATION_EVIDENCE_KINDS)[number];
 
 export function isProfileVerificationEvidenceKind(value: unknown): value is ProfileVerificationEvidenceKind {
   return typeof value === "string" && (PROFILE_VERIFICATION_EVIDENCE_KINDS as readonly string[]).includes(value);
@@ -119,8 +119,8 @@ export function profileVerificationEvidenceContentType(kind: ProfileVerification
   return kind === "video" ? "video/mp4" : "image/jpeg";
 }
 
-export const PROFILE_VERIFICATION_PREFERRED_EXAMPLES = ["male", "female", "both"] as const;
-export type ProfileVerificationPreferredExample = (typeof PROFILE_VERIFICATION_PREFERRED_EXAMPLES)[number];
+const PROFILE_VERIFICATION_PREFERRED_EXAMPLES = ["male", "female", "both"] as const;
+type ProfileVerificationPreferredExample = (typeof PROFILE_VERIFICATION_PREFERRED_EXAMPLES)[number];
 
 /**
  * One reviewed photo of a set: its evidence kind (never a storage path), its
@@ -146,14 +146,14 @@ export type ProfileVerificationPhoto = {
   has_photo: boolean;
 };
 
-export type ProfileVerificationBadgeStatus = (typeof PROFILE_VERIFICATION_BADGE_STATUSES)[number];
-export type ProfileVerificationStatus = (typeof PROFILE_VERIFICATION_STATUSES)[number];
-export type ProfileVerificationDetailStatus = (typeof PROFILE_VERIFICATION_DETAIL_STATUSES)[number];
-export type ProfileVerificationPromptKey = (typeof PROFILE_VERIFICATION_PROMPTS)[number];
+type ProfileVerificationBadgeStatus = (typeof PROFILE_VERIFICATION_BADGE_STATUSES)[number];
+type ProfileVerificationStatus = (typeof PROFILE_VERIFICATION_STATUSES)[number];
+type ProfileVerificationDetailStatus = (typeof PROFILE_VERIFICATION_DETAIL_STATUSES)[number];
+type ProfileVerificationPromptKey = (typeof PROFILE_VERIFICATION_PROMPTS)[number];
 export type ProfileVerificationLocalizedText = { en: string; hu: string };
 export type ProfileVerificationIconColor = { light: string; dark: string };
 
-export type ProfileVerificationAccountCard = {
+type ProfileVerificationAccountCard = {
   title: ProfileVerificationLocalizedText;
   subtitle: ProfileVerificationLocalizedText;
   icon_color: ProfileVerificationIconColor;
@@ -230,14 +230,14 @@ export type ProfileVerificationQueueItem = {
   lease_expires_at: number | null;
 };
 
-export type ProfileVerificationQueue = {
+type ProfileVerificationQueue = {
   items: ProfileVerificationQueueItem[];
   has_more: boolean;
   next_before_millis: number | null;
   next_before_uid: number | null;
 };
 
-export type ProfileVerificationCase = {
+type ProfileVerificationCase = {
   case_id: string;
   uid: number;
   submission_id: string;
@@ -636,7 +636,7 @@ export type ProfileVerificationFieldProblem = "required" | "tooLong" | "invalid"
  * root; gesture rows are addressed by id (`photo_gestures.<id>.title.en`) so a
  * problem stays on its row when rows are added or removed.
  */
-export type ProfileVerificationFieldIssue = { path: string; problem: ProfileVerificationFieldProblem };
+type ProfileVerificationFieldIssue = { path: string; problem: ProfileVerificationFieldProblem };
 
 /**
  * Core answers an invalid document with ONE code

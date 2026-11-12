@@ -36,13 +36,13 @@ import {
 
 type Notice = { tone: "info" | "error" | "success"; text: string } | null;
 
-export type ModeCardDraft = {
+type ModeCardDraft = {
   title: Record<ModeCardLanguage, string>;
   subtitle: Record<ModeCardLanguage, string>;
   icon: ModeCardIcon | null;
 };
 
-export type ModeCardsDraft = Record<ModeCardKey, ModeCardDraft>;
+type ModeCardsDraft = Record<ModeCardKey, ModeCardDraft>;
 
 type ModeCardsEditorProps = {
   draft: ModeCardsDraft;
@@ -63,7 +63,7 @@ type ModeCardsEditorProps = {
   onUploadingChange: (card: ModeCardKey | null) => void;
 };
 
-export function modeCardsDraftFrom(state: ModeCardsState): ModeCardsDraft {
+function modeCardsDraftFrom(state: ModeCardsState): ModeCardsDraft {
   const draft = {} as ModeCardsDraft;
   for (const card of MODE_CARDS) {
     const served: ModeCard | undefined = state.cards.find((entry) => entry.key === card);
@@ -76,7 +76,7 @@ export function modeCardsDraftFrom(state: ModeCardsState): ModeCardsDraft {
   return draft;
 }
 
-export function modeCardsDraftIsValid(draft: ModeCardsDraft): boolean {
+function modeCardsDraftIsValid(draft: ModeCardsDraft): boolean {
   return MODE_CARDS.every((card) => MODE_CARD_LANGUAGES.every((language) =>
     modeCardTextIsValid(draft[card].title[language], MODE_CARDS_TITLE_MAX)
     && modeCardTextIsValid(draft[card].subtitle[language], MODE_CARDS_SUBTITLE_MAX)));

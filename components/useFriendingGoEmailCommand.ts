@@ -47,7 +47,7 @@ function forgetSentEmail(command: FriendingGoSendBody): void {
   }
 }
 
-export type FriendingGoNavigationCopy = { confirm: string; history: string; title: string; leave: string };
+type FriendingGoNavigationCopy = { confirm: string; history: string; title: string; leave: string };
 
 /**
  * One email command (test, draft, send or resume) per browser tab, shared by the Email and Sent tabs:
@@ -153,7 +153,7 @@ export type FriendingGoAccess = { load: "loading" | "ready" | "error"; canWrite:
  * alone (Core treats an unrecognised stored role as read-only although `admin_me` shows `admin`). The
  * smallest page carries the same flags: `complained` rows only (the totals are the whole registry's).
  */
-export const FRIENDINGGO_ACCESS_FILTERS: FriendingGoListFilters = { q: "", status: "complained", page: 1 };
+const FRIENDINGGO_ACCESS_FILTERS: FriendingGoListFilters = { q: "", status: "complained", page: 1 };
 
 export function useFriendingGoAccess(): FriendingGoAccess {
   const [access, setAccess] = useState<FriendingGoAccess>({ load: "loading", canWrite: false, active: null });

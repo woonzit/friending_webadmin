@@ -1,6 +1,6 @@
 export type LocalizedText = Record<string, string>;
 
-export type ManagedIcon = {
+type ManagedIcon = {
   url: string;
   mime: "" | "image/png" | "image/svg+xml";
 };
@@ -10,7 +10,7 @@ export type PresentationSourceRef = {
   key: string;
 };
 
-export type PresentationFieldSource = PresentationSourceRef & {
+type PresentationFieldSource = PresentationSourceRef & {
   kind: "field";
   labels: LocalizedText;
   icon: ManagedIcon;
@@ -61,7 +61,7 @@ export type PresentationSourceIssue = {
  * empty PHP array) rather than being omitted; the parser reads absent, `[]` and
  * `{}` as the same "no vocabulary".
  */
-export type PresentationOptionRow = {
+type PresentationOptionRow = {
   key: string;
   labels: LocalizedText;
   icon: ManagedIcon;
@@ -116,9 +116,9 @@ export type TagAudience = {
  * NOT a synonym for `approved`, and the distinction is the difference between a
  * save that preserves a ban and one that erases it.
  */
-export const TAG_MODERATION_STATES = ["approved", "pending", "rejected", "merged"] as const;
+const TAG_MODERATION_STATES = ["approved", "pending", "rejected", "merged"] as const;
 
-export type TagModerationState = (typeof TAG_MODERATION_STATES)[number];
+type TagModerationState = (typeof TAG_MODERATION_STATES)[number];
 
 /** A row a catalogue save may neither activate nor re-state (`profile-tag-item-moderation-locked`). */
 export function isTagModerationLocked(state: TagModerationState | null): boolean {
@@ -160,7 +160,7 @@ export type ProfileTagCatalog = {
   groups: ProfileTagGroup[];
 };
 
-export type ProfileTagCatalogPayload = {
+type ProfileTagCatalogPayload = {
   schema_version: 1;
   catalogs: ProfileTagCatalog[];
 };
@@ -189,7 +189,7 @@ export type ProfileTagWarning = {
   selected_member_count: number;
 };
 
-export type ProfilePhotoInsightRow = {
+type ProfilePhotoInsightRow = {
   image_id: string;
   likes_count: number;
   rank: number | null;

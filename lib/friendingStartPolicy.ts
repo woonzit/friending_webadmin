@@ -33,7 +33,7 @@ import {
  *   `{schema_version, radar_enabled, touch_enabled}`; it is a compare-and-set
  *   (`409` on a stale revision), and both methods off is `422`.
  */
-export const FRIENDING_START_POLICY_SCHEMA_VERSION = 1 as const;
+const FRIENDING_START_POLICY_SCHEMA_VERSION = 1 as const;
 export const FRIENDING_START_POLICY_ACTIONS = [
   "friending_start_policy",
   "save_friending_start_policy",
@@ -43,16 +43,16 @@ export const FRIENDING_START_METHODS = [
   "radar_enabled",
   "touch_enabled",
 ] as const;
-export const FRIENDING_START_POLICY_REVISION_MAX = 2_147_483_647 as const;
+const FRIENDING_START_POLICY_REVISION_MAX = 2_147_483_647 as const;
 /** The saver's e-mail, bounded as Core bounds an actor: UTF-8 bytes. */
-export const FRIENDING_START_POLICY_ACTOR_MAX_BYTES = 320 as const;
+const FRIENDING_START_POLICY_ACTOR_MAX_BYTES = 320 as const;
 
 export type FriendingStartMethod = (typeof FRIENDING_START_METHODS)[number];
 
 /** What the operator edits: the two switches and nothing else. */
 export type FriendingStartPolicyDraft = Record<FriendingStartMethod, boolean>;
 
-export type FriendingStartPolicyConfiguration = FriendingStartPolicyDraft & {
+type FriendingStartPolicyConfiguration = FriendingStartPolicyDraft & {
   schema_version: typeof FRIENDING_START_POLICY_SCHEMA_VERSION;
   revision: number;
   updated_at: number;
@@ -65,7 +65,7 @@ export type FriendingStartPolicyState = {
   can_write: boolean;
 };
 
-export type FriendingStartPolicySaveBody = {
+type FriendingStartPolicySaveBody = {
   expected_revision: number;
   configuration: FriendingStartPolicyDraft & {
     schema_version: typeof FRIENDING_START_POLICY_SCHEMA_VERSION;
@@ -175,7 +175,7 @@ function serverSideFailure(value: unknown): boolean {
   return envelope !== null && envelope.status_code >= 500;
 }
 
-export type FriendingStartPolicyReadOutcome =
+type FriendingStartPolicyReadOutcome =
   | { kind: "ready"; state: FriendingStartPolicyState }
   /** Core or the path to it failed (5xx, or no answer at all): nothing is known. */
   | { kind: "unavailable" }
@@ -190,7 +190,7 @@ export function friendingStartPolicyReadOutcome(response: unknown): FriendingSta
   return serverSideFailure(response) ? { kind: "unavailable" } : { kind: "error" };
 }
 
-export type FriendingStartPolicySaveOutcome =
+type FriendingStartPolicySaveOutcome =
   | { kind: "saved"; state: FriendingStartPolicyState; changed: boolean }
   /** `409`: the revision moved underneath this draft. */
   | { kind: "conflict" }
@@ -304,7 +304,7 @@ export function normalizeFriendingStartPolicyProxyBody(
 
 // ------------------------------------------------------------ panel state
 
-export type FriendingStartPolicyNotice =
+type FriendingStartPolicyNotice =
   | { tone: "success"; key: "saved"; revision: number }
   | { tone: "success"; key: "unchanged" }
   | { tone: "error"; key: "conflict"; revision: number }

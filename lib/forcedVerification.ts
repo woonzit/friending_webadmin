@@ -33,7 +33,7 @@ export type WaitingRoomLocale = (typeof WAITING_ROOM_LOCALES)[number];
 export const WAITING_ROOM_COPY_FIELDS = ["title", "subtitle", "description"] as const;
 export type WaitingRoomCopyField = (typeof WAITING_ROOM_COPY_FIELDS)[number];
 /** Amendment v1.5: the per-language URL behind the Waiting Room's round "?" button; `null` = no button. */
-export const WAITING_ROOM_HELP_URL_FIELD = "help_url" as const;
+const WAITING_ROOM_HELP_URL_FIELD = "help_url" as const;
 /** Every key of a copy block, in the order Core compares the key list. */
 export const WAITING_ROOM_COPY_KEYS = [...WAITING_ROOM_COPY_FIELDS, WAITING_ROOM_HELP_URL_FIELD] as const;
 export type WaitingRoomCopyKey = (typeof WAITING_ROOM_COPY_KEYS)[number];
@@ -74,8 +74,8 @@ export const WAITING_ROOM_COMPILED_COPY: Readonly<Record<WaitingRoomLocale, Wait
 // Storefront catalogue (App Store storefront = ISO 3166-1 alpha-3, D-049 model)
 // ---------------------------------------------------------------------------
 
-export type ForcedStorefront = { alpha2: string; alpha3: string; englishName: string };
-export type LocalizedForcedStorefront = ForcedStorefront & { name: string };
+type ForcedStorefront = { alpha2: string; alpha3: string; englishName: string };
+type LocalizedForcedStorefront = ForcedStorefront & { name: string };
 
 const NON_ISO_REGIONS = new Set(["AC", "TA"]);
 
@@ -333,7 +333,7 @@ export type ForcedVerificationDraftIssue =
   | "copyHelpUrlControl"
   | "copyHelpUrlCredentials";
 
-export function emptyWaitingRoomCopyDraft(): WaitingRoomCopyDraft {
+function emptyWaitingRoomCopyDraft(): WaitingRoomCopyDraft {
   return { title: "", subtitle: "", description: "", help_url: "" };
 }
 
@@ -366,7 +366,7 @@ export function waitingRoomCopyIssue(value: string, field: WaitingRoomCopyField,
 // Copy preview (D-053 Amendment v1.4: copy is presentation, not authorization)
 // ---------------------------------------------------------------------------
 
-export type WaitingRoomPreviewCopy = { copy: WaitingRoomCopy; compiledFields: WaitingRoomCopyKey[] };
+type WaitingRoomPreviewCopy = { copy: WaitingRoomCopy; compiledFields: WaitingRoomCopyKey[] };
 
 /**
  * The Waiting Room copy a preview renders: per field the non-blank storefront

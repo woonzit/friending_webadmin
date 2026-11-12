@@ -23,7 +23,7 @@ export function datesExternalRecheckStatus(response: unknown, externalId: string
  * the job is known to be finished (no job queued or running), `true` while it is still open AND when the read failed or
  * its body could not be decoded - then nothing is known, and the next read retries. A read that throws counts as failed.
  */
-export type DatesExternalRecheckPollRead = (signal: AbortSignal) => Promise<boolean>;
+type DatesExternalRecheckPollRead = (signal: AbortSignal) => Promise<boolean>;
 
 /** The two timer functions the poll uses: the browser's by default, a fake clock's in a test. */
 export interface DatesExternalRecheckPollTimers {

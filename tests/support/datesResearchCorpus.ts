@@ -5,7 +5,7 @@ export function researchFixture(name: string): any {
   return JSON.parse(readFileSync(new URL(`../fixtures/dates_event_research_admin_wire/${name}`, import.meta.url), "utf8"));
 }
 // Unchanged provider captures. See datesResearchProviderPin.json and the read-only Git proof script.
-export const GENUINE_EMPTY_OVERVIEW = researchFixture("admin-overview-empty.json");
+const GENUINE_EMPTY_OVERVIEW = researchFixture("admin-overview-empty.json");
 export const GENUINE_DEFAULTS = decodeResearchDefaults(GENUINE_EMPTY_OVERVIEW.defaults)!;
 export const GENUINE_AREA = decodeResearchArea(researchFixture("admin-area-created-receipt.json").area)!;
 export const GENUINE_SOURCE = decodeResearchSource(researchFixture("admin-source-official-created.json").source)!;

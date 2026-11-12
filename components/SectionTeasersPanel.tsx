@@ -47,7 +47,7 @@ type Notice = { tone: "info" | "error" | "success"; text: string } | null;
  * `type="checkbox"` source — the global availability switch — which
  * `tests/sectionAvailability.test.mts` pins.
  */
-export type SectionTeasersConsole = {
+type SectionTeasersConsole = {
   state: "loading" | "ready" | "error";
   draft: SectionTeasersDraft | null;
   current: SectionTeasersState | null;

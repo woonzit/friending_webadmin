@@ -21,9 +21,9 @@ export const APPEARANCE_MAP_DEFAULT_CENTER = { latitude: 47.4979, longitude: 19.
  * https://developers.google.com/maps/documentation/javascript/mapcolorscheme).
  */
 export const APPEARANCE_MAP_COLOR_SCHEME = "DARK" as const;
-export const APPEARANCE_MAP_DEFAULT_ZOOM = 9;
+const APPEARANCE_MAP_DEFAULT_ZOOM = 9;
 
-export type AppearanceMapOptions = {
+type AppearanceMapOptions = {
   center: { lat: number; lng: number };
   zoom: number;
   mapTypeControl: false;

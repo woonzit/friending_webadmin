@@ -11,7 +11,7 @@ export type Setting<T> = {
   updated_by: string;
 };
 
-export type AppearanceMode = "system" | "light" | "dark";
+type AppearanceMode = "system" | "light" | "dark";
 
 export type RuntimeSettings = {
   people_hero_enabled: Setting<boolean>;

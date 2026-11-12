@@ -56,7 +56,7 @@ export async function membershipReadUserDetail(
     : null;
 }
 
-export type MembershipGrantSubmitResult =
+type MembershipGrantSubmitResult =
   | { kind: "granted"; detail: MembershipUserDetail; pending: null }
   /** The member's grant changed after an unknown outcome: most likely this request applied. */
   | { kind: "uncertainResolved"; detail: MembershipUserDetail; pending: null }
@@ -170,7 +170,7 @@ export async function membershipSubmitGrant(
   };
 }
 
-export type MembershipPendingGrantCheck =
+type MembershipPendingGrantCheck =
   /** The grant changed against the baseline (identity or revision): most likely it applied. */
   | { kind: "changed"; detail: MembershipUserDetail }
   /** The member still has the baseline grant; the request may or may not still arrive. */
@@ -239,17 +239,17 @@ const PENDING_GRANT_BODY_KEYS = ["custom_expires_at", "expected_revision", "pres
 const PENDING_GRANT_PRESETS = ["plus_week", "plus_month", "plus_quarter", "custom"] as const;
 const PENDING_GRANT_START_MODES = ["extend", "start_now"] as const;
 
-export type MembershipPendingGrantStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+type MembershipPendingGrantStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 /** The pinned request's form values, so a restored lock shows exactly what a retry resends. */
-export type MembershipPendingGrantRequest = {
+type MembershipPendingGrantRequest = {
   preset_id: (typeof PENDING_GRANT_PRESETS)[number];
   start_mode: (typeof PENDING_GRANT_START_MODES)[number];
   custom_expires_at: string | null;
   reason: string;
 };
 
-export type MembershipPendingGrantRestore =
+type MembershipPendingGrantRestore =
   /** Nothing usable was stored (absent, unreadable storage, or a malformed entry, which is removed). */
   | { kind: "none" }
   /** The stored pin was older than the TTL and was removed; nothing is locked. */

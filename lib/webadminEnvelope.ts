@@ -18,7 +18,7 @@ const BASE_KEYS = [
   "can_send",
 ] as const;
 
-export type WebadminEnvelope = Record<string, unknown> & {
+type WebadminEnvelope = Record<string, unknown> & {
   success: boolean;
   status_code: number;
   message: typeof WEBADMIN_LEGACY_MESSAGE;
@@ -26,18 +26,18 @@ export type WebadminEnvelope = Record<string, unknown> & {
   can_send: typeof WEBADMIN_LEGACY_CAN_SEND;
 };
 
-export type WebadminDataSuccessEnvelope = WebadminEnvelope & {
+type WebadminDataSuccessEnvelope = WebadminEnvelope & {
   success: true;
   status_code: 200;
   data: unknown;
 };
 
-export type WebadminEmptySuccessEnvelope = WebadminEnvelope & {
+type WebadminEmptySuccessEnvelope = WebadminEnvelope & {
   success: true;
   status_code: 200;
 };
 
-export type WebadminErrorEnvelope = WebadminEnvelope & {
+type WebadminErrorEnvelope = WebadminEnvelope & {
   success: false;
   error: string;
   data?: unknown;

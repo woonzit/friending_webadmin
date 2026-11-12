@@ -1,9 +1,9 @@
 import { webadminEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
-export type ExternalMediaPhoto = { id: string; url: string; moderation_state: "pending" | "approved" | "rejected" | "removed" | "appealed" };
+type ExternalMediaPhoto = { id: string; url: string; moderation_state: "pending" | "approved" | "rejected" | "removed" | "appealed" };
 export type ExternalMedia = { contract_version: 1; external_event_id: string; activity_id: string; revision: number; activity_revision: number;
   maximum_photos: 8; photos: ExternalMediaPhoto[]; featured_photo_id: string | null; can_manage: boolean };
-export type ExternalMediaRequest = { action: "read"; external_event_id: string } | {
+type ExternalMediaRequest = { action: "read"; external_event_id: string } | {
   action: "upload" | "feature" | "remove"; external_event_id: string; expected_revision: number; reason: string; idempotency_key: string;
   provenance?: "ai_generated" | "owned"; rights_confirmed?: "1"; photo_id?: string;
 };

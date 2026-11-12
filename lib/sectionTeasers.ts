@@ -40,7 +40,7 @@ export const SECTION_TEASERS_ACTIONS = [
 export const SECTION_TEASERS_TITLE_MAX = 40 as const;
 export const SECTION_TEASERS_DESCRIPTION_MAX = 400 as const;
 export const SECTION_TEASERS_AUDIT_REASON_MAX = 300 as const;
-export const SECTION_TEASERS_REVISION_MAX = 2_147_483_647 as const;
+const SECTION_TEASERS_REVISION_MAX = 2_147_483_647 as const;
 
 /**
  * `admin_me` does NOT advertise a `section_teasers` capability block, exactly as
@@ -55,11 +55,11 @@ export const SECTION_TEASERS_CORE_READ_CAPABILITY = "section_teasers_read" as co
 export const SECTION_TEASERS_CORE_EDIT_CAPABILITY = "section_teasers_edit" as const;
 
 export type SectionTeaserKey = (typeof SECTION_TEASER_SECTIONS)[number];
-export type SectionTeaserLanguage = (typeof SECTION_TEASER_LANGUAGES)[number];
+type SectionTeaserLanguage = (typeof SECTION_TEASER_LANGUAGES)[number];
 
-export type SectionTeaserText = Record<SectionTeaserLanguage, string>;
+type SectionTeaserText = Record<SectionTeaserLanguage, string>;
 
-export type SectionTeaser = {
+type SectionTeaser = {
   key: SectionTeaserKey;
   hidden: boolean;
   title: SectionTeaserText;
@@ -74,25 +74,25 @@ export type SectionTeasersState = {
   updated_by: string;
 };
 
-export type SectionTeasersMutation = SectionTeasersState & {
+type SectionTeasersMutation = SectionTeasersState & {
   no_change: boolean;
   replayed: boolean;
 };
 
-export type SectionTeasersConflict = { current: SectionTeasersState };
+type SectionTeasersConflict = { current: SectionTeasersState };
 
 /** One published member teaser: `null`, or exactly the two resolved strings. */
-export type SectionTeaserPublication = { title: string; description: string };
+type SectionTeaserPublication = { title: string; description: string };
 
 /** The public `ios_appconfig.section_teasers` block, decoded for the corpus test. */
-export type SectionTeasersAppBlock = {
+type SectionTeasersAppBlock = {
   contract_version: 1;
   teasers: Record<SectionTeaserKey, SectionTeaserPublication | null>;
 };
 
 type JsonObject = Record<string, unknown>;
 
-export type SectionTeaserInput = {
+type SectionTeaserInput = {
   hidden: boolean;
   title: SectionTeaserText;
   description: SectionTeaserText;
@@ -379,7 +379,7 @@ export function sectionTeasersFieldPointer(value: unknown): string | null {
     : null;
 }
 
-export type SectionTeasersErrorKey =
+type SectionTeasersErrorKey =
   | "sessionInvalid"
   | "badOrigin"
   | "routeNotFound"
@@ -519,7 +519,7 @@ export function normalizeSectionTeasersProxyBody(
 
 // ------------------------------------------------------------- the draft
 
-export type SectionTeaserDraft = {
+type SectionTeaserDraft = {
   hidden: boolean;
   title: SectionTeaserText;
   description: SectionTeaserText;
@@ -550,7 +550,7 @@ export function sectionTeasersDraftWithSection(
   return { ...draft, [section]: { ...draft[section], ...changes } };
 }
 
-export type SectionTeasersDraftIssue =
+type SectionTeasersDraftIssue =
   | "title"
   | "description";
 
@@ -600,7 +600,7 @@ export function sectionTeasersSavePayload(
 // ------------------------------------------------------------- convergence
 
 /** Does the served state carry exactly the values this command asked for? */
-export function sectionTeasersStateMatchesPayload(
+function sectionTeasersStateMatchesPayload(
   payload: SectionTeasersSavePayload,
   state: SectionTeasersState,
 ): boolean {

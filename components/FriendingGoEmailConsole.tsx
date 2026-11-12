@@ -65,19 +65,19 @@ import type { FriendingGoNotice } from "@/components/FriendingGoPreordersConsole
 
 export type { FriendingGoAccess };
 
-export type FriendingGoPreviewState =
+type FriendingGoPreviewState =
   | { kind: "idle" }
   | { kind: "loading"; key: string }
   | { kind: "ready"; key: string; data: FriendingGoPreview }
   | { kind: "error"; key: string; message: string };
 
-export type FriendingGoEmailConfirm =
+type FriendingGoEmailConfirm =
   | { kind: "send" }
   | { kind: "discard" }
   /** Replace what is being written: with a draft, or (null) with a new, empty email. */
   | { kind: "replace"; draft: { id: string; subject: string | null } | null };
 
-export type FriendingGoDraftsState = { load: "loading" | "ready" | "error"; drafts: FriendingGoCampaign[]; more: boolean };
+type FriendingGoDraftsState = { load: "loading" | "ready" | "error"; drafts: FriendingGoCampaign[]; more: boolean };
 
 /** The tab's email command as the view shows it. */
 export type FriendingGoCommandView = { pending: FriendingGoPendingEmail | null; busy: boolean; progress: FriendingGoRunProgress | null };
@@ -86,7 +86,7 @@ const NAMES_SHOWN = 8;
 const length = (value: string) => [...value].length;
 
 /** Whether the composer holds anything an operator would lose. */
-export function friendingGoComposerHasContent(composer: FriendingGoComposer): boolean {
+function friendingGoComposerHasContent(composer: FriendingGoComposer): boolean {
   return composer.subject.trim() !== "" || composer.preheader.trim() !== "" || composer.body.trim() !== "";
 }
 

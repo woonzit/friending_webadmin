@@ -19,7 +19,7 @@
  *
  * This is the ONE place that names it. `null` would send nothing.
  */
-export type DatesAdminContractSelector = { readonly parameter: string; readonly value: number | string };
+type DatesAdminContractSelector = { readonly parameter: string; readonly value: number | string };
 export const DATES_ADMIN_INTAKE_CONTRACT_SELECTOR: DatesAdminContractSelector | null = { parameter: "dates_event_intake_admin_contract_version", value: 1 };
 
 /**
@@ -78,7 +78,7 @@ export function datesAdminCommandContractParams(action: string): Record<string, 
 }
 
 /** T-896 / D-143: added by the server to research actions and the selected intake queue. */
-export const DATES_ADMIN_RESEARCH_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_event_research_admin_contract_version", value: 1 };
+const DATES_ADMIN_RESEARCH_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_event_research_admin_contract_version", value: 1 };
 export function datesAdminResearchContractParams(action: string, params: Record<string, unknown> = {}): Record<string, number | string> {
   const research = /^dates_event_research_[a-z0-9_]+$/.test(action) || action === "dates_event_intake_batch_decide"
     || action === "dates_event_intake_list" && (Object.hasOwn(params, "research_run_id") || params.channel === "ai_research");
@@ -94,7 +94,7 @@ export function datesAdminResearchContractParams(action: string, params: Record<
  * (team/handoffs/areyouin-autopublish-research.md, "Admin wire"); Core finalises it in docs/DATES_EXTERNAL_ADMIN_V1.md.
  * Every addition is optional in the decoders, so the console reads a Core of either kind.
  */
-export const DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_external_admin_contract_version", value: 2 };
+const DATES_EXTERNAL_ADMIN_CONTRACT_SELECTOR: DatesAdminContractSelector = { parameter: "dates_external_admin_contract_version", value: 2 };
 /**
  * The routes the v2 selector goes with (Core-B c268ae4b, "The review contract selector"): the list, the detail and the
  * command, whose bodies it changes; the update (`correction_id`, where it changes nothing); the three new routes, which

@@ -31,13 +31,13 @@ export const DATES_INTAKE_PROXY_ACTIONS = [
   // T-886: a reviewer sends a member's draft back to the member, once.
   "dates_event_intake_ask_member",
 ] as const;
-export type DatesIntakeProxyAction = typeof DATES_INTAKE_PROXY_ACTIONS[number];
+type DatesIntakeProxyAction = typeof DATES_INTAKE_PROXY_ACTIONS[number];
 
 // The closed vocabularies of the wire, exactly as the corpus manifest publishes
 // them (`vocabularies`); `tests/datesIntakeWire.test.mts` compares them.
 export const DATES_INTAKE_STATUSES = ["received", "screening", "extracting", "validating", "member_confirming", "in_review", "published",
   "merged", "rejected", "duplicate", "failed", "withdrawn", "expired", "awaiting_budget"] as const;
-export const DATES_INTAKE_STATUS_DETAILS = ["image-empty", "image-unreadable", "image-too-large", "image-dimensions", "image-encode-failed",
+const DATES_INTAKE_STATUS_DETAILS = ["image-empty", "image-unreadable", "image-too-large", "image-dimensions", "image-encode-failed",
   "image-content-rejected", "screening-unavailable", "image-missing", "source-not-readable", "source-not-fetchable", "source-unreachable",
   "source-not-text", "source-too-large", "source-empty", "not-an-event", "prohibited-category", "ai-unavailable", "ai-refused",
   "ai-not-configured", "ai-budget-overrun", "venue-search-unavailable", "duplicate-source", "duplicate-event", "start-passed", "storage-unavailable",
@@ -46,7 +46,7 @@ export const DATES_INTAKE_CHANNELS = ["admin_draft", "member_suggestion", "ai_re
 /** The channels that have a writer today, offered as the queue's filter (the research channel is P3). */
 export const DATES_INTAKE_QUEUE_CHANNELS = ["admin_draft", "member_suggestion", "ai_research"] as const;
 export const DATES_INTAKE_INPUT_KINDS = ["url", "images", "text"] as const;
-export const DATES_INTAKE_DECISION_ACTIONS = ["published", "rejected", "duplicate", "merged", "expired", "screening_rejected", "extraction_rejected",
+const DATES_INTAKE_DECISION_ACTIONS = ["published", "rejected", "duplicate", "merged", "expired", "screening_rejected", "extraction_rejected",
   "withdrawn"] as const;
 export const DATES_INTAKE_REJECT_REASONS = ["not_an_event", "date_unclear_or_past", "private_event", "duplicate", "prohibited_content",
   "unverifiable", "outside_area", "sensitive_not_allowed", "spam_or_fake"] as const;
@@ -56,7 +56,7 @@ export const DATES_INTAKE_HARD_FAILS = ["not_an_event", "prohibited_category", "
   "time_missing", "midnight_unconfirmed", "relative_date_unconfirmed", "local_time_nonexistent", "local_time_ambiguous", "start_in_past",
   "start_beyond_lookahead", "end_not_after_start", "duration_too_long", "weekday_mismatch", "online_only", "venue_not_public",
   "venue_unresolved", "venue_ambiguous", "venue_country_unavailable", "timezone_unknown"] as const;
-export const DATES_INTAKE_WARNINGS = ["prompt_injection_suspected", "fallback_provider", "year_inferred", "start_at_midnight", "start_is_doors_time",
+const DATES_INTAKE_WARNINGS = ["prompt_injection_suspected", "fallback_provider", "year_inferred", "start_at_midnight", "start_is_doors_time",
   "end_estimated", "date_ambiguous", "multiple_dates", "low_confidence_date", "low_confidence_time", "low_confidence_venue",
   "date_quote_unverified", "time_quote_unverified", "quotes_unverified", "witness_disagrees_date", "witness_disagrees_time",
   "witness_disagrees_venue", "venue_similarity_low", "possible_private_address", "venue_search_unavailable", "venue_unbounded",
@@ -64,30 +64,30 @@ export const DATES_INTAKE_WARNINGS = ["prompt_injection_suspected", "fallback_pr
   "organizer_url_dropped", "paid_without_official_link", "organizer_missing", "price_unclear", "sensitive", "status_canceled",
   "status_postponed", "status_sold_out", "low_legibility", "language_uncertain", "conflicting_information", "content_unscreened",
   "member_corrected"] as const;
-export const DATES_INTAKE_AUTO_BLOCKERS = ["no_hard_fail", "warnings_benign", "primary_provider", "quotes_verified", "time_explicit", "confident",
+const DATES_INTAKE_AUTO_BLOCKERS = ["no_hard_fail", "warnings_benign", "primary_provider", "quotes_verified", "time_explicit", "confident",
   "venue_place_matches", "timezone_known", "country_available", "content_screened"] as const;
-export const DATES_INTAKE_TIERS = ["official", "single_source"] as const;
-export const DATES_INTAKE_WITNESS_VERDICTS = ["agrees", "disagrees", "absent"] as const;
+const DATES_INTAKE_TIERS = ["official", "single_source"] as const;
+const DATES_INTAKE_WITNESS_VERDICTS = ["agrees", "disagrees", "absent"] as const;
 export const DATES_INTAKE_EVIDENCE_FIELDS = ["title", "date", "time", "venue", "organizer", "price", "status"] as const;
-export const DATES_INTAKE_EVIDENCE_MATCHES = ["exact", "loose"] as const;
-export const DATES_INTAKE_DEDUPE_DECISIONS = ["new", "review", "duplicate"] as const;
-export const DATES_INTAKE_DEDUPE_VERDICTS = ["duplicate", "review"] as const;
-export const DATES_INTAKE_DEDUPE_KINDS = ["event", "intake"] as const;
-export const DATES_INTAKE_LINK_DROP_REASONS = ["not_in_sources", "not_https", "domain_not_allowed"] as const;
+const DATES_INTAKE_EVIDENCE_MATCHES = ["exact", "loose"] as const;
+const DATES_INTAKE_DEDUPE_DECISIONS = ["new", "review", "duplicate"] as const;
+const DATES_INTAKE_DEDUPE_VERDICTS = ["duplicate", "review"] as const;
+const DATES_INTAKE_DEDUPE_KINDS = ["event", "intake"] as const;
+const DATES_INTAKE_LINK_DROP_REASONS = ["not_in_sources", "not_https", "domain_not_allowed"] as const;
 export const DATES_AI_PROVIDERS = ["openai", "gemini", "anthropic"] as const;
 export const DATES_AI_OUTCOMES = ["sheet", "verdict", "refused", "unavailable", "truncated", "invalid_output", "not_configured"] as const;
-export const DATES_SAFE_SEARCH_LIKELIHOODS = ["UNKNOWN", "VERY_UNLIKELY", "UNLIKELY", "POSSIBLE", "LIKELY", "VERY_LIKELY"] as const;
+const DATES_SAFE_SEARCH_LIKELIHOODS = ["UNKNOWN", "VERY_UNLIKELY", "UNLIKELY", "POSSIBLE", "LIKELY", "VERY_LIKELY"] as const;
 /** Where a member's look at their own draft stands (member channel). */
-export const DATES_INTAKE_MEMBER_CONFIRMATION_STATES = ["awaiting", "confirmed", "corrected", "unchecked", "unanswered"] as const;
+const DATES_INTAKE_MEMBER_CONFIRMATION_STATES = ["awaiting", "confirmed", "corrected", "unchecked", "unanswered"] as const;
 /** The fields of a draft a member may correct, and a reviewer may ask about. */
 export const DATES_INTAKE_MEMBER_EDITABLE_FIELDS = ["title", "starts_local", "ends_local", "venue_name", "venue_address", "venue_city", "price_text",
   "is_free"] as const;
 /** The statuses in which an intake is still open (Core: every status that is not terminal). */
-export const DATES_INTAKE_OPEN_STATUSES = ["received", "screening", "extracting", "validating", "member_confirming", "in_review", "awaiting_budget"] as const;
+const DATES_INTAKE_OPEN_STATUSES = ["received", "screening", "extracting", "validating", "member_confirming", "in_review", "awaiting_budget"] as const;
 
 /** Manifest vocabulary name => the console's list; the pin test walks this map. */
 /** Where the text of the suggestion terms stands (the configuration read's `event_suggestion_consent.text_status`). */
-export const DATES_CONSENT_TEXT_STATUSES = ["missing", "draft", "approved"] as const;
+const DATES_CONSENT_TEXT_STATUSES = ["missing", "draft", "approved"] as const;
 export const DATES_INTAKE_VOCABULARIES = {
   status: DATES_INTAKE_STATUSES, status_detail: DATES_INTAKE_STATUS_DETAILS, channel: DATES_INTAKE_CHANNELS,
   input_kind: DATES_INTAKE_INPUT_KINDS, decision_action: DATES_INTAKE_DECISION_ACTIONS, reject_reason: DATES_INTAKE_REJECT_REASONS,
@@ -164,7 +164,7 @@ export const datesExternalEventId = externalEventId;
 const auditId = id("aud");
 
 /** A list whose items are read one by one: a damaged item is named, never fatal. */
-export type DatesIntakeRows<T> = { items: T[]; unreadable: number[] };
+type DatesIntakeRows<T> = { items: T[]; unreadable: number[] };
 function rows<T>(value: unknown, guard: Guard<T>, maximum: number): DatesIntakeRows<T> | null {
   if (!Array.isArray(value) || value.length > maximum) return null;
   const items: T[] = [], unreadable: number[] = [];
@@ -176,10 +176,10 @@ function rows<T>(value: unknown, guard: Guard<T>, maximum: number): DatesIntakeR
 
 const LEASE = { holder: nullable(string(320)), until: integer(0), active: bool, mine: bool };
 const leaseShape = bound(LEASE);
-export type DatesIntakeLease = Parsed<typeof leaseShape>;
+type DatesIntakeLease = Parsed<typeof leaseShape>;
 const leaseCoherent = (value: DatesIntakeLease) => value.active === (value.holder !== null) && (value.active || value.until === 0) && (!value.mine || value.active);
 /** Core's own coherence rule for a projected lease (contract `lease coherence`). */
-export const datesIntakeLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => leaseShape(value) && leaseCoherent(value);
+const datesIntakeLease: Guard<DatesIntakeLease> = (value): value is DatesIntakeLease => leaseShape(value) && leaseCoherent(value);
 /** The lease as a receipt echoes it: the same four facts, any other key tolerated. What they must say is the action's (below). */
 const receiptLease: Guard<DatesIntakeLease> = bound(LEASE);
 
@@ -223,7 +223,7 @@ export type DatesIntakeQueueRow = RowDisplay & {
   controls: boolean;
   unreadable_fields: string[];
 };
-export type DatesIntakeUnreadableRow = { index: number; intake_id: string | null };
+type DatesIntakeUnreadableRow = { index: number; intake_id: string | null };
 
 /** `keys` are the keys the object must have (row, or row + detail); any other key is tolerated. */
 function projectRow(value: unknown, keys: readonly string[]): DatesIntakeQueueRow | null {
@@ -302,22 +302,22 @@ export function datesSuggestionConsent(configuration: unknown): DatesSuggestionC
 const safeSearch = bound({ adult: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS), violence: oneOf(DATES_SAFE_SEARCH_LIKELIHOODS) });
 const imageGuard = bound({ index: integer(1, DATES_INTAKE_MAX_IMAGES), ready: bool, width: nullable(integer(0)), height: nullable(integer(0)),
   bytes: integer(0), safe_search: nullable(safeSearch) });
-export type DatesIntakeImage = Parsed<typeof imageGuard>;
+type DatesIntakeImage = Parsed<typeof imageGuard>;
 const fetchGuard = bound({ final_url: string(8192), http_status: integer(0, 999), truncated: bool, fetched_at: clock });
 const sourceTextGuard = bound({ label: ((value: unknown): value is string => typeof value === "string" && /^(image|page|text):[0-9]$/.test(value)),
   text: string(400_000), truncated: bool });
-export type DatesIntakeSourceText = Parsed<typeof sourceTextGuard>;
+type DatesIntakeSourceText = Parsed<typeof sourceTextGuard>;
 const aiRunGuard = bound({ provider: oneOf(DATES_AI_PROVIDERS), task: string(200), model: string(200), outcome: oneOf(DATES_AI_OUTCOMES),
   input_tokens: integer(0), output_tokens: integer(0), cost_micro_usd: integer(0), cost_estimated: bool, at: clock });
-export type DatesIntakeAiRun = Parsed<typeof aiRunGuard>;
+type DatesIntakeAiRun = Parsed<typeof aiRunGuard>;
 const statementGuard = bound({ en: string(2000), hu: string(2000) });
 const decisionShape = bound({ by: string(320), at: clock, action: oneOf(DATES_INTAKE_DECISION_ACTIONS),
   reason_code: nullable(oneOf(DATES_INTAKE_REJECT_REASONS)), statement: nullable(statementGuard) });
-export type DatesIntakeDecision = Parsed<typeof decisionShape>;
+type DatesIntakeDecision = Parsed<typeof decisionShape>;
 const decisionGuard: Guard<DatesIntakeDecision> = (value): value is DatesIntakeDecision => decisionShape(value)
   && (value.reason_code === null) === (value.statement === null);
 const referenceGuard = bound({ kind: oneOf(DATES_INTAKE_DEDUPE_KINDS), id: string(200) });
-export type DatesIntakeReference = Parsed<typeof referenceGuard>;
+type DatesIntakeReference = Parsed<typeof referenceGuard>;
 
 const draftGuard = bound({
   title: string(), summary_hu: string(), summary_en: string(), category: oneOf(DATES_EXTERNAL_CATEGORIES), sensitive: bool,
@@ -371,7 +371,7 @@ const editorInputGuard = bound({
   attendee_list: oneOf(["visible", "count_only"] as const),
   confirmations: bound({ source: literal(false), public_venue: literal(false), timezone: literal(false), content_safe: literal(false) }),
 });
-export type DatesIntakeEditorInput = Parsed<typeof editorInputGuard>;
+type DatesIntakeEditorInput = Parsed<typeof editorInputGuard>;
 
 const eventShape = { index: integer(0, 99), published_external_event_id: nullable(externalEventId), draft: draftGuard,
   validation: nullable(validationGuard), field_evidence: nullable(fieldEvidenceGuard), dedupe: nullable(dedupeGuard) };
@@ -412,7 +412,7 @@ const memberReReview = bound({ requested_at: nullable(clock), note: nullable(str
   first_decision: nullable(memberFirstDecision) });
 const memberStanding = bound({ strikes: integer(0), strike_limit: integer(0), banned_until: nullable(clock) });
 const MEMBER_KEYS = ["submitter_uid", "anonymous", "auto_going", "consent_version", "confirmation", "corrections", "re_review", "standing", "can_ask"];
-export type DatesIntakeMemberCorrection = Parsed<typeof memberCorrection>;
+type DatesIntakeMemberCorrection = Parsed<typeof memberCorrection>;
 export type DatesIntakeMember = {
   /** Null once the account is erased: nobody to name, nothing to ask. */
   submitter_uid: number | null;
@@ -587,7 +587,7 @@ export function datesIntakeLink(value: unknown): string | null {
 
 // ---------------------------------------------------------------- what the reviewer may do
 
-export type DatesIntakeAffordances = {
+type DatesIntakeAffordances = {
   claim: boolean; release: boolean; overrideRelease: boolean; reject: boolean; publish: boolean;
 };
 /** A rejection for one of these reasons is a strike against the member who suggested the event (Core: STRIKE_REASONS). */
@@ -729,7 +729,7 @@ export function datesIntakeCompleteFlag(completion: DatesIntakeCompletion, close
 }
 
 /** Seconds Core will still honour the reviewer's hold; never negative. */
-export function datesIntakeLeaseRemaining(lease: DatesIntakeLease | null, serverNow: number): number {
+function datesIntakeLeaseRemaining(lease: DatesIntakeLease | null, serverNow: number): number {
   return lease?.active ? Math.max(0, lease.until - serverNow) : 0;
 }
 
@@ -872,7 +872,7 @@ export function decodeDatesIntakePublishReceipt(value: unknown, request: Record<
 const imageReceipt = bound({ ...envelope, image: bound({ index: integer(1, DATES_INTAKE_MAX_IMAGES), mime: literal("image/jpeg"),
   width: integer(0), height: integer(0), sha256: ((value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{64}$/.test(value)),
   data_base64: string(20_000_000) }), audit_id: auditId });
-export type DatesIntakeImageRead = Parsed<typeof imageReceipt>;
+type DatesIntakeImageRead = Parsed<typeof imageReceipt>;
 /** The shape of Core's audited flyer read; the bytes are checked where they are decoded. */
 export function decodeDatesIntakeImage(value: unknown, index: number): DatesIntakeImageRead | null {
   return imageReceipt(value) && value.image.index === index ? value : null;
@@ -902,7 +902,7 @@ const usageRow = bound({ provider: string(64), model: string(200), task: string(
   unanswered_calls: integer(0), input_tokens: integer(0), output_tokens: integer(0), cache_read_tokens: integer(0),
   cache_write_tokens: integer(0), reasoning_tokens: integer(0), cost_micro_usd: integer(0), estimated_cost_calls: integer(0) });
 /** A row's calls whose cost is not known (D-145): optional - a Core before it does not serve the key. */
-export type DatesAiUsageRow = Parsed<typeof usageRow> & { ambiguous_calls?: number };
+type DatesAiUsageRow = Parsed<typeof usageRow> & { ambiguous_calls?: number };
 const usageRowRead = (value: unknown): value is DatesAiUsageRow => usageRow(value)
   && (!Object.hasOwn(value, "ambiguous_calls") || integer(0)((value as Record<string, unknown>).ambiguous_calls));
 const month: Guard<string> = (value): value is string => typeof value === "string" && /^20\d{2}-(?:0[1-9]|1[0-2])$/.test(value);
@@ -914,7 +914,7 @@ const usageGuard = bound({ ...envelope, usage: bound({ month, cap_usd: integer(0
 export const DATES_AI_AMBIGUOUS_SOURCES = ["transport", "unsettled", "reaped"] as const;
 const ambiguousRun = bound({ provider: string(64), model: string(200), task: string(200), channel: string(64), source: string(64),
   failure: string(64), booked_micro_usd: integer(0), at: clock });
-export type DatesAiAmbiguousRun = Parsed<typeof ambiguousRun>;
+type DatesAiAmbiguousRun = Parsed<typeof ambiguousRun>;
 /**
  * The calls whose cost is not known (Core D-145): a call that was sent and whose answer never arrived or could not be
  * settled may have been charged by the provider, so Core books it at its whole reservation as money spent (it is in
@@ -923,7 +923,7 @@ export type DatesAiAmbiguousRun = Parsed<typeof ambiguousRun>;
  */
 export type DatesAiAmbiguous = { kind: "absent" } | { kind: "unreadable" }
   | { kind: "known"; calls: number; micro_usd: number; runs: DatesAiAmbiguousRun[]; unreadable_runs: number[] };
-export type DatesAiUsage = Omit<Parsed<typeof usageGuard>["usage"], "rows"> & { rows: DatesAiUsageRow[]; unreadable_rows: number[]; ambiguous: DatesAiAmbiguous };
+type DatesAiUsage = Omit<Parsed<typeof usageGuard>["usage"], "rows"> & { rows: DatesAiUsageRow[]; unreadable_rows: number[]; ambiguous: DatesAiAmbiguous };
 export type DatesAiUsageRead = { usage: DatesAiUsage; drafts_enabled: boolean; capabilities: string[]; server_now: number };
 
 function ambiguousOf(usage: Record<string, unknown>): DatesAiAmbiguous {
@@ -1117,7 +1117,7 @@ export function datesIntakeSourceUrl(value: unknown): string | null {
   } catch { return null; }
 }
 
-export type DatesIntakeCreateFields =
+type DatesIntakeCreateFields =
   | { kind: "url"; url: string; locale: "en" | "hu"; idempotency_key: string }
   | { kind: "text"; text: string; locale: "en" | "hu"; idempotency_key: string }
   | { kind: "images"; text: string | null; locale: "en" | "hu"; idempotency_key: string };
@@ -1146,7 +1146,7 @@ export function normalizeDatesIntakeCreateFields(fields: Record<string, unknown>
 }
 
 /** The statuses in which the worker still owns the intake and the page should keep asking. */
-export const DATES_INTAKE_WORKING_STATUSES: readonly DatesIntakeStatus[] = ["received", "screening", "extracting", "validating", "awaiting_budget"];
+const DATES_INTAKE_WORKING_STATUSES: readonly DatesIntakeStatus[] = ["received", "screening", "extracting", "validating", "awaiting_budget"];
 export function datesIntakeInProgress(status: DatesIntakeStatus): boolean {
   return DATES_INTAKE_WORKING_STATUSES.includes(status);
 }

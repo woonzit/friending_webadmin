@@ -1,6 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-export const SESSION_VERSION = 1;
+const SESSION_VERSION = 1;
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
@@ -97,7 +97,7 @@ export function verifySessionToken(
   };
 }
 
-export type SessionRevocationList = {
+type SessionRevocationList = {
   revoke(nonce: string, expiresAtSeconds: number, nowSeconds?: number): void;
   isRevoked(nonce: string, nowSeconds?: number): boolean;
   size(): number;
@@ -109,7 +109,7 @@ export type SessionRevocationList = {
  * outlive the token they revoke, so pruning by `exp` keeps the list small on its
  * own and the cap is normally unreachable.
  */
-export const SESSION_REVOCATION_MAX_ENTRIES = 4096;
+const SESSION_REVOCATION_MAX_ENTRIES = 4096;
 
 export function createSessionRevocationList(
   maxEntries = SESSION_REVOCATION_MAX_ENTRIES,

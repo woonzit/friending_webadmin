@@ -9,16 +9,16 @@
 
 export const APP_REVIEW_RESET_CONFIRMATION = "RESET APP REVIEW";
 
-export const APP_REVIEW_CONTROL_STATES = ["absent", "prepared", "ready"] as const;
-export type AppReviewControlState = (typeof APP_REVIEW_CONTROL_STATES)[number];
+const APP_REVIEW_CONTROL_STATES = ["absent", "prepared", "ready"] as const;
+type AppReviewControlState = (typeof APP_REVIEW_CONTROL_STATES)[number];
 
-export const APP_REVIEW_RESET_STATES = ["idle", "running", "finishing", "failed"] as const;
-export type AppReviewResetState = (typeof APP_REVIEW_RESET_STATES)[number];
+const APP_REVIEW_RESET_STATES = ["idle", "running", "finishing", "failed"] as const;
+type AppReviewResetState = (typeof APP_REVIEW_RESET_STATES)[number];
 
-export const APP_REVIEW_REPROVISION_STATES = [
+const APP_REVIEW_REPROVISION_STATES = [
   "idle", "deleting", "pending", "provisioning", "failed",
 ] as const;
-export type AppReviewReprovisionState = (typeof APP_REVIEW_REPROVISION_STATES)[number];
+type AppReviewReprovisionState = (typeof APP_REVIEW_REPROVISION_STATES)[number];
 
 export const APP_REVIEW_CHECK_KEYS = [
   "account_active",
@@ -304,7 +304,7 @@ export function appReviewSandboxStatus(value: unknown): AppReviewSandboxStatus |
   };
 }
 
-export type AppReviewResetResult = {
+type AppReviewResetResult = {
   status: AppReviewSandboxStatus;
   replayed: boolean;
 };
@@ -347,7 +347,7 @@ export const APP_REVIEW_RESET_ERROR_KEYS = {
   "app-review-sandbox-unavailable": "unavailable",
 } as const;
 
-export type AppReviewResetErrorKey =
+type AppReviewResetErrorKey =
   | (typeof APP_REVIEW_RESET_ERROR_KEYS)[keyof typeof APP_REVIEW_RESET_ERROR_KEYS]
   | "generic";
 

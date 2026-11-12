@@ -21,7 +21,7 @@
 
 export type AppearancePreviewLanguage = "en" | "hu";
 
-export type AppearancePreviewLabels = {
+type AppearancePreviewLabels = {
   apple: string;
   divider: string;
   qr: string;

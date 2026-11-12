@@ -1,6 +1,6 @@
 /** Logical refusal emitted by the authenticated Next.js admin bridge. */
 
-export type AdminBridgeErrorEnvelope = {
+type AdminBridgeErrorEnvelope = {
   success: false;
   status_code: number;
   error: string;

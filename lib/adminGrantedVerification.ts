@@ -23,15 +23,15 @@ export const ADMIN_GRANTED_VERIFICATION_LEVELS = ["none", "light", "strong"] as 
 export const ADMIN_GRANTED_VERIFICATION_SOURCES = ["derived", "imported", "granted"] as const;
 export const ADMIN_GRANTED_VERIFICATION_STATUSES = ["active", "expired", "revoked"] as const;
 
-export type AdminGrantedVerificationAction = (typeof ADMIN_GRANTED_VERIFICATION_ACTIONS)[number];
-export type AdminGrantedVerificationCapability = (typeof ADMIN_GRANTED_VERIFICATION_CAPABILITIES)[number];
+type AdminGrantedVerificationAction = (typeof ADMIN_GRANTED_VERIFICATION_ACTIONS)[number];
+type AdminGrantedVerificationCapability = (typeof ADMIN_GRANTED_VERIFICATION_CAPABILITIES)[number];
 export type AdminGrantedVerificationMethod = (typeof ADMIN_GRANTED_VERIFICATION_METHODS)[number];
-export type AdminGrantedVerificationLevel = (typeof ADMIN_GRANTED_VERIFICATION_LEVELS)[number];
-export type AdminGrantedVerificationSource = (typeof ADMIN_GRANTED_VERIFICATION_SOURCES)[number];
-export type AdminGrantedVerificationStatus = (typeof ADMIN_GRANTED_VERIFICATION_STATUSES)[number];
+type AdminGrantedVerificationLevel = (typeof ADMIN_GRANTED_VERIFICATION_LEVELS)[number];
+type AdminGrantedVerificationSource = (typeof ADMIN_GRANTED_VERIFICATION_SOURCES)[number];
+type AdminGrantedVerificationStatus = (typeof ADMIN_GRANTED_VERIFICATION_STATUSES)[number];
 export type AdminGrantedVerificationRole = "viewer" | "admin" | "owner";
 
-export type AdminGrantedVerificationPrincipal = {
+type AdminGrantedVerificationPrincipal = {
   role: AdminGrantedVerificationRole;
   capabilities: AdminGrantedVerificationCapability[];
 };
@@ -43,7 +43,7 @@ export type AdminGrantedVerificationAdminMe = {
   actions: AdminGrantedVerificationAction[];
 };
 
-export type AdminGrantedSeal = {
+type AdminGrantedSeal = {
   method: AdminGrantedVerificationMethod;
   level: "light" | "strong";
   method_hint: "admin_granted";
@@ -69,21 +69,21 @@ export type AdminGrantedVerificationResource = {
   external_seal_would_show: boolean;
 };
 
-export type AdminGrantedVerificationSelectedDetail = {
+type AdminGrantedVerificationSelectedDetail = {
   contract_version: 1;
   principal: VerificationAdminPrincipal;
   verification: VerificationUserProjection;
   admin_granted_verification: AdminGrantedVerificationResource;
 };
 
-export type AdminGrantedVerificationMutation = {
+type AdminGrantedVerificationMutation = {
   contract_version: 1;
   principal: AdminGrantedVerificationPrincipal;
   admin_granted_verification: AdminGrantedVerificationResource;
   replayed: boolean;
 };
 
-export type AdminGrantedVerificationConflict = {
+type AdminGrantedVerificationConflict = {
   error:
     | "verification-method-not-enabled"
     | "verification-grant-not-active"
@@ -466,7 +466,7 @@ export function adminGrantedVerificationError(value: unknown): string | null {
     : null;
 }
 
-export type AdminGrantedVerificationErrorKey =
+type AdminGrantedVerificationErrorKey =
   | "sessionInvalid"
   | "forbidden"
   | "routeNotFound"

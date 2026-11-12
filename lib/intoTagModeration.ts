@@ -28,13 +28,13 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
  * surface over material the console did not understand.
  */
 
-export const INTO_TAG_MODERATION_SCHEMA_VERSION = 1;
+const INTO_TAG_MODERATION_SCHEMA_VERSION = 1;
 export const INTO_TAG_MODERATION_PAGE_SIZE = 50;
-export const INTO_TAG_MODERATION_LIMIT_MAX = 200;
+const INTO_TAG_MODERATION_LIMIT_MAX = 200;
 export const INTO_TAG_MODERATION_REASON_MAX_LENGTH = 500;
 
 /** The Webadmin mutation family; the audit id is derived from it (see below). */
-export const INTO_TAG_MODERATION_FAMILY = "into_tag_moderation";
+const INTO_TAG_MODERATION_FAMILY = "into_tag_moderation";
 
 export const INTO_TAG_MODERATION_ACTIONS = [
   "into_tag_moderation_list",
@@ -42,7 +42,7 @@ export const INTO_TAG_MODERATION_ACTIONS = [
   "into_tag_moderation_settings",
 ] as const;
 
-export const INTO_TAG_MODERATION_STATES = [
+const INTO_TAG_MODERATION_STATES = [
   "approved",
   "pending",
   "rejected",
@@ -58,19 +58,19 @@ export const INTO_TAG_MODERATION_TABS = [
 ] as const;
 
 /** Everything `into_tag_moderation_list` accepts as `state`. */
-export const INTO_TAG_MODERATION_LIST_STATES = [
+const INTO_TAG_MODERATION_LIST_STATES = [
   ...INTO_TAG_MODERATION_STATES,
   "all",
 ] as const;
 
-export const INTO_TAG_PROVENANCES = [
+const INTO_TAG_PROVENANCES = [
   "seed",
   "member",
   "legacy-user-created",
   "admin",
 ] as const;
 
-export const INTO_TAG_VERDICTS = ["approve", "reject", "merge"] as const;
+const INTO_TAG_VERDICTS = ["approve", "reject", "merge"] as const;
 
 /**
  * Core's capability pair. `into_tag_moderation_read` is the list gate;
@@ -78,20 +78,20 @@ export const INTO_TAG_VERDICTS = ["approve", "reject", "merge"] as const;
  * lexicographically on the wire — Core appends the decide capability after the
  * read one — so the decoder pins Core's order rather than inventing a sort.
  */
-export const INTO_TAG_MODERATION_CAPABILITIES = [
+const INTO_TAG_MODERATION_CAPABILITIES = [
   "into_tag_moderation_read",
   "into_tag_moderation",
 ] as const;
 
-export const INTO_TAG_MODERATION_ROLES = ["viewer", "editor", "approver", "owner"] as const;
+const INTO_TAG_MODERATION_ROLES = ["viewer", "editor", "approver", "owner"] as const;
 
-export type IntoTagModerationState = (typeof INTO_TAG_MODERATION_STATES)[number];
+type IntoTagModerationState = (typeof INTO_TAG_MODERATION_STATES)[number];
 export type IntoTagModerationTab = (typeof INTO_TAG_MODERATION_TABS)[number];
-export type IntoTagModerationListState = (typeof INTO_TAG_MODERATION_LIST_STATES)[number];
-export type IntoTagProvenance = (typeof INTO_TAG_PROVENANCES)[number];
+type IntoTagModerationListState = (typeof INTO_TAG_MODERATION_LIST_STATES)[number];
+type IntoTagProvenance = (typeof INTO_TAG_PROVENANCES)[number];
 export type IntoTagVerdict = (typeof INTO_TAG_VERDICTS)[number];
-export type IntoTagModerationCapability = (typeof INTO_TAG_MODERATION_CAPABILITIES)[number];
-export type IntoTagModerationRole = (typeof INTO_TAG_MODERATION_ROLES)[number];
+type IntoTagModerationCapability = (typeof INTO_TAG_MODERATION_CAPABILITIES)[number];
+type IntoTagModerationRole = (typeof INTO_TAG_MODERATION_ROLES)[number];
 
 export type IntoTagModerationPrincipal = {
   role: IntoTagModerationRole;
@@ -105,7 +105,7 @@ export type IntoTagModerationCounts = {
   merged: number;
 };
 
-export type IntoTagModerationPropagation = {
+type IntoTagModerationPropagation = {
   selections: number;
   userinfo: number;
   user_into: number;
@@ -147,7 +147,7 @@ export type IntoTagModerationListData = {
   principal: IntoTagModerationPrincipal;
 };
 
-export type IntoTagModerationDecisionData = {
+type IntoTagModerationDecisionData = {
   revision: number;
   item: IntoTagModerationItem;
   propagated: IntoTagModerationPropagation;
@@ -156,7 +156,7 @@ export type IntoTagModerationDecisionData = {
   audit_id: string;
 };
 
-export type IntoTagModerationSettingsData = {
+type IntoTagModerationSettingsData = {
   member_creation_enabled: boolean;
   revision: number;
   counts: IntoTagModerationCounts;
@@ -164,7 +164,7 @@ export type IntoTagModerationSettingsData = {
   audit_id: string;
 };
 
-export type IntoTagModerationConflictData = {
+type IntoTagModerationConflictData = {
   current: {
     revision: number;
     member_creation_enabled: boolean;
@@ -246,7 +246,7 @@ function optionalItemKey(value: unknown): string | null {
   return value === "" ? "" : itemKey(value);
 }
 
-export function isIntoTagModerationRequestId(value: unknown): value is string {
+function isIntoTagModerationRequestId(value: unknown): value is string {
   return typeof value === "string" && REQUEST_ID.test(value);
 }
 
@@ -380,14 +380,14 @@ export function intoTagModerationItem(value: unknown): IntoTagModerationItem | n
 }
 
 /** Core pages the queue by `key` ascending; the cursor IS the last key served. */
-export function intoTagModerationItemsAreOrdered(items: IntoTagModerationItem[]): boolean {
+function intoTagModerationItemsAreOrdered(items: IntoTagModerationItem[]): boolean {
   for (let index = 1; index < items.length; index += 1) {
     if (items[index - 1].key >= items[index].key) return false;
   }
   return true;
 }
 
-export function intoTagModerationListData(value: unknown): IntoTagModerationListData | null {
+function intoTagModerationListData(value: unknown): IntoTagModerationListData | null {
   const raw = requiredObject(value, [
     "schema_version",
     "state",
@@ -450,7 +450,7 @@ function auditId(value: unknown): string | null {
   return typeof value === "string" && AUDIT_ID.test(value) ? value : null;
 }
 
-export function intoTagModerationDecisionData(
+function intoTagModerationDecisionData(
   value: unknown,
 ): IntoTagModerationDecisionData | null {
   const raw = requiredObject(value, [
@@ -495,7 +495,7 @@ export function intoTagModerationDecisionResponse(
   return envelope ? intoTagModerationDecisionData(envelope.data) : null;
 }
 
-export function intoTagModerationSettingsData(
+function intoTagModerationSettingsData(
   value: unknown,
 ): IntoTagModerationSettingsData | null {
   const raw = requiredObject(value, [
@@ -593,7 +593,7 @@ export const INTO_TAG_MODERATION_ERROR_KEYS = {
   "catalog-admin-capability-required": "capabilityRequired",
 } as const;
 
-export type IntoTagModerationErrorKey =
+type IntoTagModerationErrorKey =
   | (typeof INTO_TAG_MODERATION_ERROR_KEYS)[keyof typeof INTO_TAG_MODERATION_ERROR_KEYS]
   | "generic";
 

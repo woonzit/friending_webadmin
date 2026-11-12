@@ -36,12 +36,12 @@ export type WelcomeMessageStored = {
  * - `invalid`: anything else — a refusal, a transport failure, a Core without
  *   the setting, or a body this console cannot vouch for.
  */
-export type WelcomeMessageRead =
+type WelcomeMessageRead =
   | { kind: "ready"; stored: WelcomeMessageStored }
   | { kind: "corrupt"; updatedAt: number; updatedBy: string }
   | { kind: "invalid" };
 
-export type WelcomeMessageBodyIssue = "empty" | "tooLong" | "control";
+type WelcomeMessageBodyIssue = "empty" | "tooLong" | "control";
 
 function record(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -133,7 +133,7 @@ export function welcomeMessageSaveBody(
   return value ? { settings: { welcome_message: value } } : null;
 }
 
-export type WelcomeMessageSaveOutcome =
+type WelcomeMessageSaveOutcome =
   | { kind: "saved"; stored: WelcomeMessageStored }
   | { kind: "invalid" }
   | { kind: "writeRequired" }

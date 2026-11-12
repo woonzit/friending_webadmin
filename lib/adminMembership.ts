@@ -2,7 +2,7 @@ import { webadminEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope"
 
 export const ADMIN_MEMBERSHIP_UNCONFIRMED = "admin-membership-unconfirmed" as const;
 
-export type AdminMembershipDecision =
+type AdminMembershipDecision =
   | { kind: "confirmed"; membership: Record<string, unknown>; email: string; role: "owner" | "admin" | "viewer" }
   | { kind: "revoked" }
   | { kind: "unconfirmed" };

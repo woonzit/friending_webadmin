@@ -25,8 +25,8 @@
  */
 
 /** Spec §8 Layer 1 groups. A Layer 2 item must map to at least one. */
-export const LAYER1_GROUPS = ["sex", "friends", "love"] as const;
-export type Layer1Group = (typeof LAYER1_GROUPS)[number];
+const LAYER1_GROUPS = ["sex", "friends", "love"] as const;
+type Layer1Group = (typeof LAYER1_GROUPS)[number];
 
 /**
  * One mode, kept as a named type rather than dropped. DEC-011 keeps `visibility_mode` on the wire
@@ -75,9 +75,9 @@ export function selectionLimitIsWritable(value: unknown): value is number {
     && Number(value) <= LAYER2_SELECTION_LIMIT_MAX;
 }
 
-export type IntentLocalizedText = Record<string, string>;
+type IntentLocalizedText = Record<string, string>;
 
-export type Layer2Intent = {
+type Layer2Intent = {
   /** Stable and immutable after creation. Never renamed; archive and replace instead. */
   id: string;
   labels: IntentLocalizedText;
@@ -96,7 +96,7 @@ export type Layer2Intent = {
  * `layer2-glossary-missing` or `layer2-glossary-missing-<locale>`; the locale is carried in the
  * code rather than in a field of its own, so it is derived here instead of invented.
  */
-export type Layer2Blocker = { id: string; error: string; locale: string | null };
+type Layer2Blocker = { id: string; error: string; locale: string | null };
 
 const GLOSSARY_MISSING_PREFIX = "layer2-glossary-missing-";
 
@@ -138,7 +138,7 @@ export type Layer2Catalog = {
   reciprocal_sets: string[];
 };
 
-export type Layer2CatalogError =
+type Layer2CatalogError =
   | "malformed"
   | "schema-version-unsupported"
   | "revision-invalid"
@@ -156,7 +156,7 @@ export type Layer2CatalogError =
   | "reciprocal-set-undeclared"
   | "order-invalid";
 
-export type Layer2CatalogResult =
+type Layer2CatalogResult =
   | { ok: true; catalog: Layer2Catalog }
   | { ok: false; error: Layer2CatalogError; item_id?: string };
 

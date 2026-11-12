@@ -25,9 +25,9 @@ export const MEMBERSHIP_QUOTAS = [
 export type MembershipQuotaKey = (typeof MEMBERSHIP_QUOTAS)[number];
 
 export type MembershipQuotaMode = "disabled" | "finite" | "unlimited";
-export type MembershipQuotaScope = "utc_day" | "concurrent";
+type MembershipQuotaScope = "utc_day" | "concurrent";
 
-export type MembershipQuotaRule = {
+type MembershipQuotaRule = {
   mode: MembershipQuotaMode;
   value: number | null;
 };
@@ -69,14 +69,14 @@ export type MembershipConfiguration = {
   };
 };
 
-export type MembershipStoreProductRow = {
+type MembershipStoreProductRow = {
   platform: "apple" | "google";
   product_id: string;
   tier: "plus";
   period: string;
 };
 
-export const MEMBERSHIP_LIFECYCLE_STATES = [
+const MEMBERSHIP_LIFECYCLE_STATES = [
   "none",
   "pending",
   "scheduled",
@@ -90,9 +90,9 @@ export const MEMBERSHIP_LIFECYCLE_STATES = [
   "invalid",
   "unavailable",
 ] as const;
-export type MembershipLifecycleState = (typeof MEMBERSHIP_LIFECYCLE_STATES)[number];
+type MembershipLifecycleState = (typeof MEMBERSHIP_LIFECYCLE_STATES)[number];
 
-export type MembershipStatus = {
+type MembershipStatus = {
   schema_version: 1;
   tier: MembershipTier | "unknown";
   entitled: boolean;
@@ -118,7 +118,7 @@ export type MembershipStatus = {
   badge: { eligible: boolean; hidden: boolean; visible: boolean };
 };
 
-export type MembershipUsageRule = {
+type MembershipUsageRule = {
   scope: MembershipQuotaScope;
   mode: MembershipQuotaMode;
   used: number;
@@ -189,7 +189,7 @@ export type MembershipUserDetail = {
 };
 
 /** One live quota as `MembershipQuotaGateService::liveQuota` builds it. */
-export type MembershipLiveQuota = {
+type MembershipLiveQuota = {
   scope: MembershipQuotaScope;
   mode: MembershipQuotaMode;
   limit: number | null;
@@ -209,12 +209,12 @@ export type MembershipLiveAccess = {
   quotas: Record<MembershipQuotaKey, MembershipLiveQuota>;
 };
 
-export type MembershipLiveAccessRead =
+type MembershipLiveAccessRead =
   | { state: "present"; access: MembershipLiveAccess }
   | { state: "absent" }
   | { state: "invalid" };
 
-export type MembershipListSummary = {
+type MembershipListSummary = {
   tier: MembershipTier | "unknown";
   entitled: boolean;
   lifecycle_state: MembershipLifecycleState;
@@ -243,14 +243,14 @@ export type MembershipGrantPreview = {
   resulting_effective_expires_at: string;
 };
 
-export type MembershipExpiryChange = "invalid" | "unchanged" | "extend" | "shorten";
+type MembershipExpiryChange = "invalid" | "unchanged" | "extend" | "shorten";
 
-export const MEMBERSHIP_ADMIN_GRANT_PRESETS = [
+const MEMBERSHIP_ADMIN_GRANT_PRESETS = [
   "plus_week",
   "plus_month",
   "plus_quarter",
 ] as const;
-export type MembershipAdminGrantPresetKey = (typeof MEMBERSHIP_ADMIN_GRANT_PRESETS)[number];
+type MembershipAdminGrantPresetKey = (typeof MEMBERSHIP_ADMIN_GRANT_PRESETS)[number];
 
 export type MembershipPlanValidationIssue = {
   kind: "scope_mismatch" | "mode_invalid" | "finite_value_invalid" | "non_finite_value";
@@ -780,7 +780,7 @@ export function membershipStoreContribution(
   return rowsForWindow.length === 1 ? matches[0].contributes_to_access : null;
 }
 
-export type MembershipStoreRowContribution = "contributing" | "notContributing" | "notCounted" | "unknown";
+type MembershipStoreRowContribution = "contributing" | "notContributing" | "notCounted" | "unknown";
 
 /**
  * The operator label for one retained store row. Core reports `counts_for_access: false` both for
@@ -798,8 +798,8 @@ export function membershipStoreRowContribution(
 }
 
 /** Store evidence environments as Core stores them (Apple: production/sandbox, Google: production/test). */
-export const MEMBERSHIP_STORE_ENVIRONMENTS = ["production", "sandbox", "test"] as const;
-export type MembershipStoreEnvironment = (typeof MEMBERSHIP_STORE_ENVIRONMENTS)[number];
+const MEMBERSHIP_STORE_ENVIRONMENTS = ["production", "sandbox", "test"] as const;
+type MembershipStoreEnvironment = (typeof MEMBERSHIP_STORE_ENVIRONMENTS)[number];
 
 /** A retained row's environment; empty or unrecognized text is `null` and shown as unknown. */
 export function membershipStoreEnvironment(value: string): MembershipStoreEnvironment | null {

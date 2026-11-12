@@ -73,13 +73,13 @@ export const VERIFICATION_METHOD_ACTIONS = [
   "verification_method_impact",
   "verification_method_save",
 ] as const;
-export type VerificationMethodAction = (typeof VERIFICATION_METHOD_ACTIONS)[number];
+type VerificationMethodAction = (typeof VERIFICATION_METHOD_ACTIONS)[number];
 
-export const VERIFICATION_METHOD_MUTATION_ACTIONS = [
+const VERIFICATION_METHOD_MUTATION_ACTIONS = [
   "verification_method_apply",
   "verification_method_save",
 ] as const;
-export type VerificationMethodMutationAction = (typeof VERIFICATION_METHOD_MUTATION_ACTIONS)[number];
+type VerificationMethodMutationAction = (typeof VERIFICATION_METHOD_MUTATION_ACTIONS)[number];
 
 /**
  * The scalar a row carries, in Core's `VerificationMethodPolicy::METHODS`
@@ -92,7 +92,7 @@ export type MandatoryMethod = (typeof MANDATORY_METHODS)[number];
 
 /** The methods a deployment can actually start; `none` has no availability entry. */
 export const VERIFICATION_START_METHODS = ["video", "persona", "photo"] as const;
-export type VerificationStartMethod = (typeof VERIFICATION_START_METHODS)[number];
+type VerificationStartMethod = (typeof VERIFICATION_START_METHODS)[number];
 
 /**
  * The console wire versions this Webadmin speaks. v1 is T-617 (three-key
@@ -160,7 +160,7 @@ export const VERIFICATION_METHOD_AVAILABILITY_REASONS = {
   persona: ["deployment_unlock_disabled", "service_config_disabled", "provider_unconfigured"],
   photo: ["deployment_unlock_disabled", "service_config_disabled", "processing_unavailable", "catalogue_insufficient"],
 } as const satisfies Record<VerificationStartMethod, readonly string[]>;
-export type VerificationMethodAvailabilityReason =
+type VerificationMethodAvailabilityReason =
   (typeof VERIFICATION_METHOD_AVAILABILITY_REASONS)[VerificationStartMethod][number];
 
 /** Core `VerificationMethodPolicy::MAX_OVERRIDES`, equal to the closed storefront catalogue size. */
@@ -168,7 +168,7 @@ export const VERIFICATION_METHOD_MAX_OVERRIDES = 249;
 /** Core `VerificationMethodPolicy::MIN_REVISION`/`MAX_REVISION`. */
 export const VERIFICATION_METHOD_REVISION_MAX = 9_007_199_254_740_991;
 export const VERIFICATION_METHOD_CONFIRMATION_PHRASE = "PUBLISH VERIFICATION METHOD";
-export const VERIFICATION_METHOD_STOREFRONT_HINT = "alpha-3";
+const VERIFICATION_METHOD_STOREFRONT_HINT = "alpha-3";
 export const VERIFICATION_METHOD_REASON_MAX = 300;
 
 /** Core `VerificationMethodPublicationGuard` sorts these with `SORT_STRING`; this is that order. */
@@ -177,7 +177,7 @@ export const VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES = [
   "verification-method-photo-unavailable",
   "verification-method-video-unavailable",
 ] as const;
-export type VerificationMethodPublishBlockingCode =
+type VerificationMethodPublishBlockingCode =
   (typeof VERIFICATION_METHOD_PUBLISH_BLOCKING_CODES)[number];
 
 export const VERIFICATION_METHOD_UNAVAILABLE_ERROR = "verification-method-unavailable";
@@ -231,7 +231,7 @@ export type VerificationClosedModeCatalogue = {
   client_selector: typeof VERIFICATION_CLOSED_MODE_CLIENT_SELECTOR;
 };
 
-export type VerificationGateModeCatalogue = {
+type VerificationGateModeCatalogue = {
   modes: VerificationGateMode[];
   recommended: VerificationGateMode;
   client_selector: typeof VERIFICATION_GATE_MODE_CLIENT_SELECTOR;
@@ -255,13 +255,13 @@ export type VerificationMethodDocument = {
   gate_mode?: VerificationGateModePolicy;
 };
 
-export type VerificationMethodDraftSnapshot = {
+type VerificationMethodDraftSnapshot = {
   document: VerificationMethodDocument;
   saved_at: number;
   saved_by: string;
 };
 
-export type VerificationMethodLiveSnapshot = {
+type VerificationMethodLiveSnapshot = {
   document: VerificationMethodDocument;
   published_at: number;
   published_by: string;
@@ -276,7 +276,7 @@ export type VerificationMethodPolicy = {
   updated_by: string;
 };
 
-export type VerificationMethodPublishGuard = {
+type VerificationMethodPublishGuard = {
   ready: boolean;
   blocking_codes: VerificationMethodPublishBlockingCode[];
 };
@@ -298,7 +298,7 @@ export type VerificationMethodConsoleData = {
   gate_mode_catalogue?: VerificationGateModeCatalogue;
 };
 
-export type VerificationMethodMutationData = {
+type VerificationMethodMutationData = {
   contract_version: VerificationMethodContractVersion;
   principal: VerificationAdminPrincipal;
   policy: VerificationMethodPolicy;
@@ -308,7 +308,7 @@ export type VerificationMethodMutationData = {
   gate_mode_hidden?: true;
 };
 
-export type VerificationMethodImpactCounts = {
+type VerificationMethodImpactCounts = {
   members_seen: number;
   currently_gated: number;
   would_be_gated: number;
@@ -318,7 +318,7 @@ export type VerificationMethodImpactCounts = {
 };
 
 /** v2 and v3 (contract §8.4): the counts do not depend on the mode; the mode says what a held member gets. */
-export type VerificationMethodImpactGateModes = {
+type VerificationMethodImpactGateModes = {
   live_gate_mode?: VerificationGateMode;
   draft_gate_mode?: VerificationGateMode;
 };
@@ -326,13 +326,13 @@ export type VerificationMethodImpactGateModes = {
 /** v3 `impact.closed_below_events`: the live and the draft threshold, each 0..50. */
 export type VerificationClosedModeImpact = { live: number; draft: number };
 
-export type VerificationMethodImpactRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
+type VerificationMethodImpactRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
   storefront: string;
   live_method: MandatoryMethod;
   draft_method: MandatoryMethod;
 };
 
-export type VerificationMethodImpactUnknownRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
+type VerificationMethodImpactUnknownRow = VerificationMethodImpactCounts & VerificationMethodImpactGateModes & {
   live_method: MandatoryMethod;
   draft_method: MandatoryMethod;
 };
@@ -358,20 +358,20 @@ export type VerificationMethodImpactData = {
 };
 
 /** Core's 422 `verification-method-gate-mode-invalid` body when a scope in Explore does not force Persona. */
-export type VerificationMethodGateModeConflict = {
+type VerificationMethodGateModeConflict = {
   reason: "explore_requires_persona";
   /** `global` first when it conflicts, then storefronts ascending (Core `gateModeMethodConflicts`). */
   scopes: string[];
 };
 
-export type VerificationMethodConflictData = {
+type VerificationMethodConflictData = {
   contract_version: VerificationMethodContractVersion;
   policy: VerificationMethodPolicy;
   method_availability: VerificationMethodAvailabilityMap;
 };
 
 /** Core's per-operator projection, the sibling of the closed `admin_me.verification` block. */
-export type VerificationMethodAdminMe = {
+type VerificationMethodAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   actions: VerificationMethodAction[];
@@ -439,7 +439,7 @@ function sha256Hex(value: unknown): string | null {
 /** Core's `CONTROL_PATTERN`: C0 except TAB/LF/CR, DEL and the C1 range. */
 const CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/u;
 
-export function isVerificationMethodRequestId(value: unknown): value is string {
+function isVerificationMethodRequestId(value: unknown): value is string {
   return typeof value === "string"
     && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(value);
 }
@@ -485,7 +485,7 @@ function availability<M extends VerificationStartMethod>(
  * Core 60b7814e projects all three start methods on every console, impact,
  * mutation and conflict body; a map without `photo` is not proven material.
  */
-export function verificationMethodAvailabilityMap(value: unknown): VerificationMethodAvailabilityMap | null {
+function verificationMethodAvailabilityMap(value: unknown): VerificationMethodAvailabilityMap | null {
   const raw = requiredObject(value, VERIFICATION_START_METHODS);
   const video = availability(raw?.video, "video");
   const persona = availability(raw?.persona, "persona");
@@ -817,7 +817,7 @@ export function verificationMethodAccess(
   };
 }
 
-export function isVerificationMethodAction(action: string): action is VerificationMethodAction {
+function isVerificationMethodAction(action: string): action is VerificationMethodAction {
   return (VERIFICATION_METHOD_ACTIONS as readonly string[]).includes(action);
 }
 
@@ -872,7 +872,7 @@ export const VERIFICATION_METHOD_ERROR_STATUSES = {
   "core-timeout": 504,
 } as const;
 
-export type VerificationMethodError = keyof typeof VERIFICATION_METHOD_ERROR_STATUSES;
+type VerificationMethodError = keyof typeof VERIFICATION_METHOD_ERROR_STATUSES;
 
 export function verificationMethodErrorResponse(value: unknown): VerificationMethodError | null {
   const core = webadminErrorEnvelope(value);
@@ -951,7 +951,7 @@ export function verificationMethodConsoleResponse(
   });
 }
 
-export type VerificationMethodConsoleLoad =
+type VerificationMethodConsoleLoad =
   | { ok: true; version: VerificationMethodContractVersion; data: VerificationMethodConsoleData }
   | { ok: false; version: VerificationMethodContractVersion; error: VerificationMethodError | null };
 
@@ -1164,7 +1164,7 @@ export function verificationMethodGateModeConflictResponse(value: unknown): Veri
 // ---------------------------------------------------------------------------
 
 /** One storefront row: its method and its copy override travel together. */
-export type VerificationMethodOverrideRow = {
+type VerificationMethodOverrideRow = {
   storefront: string;
   method: MandatoryMethod;
   copy: WaitingRoomCopyOverrideDraft;
@@ -1189,7 +1189,7 @@ export type VerificationMethodDraft = {
  * is video or photo, which Core refuses (D-151 review). `closedBelowEvents`:
  * the Closed mode threshold is not an integer 0..50 (D-152 §6.2).
  */
-export type VerificationMethodDraftIssue =
+type VerificationMethodDraftIssue =
   | ForcedVerificationDraftIssue | "gateMode" | "exploreRequiresPersona" | "closedBelowEvents";
 
 /**
@@ -1512,7 +1512,7 @@ export function gateModeStoredUnderNone(
 }
 
 /** What removing a row did to that storefront's own mode, for the operator's notice. */
-export type GateModeRemovalNotice =
+type GateModeRemovalNotice =
   /** Its own mode is gone and the storefront now gets a different one (Global's). */
   | { kind: "dropped"; reason: "none" | "persona"; mode: VerificationGateMode; global: VerificationGateMode }
   /** Its own mode is gone but equals Global's: the storefront still gets `mode`. */
@@ -1669,7 +1669,7 @@ export function verificationMethodOutcomeProvesV2(
     || outcome.kind === "gate-mode-conflict";
 }
 
-export type VerificationMethodMutationOutcome =
+type VerificationMethodMutationOutcome =
   | { kind: "success"; data: VerificationMethodMutationData }
   | { kind: "gate-mode-conflict"; conflict: VerificationMethodGateModeConflict }
   | { kind: "conflict"; error: "verification-method-conflict" | "verification-method-preview-stale"; data: VerificationMethodConflictData }
@@ -1696,7 +1696,7 @@ export function verificationMethodMutationOutcome(
 }
 
 /** The one method Explore may run under (D-151 review): the T-713 boundary it relaxes is Persona's. */
-export const VERIFICATION_GATE_MODE_EXPLORE_METHOD = "persona" as const satisfies MandatoryMethod;
+const VERIFICATION_GATE_MODE_EXPLORE_METHOD = "persona" as const satisfies MandatoryMethod;
 
 /** Whether a row whose effective method is `method` may choose Explore. */
 export function gateModeExploreAllowed(method: MandatoryMethod): boolean {

@@ -14,7 +14,7 @@ import {
 
 export type AppearanceAuthPreviewMode = "both" | "phone" | "email";
 
-export type AppearanceLandingPreviewLabels = {
+type AppearanceLandingPreviewLabels = {
   apple: string;
   divider: string;
   qr: string;

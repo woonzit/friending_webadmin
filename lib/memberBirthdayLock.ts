@@ -41,7 +41,7 @@ const BRIDGE_ERROR_STATUS = {
   "invalid-core-response": 502,
 } as const;
 
-export type MemberBirthdayLockResetPayload = {
+type MemberBirthdayLockResetPayload = {
   contract_version: 1;
   uid: number;
   request_id: string;
@@ -53,7 +53,7 @@ export type MemberBirthdayLockReceipt = {
   replayed: boolean;
 };
 
-export type MemberBirthdayLockResetResult = {
+type MemberBirthdayLockResetResult = {
   contract_version: 1;
   uid: number;
   changed: boolean;
@@ -62,7 +62,7 @@ export type MemberBirthdayLockResetResult = {
   receipt: MemberBirthdayLockReceipt;
 };
 
-export type MemberBirthdayLockRefusal = {
+type MemberBirthdayLockRefusal = {
   error: string;
   status_code: number;
 };
@@ -167,7 +167,7 @@ export function memberBirthdayLockRefusal(value: unknown): MemberBirthdayLockRef
     : null;
 }
 
-export type MemberBirthdayLockErrorMessageKey =
+type MemberBirthdayLockErrorMessageKey =
   | "authorization"
   | "invalidRequest"
   | "memberNotFound"

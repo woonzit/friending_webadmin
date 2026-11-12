@@ -3,7 +3,7 @@
  * notice keeps the research labels, exactly as before.
  */
 export type ResearchNavigationNotice = { kind: "confirm" | "history"; message: string; title?: string; leave?: string };
-export type NavigationLabels = { title: string; leave: string };
+type NavigationLabels = { title: string; leave: string };
 /** One in-page guard for all retained research commands, including hidden actor-fenced owners. */
 export function createResearchNavigationGuard(browser: Window, page: Document) {
   const owners = new Map<symbol, { confirm: string; history: string; labels?: NavigationLabels }>();

@@ -24,7 +24,7 @@ import {
  *   compare-and-set (`409` on a stale revision) audited in the same
  *   transaction, and an unchanged save returns the current state unaudited.
  */
-export const LOCATION_ACCESS_POLICY_SCHEMA_VERSION = 1 as const;
+const LOCATION_ACCESS_POLICY_SCHEMA_VERSION = 1 as const;
 export const LOCATION_ACCESS_POLICY_ACTIONS = [
   "location_access_policy",
   "save_location_access_policy",
@@ -34,16 +34,16 @@ export const LOCATION_ACCESS_POLICY_FLAGS = [
   "required_for_nearby",
   "required_for_signup",
 ] as const;
-export const LOCATION_ACCESS_POLICY_REVISION_MAX = 2_147_483_647 as const;
+const LOCATION_ACCESS_POLICY_REVISION_MAX = 2_147_483_647 as const;
 /** Core's `LocationAccessPolicy::MAX_ACTOR_BYTES`, measured in UTF-8 bytes. */
-export const LOCATION_ACCESS_POLICY_ACTOR_MAX_BYTES = 320 as const;
+const LOCATION_ACCESS_POLICY_ACTOR_MAX_BYTES = 320 as const;
 
 export type LocationAccessPolicyFlag = (typeof LOCATION_ACCESS_POLICY_FLAGS)[number];
 
 /** What the operator edits: the two switches and nothing else. */
-export type LocationAccessPolicyDraft = Record<LocationAccessPolicyFlag, boolean>;
+type LocationAccessPolicyDraft = Record<LocationAccessPolicyFlag, boolean>;
 
-export type LocationAccessPolicyConfiguration = LocationAccessPolicyDraft & {
+type LocationAccessPolicyConfiguration = LocationAccessPolicyDraft & {
   schema_version: typeof LOCATION_ACCESS_POLICY_SCHEMA_VERSION;
   revision: number;
   updated_at: number;
@@ -56,7 +56,7 @@ export type LocationAccessPolicyState = {
   can_write: boolean;
 };
 
-export type LocationAccessPolicySaveBody = {
+type LocationAccessPolicySaveBody = {
   expected_revision: number;
   configuration: LocationAccessPolicyDraft & {
     schema_version: typeof LOCATION_ACCESS_POLICY_SCHEMA_VERSION;
@@ -159,7 +159,7 @@ function serverSideFailure(error: string | null): boolean {
   return error !== null && LOCATION_ACCESS_POLICY_ERROR_STATUSES[error] >= 500;
 }
 
-export type LocationAccessPolicyReadOutcome =
+type LocationAccessPolicyReadOutcome =
   | { kind: "ready"; state: LocationAccessPolicyState }
   /** Core or the path to it failed (5xx, or no answer at all): nothing is known. */
   | { kind: "unavailable" }
@@ -176,7 +176,7 @@ export function locationAccessPolicyReadOutcome(response: unknown): LocationAcce
     : { kind: "error" };
 }
 
-export type LocationAccessPolicySaveOutcome =
+type LocationAccessPolicySaveOutcome =
   | { kind: "saved"; state: LocationAccessPolicyState; changed: boolean }
   /** `409`: the revision moved underneath this draft. */
   | { kind: "conflict" }
@@ -221,7 +221,7 @@ export function locationAccessPolicySaveOutcome(
   return { kind: "unexpected" };
 }
 
-export function locationAccessPolicyDraftFrom(
+function locationAccessPolicyDraftFrom(
   configuration: LocationAccessPolicyConfiguration,
 ): LocationAccessPolicyDraft {
   return {
@@ -289,7 +289,7 @@ export function normalizeLocationAccessPolicyProxyBody(
 
 // ------------------------------------------------------------ panel state
 
-export type LocationAccessPolicyNotice =
+type LocationAccessPolicyNotice =
   | { tone: "success"; key: "saved"; revision: number }
   | { tone: "success"; key: "unchanged" }
   | { tone: "error"; key: "conflict"; revision: number }

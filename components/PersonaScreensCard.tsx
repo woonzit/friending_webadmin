@@ -383,7 +383,7 @@ export default function PersonaScreensCard({ projection, locked }: Props) {
   );
 }
 
-export type PersonaScreensEditorProps = {
+type PersonaScreensEditorProps = {
   access: PersonaScreensAccess;
   console_: PersonaScreensConsole;
   draft: PersonaScreensDraft;

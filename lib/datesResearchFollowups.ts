@@ -10,26 +10,26 @@ export const DATES_RESEARCH_FOLLOWUP_GROUPS = ["fetch", "validation", "gate", "o
 export const DATES_RESEARCH_FOLLOWUP_STATES = ["open", "done", "dismissed"] as const;
 export const DATES_RESEARCH_FOLLOWUP_STATE_FILTERS = ["open", "done", "dismissed", "all"] as const;
 /** Core's follow-up reasons: the candidate drop reasons it lists, and the gate's closure of an imported candidate. */
-export const DATES_RESEARCH_FOLLOWUP_REASONS = ["fetch_failed", "robots_disallowed", "over_cap", "validation_failed", "no_event_page",
+const DATES_RESEARCH_FOLLOWUP_REASONS = ["fetch_failed", "robots_disallowed", "over_cap", "validation_failed", "no_event_page",
   "blocked_domain", "research_not_publishable"] as const;
 const GROUP_OF: Readonly<Record<ResearchFollowupReason, ResearchFollowupGroup>> = { fetch_failed: "fetch", robots_disallowed: "fetch", over_cap: "fetch",
   validation_failed: "validation", no_event_page: "other", blocked_domain: "other", research_not_publishable: "gate" };
-export const DATES_RESEARCH_FOLLOWUP_NOTE_MAX = 500;
-export const DATES_RESEARCH_FOLLOWUP_QUERY_MAX = 200;
+const DATES_RESEARCH_FOLLOWUP_NOTE_MAX = 500;
+const DATES_RESEARCH_FOLLOWUP_QUERY_MAX = 200;
 export const DATES_RESEARCH_FOLLOWUP_LIMIT_MAX = 100;
 /** Rows without a city (a registered source with none) are filtered with this area value. */
 export const DATES_RESEARCH_FOLLOWUP_NO_AREA = "none";
 
-export type ResearchFollowupGroup = typeof DATES_RESEARCH_FOLLOWUP_GROUPS[number];
+type ResearchFollowupGroup = typeof DATES_RESEARCH_FOLLOWUP_GROUPS[number];
 export type ResearchFollowupStateName = typeof DATES_RESEARCH_FOLLOWUP_STATES[number];
 export type ResearchFollowupStateFilter = typeof DATES_RESEARCH_FOLLOWUP_STATE_FILTERS[number];
 export type ResearchFollowupReason = typeof DATES_RESEARCH_FOLLOWUP_REASONS[number];
 /** What the extraction read about the event's time and place; every key is always present. */
 export type ResearchFollowupFound = { starts_local: string | null; ends_local: string | null; timezone: string | null; start_at: number | null;
   end_at: number | null; all_day: boolean | null; venue_name: string | null; venue_address: string | null; city: string | null };
-export type ResearchFollowupDetail = { stage: string | null; http_status: number | null; hard_fails: string[]; gate: string | null;
+type ResearchFollowupDetail = { stage: string | null; http_status: number | null; hard_fails: string[]; gate: string | null;
   title_match: string | null; extraction_result: string | null };
-export type ResearchFollowupState = { key: string; state: ResearchFollowupStateName; note: string | null; revision: number;
+type ResearchFollowupState = { key: string; state: ResearchFollowupStateName; note: string | null; revision: number;
   updated_by: string | null; updated_at: number | null };
 export type ResearchFollowup = Omit<ResearchFollowupState, never> & {
   group: ResearchFollowupGroup; reason: ResearchFollowupReason; title: string; extracted_title: string | null; date_text: string; venue_name: string | null;
@@ -37,7 +37,7 @@ export type ResearchFollowup = Omit<ResearchFollowupState, never> & {
   source_id: string | null; source_label: string | null; run_id: string; run_kind: "area" | "source"; run_dry_run: boolean; run_created_at: number;
   seen_count: number; intake_id: string | null; detail: ResearchFollowupDetail;
 };
-export type ResearchFollowupAreaCount = { area_id: string | null; label: string | null; count: number };
+type ResearchFollowupAreaCount = { area_id: string | null; label: string | null; count: number };
 export type ResearchFollowupList = {
   followups: ResearchRows<ResearchFollowup>; next_cursor: string | null; limit: number;
   counts: { states: Record<ResearchFollowupStateName, number>; groups: Record<ResearchFollowupGroup, number>; areas: ResearchFollowupAreaCount[] };
@@ -143,7 +143,7 @@ export function researchFollowupQueryValid(value: unknown): boolean {
  * The words of why a row needs a manual check: a message key under datesAdmin.research.followups.reasons with its
  * values, then the detail lines (hard fails, the gate's blocker) the page words through the existing vocabularies.
  */
-export type ResearchFollowupReasonWords = { key: string; values?: Record<string, string | number> };
+type ResearchFollowupReasonWords = { key: string; values?: Record<string, string | number> };
 export function researchFollowupReasonWords(row: Pick<ResearchFollowup, "reason" | "detail">): ResearchFollowupReasonWords {
   const status = row.detail.http_status;
   switch (row.reason) {

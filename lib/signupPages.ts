@@ -1,26 +1,26 @@
 export const SIGNUP_PAGE_LIMIT = 5;
 export const SIGNUP_PAGE_ITEM_LIMIT = 8;
 
-export type SignupPageLanguage = "en" | "hu";
+type SignupPageLanguage = "en" | "hu";
 
-export type SignupPageText = {
+type SignupPageText = {
   en: string;
   hu: string;
 };
 
-export type SignupPageIcon = {
+type SignupPageIcon = {
   url: string;
   mime: "" | "image/png" | "image/svg+xml";
 };
 
-export type SignupPageOption = {
+type SignupPageOption = {
   key: string;
   labels: SignupPageText;
 };
 
 export const SIGNUP_SYSTEM_QUESTION_KEYS = ["gender", "visible_to", "intents"] as const;
 
-export type SignupSystemQuestionKey = (typeof SIGNUP_SYSTEM_QUESTION_KEYS)[number];
+type SignupSystemQuestionKey = (typeof SIGNUP_SYSTEM_QUESTION_KEYS)[number];
 
 export type SignupEligibleField = {
   /**
@@ -74,12 +74,12 @@ export type SignupPagesWarning = {
   index: number;
 };
 
-export type SignupPageItem = {
+type SignupPageItem = {
   field_key: string;
   required: boolean;
 };
 
-export type SignupPage = {
+type SignupPage = {
   key: string;
   hidden: boolean;
   title: SignupPageText;
@@ -115,7 +115,7 @@ export type SignupPagesPayload = {
   warnings: SignupPagesWarning[];
 };
 
-export const SIGNUP_PAGE_ISSUE_CODES = [
+const SIGNUP_PAGE_ISSUE_CODES = [
   "page-limit",
   "item-limit",
   "unknown-field",
@@ -133,7 +133,7 @@ export type SignupPageIssue = {
   field_key?: string;
 };
 
-export type SignupPageSaveBody = {
+type SignupPageSaveBody = {
   expected_revision: number;
   pages: Array<{
     key: string;
@@ -993,7 +993,7 @@ export type SignupIntentsLimitsField =
   | "selection_required_min"
   | "audit_reason";
 
-export const SIGNUP_INTENTS_LIMITS_ISSUE_CODES = [
+const SIGNUP_INTENTS_LIMITS_ISSUE_CODES = [
   "max-range",
   "min-range",
   "min-above-max",

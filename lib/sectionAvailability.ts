@@ -17,14 +17,14 @@ export const SECTION_AVAILABILITY_SETTING_KEYS = [
 ] as const;
 
 export type SectionAvailabilitySection = (typeof SECTION_AVAILABILITY_SECTIONS)[number];
-export type SectionAvailabilitySettingKey = (typeof SECTION_AVAILABILITY_SETTING_KEYS)[number];
+type SectionAvailabilitySettingKey = (typeof SECTION_AVAILABILITY_SETTING_KEYS)[number];
 
-export type SectionAvailabilityOverride = {
+type SectionAvailabilityOverride = {
   storefront: string;
   enabled: boolean;
 };
 
-export type SectionAvailabilityControl = {
+type SectionAvailabilityControl = {
   enabled: boolean;
   overrides: SectionAvailabilityOverride[];
   invalidCodes: string[];
@@ -47,17 +47,17 @@ export type SectionAvailabilityDraftIssue =
   | "vocabulary"
   | "revision";
 
-export type SectionAvailabilityRefusal = {
+type SectionAvailabilityRefusal = {
   setting: SectionAvailabilitySettingKey;
   storefront: string | null;
 };
 
-export type SectionAvailabilityWireSetting = {
+type SectionAvailabilityWireSetting = {
   value: boolean | SectionAvailabilityOverride[];
   invalidCodes: string[];
 };
 
-export type SectionAvailabilityWireProjection = Partial<Record<
+type SectionAvailabilityWireProjection = Partial<Record<
   SectionAvailabilitySettingKey,
   SectionAvailabilityWireSetting
 >>;
@@ -425,7 +425,7 @@ export function sectionAvailabilityRefusal(value: unknown): SectionAvailabilityR
 }
 
 /** Close a browser-owned section pair without introducing a second vocabulary source. */
-export function sectionAvailabilitySettingsMaterial(
+function sectionAvailabilitySettingsMaterial(
   value: unknown,
 ): Record<string, unknown> | null {
   const settings = record(value);

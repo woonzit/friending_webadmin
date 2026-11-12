@@ -20,17 +20,17 @@ export const APPEARANCE_ACTIONS = [
   "appearance_rules_preview",
   "appearance_city_geocode",
 ] as const;
-export type AppearanceAction = (typeof APPEARANCE_ACTIONS)[number];
+type AppearanceAction = (typeof APPEARANCE_ACTIONS)[number];
 
-export const APPEARANCE_SCOPES = ["global", "storefront", "geo"] as const;
+const APPEARANCE_SCOPES = ["global", "storefront", "geo"] as const;
 export type AppearanceScope = (typeof APPEARANCE_SCOPES)[number];
 
 /** Resolution vocabulary (Amendment v1.2): `default` = the compiled defaults. */
-export const APPEARANCE_MATCHED_SCOPES = ["geo", "storefront", "global", "default"] as const;
-export type AppearanceMatchedScope = (typeof APPEARANCE_MATCHED_SCOPES)[number];
+const APPEARANCE_MATCHED_SCOPES = ["geo", "storefront", "global", "default"] as const;
+type AppearanceMatchedScope = (typeof APPEARANCE_MATCHED_SCOPES)[number];
 
-export const APPEARANCE_LOCATION_SOURCES = ["gps", "ip", "none"] as const;
-export type AppearanceLocationSource = (typeof APPEARANCE_LOCATION_SOURCES)[number];
+const APPEARANCE_LOCATION_SOURCES = ["gps", "ip", "none"] as const;
+type AppearanceLocationSource = (typeof APPEARANCE_LOCATION_SOURCES)[number];
 
 export const APPEARANCE_PALETTE_ROLES = [
   "accent",
@@ -45,7 +45,7 @@ export const APPEARANCE_PALETTE_MODES = ["light", "dark"] as const;
 export type AppearancePaletteMode = (typeof APPEARANCE_PALETTE_MODES)[number];
 
 /** A rule sets any subset of roles per mode; an absent role inherits. */
-export type AppearancePaletteValues = Partial<Record<AppearancePaletteRole, string>>;
+type AppearancePaletteValues = Partial<Record<AppearancePaletteRole, string>>;
 export type AppearancePalette = Record<AppearancePaletteMode, AppearancePaletteValues>;
 export type AppearanceFullPaletteValues = Record<AppearancePaletteRole, string>;
 export type AppearanceFullPalette = Record<AppearancePaletteMode, AppearanceFullPaletteValues>;
@@ -69,7 +69,7 @@ export const APPEARANCE_DEFAULT_PALETTE: AppearanceFullPalette = {
 };
 
 /** The D-052/v1 landing keys. Kept as an explicit compatibility witness. */
-export const APPEARANCE_LANDING_V1_KEYS = [
+const APPEARANCE_LANDING_V1_KEYS = [
   "background_type",
   "background_url",
   "background_poster_url",
@@ -101,21 +101,21 @@ export const APPEARANCE_LANDING_FONTS = [
 export type AppearanceLandingFont = (typeof APPEARANCE_LANDING_FONTS)[number];
 
 export const APPEARANCE_LANDING_ALIGNS = ["left", "center", "right"] as const;
-export type AppearanceLandingAlign = (typeof APPEARANCE_LANDING_ALIGNS)[number];
+type AppearanceLandingAlign = (typeof APPEARANCE_LANDING_ALIGNS)[number];
 
 export const APPEARANCE_LANDING_APPLE_STYLES = ["white", "white_outline", "black"] as const;
-export type AppearanceLandingAppleStyle = (typeof APPEARANCE_LANDING_APPLE_STYLES)[number];
+type AppearanceLandingAppleStyle = (typeof APPEARANCE_LANDING_APPLE_STYLES)[number];
 
 /** D-061e / contract v1.9: uploaded QR icons are tinted or keep their source colours. */
 export const APPEARANCE_LANDING_QR_ICON_RENDERS = ["template", "original"] as const;
-export type AppearanceLandingQrIconRender = (typeof APPEARANCE_LANDING_QR_ICON_RENDERS)[number];
+type AppearanceLandingQrIconRender = (typeof APPEARANCE_LANDING_QR_ICON_RENDERS)[number];
 
 /** D-061c / contract v1.7: closed units for vertical landing layout measurements. */
 export const APPEARANCE_LANDING_LAYOUT_UNITS = ["pt", "percent"] as const;
 export type AppearanceLandingLayoutUnit = (typeof APPEARANCE_LANDING_LAYOUT_UNITS)[number];
 
 /** The contract's fixed phone-frame height; percentage layout values use this axis. */
-export const APPEARANCE_LANDING_PREVIEW_HEIGHT = 844;
+const APPEARANCE_LANDING_PREVIEW_HEIGHT = 844;
 
 /**
  * D-061 contract §1. The list is closed on both the stored-rule and browser
@@ -310,13 +310,13 @@ export const APPEARANCE_DEFAULT_LANDING: AppearanceLandingDraft = {
  * legacy country row, or an inactive legacy global landing reactivated by the
  * migration to keep an active hero. Any other value is malformed.
  */
-export const APPEARANCE_MIGRATION_MARKERS = ["country", "inactive_global_landing"] as const;
-export type AppearanceMigrationMarker = (typeof APPEARANCE_MIGRATION_MARKERS)[number];
+const APPEARANCE_MIGRATION_MARKERS = ["country", "inactive_global_landing"] as const;
+type AppearanceMigrationMarker = (typeof APPEARANCE_MIGRATION_MARKERS)[number];
 /** Core's stored actor bound (T-467b finding 23): non-empty after trim, at most 320 raw code points. */
-export const MAX_APPEARANCE_ACTOR_LENGTH = 320;
+const MAX_APPEARANCE_ACTOR_LENGTH = 320;
 
-export const APPEARANCE_HERO_MODES = ["inherit", "replace"] as const;
-export type AppearanceHeroMode = (typeof APPEARANCE_HERO_MODES)[number];
+const APPEARANCE_HERO_MODES = ["inherit", "replace"] as const;
+type AppearanceHeroMode = (typeof APPEARANCE_HERO_MODES)[number];
 export const APPEARANCE_HERO_TEXT_WEIGHTS = ["", "normal", "semibold", "bold"] as const;
 export const MAX_APPEARANCE_HERO_ITEMS = 100;
 
@@ -366,7 +366,7 @@ export type AppearanceHero = {
   items: AppearanceHeroItem[];
 };
 
-export type AppearanceCenter = { latitude: number; longitude: number };
+type AppearanceCenter = { latitude: number; longitude: number };
 
 /** One rule exactly as Core projects it (`AppearanceRuleService::wire()`). */
 export type AppearanceRule = {
@@ -429,7 +429,7 @@ export type AppearanceListPayload = {
   };
 };
 
-export type AppearancePreviewLandingV2 = {
+type AppearancePreviewLandingV2 = {
   background: {
     type: "image" | "video";
     url: string;
@@ -476,7 +476,7 @@ export type AppearancePreviewLandingV2 = {
 };
 
 /** Normalized preview view: v1 callers keep their fields; v2 adds `v2`. */
-export type AppearancePreviewLanding = {
+type AppearancePreviewLanding = {
   schema: 1 | 2;
   background: { type: "image" | "video"; url: string; poster_url: string };
   title: { type: "text" | "image" | "none"; text: string; image_url: string };
@@ -485,16 +485,16 @@ export type AppearancePreviewLanding = {
 };
 
 export const APPEARANCE_LANDING_FLAT_SOURCE_SCOPES = ["geo", "storefront", "global", "none"] as const;
-export type AppearanceLandingFlatSourceScope = (typeof APPEARANCE_LANDING_FLAT_SOURCE_SCOPES)[number];
+type AppearanceLandingFlatSourceScope = (typeof APPEARANCE_LANDING_FLAT_SOURCE_SCOPES)[number];
 
-export type AppearanceLandingFlatSource = {
+type AppearanceLandingFlatSource = {
   scope: AppearanceLandingFlatSourceScope;
   rule_id: string;
 };
 
 export type AppearanceLandingFlatSources = Record<AppearanceLandingKey, AppearanceLandingFlatSource>;
 
-export type AppearancePreviewHeroStyle = {
+type AppearancePreviewHeroStyle = {
   title_size: number | null;
   title_color: string;
   title_weight: string;
@@ -503,7 +503,7 @@ export type AppearancePreviewHeroStyle = {
   subtitle_weight: string;
 };
 
-export type AppearancePreviewHeroItem = {
+type AppearancePreviewHeroItem = {
   id: string;
   media_url: string;
   type: "image" | "video";
@@ -559,13 +559,13 @@ const MAX_APPEARANCE_PREVIEW_HERO_ITEMS = 10;
 /** `AppearanceCityGeocodeService` returns at most five de-duplicated candidates (T-468b finding 8). */
 const MAX_APPEARANCE_GEOCODE_CANDIDATES = 5;
 /** `AppearancePolicy::MAX_RULES`: a successful list never carries more rows (T-468b finding 13). */
-export const MAX_APPEARANCE_RULES = 100;
+const MAX_APPEARANCE_RULES = 100;
 /** `AppearanceRuleService::heroWire()` output ceiling — the app and the preview see at most ten items (T-468b finding 15). */
-export const MAX_APPEARANCE_EFFECTIVE_HERO_ITEMS = 10;
+const MAX_APPEARANCE_EFFECTIVE_HERO_ITEMS = 10;
 const MAX_APPEARANCE_PLACE_ID_BYTES = 256;
 
 /** The one exact rule-id reader: stored ids and update/delete targets. */
-export function appearanceRuleId(value: unknown): string | null {
+function appearanceRuleId(value: unknown): string | null {
   return typeof value === "string" && RULE_ID.test(value) ? value : null;
 }
 const MAX_URL_LENGTH = 2048;
@@ -575,7 +575,7 @@ const MAX_URL_LENGTH = 2048;
 // alpha-3; geo place metadata is alpha-2). `countries-list` ships both codes.
 // ---------------------------------------------------------------------------
 
-export type AppearanceCountry = { alpha2: string; alpha3: string };
+type AppearanceCountry = { alpha2: string; alpha3: string };
 export type LocalizedAppearanceCountry = AppearanceCountry & { name: string };
 
 /**
@@ -714,7 +714,7 @@ function boolean(value: unknown): boolean | null {
 }
 
 /** Core's `AppearancePolicy::hex()` — `#RRGGBB`, uppercase on the wire. */
-export function parseAppearancePaletteHex(value: unknown): string | null {
+function parseAppearancePaletteHex(value: unknown): string | null {
   if (typeof value !== "string") return null;
   return /^#[0-9A-F]{6}$/.test(value) ? value : null;
 }
@@ -754,7 +754,7 @@ function webUrl(value: unknown, allowEmpty: boolean): string | null {
  */
 const HTTPS_WIRE_URL = /^https:\/\/[^\/\\?#]+/;
 /** Shared with the forced-verification console's Waiting Room help URL (Amendment v1.5): one https gate, one behaviour. */
-export function httpsWireUrl(trimmed: string): boolean {
+function httpsWireUrl(trimmed: string): boolean {
   if (!HTTPS_WIRE_URL.test(trimmed)) return false;
   try {
     const url = new URL(trimmed);
@@ -789,7 +789,7 @@ function nullableTimestamp(value: unknown): string | null | undefined {
   return parsed === null ? undefined : parsed;
 }
 
-export function appearanceTimestampsOrdered(startsAt: string | null, endsAt: string | null): boolean {
+function appearanceTimestampsOrdered(startsAt: string | null, endsAt: string | null): boolean {
   if (startsAt === null || endsAt === null) return true;
   return Date.parse(startsAt) < Date.parse(endsAt);
 }
@@ -832,7 +832,7 @@ function parseCenter(value: unknown, policy: KeyPolicy): AppearanceCenter | null
   return { latitude, longitude };
 }
 
-export const APPEARANCE_LANDING_COLOR_KEYS = [
+const APPEARANCE_LANDING_COLOR_KEYS = [
   "overlay_color",
   "title_color",
   "description_color",
@@ -847,7 +847,7 @@ export const APPEARANCE_LANDING_COLOR_KEYS = [
   "qr_icon_color",
 ] as const satisfies readonly AppearanceLandingKey[];
 
-export const APPEARANCE_LANDING_ALPHA_KEYS = [
+const APPEARANCE_LANDING_ALPHA_KEYS = [
   "overlay_alpha",
   "description_backdrop_alpha",
   "footer_bg_alpha",
@@ -916,7 +916,7 @@ const LANDING_ALPHA = /^(?:0\.\d{2}|1\.00)$/;
 const LANDING_INTEGER = /^(?:0|[1-9]\d*|-[1-9]\d*)$/;
 
 /** Canonical persisted alpha: 0.00–1.00 with exactly two decimals. */
-export function parseAppearanceLandingAlpha(value: string): number | null {
+function parseAppearanceLandingAlpha(value: string): number | null {
   if (!LANDING_ALPHA.test(value)) return null;
   const parsed = Number(value);
   return parsed >= 0 && parsed <= 1 ? parsed : null;
@@ -1094,11 +1094,11 @@ function parseAppearancePaletteWithPolicy(value: unknown, policy: KeyPolicy): Ap
   return palette;
 }
 
-export function parseAppearancePalette(value: unknown): AppearancePalette | null {
+function parseAppearancePalette(value: unknown): AppearancePalette | null {
   return parseAppearancePaletteWithPolicy(value, "exact");
 }
 
-export function parseAppearanceFullPalette(value: unknown): AppearanceFullPalette | null {
+function parseAppearanceFullPalette(value: unknown): AppearanceFullPalette | null {
   const source = record(value);
   if (!source || !requiredKeys(source, APPEARANCE_PALETTE_MODES)) return null;
   const palette = { light: {}, dark: {} } as AppearanceFullPalette;
@@ -1821,9 +1821,9 @@ export function parseAppearanceGeocodePayload(value: unknown): AppearanceGeocode
 // defaults; Core's preview endpoint is the authority for a concrete location.
 // ---------------------------------------------------------------------------
 
-export type AppearancePaletteSource = "rule" | "inherited" | "default";
+type AppearancePaletteSource = "rule" | "inherited" | "default";
 
-export type ResolvedAppearancePalette = {
+type ResolvedAppearancePalette = {
   values: AppearanceFullPalette;
   sources: Record<AppearancePaletteMode, Record<AppearancePaletteRole, AppearancePaletteSource>>;
 };
@@ -1941,12 +1941,12 @@ export function resolveAppearanceLanding(
   };
 }
 
-export type AppearanceLandingPreviewLayout = {
+type AppearanceLandingPreviewLayout = {
   textGap: number;
   footerMinHeight: number;
 };
 
-export type AppearanceLandingQrGeometry = {
+type AppearanceLandingQrGeometry = {
   size: number;
   padding: number;
   iconSize: number;
@@ -2160,7 +2160,7 @@ export function appearanceLandingPreviewDraft(draft: AppearanceLandingDraft): {
  * assets; Amendment v1.9 refuses an unsafe QR box only when size and padding
  * are both explicit in the same rule. The proxy mirrors Core before forwarding.
  */
-export function appearanceLandingQrPairCoherent(landing: AppearanceLanding): boolean {
+function appearanceLandingQrPairCoherent(landing: AppearanceLanding): boolean {
   const size = appearanceTrim(landing.qr_size ?? "");
   const padding = appearanceTrim(landing.qr_icon_padding ?? "");
   if (size === "" || padding === "") return true;
@@ -2418,11 +2418,11 @@ export function appearanceRuleInputFromDraft(draft: AppearanceRuleDraft): Appear
 // Proxy body normalization (`app/api/admin/[action]/route.ts`)
 // ---------------------------------------------------------------------------
 
-export function isAppearanceAction(action: string): action is AppearanceAction {
+function isAppearanceAction(action: string): action is AppearanceAction {
   return (APPEARANCE_ACTIONS as readonly string[]).includes(action);
 }
 
-export type AppearancePreviewRequest = {
+type AppearancePreviewRequest = {
   storefront_country?: string;
   latitude?: number;
   longitude?: number;
@@ -2586,10 +2586,10 @@ export function appearanceRuleIsLive(rule: AppearanceRule, now: number): boolean
 // ---------------------------------------------------------------------------
 
 /** Core (or the bridge) answered with a machine-named refusal: the write did not land. */
-export type AppearanceRefusal = { ok: false; kind: "refused"; error: string; status: number };
+type AppearanceRefusal = { ok: false; kind: "refused"; error: string; status: number };
 /** No usable answer: transport loss, timeout, unreachable Core or an unrecognised shape. A write may have landed. */
-export type AppearanceUncertain = { ok: false; kind: "uncertain"; error: string };
-export type AppearanceDecode<T> = { ok: true; value: T } | AppearanceRefusal | AppearanceUncertain;
+type AppearanceUncertain = { ok: false; kind: "uncertain"; error: string };
+type AppearanceDecode<T> = { ok: true; value: T } | AppearanceRefusal | AppearanceUncertain;
 
 const CORE_VALIDATION_REFUSALS = [
   "appearance-rule-request-invalid", "appearance-rule-id-invalid", "appearance-rule-revision-invalid",
@@ -2778,7 +2778,7 @@ export function appearanceRuleMaterialMatches(rule: AppearanceRule, submitted: A
   return canonicalJson({ ...stored, hero: { mode: stored.hero.mode, items: storedItems } }) === canonicalJson(submitted);
 }
 
-export type AppearanceUpdateReconciliation = {
+type AppearanceUpdateReconciliation = {
   /**
    * `landed`: the authoritative row carries the submitted material — the write
    * (or an identical later one) is in place; adopt it.
@@ -2816,7 +2816,7 @@ export function reconcileAppearanceUpdate(
   return { outcome: "superseded", retry: false, adopt: authoritative };
 }
 
-export type AppearanceCreateReconciliation = {
+type AppearanceCreateReconciliation = {
   /** `landed`: a NEW row (absent from the pre-request baseline) carries the submitted material; `not-landed`: no such row. */
   outcome: "landed" | "not-landed";
   /** The newly observed row to adopt; `null` when the create did not land. */

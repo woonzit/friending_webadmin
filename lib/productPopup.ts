@@ -9,25 +9,25 @@ import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 export const PRODUCT_POPUP_CONTRACT_VERSION = 1;
 export const PRODUCT_POPUP_MIN_FUTURE_SECONDS = 5 * 60;
 export const PRODUCT_POPUP_MAX_FUTURE_SECONDS = 30 * 24 * 60 * 60;
-export const PRODUCT_POPUP_DEFAULT_FUTURE_SECONDS = 7 * 24 * 60 * 60;
+const PRODUCT_POPUP_DEFAULT_FUTURE_SECONDS = 7 * 24 * 60 * 60;
 
 export const PRODUCT_POPUP_REPEAT_MODES = ["once", "until_expiry"] as const;
 export const PRODUCT_POPUP_BUTTON_ACTIONS = ["none", "url", "rate"] as const;
-export const PRODUCT_POPUP_CAPABILITIES = [
+const PRODUCT_POPUP_CAPABILITIES = [
   "product_popup_read",
   "product_popup_write",
 ] as const;
 
-export type ProductPopupRepeatMode = (typeof PRODUCT_POPUP_REPEAT_MODES)[number];
-export type ProductPopupButtonAction = (typeof PRODUCT_POPUP_BUTTON_ACTIONS)[number];
-export type ProductPopupCapability = (typeof PRODUCT_POPUP_CAPABILITIES)[number];
+type ProductPopupRepeatMode = (typeof PRODUCT_POPUP_REPEAT_MODES)[number];
+type ProductPopupButtonAction = (typeof PRODUCT_POPUP_BUTTON_ACTIONS)[number];
+type ProductPopupCapability = (typeof PRODUCT_POPUP_CAPABILITIES)[number];
 
 export type ProductPopupPrincipal = {
   role: "viewer" | "admin" | "owner";
   capabilities: ProductPopupCapability[];
 };
 
-export type ProductPopupButton = {
+type ProductPopupButton = {
   action: ProductPopupButtonAction;
   title: string;
   url: string;
@@ -61,7 +61,7 @@ export type ProductPopupMutationData = ProductPopupResourceData & {
   replayed: boolean;
 };
 
-export type ProductPopupConflictData = {
+type ProductPopupConflictData = {
   error: "product-popup-conflict" | "product-popup-already-clear";
   resource: ProductPopupResourceData;
 };
@@ -77,7 +77,7 @@ export type ProductPopupDraft = {
   auditReason: string;
 };
 
-export type ProductPopupSetPayload = {
+type ProductPopupSetPayload = {
   contract_version: 1;
   uid: number;
   expected_revision: number;
@@ -97,7 +97,7 @@ export type ProductPopupSetMaterial = Omit<
   "contract_version" | "uid" | "expected_revision" | "request_id"
 >;
 
-export type ProductPopupClearPayload = {
+type ProductPopupClearPayload = {
   contract_version: 1;
   uid: number;
   expected_revision: number;
@@ -121,7 +121,7 @@ export type ProductPopupDraftError =
   | "button"
   | "buttonUrl";
 
-export type ProductPopupPayloadResult<T> =
+type ProductPopupPayloadResult<T> =
   | { ok: true; payload: T }
   | { ok: false; error: ProductPopupDraftError };
 
@@ -585,7 +585,7 @@ function popup(
 }
 
 /** Decode the version-1 resource projection, including A1's Core clock. */
-export function productPopupResourceData(value: unknown): ProductPopupResourceData | null {
+function productPopupResourceData(value: unknown): ProductPopupResourceData | null {
   const raw = requiredObject(value, [
     "contract_version",
     "principal",
@@ -620,7 +620,7 @@ export function productPopupReadResponse(value: unknown): ProductPopupResourceDa
     : null;
 }
 
-export function productPopupMutationData(value: unknown): ProductPopupMutationData | null {
+function productPopupMutationData(value: unknown): ProductPopupMutationData | null {
   const raw = requiredObject(value, [
     "contract_version",
     "principal",
@@ -739,7 +739,7 @@ export const PRODUCT_POPUP_ERROR_STATUSES: Record<
   "admin-write-required": 403,
 };
 
-export type ProductPopupErrorKey =
+type ProductPopupErrorKey =
   | (typeof PRODUCT_POPUP_ERROR_KEYS)[keyof typeof PRODUCT_POPUP_ERROR_KEYS]
   | "generic";
 

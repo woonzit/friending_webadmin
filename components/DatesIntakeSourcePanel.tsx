@@ -12,7 +12,7 @@ import { createDatesIntakeSourceAttempts, datesIntakeHintFor, datesIntakeHintSto
 import { formatDate } from "@/lib/format";
 
 type Picked = DatesIntakeSourceFile & { file: File };
-export type DatesIntakeSourceNoticeValue = { kind: "problem"; key: string } | { kind: "refused"; error: string } | { kind: "uncertain"; error: string | null };
+type DatesIntakeSourceNoticeValue = { kind: "problem"; key: string } | { kind: "refused"; error: string } | { kind: "uncertain"; error: string | null };
 
 /**
  * What the last attempt came to. A definitive refusal is Core's own words. An

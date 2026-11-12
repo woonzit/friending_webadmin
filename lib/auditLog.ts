@@ -69,7 +69,7 @@ const SAFE_KEYS: ReadonlySet<string> = new Set(AUDIT_DETAIL_SAFE_KEYS);
 /** Long enough for an identifier or a short stated reason, short enough for one table row. */
 export const AUDIT_DETAIL_VALUE_MAX = 120;
 
-export type AuditDetailSummary = {
+type AuditDetailSummary = {
   /** Allow-listed key/value pairs, in the order the keys are listed above. */
   shown: Array<{ key: string; value: string }>;
   /** How many keys were present but not rendered. Never the keys themselves. */
@@ -177,7 +177,7 @@ const OPERATIONAL_SAFE_KEYS: ReadonlySet<string> = new Set(OPERATIONAL_RECORD_SA
  * before it leaves the server (lib/datesAdminProjection.ts), so the history
  * panel is told how many fields it was not sent.
  */
-export const OPERATIONAL_RECORD_WITHHELD_KEY = "withheld_fields";
+const OPERATIONAL_RECORD_WITHHELD_KEY = "withheld_fields";
 
 export function operationalRecordSummary(value: unknown): AuditDetailSummary {
   const source = record(value);

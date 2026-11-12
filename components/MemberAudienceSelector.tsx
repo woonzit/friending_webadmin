@@ -5,8 +5,8 @@ import React from "react";
 import type { UserCastGroup } from "@/lib/userCastGroups";
 import { representedLegacySegments } from "@/lib/memberAudience";
 
-export const MEMBER_AUDIENCE_GENDERS = ["male", "female", "other"] as const;
-export type MemberAudienceGender = typeof MEMBER_AUDIENCE_GENDERS[number];
+const MEMBER_AUDIENCE_GENDERS = ["male", "female", "other"] as const;
+type MemberAudienceGender = typeof MEMBER_AUDIENCE_GENDERS[number];
 
 export type MemberAudienceValue = {
   mode: "global" | "segments";
@@ -17,7 +17,7 @@ export type MemberAudienceValue = {
 
 type LocalizedOption = { key: string; labels: Record<string, string> };
 
-export type MemberAudienceLabels = {
+type MemberAudienceLabels = {
   legend: string;
   help: string;
   global: string;

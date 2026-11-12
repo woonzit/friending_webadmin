@@ -32,14 +32,14 @@ export type HelpBlock = {
   items?: HelpRun[][];
 };
 
-export type HelpLocaleContent = {
+type HelpLocaleContent = {
   title: string;
   summary: string;
   keywords: string[];
   blocks: HelpBlock[];
 };
 
-export type HelpCategory = {
+type HelpCategory = {
   id: string;
   key: string;
   iconKey: string;

@@ -13,19 +13,19 @@ export const VERIFICATION_METHODS = ["video", "persona"] as const;
  * seed. Held here as a constant so widening it is one edit rather than a
  * literal buried in a decoder (T-705 R-1).
  */
-export const VERIFICATION_IMPORT_PROVENANCES = ["apifriending", "app_review_seed"] as const;
-export type VerificationImportProvenance = (typeof VERIFICATION_IMPORT_PROVENANCES)[number];
+const VERIFICATION_IMPORT_PROVENANCES = ["apifriending", "app_review_seed"] as const;
+type VerificationImportProvenance = (typeof VERIFICATION_IMPORT_PROVENANCES)[number];
 export const VERIFICATION_METHOD_STATUSES = ["not_started", "pending", "verified", "rejected"] as const;
 export const VERIFICATION_LEVELS = ["none", "light", "strong"] as const;
 export const VERIFICATION_REQUIREMENTS = ["inherit", "none", "light", "strong"] as const;
-export const VERIFICATION_EFFECTIVE_REQUIREMENTS = ["none", "light", "strong"] as const;
-export const VERIFICATION_SCOPE_KINDS = ["global", "country", "city"] as const;
-export const VERIFICATION_SCOPE_FILTERS = ["all", ...VERIFICATION_SCOPE_KINDS] as const;
+const VERIFICATION_EFFECTIVE_REQUIREMENTS = ["none", "light", "strong"] as const;
+const VERIFICATION_SCOPE_KINDS = ["global", "country", "city"] as const;
+const VERIFICATION_SCOPE_FILTERS = ["all", ...VERIFICATION_SCOPE_KINDS] as const;
 export const VERIFICATION_POLICY_OPERATIONS = ["publish", "deactivate", "tombstone", "restore"] as const;
 export const VERIFICATION_GATE_VARIANTS = ["video", "persona", "both", "pending", "rejected"] as const;
 export const VERIFICATION_BADGE_SLOTS = ["light", "strong", "pending"] as const;
 export const VERIFICATION_LOCALES = ["en", "hu"] as const;
-export const VERIFICATION_PROVENANCE = ["derived", "imported", "granted"] as const;
+const VERIFICATION_PROVENANCE = ["derived", "imported", "granted"] as const;
 /**
  * Every console tab. T-617 folded the D-053 "Forced & waiting room" tab into
  * the Scopes table, so `forced` is gone and `?tab=forced` normalizes to
@@ -91,23 +91,23 @@ export const MAX_VERIFICATION_BADGE_BYTES = 2_097_152;
 export const MAX_VERIFICATION_BADGE_FORM_BYTES = 3_145_728;
 export const MAX_VERIFICATION_BADGE_DIMENSION = 2_048;
 export const MIN_VERIFICATION_BADGE_DIMENSION = 16;
-export const VERIFICATION_FIXTURE_EVALUATED_AT = 1_787_692_800;
+const VERIFICATION_FIXTURE_EVALUATED_AT = 1_787_692_800;
 
-export type VerificationMethod = (typeof VERIFICATION_METHODS)[number];
+type VerificationMethod = (typeof VERIFICATION_METHODS)[number];
 export type VerificationMethodStatus = (typeof VERIFICATION_METHOD_STATUSES)[number];
 export type VerificationLevel = (typeof VERIFICATION_LEVELS)[number];
-export type VerificationRequirement = (typeof VERIFICATION_REQUIREMENTS)[number];
-export type VerificationEffectiveRequirement = (typeof VERIFICATION_EFFECTIVE_REQUIREMENTS)[number];
-export type VerificationScopeKind = (typeof VERIFICATION_SCOPE_KINDS)[number];
+type VerificationRequirement = (typeof VERIFICATION_REQUIREMENTS)[number];
+type VerificationEffectiveRequirement = (typeof VERIFICATION_EFFECTIVE_REQUIREMENTS)[number];
+type VerificationScopeKind = (typeof VERIFICATION_SCOPE_KINDS)[number];
 export type VerificationPolicyOperation = (typeof VERIFICATION_POLICY_OPERATIONS)[number];
-export type VerificationGateVariant = (typeof VERIFICATION_GATE_VARIANTS)[number];
+type VerificationGateVariant = (typeof VERIFICATION_GATE_VARIANTS)[number];
 export type VerificationBadgeSlot = (typeof VERIFICATION_BADGE_SLOTS)[number];
 export type VerificationLocale = (typeof VERIFICATION_LOCALES)[number];
-export type VerificationProvenance = (typeof VERIFICATION_PROVENANCE)[number];
+type VerificationProvenance = (typeof VERIFICATION_PROVENANCE)[number];
 export type VerificationTabKey = (typeof VERIFICATION_TAB_KEYS)[number];
-export type VerificationFeatureKey = (typeof VERIFICATION_FEATURE_KEYS)[number];
+type VerificationFeatureKey = (typeof VERIFICATION_FEATURE_KEYS)[number];
 export type VerificationCapability = (typeof VERIFICATION_CAPABILITIES)[number];
-export type VerificationAction = (typeof VERIFICATION_ADMIN_ACTIONS)[number];
+type VerificationAction = (typeof VERIFICATION_ADMIN_ACTIONS)[number];
 export type VerificationMutationAction = (typeof VERIFICATION_MUTATION_ACTIONS)[number];
 
 export type VerificationAdminPrincipal = {
@@ -115,7 +115,7 @@ export type VerificationAdminPrincipal = {
   capabilities: VerificationCapability[];
 };
 
-export type VerificationAdminMe = {
+type VerificationAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   principal: VerificationAdminPrincipal;
@@ -135,7 +135,7 @@ export type VerificationMethodAvailability = {
   reason: null | "deployment_unlock_disabled" | "service_config_disabled" | "provider_unconfigured";
 };
 
-export type VerificationScope = {
+type VerificationScope = {
   kind: VerificationScopeKind;
   country_code: string | null;
   place_id: string | null;
@@ -147,12 +147,12 @@ export type VerificationStoredPolicyBlock = {
   feature_requirements: Record<VerificationFeatureKey, VerificationRequirement>;
 };
 
-export type VerificationSavedPolicyBlock = VerificationStoredPolicyBlock & {
+type VerificationSavedPolicyBlock = VerificationStoredPolicyBlock & {
   saved_at: number;
   saved_by: string;
 };
 
-export type VerificationEffectivePolicy = {
+type VerificationEffectivePolicy = {
   enabled_methods: VerificationMethod[];
   enabled_methods_source_scope_key: string;
   tier_language: boolean;
@@ -177,7 +177,7 @@ export type VerificationPolicy = {
   updated_by: string;
 };
 
-export type VerificationPolicyLifecycle =
+type VerificationPolicyLifecycle =
   | "active"
   | "draft_only"
   | "inactive"
@@ -229,7 +229,7 @@ export type VerificationLocalizedGateCopy = {
   cancel_label: string;
 };
 
-export type VerificationCopyPair = {
+type VerificationCopyPair = {
   schema_version: 1;
   copy_key: string;
   revision: number;
@@ -241,7 +241,7 @@ export type VerificationCopyPair = {
   updated_by: string;
 };
 
-export type VerificationPendingSettings = {
+type VerificationPendingSettings = {
   schema_version: 1;
   revision: number;
   overdue_after_seconds: number;
@@ -267,7 +267,7 @@ export type VerificationBadgeAsset = {
   updated_by: string;
 };
 
-export type VerificationActivationGuard = {
+type VerificationActivationGuard = {
   non_none_publish_ready: boolean;
   blocking_reasons: Array<"supported_client_unready" | "persona_force_receipt_unready" | "global_policy_invalid" | "method_unavailable">;
 };
@@ -288,14 +288,14 @@ export type VerificationConsoleData = {
   activation_guard: VerificationActivationGuard;
 };
 
-export type VerificationPolicyMutationData = {
+type VerificationPolicyMutationData = {
   contract_version: 1;
   principal: VerificationAdminPrincipal;
   policy: VerificationPolicy;
   replayed: boolean;
 };
 
-export type VerificationFeatureImpact = {
+type VerificationFeatureImpact = {
   feature: VerificationFeatureKey;
   configured_before: VerificationEffectiveRequirement;
   configured_after: VerificationEffectiveRequirement;
@@ -327,19 +327,19 @@ export type VerificationPolicyImpactPreviewData = {
   };
 };
 
-export type VerificationCopyMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; copy_pair: VerificationCopyPair; replayed: boolean };
-export type VerificationPendingSettingsMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; pending_settings: VerificationPendingSettings; replayed: boolean };
-export type VerificationBadgeMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; badge: VerificationBadgeAsset; replayed: boolean };
+type VerificationCopyMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; copy_pair: VerificationCopyPair; replayed: boolean };
+type VerificationPendingSettingsMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; pending_settings: VerificationPendingSettings; replayed: boolean };
+type VerificationBadgeMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; badge: VerificationBadgeAsset; replayed: boolean };
 
 export type VerificationCitySuggestion = { place_id: string; display: string; secondary: string; country_code: string };
-export type VerificationCitySearchData = { contract_version: 1; principal: VerificationAdminPrincipal; search_token: string; suggestions: VerificationCitySuggestion[] };
+type VerificationCitySearchData = { contract_version: 1; principal: VerificationAdminPrincipal; search_token: string; suggestions: VerificationCitySuggestion[] };
 export type VerificationCityDetailData = {
   contract_version: 1;
   principal: VerificationAdminPrincipal;
   city: { scope_key: string; kind: "city"; place_id: string; display: string; country_code: string; place_token: string; expires_at: number };
 };
 
-export type VerificationSimulationMethod = { status: VerificationMethodStatus; pending_age_seconds: number | null; attempt: number | null; retry_available: boolean };
+type VerificationSimulationMethod = { status: VerificationMethodStatus; pending_age_seconds: number | null; attempt: number | null; retry_available: boolean };
 export type VerificationSimulationInput = {
   video: VerificationSimulationMethod;
   persona: VerificationSimulationMethod;
@@ -349,8 +349,8 @@ export type VerificationSimulationInput = {
   badge_visible: boolean;
 };
 
-export type VerificationModalAction = { kind: "start_video" | "start_persona" | "open_verification_center" | "url"; label: string; url: string | null };
-export type VerificationModal = {
+type VerificationModalAction = { kind: "start_video" | "start_persona" | "open_verification_center" | "url"; label: string; url: string | null };
+type VerificationModal = {
   kind: VerificationGateVariant;
   icon: { kind: "asset"; asset_key: `verification.${VerificationGateVariant}` };
   steps: Array<{ position: number; method: VerificationMethod; state: "complete" | "current" | "upcoming" }>;
@@ -369,7 +369,7 @@ export type VerificationModal = {
   provider_attribution: string | null;
 };
 
-export type VerificationSimulatedFeatureAccess = {
+type VerificationSimulatedFeatureAccess = {
   feature: VerificationFeatureKey;
   configured_requirement: VerificationEffectiveRequirement;
   required_tier: VerificationEffectiveRequirement;
@@ -398,7 +398,7 @@ export type VerificationSimulationData = {
   feature_access: VerificationSimulatedFeatureAccess[];
 };
 
-export type VerificationPendingMethodSummary = { method: VerificationMethod; total: number; in_sla: number; overdue: number; average_wait_seconds: number | null; oldest_pending_at: number | null };
+type VerificationPendingMethodSummary = { method: VerificationMethod; total: number; in_sla: number; overdue: number; average_wait_seconds: number | null; oldest_pending_at: number | null };
 export type VerificationPendingSummaryData = {
   contract_version: 1;
   principal: VerificationAdminPrincipal;
@@ -410,7 +410,7 @@ export type VerificationPendingSummaryData = {
   methods: [VerificationPendingMethodSummary, VerificationPendingMethodSummary];
 };
 
-export type VerificationAdminMethodProjection = {
+type VerificationAdminMethodProjection = {
   status: VerificationMethodStatus;
   raw_video_status: null | "not_started" | "missing_requirements" | "pending" | "verified" | "pending_re_review" | "awaiting_avatar" | "rejected" | "new_video_requested";
   can_start: boolean;
@@ -423,7 +423,7 @@ export type VerificationAdminMethodProjection = {
   state_integrity: boolean;
 };
 
-export type VerificationGrant = {
+type VerificationGrant = {
   level: "light" | "strong";
   reason: string;
   granted_by: string;
@@ -456,7 +456,7 @@ export type VerificationUserProjection = {
   feature_access: Array<{ feature: VerificationFeatureKey; configured_requirement: VerificationEffectiveRequirement; required_tier: VerificationEffectiveRequirement; allowed: boolean }>;
 };
 
-export type VerificationUserDetailData = { contract_version: 1; principal: VerificationAdminPrincipal; verification: VerificationUserProjection };
+type VerificationUserDetailData = { contract_version: 1; principal: VerificationAdminPrincipal; verification: VerificationUserProjection };
 export type VerificationGrantPreviewData = {
   contract_version: 1;
   principal: VerificationAdminPrincipal;
@@ -473,7 +473,7 @@ export type VerificationGrantPreviewData = {
     strong_grant_warning: boolean;
   };
 };
-export type VerificationGrantMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; verification: VerificationUserProjection; replayed: boolean };
+type VerificationGrantMutationData = { contract_version: 1; principal: VerificationAdminPrincipal; verification: VerificationUserProjection; replayed: boolean };
 
 type JsonObject = Record<string, unknown>;
 
@@ -1407,7 +1407,7 @@ function uint32(bytes: Uint8Array, offset: number): number {
   return ((bytes[offset] * 0x1000000) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]) >>> 0;
 }
 
-export type VerificationBadgeFileError = "empty" | "size" | "type" | "signature" | "dimensions";
+type VerificationBadgeFileError = "empty" | "size" | "type" | "signature" | "dimensions";
 
 /** Cheap browser/proxy PNG checks. Core still owns bounded chunk/pixel decode and re-encoding. */
 export function verificationPngBytesError(bytes: Uint8Array, totalSize = bytes.byteLength): VerificationBadgeFileError | null {
@@ -1690,7 +1690,7 @@ export const VERIFICATION_ERROR_STATUSES = {
   "core-timeout": 504,
 } as const;
 
-export type VerificationError = keyof typeof VERIFICATION_ERROR_STATUSES;
+type VerificationError = keyof typeof VERIFICATION_ERROR_STATUSES;
 
 export function verificationErrorResponse(value: unknown): VerificationError | null {
   const core = webadminErrorEnvelope(value);
@@ -1705,7 +1705,7 @@ export function verificationShouldRetainMutation(error: VerificationError | null
   return error === null || error === "verification-request-in-progress" || VERIFICATION_ERROR_STATUSES[error] >= 500;
 }
 
-export type VerificationConflict =
+type VerificationConflict =
   | { kind: "policy"; policy: VerificationPolicy }
   | { kind: "copy"; copy_pair: VerificationCopyPair }
   | { kind: "pending"; pending_settings: VerificationPendingSettings }

@@ -14,7 +14,7 @@
  * layer to invent.
  */
 
-export const SIGNUP_PHOTO_SCHEMA_VERSION = 1;
+const SIGNUP_PHOTO_SCHEMA_VERSION = 1;
 
 /** §1: `tips.items` is capped at 12 entries. Six is the product default. */
 export const MAX_TIP_ITEMS = 12;
@@ -29,8 +29,8 @@ export const MAX_PHOTO_COUNT = 6;
  * accepted but a device drops would be an invisible failure — the operator would see the picture
  * here and members would see nothing.
  */
-export const PUBLIC_IMAGE_ORIGIN = "https://img.friending.co";
-export const PUBLIC_IMAGE_PATH_PREFIX = "/api/cache/";
+const PUBLIC_IMAGE_ORIGIN = "https://img.friending.co";
+const PUBLIC_IMAGE_PATH_PREFIX = "/api/cache/";
 
 export const MAX_TIP_KEY_LENGTH = 40;
 export const MAX_CAPTION_LENGTH = 180;
@@ -51,9 +51,9 @@ export const REQUIRED_LOCALES = ["en", "hu"] as const;
 
 export type SignupPhotoLocalizedText = Record<string, string>;
 
-export type SignupPhotoVerdict = "good" | "bad";
+type SignupPhotoVerdict = "good" | "bad";
 
-export type SignupPhotoTipItem = {
+type SignupPhotoTipItem = {
   key: string;
   caption: SignupPhotoLocalizedText;
   verdict: SignupPhotoVerdict;
@@ -63,19 +63,19 @@ export type SignupPhotoTipItem = {
   image_male: string | null;
 };
 
-export type SignupPhotoModeration = {
+type SignupPhotoModeration = {
   enabled: boolean;
   text: SignupPhotoLocalizedText;
   link_title: SignupPhotoLocalizedText;
   link_url: string;
 };
 
-export type SignupPhotoAvatar = {
+type SignupPhotoAvatar = {
   title: SignupPhotoLocalizedText;
   subtitle: SignupPhotoLocalizedText;
 };
 
-export type SignupPhotoTips = {
+type SignupPhotoTips = {
   title: SignupPhotoLocalizedText;
   items: SignupPhotoTipItem[];
 };
@@ -103,7 +103,7 @@ export type SignupPhotoConfig = {
  */
 export type SignupPhotoTipDraft = SignupPhotoTipItem & { uid: string };
 
-export type SignupPhotoTipsDraft = {
+type SignupPhotoTipsDraft = {
   title: SignupPhotoLocalizedText;
   items: SignupPhotoTipDraft[];
 };
@@ -137,7 +137,7 @@ export const SIGNUP_PHOTO_DRAFT_ISSUES = [
   "tooManyTips",
 ] as const;
 
-export type SignupPhotoDraftIssue = (typeof SIGNUP_PHOTO_DRAFT_ISSUES)[number];
+type SignupPhotoDraftIssue = (typeof SIGNUP_PHOTO_DRAFT_ISSUES)[number];
 
 /**
  * The failure identities `save_signup_photo_config` can answer with: §4.2's seven 422 codes, its
@@ -500,7 +500,7 @@ export function movedTipItem(
 }
 
 /** The first `tip_<n>` not already used, so a new row never collides with an existing key. */
-export function nextTipKey(items: SignupPhotoTipItem[]): string {
+function nextTipKey(items: SignupPhotoTipItem[]): string {
   const used = new Set(items.map((item) => item.key));
   for (let index = 1; index <= MAX_TIP_ITEMS + 1; index += 1) {
     const key = `tip_${index}`;

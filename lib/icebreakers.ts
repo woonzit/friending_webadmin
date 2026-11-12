@@ -1,8 +1,8 @@
 import { userCastGroup, type UserCastGroup } from "@/lib/userCastGroups";
 
-export type IcebreakerLocalizedText = Record<string, string>;
+type IcebreakerLocalizedText = Record<string, string>;
 
-export type IcebreakerReferenceOption = {
+type IcebreakerReferenceOption = {
   key: string;
   labels: IcebreakerLocalizedText;
 };

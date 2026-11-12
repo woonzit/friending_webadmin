@@ -25,7 +25,7 @@ export const DATES_EXTERNAL_COMMANDS = ["withdraw", "cancel", "reverify", "offic
 export const DATES_EXTERNAL_REVIEW_COMMANDS = ["mark_reviewed", "clear_reviewed"] as const;
 export type DatesExternalReviewCommand = typeof DATES_EXTERNAL_REVIEW_COMMANDS[number];
 /** D-149 decision 9: the states of a re-research job. `queued` and `running` are open. */
-export const DATES_EXTERNAL_RECHECK_STATUSES = ["queued", "running", "applied", "no_change", "failed"] as const;
+const DATES_EXTERNAL_RECHECK_STATUSES = ["queued", "running", "applied", "no_change", "failed"] as const;
 export type DatesExternalRecheckStatus = typeof DATES_EXTERNAL_RECHECK_STATUSES[number];
 export const DATES_EXTERNAL_RECHECK_OPEN: readonly DatesExternalRecheckStatus[] = ["queued", "running"];
 /** The admin's optional instructions to a re-research (plain text, admin-only). */

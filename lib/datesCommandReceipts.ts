@@ -60,7 +60,7 @@ export function datesActivityCommandReceipt(value: unknown, request: Fields): bo
         : action === "restore" ? !value.soft_deleted : false;
 }
 
-export type DatesHostTransferReceipt = {
+type DatesHostTransferReceipt = {
   transfer_id: string;
   /** The activity's revision after the request (T-891, with the command contract selector); `null` when not served. */
   activity_revision: number | null;
@@ -136,7 +136,7 @@ export function datesCaseResolutionReceipt(value: unknown, request: Fields): boo
  * - `restoration_skipped`: an overturn did not restore the content (`after.restoration_skipped: "host_unavailable"`).
  * `null` for anything else, also from a Core before that release. Read only from a body that is this command's receipt.
  */
-export type DatesCaseResolutionEffect = "replacement_withdrawn" | "draft_kept" | "restoration_skipped";
+type DatesCaseResolutionEffect = "replacement_withdrawn" | "draft_kept" | "restoration_skipped";
 export function datesCaseResolutionEffect(value: unknown): DatesCaseResolutionEffect | null {
   const result = record(value) ? value.target_result : null, after = record(result) ? result.after : null;
   if (!record(result) || !record(after)) return null;

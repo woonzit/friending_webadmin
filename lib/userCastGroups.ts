@@ -28,12 +28,12 @@
  */
 
 /** D-019 identity axis (`identity_v2.gender`). */
-export const CAST_GROUP_GENDERS = ["man", "woman", "nonbinary"] as const;
+const CAST_GROUP_GENDERS = ["man", "woman", "nonbinary"] as const;
 /** D-019 audience axis (`identity_v2.visible_to`). */
-export const CAST_GROUP_VISIBILITY = ["male", "female", "both"] as const;
+const CAST_GROUP_VISIBILITY = ["male", "female", "both"] as const;
 
-export type CastGroupGender = (typeof CAST_GROUP_GENDERS)[number];
-export type CastGroupVisibility = (typeof CAST_GROUP_VISIBILITY)[number];
+type CastGroupGender = (typeof CAST_GROUP_GENDERS)[number];
+type CastGroupVisibility = (typeof CAST_GROUP_VISIBILITY)[number];
 
 /**
  * Compatibility segments a protected group may project onto. The first seven
@@ -66,7 +66,7 @@ export function castGroupProfileSegment(legacySegment: string): string {
   return legacySegment === CAST_GROUP_SEGMENT_OTHER ? "identity_unresolved" : legacySegment;
 }
 
-export type CastGroupRule = {
+type CastGroupRule = {
   genders: CastGroupGender[];
   visible_to: CastGroupVisibility[];
 };
@@ -84,12 +84,12 @@ export type UserCastGroup = {
   revision: number;
 };
 
-export type CastGroupSegment = {
+type CastGroupSegment = {
   key: string;
   labels: Record<string, string>;
 };
 
-export type UserCastGroupsPayload = {
+type UserCastGroupsPayload = {
   groups: UserCastGroup[];
   segments: CastGroupSegment[];
 };

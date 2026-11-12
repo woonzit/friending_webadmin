@@ -36,12 +36,12 @@ import { userContentRevision, type UserContentRevision } from "@/lib/userContent
  * "this response did not state one", which is what a Core older than T-729
  * sends and what an unrecognised value has to become here.
  */
-export const AGE_DISPLAY_VALUES = ["exact", "generation", "hidden"] as const;
+const AGE_DISPLAY_VALUES = ["exact", "generation", "hidden"] as const;
 
-export type AgeDisplay = (typeof AGE_DISPLAY_VALUES)[number];
+type AgeDisplay = (typeof AGE_DISPLAY_VALUES)[number];
 
 export const TRIP_INTENTS = ["new_friends", "activities", "networking", "local_tips", "events", "dates"] as const;
-export type TripIntent = (typeof TRIP_INTENTS)[number];
+type TripIntent = (typeof TRIP_INTENTS)[number];
 
 export type UserDetailTrip = {
   city: string;
@@ -104,7 +104,7 @@ export type UserDetailProfile = {
   hometown: UserDetailLocation | null;
 };
 
-export type UserDetailImage = {
+type UserDetailImage = {
   image_id: string;
   thumb: string;
   full: string;

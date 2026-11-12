@@ -1,5 +1,5 @@
 /** Shared preview/export geometry. Pan is a fraction of the available overflow. */
-export type ImageSize = { width: number; height: number };
+type ImageSize = { width: number; height: number };
 export type CropPoint = { x: number; y: number };
 export type CropTransform = { zoom: number; rotation: number; positionX: number; positionY: number };
 

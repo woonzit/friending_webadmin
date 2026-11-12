@@ -1,6 +1,6 @@
 import "server-only";
 
-export type CoreResult<T = Record<string, unknown>> = {
+type CoreResult<T = Record<string, unknown>> = {
   status: number;
   data: T | null;
 };

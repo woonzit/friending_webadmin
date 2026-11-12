@@ -12,7 +12,7 @@ export type PolicyJsonObject = Record<string, unknown>;
 
 const PLAIN_TEXT_CONTROL = /[\u0000-\u001f\u007f-\u009f]/u;
 
-export function policyRecord(value: unknown): PolicyJsonObject | null {
+function policyRecord(value: unknown): PolicyJsonObject | null {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? value as PolicyJsonObject
     : null;

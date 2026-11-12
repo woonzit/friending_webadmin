@@ -12,17 +12,17 @@
  *   (audience reach is `MemberAudienceAuthorization` and is not modelled here at all)
  */
 
-export type EligibilityMode = "all" | "rules" | "none";
+type EligibilityMode = "all" | "rules" | "none";
 
 /** Spec v2.5 §4 main gender values. Note these are the V2 vocabulary, not `male|female|other`. */
-export const ELIGIBILITY_GENDERS = ["woman", "man", "nonbinary"] as const;
-export type EligibilityGender = (typeof ELIGIBILITY_GENDERS)[number];
+const ELIGIBILITY_GENDERS = ["woman", "man", "nonbinary"] as const;
+type EligibilityGender = (typeof ELIGIBILITY_GENDERS)[number];
 
 /** Spec v2.5 §8 Layer 1. The only intent axis an admin rule may target. */
-export const LOOKING_FOR_VALUES = ["sex", "friends", "love"] as const;
-export type LookingForValue = (typeof LOOKING_FOR_VALUES)[number];
+const LOOKING_FOR_VALUES = ["sex", "friends", "love"] as const;
+type LookingForValue = (typeof LOOKING_FOR_VALUES)[number];
 
-export const ELIGIBILITY_MODES = ["all", "rules", "none"] as const;
+const ELIGIBILITY_MODES = ["all", "rules", "none"] as const;
 export type VisibilityMode = "public" | "reciprocal_set";
 
 /**
@@ -47,7 +47,7 @@ export const FORBIDDEN_ELIGIBILITY_AXES = [
   "legacy_cast_v1",
 ] as const;
 
-export type EligibilityRule = {
+type EligibilityRule = {
   mode: EligibilityMode;
   /** Empty means unrestricted on this axis. A non-empty list requires `gender_restriction_reason`. */
   genders_any: EligibilityGender[];
@@ -62,7 +62,7 @@ export type EligibilityRule = {
   gender_restriction_reason: string;
 };
 
-export type VisibilityRule =
+type VisibilityRule =
   | { mode: "public" }
   | { mode: "reciprocal_set"; set_id: string };
 
@@ -99,7 +99,7 @@ function closedList<T extends string>(value: unknown, allowed: readonly T[]): T[
  * Why a rule was rejected. Returned instead of a bare `null` because WA-01's editor has to tell an
  * operator which of the five concepts is wrong, and `null` cannot carry that.
  */
-export type AudienceRuleError =
+type AudienceRuleError =
   | "malformed"
   | "rule-version-unsupported"
   | "eligibility-mode-invalid"
@@ -113,7 +113,7 @@ export type AudienceRuleError =
   | "reciprocal-set-id-required"
   | "reciprocal-set-id-on-public";
 
-export type AudienceRuleResult =
+type AudienceRuleResult =
   | { ok: true; rule: AudienceRuleV2 }
   | { ok: false; error: AudienceRuleError };
 

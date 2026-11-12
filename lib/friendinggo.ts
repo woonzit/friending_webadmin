@@ -28,7 +28,7 @@ export type FriendingGoAction = (typeof FRIENDINGGO_ACTIONS)[number];
 export const FRIENDINGGO_STATUSES = ["active", "unsubscribed", "bounced", "complained"] as const;
 export type FriendingGoStatus = (typeof FRIENDINGGO_STATUSES)[number];
 /** The two statuses an operator may set; `bounced` and `complained` come only from delivery. */
-export const FRIENDINGGO_SETTABLE_STATUSES = ["active", "unsubscribed"] as const;
+const FRIENDINGGO_SETTABLE_STATUSES = ["active", "unsubscribed"] as const;
 export type FriendingGoSettableStatus = (typeof FRIENDINGGO_SETTABLE_STATUSES)[number];
 /**
  * Who made the last status change (Core round 2, contract §10.2): the person (`self`: the unsubscribe
@@ -36,28 +36,26 @@ export type FriendingGoSettableStatus = (typeof FRIENDINGGO_SETTABLE_STATUSES)[n
  * feedback (`feedback`: a bounce, a spam report, a Mailgun unsubscribe). `null` until the first change.
  */
 export const FRIENDINGGO_STATUS_SOURCES = ["self", "admin", "feedback"] as const;
-export type FriendingGoStatusSource = (typeof FRIENDINGGO_STATUS_SOURCES)[number];
+type FriendingGoStatusSource = (typeof FRIENDINGGO_STATUS_SOURCES)[number];
 /** The Email delivery log's states, which Core joins onto a confirmation and a recipient. */
-export const FRIENDINGGO_DELIVERY_STATES = ["delivered", "pending", "retrying", "failed", "not_sent"] as const;
+const FRIENDINGGO_DELIVERY_STATES = ["delivered", "pending", "retrying", "failed", "not_sent"] as const;
 export type FriendingGoDeliveryState = (typeof FRIENDINGGO_DELIVERY_STATES)[number];
 /** A confirmation may also be `skipped` (round 2: at most three a day per base mailbox); it has no outbox row then. */
-export type FriendingGoConfirmationState = FriendingGoDeliveryState | "skipped";
+type FriendingGoConfirmationState = FriendingGoDeliveryState | "skipped";
 /** A campaign's delivery counts add `purged`: a queued message whose outbox row is gone (30 days). */
 export const FRIENDINGGO_DELIVERY_COUNT_KEYS = [...FRIENDINGGO_DELIVERY_STATES, "purged"] as const;
-export type FriendingGoDeliveryCountKey = (typeof FRIENDINGGO_DELIVERY_COUNT_KEYS)[number];
+type FriendingGoDeliveryCountKey = (typeof FRIENDINGGO_DELIVERY_COUNT_KEYS)[number];
 export const FRIENDINGGO_KINDS = ["direct", "newsletter"] as const;
 export type FriendingGoKind = (typeof FRIENDINGGO_KINDS)[number];
 export const FRIENDINGGO_CAMPAIGN_STATES = ["draft", "sending", "sent"] as const;
 export type FriendingGoCampaignState = (typeof FRIENDINGGO_CAMPAIGN_STATES)[number];
 export const FRIENDINGGO_AUDIENCES = ["selected", "all_active"] as const;
 export type FriendingGoAudience = (typeof FRIENDINGGO_AUDIENCES)[number];
-/** `resume` (Core round 3) finishes a `sending` campaign whose own request is gone, under a fresh request id. */
-export const FRIENDINGGO_SEND_MODES = ["test", "send", "save_draft", "resume"] as const;
-export const FRIENDINGGO_RECIPIENT_STATES = ["queued", "suppressed"] as const;
-export type FriendingGoRecipientState = (typeof FRIENDINGGO_RECIPIENT_STATES)[number];
+const FRIENDINGGO_RECIPIENT_STATES = ["queued", "suppressed"] as const;
+type FriendingGoRecipientState = (typeof FRIENDINGGO_RECIPIENT_STATES)[number];
 
 /** Core's `GoPreorderPolicy` bounds. */
-export const FRIENDINGGO_PAGE_SIZE = 50;
+const FRIENDINGGO_PAGE_SIZE = 50;
 export const FRIENDINGGO_CAPS: Readonly<Record<FriendingGoKind, number>> = { direct: 100, newsletter: 5000 };
 export const FRIENDINGGO_EXPORT_LIMIT = 5000;
 export const FRIENDINGGO_SUBJECT_MAX = 150;
@@ -68,7 +66,7 @@ export const FRIENDINGGO_PREHEADER_MAX = 200;
  * The tag set is the canned templates' (`CannedTemplateHtmlSanitizer`), whose validator caps at 50,000 too.
  */
 export const FRIENDINGGO_BODY_MAX = 50_000;
-export const FRIENDINGGO_QUERY_MAX = 100;
+const FRIENDINGGO_QUERY_MAX = 100;
 export const FRIENDINGGO_MERGE_TAGS = ["{{first_name}}", "{{city}}"] as const;
 export const FRIENDINGGO_SAMPLE = {
   first_name: "Alex",
@@ -105,7 +103,7 @@ export type FriendingGoPreorder = {
   created_at: number;
   updated_at: number;
 };
-export type FriendingGoTotals = Record<"all" | FriendingGoStatus, number>;
+type FriendingGoTotals = Record<"all" | FriendingGoStatus, number>;
 export type FriendingGoPreorderList = {
   contract_version: 1;
   filters: FriendingGoListFilters;
@@ -118,7 +116,7 @@ export type FriendingGoPreorderList = {
   can_write: boolean;
   rows: FriendingGoPreorder[];
 };
-export type FriendingGoExport = {
+type FriendingGoExport = {
   contract_version: 1;
   export: true;
   filters: { q: string; status: FriendingGoStatus | "" };
@@ -128,18 +126,18 @@ export type FriendingGoExport = {
   audit_id: string;
   rows: FriendingGoPreorder[];
 };
-export type FriendingGoReceipt = { request_id: string; audit_id: string; replayed: boolean };
-export type FriendingGoStatusResult = {
+type FriendingGoReceipt = { request_id: string; audit_id: string; replayed: boolean };
+type FriendingGoStatusResult = {
   contract_version: 1;
   changed: boolean;
   preorder: FriendingGoPreorder;
   receipt: FriendingGoReceipt;
 };
 export const FRIENDINGGO_SUPPRESSION_REASONS = ["unsubscribed", "bounced", "complained"] as const;
-export type FriendingGoSuppressionReason = (typeof FRIENDINGGO_SUPPRESSION_REASONS)[number];
+type FriendingGoSuppressionReason = (typeof FRIENDINGGO_SUPPRESSION_REASONS)[number];
 /** Who is left out, by reason; the reasons add up to `suppressed` (review P3-9, every count since Core round 2). */
 export type FriendingGoReasons = Record<FriendingGoSuppressionReason, number>;
-export type FriendingGoCounts = { selected: number; sendable: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
+type FriendingGoCounts = { selected: number; sendable: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
 export type FriendingGoPreview = {
   contract_version: 1;
   kind: FriendingGoKind;
@@ -152,7 +150,7 @@ export type FriendingGoPreview = {
   counts: FriendingGoCounts;
   cap: number;
 };
-export type FriendingGoCampaignCounts = { selected: number; queued: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
+type FriendingGoCampaignCounts = { selected: number; queued: number; suppressed: number; suppressed_by_reason: FriendingGoReasons };
 export type FriendingGoCampaign = {
   id: string;
   kind: FriendingGoKind;
@@ -174,11 +172,11 @@ export type FriendingGoProgress = { processed: number; total: number };
  * progress for 120 s, which `mode=resume` may finish) and its `progress` (`null` for a draft).
  */
 export type FriendingGoListedCampaign = FriendingGoCampaign & { resumable: boolean; progress: FriendingGoProgress | null };
-export type FriendingGoCampaignDetailCampaign = Omit<FriendingGoListedCampaign, "audience"> & {
+type FriendingGoCampaignDetailCampaign = Omit<FriendingGoListedCampaign, "audience"> & {
   audience: { mode: FriendingGoAudience; count: number | null; preorder_ids: string[] };
   body_html: string;
 };
-export type FriendingGoRecipient = {
+type FriendingGoRecipient = {
   preorder_id: string;
   name: string | null;
   email: string;
@@ -189,7 +187,7 @@ export type FriendingGoRecipient = {
   delivered_at: number | null;
   created_at: number;
 };
-export const FRIENDINGGO_CAMPAIGN_FILTERS = ["", ...FRIENDINGGO_CAMPAIGN_STATES] as const;
+const FRIENDINGGO_CAMPAIGN_FILTERS = ["", ...FRIENDINGGO_CAMPAIGN_STATES] as const;
 export type FriendingGoCampaignFilter = (typeof FRIENDINGGO_CAMPAIGN_FILTERS)[number];
 export type FriendingGoCampaignList = {
   contract_version: 1;
@@ -269,7 +267,7 @@ const AUDIT_ID = /^[A-Za-z0-9:_-]{1,200}$/u;
 const CONTROL = /\p{Cc}/u;
 
 export const isFriendingGoObjectId = (value: unknown): value is string => typeof value === "string" && OBJECT_ID.test(value);
-export const isFriendingGoRequestId = (value: unknown): value is string => typeof value === "string" && REQUEST_ID.test(value);
+const isFriendingGoRequestId = (value: unknown): value is string => typeof value === "string" && REQUEST_ID.test(value);
 const address = (value: unknown): value is string => typeof value === "string" && value.length <= 320 && EMAIL.test(value);
 
 // ------------------------------------------------------------------ capability
@@ -313,7 +311,7 @@ export function friendingGoQuery(value: unknown): string | null {
  * One line as Core stores a subject or a preheader (`normalizedLine`): no control character, every run
  * of spaces collapsed to one, trimmed. `null` when it carries a control character.
  */
-export function friendingGoLine(value: unknown): string | null {
+function friendingGoLine(value: unknown): string | null {
   // In a `u` regular expression a surrogate pair is one code point, so this matches only a lone half.
   if (typeof value !== "string" || CONTROL.test(value) || /[\uD800-\uDFFF]/u.test(value)) return null;
   return value.replace(/\p{Z}+/gu, " ").replace(/^ +| +$/gu, "");
@@ -337,7 +335,7 @@ export function friendingGoPreheader(value: unknown): string | null {
 }
 
 /** Unique ids in a stable order (Core sorts and de-duplicates them too); `null` for anything else. */
-export function friendingGoIds(value: unknown): string[] | null {
+function friendingGoIds(value: unknown): string[] | null {
   if (!Array.isArray(value) || value.length > FRIENDINGGO_CAPS.newsletter) return null;
   if (!value.every(isFriendingGoObjectId)) return null;
   const ids = [...new Set(value as string[])].sort();
@@ -345,7 +343,7 @@ export function friendingGoIds(value: unknown): string[] | null {
 }
 
 /** The filters a browser body (or the bridge's own Core params) asks for, or null for anything else. */
-export function friendingGoListFilters(body: Record<string, unknown>): FriendingGoListFilters | null {
+function friendingGoListFilters(body: Record<string, unknown>): FriendingGoListFilters | null {
   if (!onlyKeys(body, ["q", "status", "page"])) return null;
   const { q = "", status = "", page = 1 } = body;
   const query = friendingGoQuery(q);
@@ -373,7 +371,7 @@ export function friendingGoExportFilters(body: Record<string, unknown>): { q: st
 }
 
 /** The content of a preview, canonical and inside Core's audience rules, or null. */
-export function friendingGoEmailContent(body: Record<string, unknown>): FriendingGoEmailContent | null {
+function friendingGoEmailContent(body: Record<string, unknown>): FriendingGoEmailContent | null {
   const words = wording(body);
   const { audience, preorder_ids: rawIds } = body;
   if (!words || !oneOf(FRIENDINGGO_AUDIENCES, audience)) return null;
@@ -429,7 +427,7 @@ export function friendingGoStatusBody(body: Record<string, unknown>): FriendingG
  * A campaigns read from the browser: the list (a page, optionally of one state) or one campaign (an id
  * and a page of recipients). Core refuses a state filter together with an id.
  */
-export function friendingGoCampaignsRequest(body: Record<string, unknown>): { campaign_id: string; page: number; state: FriendingGoCampaignFilter } | null {
+function friendingGoCampaignsRequest(body: Record<string, unknown>): { campaign_id: string; page: number; state: FriendingGoCampaignFilter } | null {
   if (!onlyKeys(body, ["campaign_id", "page", "state"])) return null;
   const { campaign_id: id = "", page = 1, state = "" } = body;
   if (id !== "" && !isFriendingGoObjectId(id)) return null;
@@ -439,7 +437,7 @@ export function friendingGoCampaignsRequest(body: Record<string, unknown>): { ca
 }
 
 /** Core's form body (`coreCall` stringifies numbers): the contract version and exactly the route's fields. */
-export type FriendingGoCoreParams = Record<string, string | number>;
+type FriendingGoCoreParams = Record<string, string | number>;
 
 /**
  * The same-origin bridge forwards a FriendingGO action with exactly its closed, canonical fields and
@@ -1078,7 +1076,7 @@ export const FRIENDINGGO_ERRORS = {
 export type FriendingGoError = keyof typeof FRIENDINGGO_ERRORS;
 /** The console's own two messages: an unnamed failure, and a browser that cannot keep a request for its retry. */
 export const FRIENDINGGO_CONSOLE_ERROR_KEYS = ["generic", "storageUnavailable"] as const;
-export type FriendingGoErrorKey = (typeof FRIENDINGGO_ERRORS)[FriendingGoError]["key"] | (typeof FRIENDINGGO_CONSOLE_ERROR_KEYS)[number];
+type FriendingGoErrorKey = (typeof FRIENDINGGO_ERRORS)[FriendingGoError]["key"] | (typeof FRIENDINGGO_CONSOLE_ERROR_KEYS)[number];
 
 /**
  * A write whose outcome these answers do not settle: the request may have run. The pending command
@@ -1136,7 +1134,7 @@ export function friendingGoRateLimit(response: unknown): { limit: number; window
 }
 
 /** Why the console may not turn an address back on; the message key under `preorders.status.locked`. */
-export type FriendingGoLockReason = "self" | "feedback" | "bounced" | "complained" | "unsubscribed";
+type FriendingGoLockReason = "self" | "feedback" | "bounced" | "complained" | "unsubscribed";
 
 /** The reason for a status and the source that set it (contract §10.2). */
 export function friendingGoLockReason(status: FriendingGoStatus, source: FriendingGoStatusSource | null): FriendingGoLockReason {

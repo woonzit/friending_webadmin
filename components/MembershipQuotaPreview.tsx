@@ -21,9 +21,9 @@ export const MEMBERSHIP_QUOTA_FEATURE_FAMILIES = {
   quick_phrase_slots: null,
 } as const satisfies Record<MembershipQuotaKey, FeatureSwitch | null>;
 
-export type MembershipQuotaFeatureState = "on" | "off" | "unreadable" | "not-switchable";
+type MembershipQuotaFeatureState = "on" | "off" | "unreadable" | "not-switchable";
 
-export function membershipQuotaFeatureState(
+function membershipQuotaFeatureState(
   quota: MembershipQuotaKey,
   featureSwitches: FeatureSwitchesState | null,
 ): MembershipQuotaFeatureState {

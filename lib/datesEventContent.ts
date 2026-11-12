@@ -15,23 +15,23 @@ import { datesIntakeRefusal } from "./datesIntakeAdmin";
  * with them - reading, paging, selecting, a command in doubt - is
  * lib/datesEventContentPanel.ts.
  */
-export const EVENT_CONTENT_ACTIONS = ["dates_event_content", "dates_event_content_review"] as const;
+const EVENT_CONTENT_ACTIONS = ["dates_event_content", "dates_event_content_review"] as const;
 /** The tabs. "hidden" lists the wall posts and comments a member hid for themselves. */
 export const EVENT_CONTENT_KINDS = ["wall_post", "wall_comment", "message", "review", "hidden"] as const;
 export type EventContentKind = typeof EVENT_CONTENT_KINDS[number];
 /** What a listed row is. */
-export const EVENT_CONTENT_ROW_KINDS = ["wall_post", "wall_comment", "message", "review"] as const;
+const EVENT_CONTENT_ROW_KINDS = ["wall_post", "wall_comment", "message", "review"] as const;
 export type EventContentRowKind = typeof EVENT_CONTENT_ROW_KINDS[number];
 /** What a case can be opened for: a listed row, or the event. */
-export const EVENT_REVIEW_KINDS = [...EVENT_CONTENT_ROW_KINDS, "activity"] as const;
-export type EventReviewKind = typeof EVENT_REVIEW_KINDS[number];
+const EVENT_REVIEW_KINDS = [...EVENT_CONTENT_ROW_KINDS, "activity"] as const;
+type EventReviewKind = typeof EVENT_REVIEW_KINDS[number];
 /** What a row carries: Core's wall post kinds (`DatesWallPolicy::KINDS`); everything that is not a wall post is "text". */
-export const EVENT_CONTENT_ATTACHMENTS = ["text", "photo", "video", "location", "link", "youtube", "tiktok"] as const;
-export type EventContentAttachment = typeof EVENT_CONTENT_ATTACHMENTS[number];
-export const EVENT_CONTENT_STATES = ["active", "pending", "moderated", "deleted"] as const;
-export type EventContentState = typeof EVENT_CONTENT_STATES[number];
+const EVENT_CONTENT_ATTACHMENTS = ["text", "photo", "video", "location", "link", "youtube", "tiktok"] as const;
+type EventContentAttachment = typeof EVENT_CONTENT_ATTACHMENTS[number];
+const EVENT_CONTENT_STATES = ["active", "pending", "moderated", "deleted"] as const;
+type EventContentState = typeof EVENT_CONTENT_STATES[number];
 /** Core's page (`DatesEventContentAdminService::content`): a body with more rows is not this route's. */
-export const EVENT_CONTENT_PAGE_SIZE = 20;
+const EVENT_CONTENT_PAGE_SIZE = 20;
 /** Core writes these grapheme bounds: DatesWallPolicy:15-16, DatesChatPolicy:16,
  * DatesReviewPolicy:12. DatesEventContentAdminService::row/removal serve text
  * verbatim; a UTF-16/code-point bound can reject valid multi-code-point text. */
@@ -39,8 +39,8 @@ const TEXT_MAX: Readonly<Record<EventContentRowKind, number>> = { wall_post: 400
 const CURSOR_MAX = 4096;
 
 /** Who took a row down (host moderation v1): its author, the event's host, or a moderation decision. */
-export const EVENT_CONTENT_REMOVERS = ["author", "host", "moderation"] as const;
-export type EventContentRemover = typeof EVENT_CONTENT_REMOVERS[number];
+const EVENT_CONTENT_REMOVERS = ["author", "host", "moderation"] as const;
+type EventContentRemover = typeof EVENT_CONTENT_REMOVERS[number];
 /**
  * What Core kept, for the operators, of another member's content when the
  * event's host removed it: the text, its kind, a shared link, and whether it
@@ -217,7 +217,7 @@ export function eventContentReviewReceipt(value: unknown, request: EventReviewRe
     ? { case_id: value.case_id, created: value.created } : null;
 }
 
-export type EventReviewOutcome =
+type EventReviewOutcome =
   | { kind: "opened"; case_id: string; created: boolean }
   /** An answer to this request, and no case of it. `problem`: what the answer was, in the terms of a read. */
   | { kind: "refused"; error: string; problem: EventContentProblem }

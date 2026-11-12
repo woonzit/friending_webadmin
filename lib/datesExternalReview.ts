@@ -43,11 +43,11 @@ export async function runDatesExternalReview(send: Send, target: DatesExternalRe
  * is sent, an unanswered attempt is retried with the same key (Core answers a replay with the same job), and the saved
  * request is cleared only by a receipt or a refusal that wrote nothing.
  */
-export type DatesExternalRecheckPending = { version: 1; actor: string; issued_at: number; body: { external_event_id: string; instructions?: string; idempotency_key: string } };
+type DatesExternalRecheckPending = { version: 1; actor: string; issued_at: number; body: { external_event_id: string; instructions?: string; idempotency_key: string } };
 export type DatesExternalRecheckStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const recheckKey = (actor: string, externalId: string) => `friending:dates-external:recheck:v1:${encodeURIComponent(actor)}:${externalId}`;
 
-export function decodeDatesExternalRecheckPending(value: unknown, actor: string, externalId: string): DatesExternalRecheckPending | null {
+function decodeDatesExternalRecheckPending(value: unknown, actor: string, externalId: string): DatesExternalRecheckPending | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const row = value as Record<string, unknown>, body = row.body as Record<string, unknown> | null;
   if (Object.keys(row).sort().join() !== "actor,body,issued_at,version" || row.version !== 1 || row.actor !== actor
@@ -74,7 +74,7 @@ export function prepareDatesExternalRecheck(actor: string, externalId: string, i
     body: { external_event_id: externalId, ...(text === undefined ? {} : { instructions: text }), idempotency_key: createAdminIdempotencyKey("dates-external-recheck") } };
   return decodeDatesExternalRecheckPending(JSON.parse(JSON.stringify(pending)), actor, externalId);
 }
-export type DatesExternalRecheckOutcome =
+type DatesExternalRecheckOutcome =
   | { kind: "success"; receipt: DatesExternalRecheckReceipt; retained: boolean }
   | { kind: "refused"; error: string; retained: boolean }
   | { kind: "uncertain"; error: string | null }
@@ -160,7 +160,7 @@ export function datesExternalOffsetForLocal(local: string, timezone: string): st
   return valid.length === 1 ? valid[0] : "";
 }
 
-export type DatesExternalCorrectionPrefill = {
+type DatesExternalCorrectionPrefill = {
   draft: DatesExternalDraft;
   /** The proposed facts that were put into the form. */
   applied: DatesExternalCorrectionField[];

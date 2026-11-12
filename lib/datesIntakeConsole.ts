@@ -21,11 +21,11 @@ import {
  * genuine Core bodies can be run through them in tests. `send` is the
  * same-origin bridge (`adminCall`); nothing here talks to Core directly.
  */
-export type DatesIntakeSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
+type DatesIntakeSend = (action: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<unknown>;
 
-export const DATES_INTAKE_REVIEW = "dates_external_event_review";
-export const DATES_INTAKE_MANAGE = "dates_external_event_manage";
-export const DATES_INTAKE_READ = "dates_external_event_read";
+const DATES_INTAKE_REVIEW = "dates_external_event_review";
+const DATES_INTAKE_MANAGE = "dates_external_event_manage";
+const DATES_INTAKE_READ = "dates_external_event_read";
 
 export type DatesIntakeOperator = {
   principal: DatesAdminPrincipal;
@@ -48,7 +48,7 @@ export function datesIntakeOperator(identity: unknown): DatesIntakeOperator | nu
  * - `unconfirmed`: nothing readable came back. It is never shown as "no
  *   permission" and never as an empty result.
  */
-export type DatesIntakeRead<T> =
+type DatesIntakeRead<T> =
   | ({ kind: "ready"; operator: DatesIntakeOperator } & T)
   | { kind: "denied" }
   | { kind: "refused"; error: string; status: number }
@@ -64,7 +64,7 @@ async function pair(send: DatesIntakeSend, action: string, body: Record<string, 
   try { return await Promise.all([send(action, body, signal), send("admin_me", {}, signal)]); } catch { return [null, null]; }
 }
 
-export type DatesIntakeQueueFilters = { status: string; channel: string; page: number; limit: number;
+type DatesIntakeQueueFilters = { status: string; channel: string; page: number; limit: number;
   /** Only the second looks (true), everything but them (false), or no such filter (absent). */
   second_look?: boolean; research_run_id?: string };
 
@@ -125,7 +125,7 @@ export async function readDatesIntakeDraftEntry(send: DatesIntakeSend, signal?: 
 
 // ---------------------------------------------------------------- commands
 
-export type DatesIntakeCommandOutcome<T> =
+type DatesIntakeCommandOutcome<T> =
   | { kind: "success"; receipt: T }
   /** Core's own pinned no-land refusal: this command wrote nothing, and its identity is spent. */
   | { kind: "refused"; error: string; status: number }
@@ -216,9 +216,9 @@ export async function runDatesIntakeAsk(send: DatesIntakeSend, command: DatesInt
 
 // ---------------------------------------------------------------- publish through the P1 publisher
 
-export type DatesIntakePublishCandidate = { intake_id: string; intake_revision: number; event_index: number; complete: boolean;
+type DatesIntakePublishCandidate = { intake_id: string; intake_revision: number; event_index: number; complete: boolean;
   event: DatesExternalManualEvent; reason: string };
-export type DatesIntakePublishOutcome = DatesExternalMutationOutcome
+type DatesIntakePublishOutcome = DatesExternalMutationOutcome
   /** Fresh identity, capability or Core time could not be confirmed: nothing was sent. */
   | { kind: "access" }
   /** The console would not send this command (shape, bounds, a caller-supplied key). */
@@ -250,9 +250,9 @@ export function datesIntakePendingPublish(storage: DatesExternalStorage | null, 
 
 // ---------------------------------------------------------------- "Draft from source"
 
-export type DatesIntakeSourceDraft = { kind: DatesIntakeSourceKind; url: string; text: string };
+type DatesIntakeSourceDraft = { kind: DatesIntakeSourceKind; url: string; text: string };
 export type DatesIntakeSourceFile = { name: string; size: number; header: Uint8Array };
-export type DatesIntakeSourceProblem = "url" | "text" | "imageCount" | "imageSize" | "imageType";
+type DatesIntakeSourceProblem = "url" | "text" | "imageCount" | "imageSize" | "imageType";
 
 /** What the console checks before anything is sent; Core checks again and its refusal is shown. */
 export function datesIntakeSourceProblem(draft: DatesIntakeSourceDraft, files: readonly DatesIntakeSourceFile[]): DatesIntakeSourceProblem | null {
@@ -264,7 +264,7 @@ export function datesIntakeSourceProblem(draft: DatesIntakeSourceDraft, files: r
   return draft.text.trim() !== "" && datesIntakeSourceText(draft.text) === null ? "text" : null;
 }
 
-export type DatesIntakePost = (form: FormData) => Promise<unknown>;
+type DatesIntakePost = (form: FormData) => Promise<unknown>;
 
 /**
  * Hands the source to the console's server route. `key` is minted once per
@@ -365,7 +365,7 @@ export function forgetDatesIntakeLanding(): void { landedOnExisting = null; }
  * the clock, and the operator may dismiss it at any time.
  */
 export type DatesIntakeSubmissionHint = { at: number; kind: DatesIntakeSourceKind };
-export type DatesIntakeHintStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+type DatesIntakeHintStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const hintKey = (actor: string) => `friending:dates-intake:hint:v1:${encodeURIComponent(actor)}`;
 
 export function datesIntakeHintStorage(): DatesIntakeHintStorage | null {

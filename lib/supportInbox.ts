@@ -1,6 +1,6 @@
 /** Runtime decoder for the additive help-support-v2 admin contract. */
 
-export type SupportSource = "ios" | "android" | "web";
+type SupportSource = "ios" | "android" | "web";
 
 export function supportSourceLabel(source: SupportSource): string {
   if (source === "android") return "Android";
@@ -50,7 +50,7 @@ export type SupportThreadRow = {
   clientContext: SupportClientContext | null;
 };
 
-export type SupportMessage = {
+type SupportMessage = {
   id: string;
   smid: number;
   sender: "user" | "admin";

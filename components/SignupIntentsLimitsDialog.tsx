@@ -36,7 +36,7 @@ const ISSUE_KEYS: Record<SignupIntentsLimitsIssueCode, string> = {
 
 type Notice = { tone: "success" | "error"; text: string };
 
-export type SignupIntentsLimitsDialogProps = {
+type SignupIntentsLimitsDialogProps = {
   question: SignupSystemQuestion;
   /**
    * `changed` is true once Core has moved (or proved it already had): the card

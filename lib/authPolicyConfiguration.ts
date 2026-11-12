@@ -15,16 +15,16 @@ export const AUTH_POLICY_SETTING_KEYS = [
   "auth_policy_revision",
 ] as const;
 
-export type AuthMethods = {
+type AuthMethods = {
   phone: boolean;
   email: boolean;
 };
 
-export type DialCodeRule = "ALL" | string[];
+type DialCodeRule = "ALL" | string[];
 
 export type RegionRule = "ALL" | string[];
 
-export type AuthMethodOverride = AuthMethods & {
+type AuthMethodOverride = AuthMethods & {
   storefront: string;
 };
 
@@ -33,7 +33,7 @@ type DialCodeOverride = {
   dialCodes: DialCodeRule;
 };
 
-export type RegionOverride = {
+type RegionOverride = {
   storefront: string;
   regions: RegionRule;
 };
@@ -67,12 +67,12 @@ export type AuthPolicyDraftIssue =
   | "dialFormatMask"
   | "revision";
 
-export type PhoneDialFormatRefusal = {
+type PhoneDialFormatRefusal = {
   field: "phone_dial_formats" | "code" | "mask";
   index: number | null;
 };
 
-export type PhoneRegionRefusal = {
+type PhoneRegionRefusal = {
   setting: "phone_regions_default" | "phone_regions_overrides";
   storefront: string | null;
   index: number | null;
@@ -82,18 +82,18 @@ export type AuthPolicyConflict = {
   currentRevision: number;
 };
 
-export type AuthPolicyStorefront = {
+type AuthPolicyStorefront = {
   alpha3: string;
   nameEn: string;
   nameHu: string;
 };
 
-export type AuthPolicyCallingCode = {
+type AuthPolicyCallingCode = {
   code: string;
   exampleAlpha3: string;
 };
 
-export type AuthPolicyRegion = {
+type AuthPolicyRegion = {
   alpha2: string;
   alpha3: string;
   callingCode: string;
@@ -118,7 +118,7 @@ export type LocalizedAuthPolicyRegion = AuthPolicyRegion & {
   name: string;
 };
 
-export type AuthPolicyVocabularyWarning = {
+type AuthPolicyVocabularyWarning = {
   setting: (typeof AUTH_POLICY_EDITABLE_SETTING_KEYS)[number];
   codes: string[];
 };
@@ -731,7 +731,7 @@ function collectVocabularyWarnings(
   return warnings;
 }
 
-export function authPolicyVocabularyWarnings(
+function authPolicyVocabularyWarnings(
   value: Pick<AuthPolicyConfiguration,
     "methodOverrides" | "defaultRegions" | "regionOverrides" | "phoneDialFormats">,
   authVocabulary: AuthPolicyVocabulary,

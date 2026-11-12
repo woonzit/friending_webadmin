@@ -11,7 +11,7 @@
  */
 
 export const MAIL_DELIVERY_DAYS = [1, 7, 30] as const;
-export type MailDeliveryDays = (typeof MAIL_DELIVERY_DAYS)[number];
+type MailDeliveryDays = (typeof MAIL_DELIVERY_DAYS)[number];
 /**
  * Friending Core's `MailDeliveryReadService::KINDS`, in its order: the outbox kinds Core writes.
  * Core reports any other stored kind as `other`, so a kind outside this list is a contract change.
@@ -30,15 +30,15 @@ export const MAIL_DELIVERY_KINDS = [
   "go_direct_email",
   "go_newsletter",
 ] as const;
-export type MailDeliveryKind = (typeof MAIL_DELIVERY_KINDS)[number];
+type MailDeliveryKind = (typeof MAIL_DELIVERY_KINDS)[number];
 /** The state filter: the five row states plus `slow` (delivered later than `slow_seconds`). */
 export const MAIL_DELIVERY_STATES = ["delivered", "slow", "pending", "retrying", "failed", "not_sent"] as const;
-export type MailDeliveryStateFilter = (typeof MAIL_DELIVERY_STATES)[number];
+type MailDeliveryStateFilter = (typeof MAIL_DELIVERY_STATES)[number];
 export const MAIL_DELIVERY_ROW_STATES = ["delivered", "pending", "retrying", "failed", "not_sent"] as const;
-export type MailDeliveryRowState = (typeof MAIL_DELIVERY_ROW_STATES)[number];
+type MailDeliveryRowState = (typeof MAIL_DELIVERY_ROW_STATES)[number];
 
 /** Core's page size, its by-domain cap and the highest page it accepts (`[1-9][0-9]{0,3}`). */
-export const MAIL_DELIVERY_PAGE_SIZE = 50;
+const MAIL_DELIVERY_PAGE_SIZE = 50;
 const DOMAIN_LIMIT = 10;
 const MAX_PAGE = 9999;
 const ADDRESS_MAX = 254;
@@ -56,7 +56,7 @@ export type MailDeliveryFilters = {
 };
 export const DEFAULT_MAIL_DELIVERY_FILTERS: MailDeliveryFilters = { days: 1, kind: "", state: "", email: "", page: 1 };
 
-export type MailDeliveryIssue = { code: number | null; message: string };
+type MailDeliveryIssue = { code: number | null; message: string };
 export type MailDeliveryRow = {
   id: string;
   kind: MailDeliveryKind | "other";
@@ -72,7 +72,7 @@ export type MailDeliveryRow = {
   temporary_failures: number;
   issue: MailDeliveryIssue | null;
 };
-export type MailDeliveryDomain = {
+type MailDeliveryDomain = {
   domain: string;
   total: number;
   delivered: number;
@@ -80,7 +80,7 @@ export type MailDeliveryDomain = {
   max_seconds: number | null;
   slow: number;
 };
-export type MailDeliverySummary = {
+type MailDeliverySummary = {
   total: number;
   counts: Record<MailDeliveryRowState, number>;
   median_seconds: number | null;
@@ -134,7 +134,7 @@ export function mailDeliveryAddress(value: string): string | null {
 }
 
 /** Core's form body: the days and page always, the other three only when set. */
-export type MailDeliveryCoreParams = {
+type MailDeliveryCoreParams = {
   days: MailDeliveryDays;
   page: number;
   kind?: MailDeliveryKind;
@@ -143,7 +143,7 @@ export type MailDeliveryCoreParams = {
 };
 
 /** The filters a browser body (or a Core form body built from one) asks for, or null for anything else. */
-export function mailDeliveryFilters(body: Record<string, unknown>): MailDeliveryFilters | null {
+function mailDeliveryFilters(body: Record<string, unknown>): MailDeliveryFilters | null {
   if (Object.keys(body).some((key) => !["days", "kind", "state", "email", "page"].includes(key))) return null;
   const { days = 1, kind = "", state = "", email = "", page = 1 } = body;
   if (!(MAIL_DELIVERY_DAYS as readonly unknown[]).includes(days)) return null;
@@ -163,7 +163,7 @@ export function mailDeliveryFilters(body: Record<string, unknown>): MailDelivery
 }
 
 /** Core's form body for the filters: the defaults of the optional three are left out. */
-export function mailDeliveryCoreParams(filters: MailDeliveryFilters): MailDeliveryCoreParams {
+function mailDeliveryCoreParams(filters: MailDeliveryFilters): MailDeliveryCoreParams {
   return {
     days: filters.days,
     page: filters.page,

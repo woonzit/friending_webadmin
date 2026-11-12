@@ -10,7 +10,7 @@
  * Pure: no clock of its own (the caller passes Core's `server_now`), no browser time zone (the event's own is used).
  */
 export type DatesExternalScheduleInput = { start_at: number; end_at: number; start_local: string; end_local: string; timezone: string; all_day?: boolean };
-export type DatesExternalSchedule = {
+type DatesExternalSchedule = {
   allDay: boolean; multiDay: boolean; running: boolean;
   /** The date or date range, with clock times only for a timed event. */
   text: string;

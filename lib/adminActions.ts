@@ -250,7 +250,7 @@ export const ADMIN_ACTIONS = [
   ...DATES_ADMIN_ACTIONS,
 ] as const;
 
-export type AdminAction = (typeof ADMIN_ACTIONS)[number];
+type AdminAction = (typeof ADMIN_ACTIONS)[number];
 
 /**
  * What a principal must hold to invoke an action, mirroring the gate Core runs
@@ -659,7 +659,7 @@ const DATES_ROLES: ReadonlySet<string> = new Set([
   "superadmin",
 ]);
 
-export type AdminPrincipal = {
+type AdminPrincipal = {
   /** `owner`, `admin` or `viewer`; `""` when the membership payload was unusable. */
   role: string;
   /** Resolved Dates rung; `""` when no rung can be established. */

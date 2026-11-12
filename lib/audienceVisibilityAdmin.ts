@@ -48,7 +48,7 @@ export const AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES = [
 export const AUDIENCE_VISIBILITY_IDENTITY_ACTIONS = [
   "save_audience_visibility_member_identity",
 ] as const;
-export const AUDIENCE_VISIBILITY_TABS = ["groups", "retirement", "intents"] as const;
+const AUDIENCE_VISIBILITY_TABS = ["groups", "retirement", "intents"] as const;
 
 export const AUDIENCE_VISIBILITY_LEGACY_TYPES = [
   "sex_cut",
@@ -101,34 +101,34 @@ export const AUDIENCE_VISIBILITY_INITIAL_INTENT_KEYS = [
 
 export type AudienceVisibilityGender = (typeof AUDIENCE_VISIBILITY_GENDERS)[number];
 export type AudienceVisibilityValue = (typeof AUDIENCE_VISIBILITY_VALUES)[number];
-export type AudienceVisibilityCapability = (typeof AUDIENCE_VISIBILITY_CAPABILITIES)[number];
+type AudienceVisibilityCapability = (typeof AUDIENCE_VISIBILITY_CAPABILITIES)[number];
 export type AudienceVisibilityAdminAction = (typeof AUDIENCE_VISIBILITY_ADMIN_ACTIONS)[number];
-export type AudienceVisibilityIdentityCapability =
+type AudienceVisibilityIdentityCapability =
   (typeof AUDIENCE_VISIBILITY_IDENTITY_CAPABILITIES)[number];
-export type AudienceVisibilityIdentityAction = (typeof AUDIENCE_VISIBILITY_IDENTITY_ACTIONS)[number];
+type AudienceVisibilityIdentityAction = (typeof AUDIENCE_VISIBILITY_IDENTITY_ACTIONS)[number];
 export type AudienceVisibilityMutationAction = (typeof AUDIENCE_VISIBILITY_MUTATION_ACTIONS)[number];
 export type AudienceVisibilityTab = (typeof AUDIENCE_VISIBILITY_TABS)[number];
-export type AudienceVisibilityRetiredProfileQuestionKey =
+type AudienceVisibilityRetiredProfileQuestionKey =
   (typeof AUDIENCE_VISIBILITY_RETIRED_PROFILE_QUESTION_KEYS)[number];
 
-export type AudienceVisibilityPrincipal = {
+type AudienceVisibilityPrincipal = {
   role: "" | "viewer" | "editor" | "approver" | "owner";
   capabilities: AudienceVisibilityCapability[];
 };
 
-export type AudienceVisibilityAdminMe = {
+type AudienceVisibilityAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   principal: AudienceVisibilityPrincipal;
   actions: AudienceVisibilityAdminAction[];
 };
 
-export type AudienceVisibilityIdentityPrincipal = {
+type AudienceVisibilityIdentityPrincipal = {
   role: "" | "viewer" | "editor" | "approver" | "owner";
   capabilities: AudienceVisibilityIdentityCapability[];
 };
 
-export type AudienceVisibilityIdentityAdminMe = {
+type AudienceVisibilityIdentityAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   principal: AudienceVisibilityIdentityPrincipal;
@@ -153,7 +153,7 @@ export type AudienceVisibilityGroup = {
   editable_fields: string[];
 };
 
-export type AudienceVisibilityRetiredQuestion = {
+type AudienceVisibilityRetiredQuestion = {
   key: AudienceVisibilityRetiredProfileQuestionKey;
   labels: { en: string; hu: string };
   /** Served by the pre-T-632 manifest ("sex_or_anatomy"); optional on the T-632 one. */
@@ -162,14 +162,14 @@ export type AudienceVisibilityRetiredQuestion = {
 };
 
 /** Only the pre-T-632 manifest carries this row; T-634 removes it with the transition branch. */
-export type AudienceVisibilityRetainedQuestion = {
+type AudienceVisibilityRetainedQuestion = {
   key: "body_hair";
   labels: { en: "Body hair"; hu: "Testszőrzet" };
   state: "active";
   change: "neutral_general_all_groups";
 };
 
-export type AudienceVisibilityRetirementManifest = {
+type AudienceVisibilityRetirementManifest = {
   sha256: string;
   matching_orientation: "retired";
   layer1_intent: "retired";
@@ -187,7 +187,7 @@ export type AudienceVisibilityIntent = {
   archived: boolean;
 };
 
-export type AudienceVisibilityIntents = {
+type AudienceVisibilityIntents = {
   schema_version: 2;
   title: { en: string; hu: string };
   intents_revision: number;
@@ -223,7 +223,7 @@ export type AudienceVisibilityCatalog = {
  * the console never rewrites a member's retired detail and never invents one.
  * `undefined` is the terminal Core; a string or `null` is the deployed one.
  */
-export type AudienceVisibilityMemberIdentity = {
+type AudienceVisibilityMemberIdentity = {
   /** `identity_v2.revision`; 0 means the member has no canonical document yet. */
   identity_revision: number;
   legacy_gender_detail?: string | null;
@@ -239,25 +239,25 @@ export type AudienceVisibilityMemberDetail = {
   identity: AudienceVisibilityMemberIdentity | null;
 };
 
-export type AudienceVisibilityMemberMutation = {
+type AudienceVisibilityMemberMutation = {
   contract_version: 1;
   member: AudienceVisibilityMemberDetail;
   replayed: boolean;
 };
 
-export type AudienceVisibilityGroupMutation = {
+type AudienceVisibilityGroupMutation = {
   contract_version: 1;
   group: AudienceVisibilityGroup;
   replayed: boolean;
 };
 
-export type AudienceVisibilityIntentMutation = {
+type AudienceVisibilityIntentMutation = {
   contract_version: 1;
   intents: AudienceVisibilityIntents;
   replayed: boolean;
 };
 
-export type AudienceVisibilityConflict =
+type AudienceVisibilityConflict =
   | { kind: "group"; group: AudienceVisibilityGroup }
   | { kind: "intents"; intents: AudienceVisibilityIntents }
   | { kind: "member"; member: AudienceVisibilityMemberDetail };
@@ -540,7 +540,7 @@ function visibilityIntent(value: unknown): AudienceVisibilityIntent | null {
     : null;
 }
 
-export function audienceVisibilityIntents(value: unknown): AudienceVisibilityIntents | null {
+function audienceVisibilityIntents(value: unknown): AudienceVisibilityIntents | null {
   const source = requiredObject(value, [
     "schema_version", "title", "intents_revision", "selection_min", "selection_max", "items",
   ]);
@@ -611,7 +611,7 @@ function principal(value: unknown): AudienceVisibilityPrincipal | null {
   return exactOrdered(capabilities, expected) ? { role, capabilities } : null;
 }
 
-export const AUDIENCE_VISIBILITY_ACTION_CAPABILITY: Record<
+const AUDIENCE_VISIBILITY_ACTION_CAPABILITY: Record<
   AudienceVisibilityAdminAction,
   AudienceVisibilityCapability
 > = {
@@ -851,7 +851,7 @@ export function audienceVisibilityConflict(value: unknown): AudienceVisibilityCo
   return memberData?.contract_version === 1 && member ? { kind: "member", member } : null;
 }
 
-export const AUDIENCE_VISIBILITY_ERROR_STATUSES: Readonly<Record<string, number>> = {
+const AUDIENCE_VISIBILITY_ERROR_STATUSES: Readonly<Record<string, number>> = {
   unauthorized: 401,
   "auth-required": 401,
   "bad-origin": 403,

@@ -7,8 +7,8 @@
  * - null: a person decided, or research publication did not close it (a candidate without an intake: null).
  * Released bodies keep serving such an intake as `rejected` / `duplicate`.
  */
-export const DATES_SYSTEM_CLOSURE_DECISIONS = ["research_not_publishable", "duplicate"] as const;
-export type DatesSystemClosureDecision = typeof DATES_SYSTEM_CLOSURE_DECISIONS[number];
+const DATES_SYSTEM_CLOSURE_DECISIONS = ["research_not_publishable", "duplicate"] as const;
+type DatesSystemClosureDecision = typeof DATES_SYSTEM_CLOSURE_DECISIONS[number];
 /**
  * The gate's blocker codes (`DatesResearchPublicationPolicy::AUTOMATIC_BLOCKERS`), which the console words. A blocker
  * may also be the machine code of the publication writer that refused an event the gate let through (at most 96

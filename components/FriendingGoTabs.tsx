@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 /** The three route tabs of the FriendingGO section (D-153): Preorders, Email, Sent. */
-export const FRIENDINGGO_TABS = [
+const FRIENDINGGO_TABS = [
   { href: "/friendinggo", key: "preorders", exact: true },
   { href: "/friendinggo/email", key: "email", exact: false },
   { href: "/friendinggo/sent", key: "sent", exact: false },

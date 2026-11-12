@@ -114,7 +114,7 @@ export function datesExternalDefaultDuration(category: DatesExternalCategory): n
  * 24 hours (`dates-external-duration-invalid`). An all-day event, stored from local midnight to local midnight, may be
  * one hour longer: the clock-change day.
  */
-export const DATES_EXTERNAL_SPAN_DAYS: Readonly<Partial<Record<DatesExternalCategory, number>>> = { festival: 62, market: 62, exhibition: 184 };
+const DATES_EXTERNAL_SPAN_DAYS: Readonly<Partial<Record<DatesExternalCategory, number>>> = { festival: 62, market: 62, exhibition: 184 };
 export function datesExternalMaximumDuration(category: DatesExternalCategory, allDay = false): number {
   return (DATES_EXTERNAL_SPAN_DAYS[category] ?? 1) * 86400 + (allDay ? 3600 : 0);
 }

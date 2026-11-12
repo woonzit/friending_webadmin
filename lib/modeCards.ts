@@ -24,8 +24,8 @@ export const MODE_CARDS_ACTIONS = ["mode_cards_get", "save_mode_cards"] as const
 
 export const MODE_CARDS_TITLE_MAX = 40 as const;
 export const MODE_CARDS_SUBTITLE_MAX = 180 as const;
-export const MODE_CARDS_URL_MAX = 512 as const;
-export const MODE_CARDS_REVISION_MAX = 2_147_483_647 as const;
+const MODE_CARDS_URL_MAX = 512 as const;
+const MODE_CARDS_REVISION_MAX = 2_147_483_647 as const;
 
 /**
  * D-115 wants a square TRANSPARENT PNG drawn bare at the height of the
@@ -33,18 +33,18 @@ export const MODE_CARDS_REVISION_MAX = 2_147_483_647 as const;
  * refuses it before the upload, so an operator learns at the file picker rather
  * than after a round trip.
  */
-export const MODE_CARDS_ICON_MIME = "image/png" as const;
-export const MODE_CARDS_ICON_MIN_DIMENSION = 16 as const;
+const MODE_CARDS_ICON_MIME = "image/png" as const;
+const MODE_CARDS_ICON_MIN_DIMENSION = 16 as const;
 export const MODE_CARDS_ICON_MAX_DIMENSION = 512 as const;
 /** The shared catalogue icon path's own decoded ceiling. */
-export const MODE_CARDS_ICON_MAX_BYTES = 2_097_152 as const;
+const MODE_CARDS_ICON_MAX_BYTES = 2_097_152 as const;
 
 export const MODE_CARDS_TARGET = "mode_cards:v1" as const;
 
 export type ModeCardKey = (typeof MODE_CARDS)[number];
 export type ModeCardLanguage = (typeof MODE_CARD_LANGUAGES)[number];
 
-export type ModeCardText = Record<ModeCardLanguage, string>;
+type ModeCardText = Record<ModeCardLanguage, string>;
 export type ModeCardIcon = { url: string; mime: typeof MODE_CARDS_ICON_MIME };
 
 export type ModeCard = {
@@ -62,25 +62,25 @@ export type ModeCardsState = {
   updated_by: string;
 };
 
-export type ModeCardsMutation = ModeCardsState & {
+type ModeCardsMutation = ModeCardsState & {
   no_change: boolean;
   replayed: boolean;
 };
 
-export type ModeCardsConflict = { current: ModeCardsState };
+type ModeCardsConflict = { current: ModeCardsState };
 
 /** The public `ios_appconfig.mode_cards` block, decoded for the corpus test. */
-export type ModeCardsAppBlock = { contract_version: 1; cards: ModeCard[] };
+type ModeCardsAppBlock = { contract_version: 1; cards: ModeCard[] };
 
 type JsonObject = Record<string, unknown>;
 
-export type ModeCardInput = {
+type ModeCardInput = {
   title: ModeCardText;
   subtitle: ModeCardText;
   icon: ModeCardIcon | null;
 };
 
-export type ModeCardsSavePayload = JsonObject & {
+type ModeCardsSavePayload = JsonObject & {
   contract_version: 1;
   cards: Record<ModeCardKey, ModeCardInput>;
   expected_revision: number;
@@ -349,7 +349,7 @@ export function modeCardsFieldPointer(value: unknown): string | null {
   return typeof field === "string" && MODE_CARDS_FIELD_POINTERS.includes(field) ? field : null;
 }
 
-export type ModeCardsErrorKey =
+type ModeCardsErrorKey =
   | "sessionInvalid"
   | "badOrigin"
   | "routeNotFound"
@@ -534,7 +534,7 @@ function sameIcon(a: ModeCardIcon | null, b: ModeCardIcon | null): boolean {
 }
 
 /** Does the served state carry exactly the copy this command asked for? */
-export function modeCardsStateMatchesPayload(
+function modeCardsStateMatchesPayload(
   payload: ModeCardsSavePayload,
   state: ModeCardsState,
 ): boolean {
@@ -587,7 +587,7 @@ export function modeCardsConflictSatisfiesPending(
 
 // ---------------------------------------------------------------- the icon
 
-export type ModeCardIconFileError = "empty" | "size" | "type" | "signature" | "dimensions";
+type ModeCardIconFileError = "empty" | "size" | "type" | "signature" | "dimensions";
 
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10] as const;
 
@@ -602,7 +602,7 @@ function uint32(bytes: Uint8Array, offset: number): number {
  * authority; this exists so a wrong file is refused at the file picker instead
  * of after an upload the operator then has to undo.
  */
-export function modeCardIconBytesError(
+function modeCardIconBytesError(
   bytes: Uint8Array,
   totalSize: number,
 ): ModeCardIconFileError | null {

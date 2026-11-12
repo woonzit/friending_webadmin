@@ -11,19 +11,19 @@
  * addresses, so nothing here logs, stores or forwards it.
  */
 
-export const INSIGHT_SCHEMA_VERSION = 1;
+const INSIGHT_SCHEMA_VERSION = 1;
 /** `AdminMemberInsightService::RECENT_LOGIN_LIMIT` / `SHARED_ACCOUNT_LIMIT`. */
-export const INSIGHT_RECENT_LOGIN_LIMIT = 15;
-export const INSIGHT_SHARED_ACCOUNT_LIMIT = 20;
+const INSIGHT_RECENT_LOGIN_LIMIT = 15;
+const INSIGHT_SHARED_ACCOUNT_LIMIT = 20;
 /** Core's uid bound on this route (`WebadminController::userModerationInsight`). */
-export const INSIGHT_MAX_UID = 2_147_483_647;
+const INSIGHT_MAX_UID = 2_147_483_647;
 
 export const INSIGHT_PLATFORMS = ["web", "ios", "android", "unknown"] as const;
-export type InsightPlatform = (typeof INSIGHT_PLATFORMS)[number];
+type InsightPlatform = (typeof INSIGHT_PLATFORMS)[number];
 
 /** `AdminMemberInsightService::methods()`, in the order Core lists them. */
 export const INSIGHT_METHODS = ["email", "phone", "apple", "google", "facebook"] as const;
-export type InsightMethod = (typeof INSIGHT_METHODS)[number];
+type InsightMethod = (typeof INSIGHT_METHODS)[number];
 
 /** `AdminMemberInsightService::assemble()` flags, in the order Core raises them. */
 export const INSIGHT_FLAGS = [
@@ -35,12 +35,12 @@ export const INSIGHT_FLAGS = [
   "no-return-after-signup",
   "logins-from-several-countries",
 ] as const;
-export type InsightFlag = (typeof INSIGHT_FLAGS)[number];
+type InsightFlag = (typeof INSIGHT_FLAGS)[number];
 
 export type InsightGeo = { country: string; country_code: string; city: string };
-export type InsightLogin = InsightGeo & { at: number; ip: string; platform: InsightPlatform; app_build: string };
+type InsightLogin = InsightGeo & { at: number; ip: string; platform: InsightPlatform; app_build: string };
 export type InsightTag = { key: string; name: string; named: boolean };
-export type InsightAccount = {
+type InsightAccount = {
   uid: number;
   display_name: string;
   created_at: number;

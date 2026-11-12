@@ -2,9 +2,9 @@
 // (handoffs/product-to-core/footprints-v1/DESIGN.md §6).
 
 export const FOOTPRINT_GENDERS = ["male", "female", "other"] as const;
-export type FootprintGender = (typeof FOOTPRINT_GENDERS)[number];
+type FootprintGender = (typeof FOOTPRINT_GENDERS)[number];
 
-export type FootprintSettings = {
+type FootprintSettings = {
   dailyLimit: number;
   messageMaxLength: number;
   revision: number;
@@ -24,7 +24,7 @@ export type FootprintBadge = {
   revision: number;
 };
 
-export type FootprintCastGroup = {
+type FootprintCastGroup = {
   id: string;
   labels: { en: string; hu: string };
   active: boolean;
@@ -32,7 +32,7 @@ export type FootprintCastGroup = {
 
 /** Core's membership rollout (`MembershipAccessService::rolloutMode`), as footprints_admin reports it. */
 export const FOOTPRINT_ROLLOUT_MODES = ["legacy", "enforced", "deny"] as const;
-export type FootprintRolloutMode = (typeof FOOTPRINT_ROLLOUT_MODES)[number];
+type FootprintRolloutMode = (typeof FOOTPRINT_ROLLOUT_MODES)[number];
 
 export type FootprintsAdminPayload = {
   settings: FootprintSettings;
@@ -70,25 +70,25 @@ export const FOOTPRINT_REPORT_REASONS = [
   "other",
   "unspecified",
 ] as const;
-export type FootprintReportReason = (typeof FOOTPRINT_REPORT_REASONS)[number];
+type FootprintReportReason = (typeof FOOTPRINT_REPORT_REASONS)[number];
 
 /** `FootprintReportPolicy::RESOLUTIONS`. */
 export const FOOTPRINT_REPORT_RESOLUTIONS = ["dismissed", "message_removed"] as const;
-export type FootprintReportResolution = (typeof FOOTPRINT_REPORT_RESOLUTIONS)[number];
+type FootprintReportResolution = (typeof FOOTPRINT_REPORT_RESOLUTIONS)[number];
 
 /** The `action` values `resolve_footprint_report` takes. */
-export const FOOTPRINT_REPORT_ACTIONS = ["dismiss", "remove_message"] as const;
+const FOOTPRINT_REPORT_ACTIONS = ["dismiss", "remove_message"] as const;
 export type FootprintReportAction = (typeof FOOTPRINT_REPORT_ACTIONS)[number];
 
 export type FootprintReportStatus = "open" | "resolved";
 
 /** `FootprintReportPolicy::NOTE_MAX_LENGTH`, code points. */
-export const FOOTPRINT_REPORT_NOTE_MAX = 500;
+const FOOTPRINT_REPORT_NOTE_MAX = 500;
 /** The resolution note bound (`ModerationPolicy::normalizeReason`, 300 code points). */
 export const FOOTPRINT_RESOLUTION_NOTE_MAX = 300;
 export const FOOTPRINT_REPORT_PAGE_SIZE = 50;
 
-export type FootprintState = {
+type FootprintState = {
   exists: boolean;
   hidden: boolean;
   messageRemoved: boolean;
@@ -124,7 +124,7 @@ export type FootprintReport = {
   senderReportCount: number | null;
 };
 
-export type FootprintReportPage = {
+type FootprintReportPage = {
   reports: FootprintReport[];
   hasMore: boolean;
   nextCursor: string | null;
@@ -536,7 +536,7 @@ export function canRemoveFootprintMessage(
     && report.message.trim() !== "";
 }
 
-export type FootprintStateKey = "missing" | "visible" | "hidden" | "messageRemoved";
+type FootprintStateKey = "missing" | "visible" | "hidden" | "messageRemoved";
 
 /** The footprint's current state as label keys; empty when Core did not say. */
 export function footprintStateKeys(report: Pick<FootprintReport, "footprintState">): FootprintStateKey[] {

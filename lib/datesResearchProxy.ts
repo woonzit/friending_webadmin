@@ -41,12 +41,12 @@ function exactValues(value: unknown, defaults: boolean) {
     && (!Object.hasOwn(value, "domains") || researchDomainsValid(value.domains));
 }
 /** Syntax only. Core alone owns the public-host, suffix and immutable deny-list decisions. */
-export function researchDomainName(value: unknown): string | null {
+function researchDomainName(value: unknown): string | null {
   if (!researchString(value)) return null;
   const host = value.replace(/^[\x00\x09\x0a\x0b\x0d\x20]+|[\x00\x09\x0a\x0b\x0d\x20]+$/g, "").toLowerCase();
   return host.length <= 253 && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/.test(host) ? host : null;
 }
-export type ResearchDomainDraftIssue = { kind: "invalid" } | { kind: "duplicate"; otherIndex: number };
+type ResearchDomainDraftIssue = { kind: "invalid" } | { kind: "duplicate"; otherIndex: number };
 /** Indexed editor hints only; do not claim Core's public-host or suffix validation. */
 export function researchDomainDraftIssues(rows: readonly { domain: unknown }[]): (ResearchDomainDraftIssue | null)[] {
   const issues: (ResearchDomainDraftIssue | null)[] = rows.map(() => null);
@@ -153,7 +153,7 @@ export function normalizeDatesResearchProxyBody(action: string, body: Record<str
   return normalizeResearchBatchBody(body);
 }
 /** Research follow-ups list filters: every one optional; an empty value is no filter and is not forwarded. */
-export function normalizeResearchFollowupsBody(body: Record<string, unknown>): Record<string, unknown> | null {
+function normalizeResearchFollowupsBody(body: Record<string, unknown>): Record<string, unknown> | null {
   if (!keys(body, [], ["area_id", "group", "state", "q", "cursor", "limit"])) return null;
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(body)) {
@@ -169,7 +169,7 @@ export function normalizeResearchFollowupsBody(body: Record<string, unknown>): R
   }
   return result;
 }
-export function normalizeResearchBatchBody(body: Record<string, unknown>): Record<string, unknown> | null {
+function normalizeResearchBatchBody(body: Record<string, unknown>): Record<string, unknown> | null {
   if (!keys(body, ["intake_ids", "expected_revisions", "action", "reason", "idempotency_key"], ["confirmations", "reason_code"]) || !audited(body)
     || !Array.isArray(body.intake_ids) || body.intake_ids.length < 1 || !body.intake_ids.every(datesIntakeId)
     || new Set(body.intake_ids).size !== body.intake_ids.length || !researchRecord(body.expected_revisions)

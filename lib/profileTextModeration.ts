@@ -20,17 +20,17 @@ export const PROFILE_TEXT_MODERATION_ACTIONS = [
 export type ProfileTextModerationField = (typeof PROFILE_TEXT_MODERATION_FIELDS)[number];
 export type ProfileTextModerationStatus = (typeof PROFILE_TEXT_MODERATION_STATUSES)[number];
 export type ProfileTextModerationDecision = (typeof PROFILE_TEXT_MODERATION_DECISIONS)[number];
-export type ProfileTextModerationCapability = (typeof PROFILE_TEXT_MODERATION_CAPABILITIES)[number];
+type ProfileTextModerationCapability = (typeof PROFILE_TEXT_MODERATION_CAPABILITIES)[number];
 export type ProfileTextModerationAction = (typeof PROFILE_TEXT_MODERATION_ACTIONS)[number];
 export type ProfileTextModerationRole = "viewer" | "admin" | "owner";
 export type ProfileTextModerationFilterField = ProfileTextModerationField | "all";
 
-export type ProfileTextModerationPrincipal = {
+type ProfileTextModerationPrincipal = {
   role: ProfileTextModerationRole;
   capabilities: ProfileTextModerationCapability[];
 };
 
-export type ProfileTextModerationAdminMe = {
+type ProfileTextModerationAdminMe = {
   contract_version: 1;
   contract_ready: boolean;
   principal: ProfileTextModerationPrincipal;
@@ -49,7 +49,7 @@ export type ProfileTextModerationItem = {
   member: { display_name: string; username: string };
 };
 
-export type ProfileTextModerationList = {
+type ProfileTextModerationList = {
   contract_version: 1;
   principal: ProfileTextModerationPrincipal;
   actions: ProfileTextModerationAction[];
@@ -59,7 +59,7 @@ export type ProfileTextModerationList = {
   total: number;
 };
 
-export type ProfileTextModerationListExpectation = {
+type ProfileTextModerationListExpectation = {
   field: ProfileTextModerationFilterField;
   uid: number | null;
   page_size: number;
@@ -73,7 +73,7 @@ export type ProfileTextModerationListExpectation = {
   loaded_before?: number;
 };
 
-export type ProfileTextModerationMutation = {
+type ProfileTextModerationMutation = {
   contract_version: 1;
   item: ProfileTextModerationItem;
   replayed: boolean;
@@ -239,7 +239,7 @@ export function profileTextModerationAdminMe(value: unknown): ProfileTextModerat
   };
 }
 
-export const PROFILE_TEXT_MODERATION_ACTION_CAPABILITY: Record<
+const PROFILE_TEXT_MODERATION_ACTION_CAPABILITY: Record<
   ProfileTextModerationAction,
   ProfileTextModerationCapability
 > = {

@@ -21,8 +21,8 @@ export const CANNED_TEMPLATE_CAPABILITIES = [
 ] as const;
 
 export type CannedTemplateChannel = (typeof CANNED_TEMPLATE_CHANNELS)[number];
-export type CannedTemplateCapability = (typeof CANNED_TEMPLATE_CAPABILITIES)[number];
-export type CannedTemplateFormat = "sanitized_html" | "plain_text";
+type CannedTemplateCapability = (typeof CANNED_TEMPLATE_CAPABILITIES)[number];
+type CannedTemplateFormat = "sanitized_html" | "plain_text";
 
 export type CannedTemplatePrincipal = {
   role: "viewer" | "admin" | "owner";
@@ -43,7 +43,7 @@ export type CannedTemplate = {
   updated_by: string;
 };
 
-export type CannedTemplateListRequest = {
+type CannedTemplateListRequest = {
   contract_version: 1;
   type: CannedTemplateChannel;
   query: string;
@@ -75,7 +75,7 @@ export type CannedTemplateDraftMaterial = {
   audit_reason: string;
 };
 
-export type CannedTemplateSavePayload = {
+type CannedTemplateSavePayload = {
   contract_version: 1;
   id: string;
   type: CannedTemplateChannel;
@@ -87,7 +87,7 @@ export type CannedTemplateSavePayload = {
   body: string;
 };
 
-export type CannedTemplateDeletePayload = {
+type CannedTemplateDeletePayload = {
   contract_version: 1;
   id: string;
   expected_revision: number;
@@ -95,7 +95,7 @@ export type CannedTemplateDeletePayload = {
   audit_reason: string;
 };
 
-export type CannedTemplateDeleted = {
+type CannedTemplateDeleted = {
   template_id: string;
   channel: CannedTemplateChannel;
   revision: number;
@@ -142,7 +142,7 @@ export type CannedTemplateDraftError =
   | "subject"
   | "body";
 
-export type CannedTemplateResult<T> =
+type CannedTemplateResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: CannedTemplateDraftError };
 
@@ -245,7 +245,7 @@ function requestId(value: unknown): string | null {
   return typeof value === "string" && REQUEST_ID.test(value) ? value : null;
 }
 
-export function normalizeCannedTemplateRequestId(value: unknown): string | null {
+function normalizeCannedTemplateRequestId(value: unknown): string | null {
   return typeof value === "string" ? requestId(value.toLowerCase()) : null;
 }
 
@@ -514,7 +514,7 @@ function templatesAreOrdered(rows: readonly CannedTemplate[]): boolean {
   return true;
 }
 
-export function cannedTemplateListData(
+function cannedTemplateListData(
   value: unknown,
   expected: CannedTemplateListRequest,
 ): CannedTemplateListData | null {
@@ -940,7 +940,7 @@ export const CANNED_TEMPLATE_ERROR_STATUSES: Record<
   "admin-write-required": 403,
 };
 
-export type CannedTemplateErrorKey =
+type CannedTemplateErrorKey =
   | (typeof CANNED_TEMPLATE_ERROR_KEYS)[keyof typeof CANNED_TEMPLATE_ERROR_KEYS]
   | "generic";
 

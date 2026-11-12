@@ -1,6 +1,6 @@
 import { castGroupProfileSegment, type UserCastGroup } from "@/lib/userCastGroups";
 
-export type MigratedMemberAudience = {
+type MigratedMemberAudience = {
   groupIds: string[];
   legacySegments: string[];
 };
