@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership } from "@/lib/adminMembership";
 import {
@@ -103,16 +104,13 @@ export async function revokeCurrentAdminSession(): Promise<boolean> {
   return true;
 }
 
-export async function adminMe(signal?: AbortSignal): Promise<AdminIdentity | null> {
-  let session;
-  try { session = await readAdminSession(); } catch { throw new AdminMembershipUnconfirmedError(); }
-  if (signal?.aborted) throw new AdminMembershipUnconfirmedError();
-  if (!session) return null;
+// `nonce` is part of the memo key only: it tells two sessions of one address apart.
+const confirmedIdentity = cache(async (email: string, nonce: string, signal: AbortSignal | undefined): Promise<AdminIdentity | null> => {
   let result;
   try {
-    result = await coreCall("admin_me", { admin_email: session.email }, undefined, { signal, membershipCheck: true });
+    result = await coreCall("admin_me", { admin_email: email }, undefined, { signal, membershipCheck: true });
   } catch { throw new AdminMembershipUnconfirmedError(); }
-  const decision = classifyAdminMembership(result, session.email, signal?.aborted === true);
+  const decision = classifyAdminMembership(result, email, signal?.aborted === true);
   if (decision.kind === "revoked") return null;
   if (decision.kind !== "confirmed") throw new AdminMembershipUnconfirmedError();
   const data = decision.membership;
@@ -138,6 +136,25 @@ export async function adminMe(signal?: AbortSignal): Promise<AdminIdentity | nul
     verificationMethod: verificationMethodAccess(verificationMethodAdminMe(data.verification_method)),
     friendingGoConsoleReady: friendingGoConsoleReady(data),
   };
+});
+
+/**
+ * The signed-in operator as Core confirms them now: `null` without a session or after a definite
+ * revocation; `AdminMembershipUnconfirmedError` when Core's answer is not a confirmation.
+ *
+ * Every server render checks once. The dashboard layout and the page of one render both ask, and
+ * they share that render's one check through React's `cache`: React keeps its memo per server
+ * request (Next renders a document's layout and page in one React request) and keeps none outside
+ * a render, so the next request, and a route handler on every call, asks Core again. The memo is
+ * keyed by the session too (`email` and `nonce`): two sessions never share an answer, even within
+ * one render. The cookie and its signature are read on every call, outside the memo.
+ */
+export async function adminMe(signal?: AbortSignal): Promise<AdminIdentity | null> {
+  let session;
+  try { session = await readAdminSession(); } catch { throw new AdminMembershipUnconfirmedError(); }
+  if (signal?.aborted) throw new AdminMembershipUnconfirmedError();
+  if (!session) return null;
+  return confirmedIdentity(session.email, session.nonce, signal);
 }
 
 /**

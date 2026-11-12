@@ -29,6 +29,18 @@ if (typeof moduleApi.registerHooks === "function") {
   throw new Error("no module resolution hook API available");
 }
 const secret = "test-membership-session-secret-0000000000";
+let rsc: { React: any; Flight: any } | undefined;
+/**
+ * Next's production App Router runtime - the React and the Flight renderer that serve the console - for
+ * modules that use React's per-request `cache` (lib/session.ts). Outside a Flight render it memoises nothing.
+ */
+export function serverReact(): { React: any; Flight: any } {
+  if (!rsc) {
+    const runtime = nodeModule.createRequire(import.meta.url)("next/dist/compiled/next-server/app-page.runtime.prod.js");
+    rsc = { React: runtime.vendored["react-rsc"].React, Flight: runtime.vendored["react-rsc"].ReactServerDOMWebpackServer };
+  }
+  return rsc;
+}
 export async function serverModule(path: string, overrides: Record<string, unknown>) {
   const source = readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
   const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
@@ -51,6 +63,7 @@ export async function sessionHarness(answer: MembershipCase) {
   const controller = new AbortController(), calls: Record<string, unknown>[] = [];
   const state = { token: createSessionToken(MEMBERSHIP_EMAIL, secret), answer, coreThrows: false, cookiesThrow: false };
   const api = await serverModule("lib/session.ts", {
+    cache: serverReact().React.cache,
     cookies: async () => { if (state.cookiesThrow) throw new Error("DERIVED cookies unavailable"); return { get: () => ({ value: state.token }) }; },
     coreCall: async (action: string, payload: Record<string, unknown>, _timeout: unknown, options: { signal?: AbortSignal; membershipCheck?: boolean }) => {
       assert.equal(action, "admin_me"); assert.equal(payload.admin_email, MEMBERSHIP_EMAIL); assert.equal(options.membershipCheck, true);
