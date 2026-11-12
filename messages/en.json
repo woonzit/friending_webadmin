@@ -36,7 +36,6 @@
     "actions": "Actions",
     "demo": "Demo",
     "real": "Regular",
-    "role": "Role",
     "email": "Email",
     "notAvailable": "Not available",
     "unreadableField": "Unreadable field — authoritative identity and revision are not changed",
@@ -3745,7 +3744,6 @@
     "title": "Overview",
     "subtitle": "A live snapshot of the community and the controls that shape discovery.",
     "totalUsers": "Registered users",
-    "newUsers": "New in 7 days",
     "signupsTitle": "Recent signups",
     "signups24h": "Last 24 hours",
     "signups7d": "Last 7 days",
@@ -4091,7 +4089,6 @@
     },
     "unlimited": "Unlimited",
     "disabled": "Unavailable",
-    "quotaUsage": "{used} / {limit} used",
     "writeRequired": "Your administrator role is read-only. An admin or owner must issue or extend access.",
     "reason": "Audit reason",
     "reasonPlaceholder": "Why is this access being granted or changed?",
@@ -4680,11 +4677,6 @@
     "eyebrow": "Trust and safety policy",
     "title": "Verification settings",
     "subtitle": "Shape regional methods, feature requirements, bilingual member messages and privacy-safe badge presentation.",
-    "staging": "Guarded rollout",
-    "fixtureBadge": "Authoritative data",
-    "localDraftNotice": "Only a revisioned, validated Core response can replace the displayed resource.",
-    "reviewDraft": "Review draft",
-    "or": "or",
     "tabs": {
       "label": "Verification settings sections",
       "scopes": "Scopes",
@@ -4778,21 +4770,6 @@
       "granted": "Verified by the Friending team",
       "imported": "Verified in the previous Friending app"
     },
-    "countries": {
-      "HU": "Hungary",
-      "AT": "Austria",
-      "DE": "Germany",
-      "PL": "Poland",
-      "RS": "Serbia",
-      "US": "United States",
-      "CA": "Canada"
-    },
-    "cities": {
-      "budapest": "Budapest",
-      "szeged": "Szeged",
-      "miami": "Miami",
-      "toronto": "Toronto"
-    },
     "features": {
       "people": {
         "list": {
@@ -4844,103 +4821,29 @@
     "scopes": {
       "listTitle": "Regional scopes",
       "listCopy": "Review saved drafts, live effective requirements and exact revisioned operations for each regional scope.",
-      "global": "Global",
-      "globalCode": "ALL",
-      "inherited": "Inherited methods",
-      "kinds": {
-        "global": "Global fallback",
-        "country": "Country region",
-        "city": "City region"
-      },
-      "columns": {
-        "region": "Region",
-        "defaultLevel": "Default level",
-        "status": "Status"
-      },
-      "states": {
-        "live": "Live",
-        "draft": "Draft",
-        "off": "Off"
-      },
-      "toggleMethod": "Toggle {method} for {scope}",
-      "defaultLevelFor": "Default level for {scope}",
-      "statusFor": "Publication status for {scope}",
-      "noTierLanguage": "Tier wording is hidden with one method",
-      "addRegion": "Add region",
-      "cancelAdd": "Close add form",
-      "importMembers": "Import from Members",
-      "importPreview": "Import is shown for workflow review only. No member locations were read.",
-      "kindLabel": "Region kind",
       "country": "Country",
       "citySearch": "City search",
-      "citySearchPlaceholder": "Search canonical cities",
-      "citySearchHint": "Typed text is never accepted as city authority. Only a current Core-proxied result token can create a city draft.",
-      "city": "Selected canonical result",
-      "cityPlaceholder": "Select a sample result",
-      "canonicalSelection": "Only the selected result supplies the city identity; its fallback key is not editable.",
-      "addDraft": "Add draft region",
-      "addedDraft": "The draft region was added to this preview only.",
-      "duplicate": "That region already exists in the preview.",
-      "cityRequired": "Select one canonical city result before adding the draft region.",
-      "guardrails": {
-        "title": "Guardrails",
-        "copy": "These rules stay visible beside every regional edit.",
-        "bothOff": {
-          "title": "Both methods off",
-          "copy": "The region has no verification gate or badge, and every feature requirement falls to None."
-        },
-        "oneOn": {
-          "title": "One method on",
-          "copy": "Member screens use method wording only and hide Light or Strong tier language."
-        },
-        "liveDisable": {
-          "title": "Disable a live method",
-          "copy": "Earned verification remains, while new checks with that method cannot start."
-        }
-      },
-      "queue": {
-        "title": "Pending review queue",
-        "copy": "Privacy-safe aggregate health for current pending reviews.",
-        "average": "Average {minutes} min",
-        "progressLabel": "Average wait {minutes} minutes against a {threshold} minute threshold",
-        "threshold": "Above {minutes} minutes, the pending message automatically uses its longer variant."
-      }
+      "addDraft": "Add draft region"
     },
     "requirements": {
       "title": "Feature requirements matrix",
       "copy": "Set a tier per closed feature key and inspect the effective source of every inherited cell.",
-      "compactScope": "Scope shown on compact layouts",
       "feature": "Feature",
       "values": {
         "inherit": "Inherit",
         "none": "None",
         "light": "Light",
         "strong": "Strong"
-      },
-      "effective": "Effective: {value} from {source}",
-      "guardrailNone": "Both methods are off, so the effective requirement is None."
+      }
     },
     "messages": {
       "title": "Default gate messages",
       "copy": "Edit one complete atomic EN/HU pair. Core validates semantic assets, labels, URLs and exact revisions before saving.",
-      "defaultLabel": "Default message kind",
-      "variants": {
-        "video": "Video",
-        "persona": "Persona",
-        "both": "Both · two steps",
-        "pending": "Pending",
-        "rejected": "Rejected · retry"
-      },
-      "bothMeaning": "Both is an ordered two-step flow: Video selfie first, then ID check. A member may stop after step 1.",
-      "pendingMeaning": "Pending is information-only. It can show the review wait and links back to Verification status.",
-      "rejectedMeaning": "Rejected uses a member-safe reason, attempt counter and manual-review availability supplied with the state.",
-      "localeLabel": "Message locale",
       "locales": {
         "en": "English",
         "hu": "Hungarian"
       },
       "fields": {
-        "icon": "Allow-listed symbol",
         "title": "Title",
         "subtitle": "Subtitle",
         "description": "Description",
@@ -4952,9 +4855,6 @@
         "secondaryAction": "Secondary action",
         "secondaryLabel": "Secondary label",
         "secondaryUrl": "Secondary HTTPS URL",
-        "actionKind": "Primary action",
-        "actionLabel": "Action label",
-        "actionUrl": "HTTPS action URL",
         "cancelLabel": "Cancel label"
       },
       "behaviorActions": {
@@ -4963,70 +4863,33 @@
         "url": "Open HTTPS URL",
         "none": "No action"
       },
-      "actions": {
-        "start_video": "Start video verification",
-        "start_persona": "Start identity verification",
-        "open_verification_center": "Open Verification",
-        "dismiss": "Close message",
-        "url": "Open HTTPS URL"
-      },
-      "invalidUrl": "Enter a canonical HTTPS URL without embedded credentials.",
       "previewLabel": "Unsaved member gate preview",
       "emptyPreview": "Untitled verification message",
       "emptyAction": "Primary action",
       "emptyCancel": "Not now",
-      "nonInteractive": "Unsaved, non-interactive member preview",
-      "previewSteps": {
-        "video": "Video selfie",
-        "persona": "ID check"
-      },
-      "previewPending": {
-        "wait": "Current average review time: about {minutes} minutes",
-        "longer": "A longer reassurance message is used above {minutes} minutes."
-      },
-      "previewRejected": {
-        "reason": "The face moved outside the guide during the recording.",
-        "attempt": "Attempt {attempt} of {maximum}",
-        "manualReview": "If retry still fails, the team can review it manually."
-      }
+      "nonInteractive": "Unsaved, non-interactive member preview"
     },
     "badges": {
       "title": "Badge specimens",
       "copy": "Review the public verified seal and the self-only pending and rejected states at every supported size.",
-      "file": "Badge PNG",
       "limit": "PNG only, square 16–2048 px and at most {size} MiB. The request is persisted before upload.",
-      "tierInsideOnly": "Verification center only",
-      "placementRule": "Photos always show one pink verified seal, regardless of Light or Strong. Tier names appear only inside the Verification center.",
       "slots": {
         "light": "Public pink seal",
         "strong": "Strong internal asset",
         "pending": "Pending self-view asset"
       },
-      "placements": {
-        "people": "People card",
-        "profile": "Profile header",
-        "chat": "Chat header"
-      },
-      "selfOnly": "Hidden from others",
-      "visibleHere": "Shown here",
-      "privacy": "Members can hide their own verified seal in Privacy. Pending and rejected seals are never projected to other members.",
       "errors": {
         "empty": "The selected file is empty.",
         "size": "The selected file is larger than 2 MiB.",
         "type": "Select a PNG file.",
         "signature": "The file does not contain a valid PNG signature and IHDR header.",
         "dimensions": "Use a square PNG between 16 and 2048 pixels."
-      },
-      "noManifest": "The PNG is locally valid; Core still performs bounded decode, re-encoding, storage and revision checks.",
-      "review": "Review selection"
+      }
     },
     "simulator": {
       "inputsTitle": "Synthetic member inputs",
       "inputsCopy": "Choose a synthetic scope, method and provenance state without looking up a UID.",
-      "localOnly": "Core runs the pure evaluator without reading or changing a member.",
       "scope": "Member region",
-      "video": "Video selfie status",
-      "persona": "Persona status",
       "methodStatus": "Synthetic method status",
       "pendingAge": "Pending age (seconds)",
       "attempt": "Attempt number (optional)",
@@ -5035,30 +4898,10 @@
       "importedHint": "Imported method hint",
       "grant": "Team-grant level",
       "badgeVisible": "Member allows the verified seal to be shown",
-      "rejectedFixture": "Retry state",
-      "rejectedReason": "The face moved outside the guide during the recording.",
-      "rejectedAttempt": "Attempt {attempt} of {maximum}",
-      "manualReview": "Manual review is available after another failed retry",
       "outputTitle": "Core evaluation",
       "outputCopy": "Every closed feature remains visible so a missing row cannot look allowed.",
-      "derived": "Derived level",
-      "effective": "Effective level and source",
-      "chain": "Scope chain",
-      "tierLanguageHidden": "Method wording only",
-      "publicBadge": "Projection to other members",
-      "pinkSeal": "One pink verified seal",
-      "hiddenSeal": "No badge",
-      "ownState": "Own-profile state",
-      "ownStates": {
-        "none": "No seal",
-        "verified": "Pink verified seal",
-        "pending": "Pending seal",
-        "rejected": "Retry seal"
-      },
       "allowed": "Allowed",
-      "blocked": "Verification required",
-      "requirement": "Requires {value}",
-      "next": "Next: {method}"
+      "blocked": "Verification required"
     },
     "live": {
       "refresh": "Refresh authoritative state",
@@ -5157,46 +5000,7 @@
       "loadMoreFailed": "The next policy page did not match the captured authoritative snapshot. Refresh and try again.",
       "importHealth": "Stored import integrity (invalid / total):"
     },
-    "seedCopy": {
-      "video": {
-        "title": "Video verification",
-        "subtitle": "A quick check helps keep Friending genuine.",
-        "description": "Open Verification to start a video selfie or check a submission. Once approved, it unlocks features that require Light verification.",
-        "actionLabel": "Open Verification",
-        "cancelLabel": "Not now"
-      },
-      "persona": {
-        "title": "Identity verification",
-        "subtitle": "An identity check helps build trust.",
-        "description": "Open Verification to start an identity check with Persona or review its status. Once approved, it unlocks features that require Strong verification.",
-        "actionLabel": "Open Verification",
-        "cancelLabel": "Not now"
-      },
-      "both": {
-        "title": "Two quick steps to continue",
-        "subtitle": "Start with a video selfie, then complete an ID check.",
-        "description": "Complete step 1 first. You may stop there and return for the ID check when you are ready.",
-        "actionLabel": "Start step 1 · Video selfie",
-        "cancelLabel": "Not now"
-      },
-      "pending": {
-        "title": "Your verification is on the way",
-        "subtitle": "The review is still in progress.",
-        "description": "You can keep using Friending while the team reviews your submission. Check Verification for the latest status.",
-        "actionLabel": "Got it",
-        "cancelLabel": "View verification status"
-      },
-      "rejected": {
-        "title": "We could not confirm that video",
-        "subtitle": "A retry usually fixes framing or lighting issues.",
-        "description": "Review the reason below, then record a new video when you are ready.",
-        "actionLabel": "Try again",
-        "cancelLabel": "Not now"
-      }
-    },
     "methodPolicy": {
-      "title": "Mandatory verification and Waiting Room",
-      "copy": "Choose one mandatory method or none globally and per App Store storefront. Only the published revision affects members.",
       "readOnly": "Read-only: your current Core capability permits inspection but not draft or publish actions.",
       "loadError": "The unified verification-method policy could not be loaded safely.",
       "unavailableTitle": "Stored method policy unavailable",
@@ -5341,8 +5145,7 @@
         "title": "The new iOS app has to be out first.",
         "copy": "Do not publish the gesture photo selfie for any row, global or storefront, until the iOS app version that can take it is available in the App Store. Members on older app versions would be held in the Waiting Room with no way to verify."
       }
-    },
-    "requirementsInactive": "Feature requirements are inactive until the client activation guard is ready."
+    }
   },
   "cannedTemplates": {
     "eyebrow": "Communications library",
@@ -6426,11 +6229,8 @@
       "separate": "Registration presence is member-specific. The global delivery mode is configured separately and can disable a present channel. Identifiers and provider credentials are never shown here."
     },
     "verificationGrant": {
-      "fixtureReason": "Team support decision",
-      "fixtureRejectionReason": "The face moved outside the guide during the recording.",
       "title": "Verification",
       "copy": "Review method states, provenance, effective level and the separate upward-only team grant.",
-      "localOnly": "This bounded Core projection excludes provider payloads, inquiry identifiers and evidence.",
       "scope": "Applied region",
       "evaluatedAt": "Evaluation time",
       "derivedLevel": "Derived level",
@@ -6438,7 +6238,6 @@
       "badgeVisibility": "Member badge visibility",
       "badgeVisible": "Visible",
       "badgeHidden": "Hidden by the member",
-      "badgePrivacy": "This preference is controlled by the member in Privacy. Administrators cannot override it here.",
       "levels": {
         "none": "Not verified",
         "light": "Light",
@@ -6467,13 +6266,6 @@
       "imported": {
         "title": "Previous-app verification",
         "copy": "{level} from {method}, imported {date}. This is not a synthetic provider inquiry or team grant."
-      },
-      "rejection": {
-        "title": "Retry context",
-        "reason": "Member-safe reason",
-        "attempt": "Attempt {attempt} of {maximum}",
-        "manualReview": "Manual review is available after another failed retry",
-        "manualReviewUnavailable": "Manual review is not currently available"
       },
       "grant": {
         "title": "Current team grant",
@@ -6507,11 +6299,9 @@
         "previewLevel": "Preview effective level",
         "changesNow": "The reviewed grant would raise the effective level.",
         "noImmediateChange": "No immediate level change.",
-        "strongWarning": "A Strong grant changes access inside Verification, but other members still see only the same pink verified seal with no tier disclosure.",
         "remove": "Remove active grant",
         "preview": "Preview grant",
-        "noRevocation": "Removal affects only the team grant. V1 cannot revoke genuine Video selfie, Persona or imported verification.",
-        "removePreview": "Removal preview only: method and imported verification would remain unchanged. No request was sent."
+        "noRevocation": "Removal affects only the team grant. V1 cannot revoke genuine Video selfie, Persona or imported verification."
       },
       "previewed": "Core prepared a current {level} grant preview. No mutation was sent.",
       "live": {
@@ -6652,8 +6442,6 @@
       "retry": "Retry authoritative read",
       "gender": "Canonical gender",
       "visibleTo": "Who can see the profile",
-      "genderDetail": "Detailed gender",
-      "noGenderDetail": "No detailed gender",
       "group": "Derived protected group",
       "revision": "Visibility revision",
       "unresolved": "Unresolved",
@@ -6672,8 +6460,6 @@
       "editor": {
         "gender": "Gender",
         "genderSelect": "Select…",
-        "genderDetail": "Detailed gender",
-        "genderDetailNone": "No detailed gender",
         "visibleTo": "Who can see my profile",
         "auditReason": "Audit reason",
         "auditHint": "{count} of 300 characters. Core stores this reason on the audit record, not on the member.",
@@ -6930,18 +6716,9 @@
     "identityReadOnlyTitle": "Identity is read-only here",
     "identityReadOnlyCopy": "Canonical gender now lives in the member's audience-visibility record, and Core refuses the legacy identity write. The values below are shown for support review only; edit them in the “Who can see my profile” panel above.",
     "gender": "Gender",
-    "subgender": "Detailed gender",
-    "noSubgender": "No detailed gender",
-    "showSubgender": "Display detailed gender on the profile",
-    "select": "Select…",
     "derivedGroup": "Derived user group",
     "channels": "Discovery channels",
     "questionPacks": "Question packs",
-    "saveIdentity": "Save gender and group",
-    "identityRequired": "Select a gender.",
-    "identitySaveError": "Gender and user group could not be saved.",
-    "identityRetired": "Core refused this write: the legacy identity route is retired. Gender is changed through the audience-visibility record.",
-    "identitySaved": "Gender saved. The user group and eligible profile fields were recalculated.",
     "fieldsTitle": "Selectable profile data",
     "fieldsCopy": "{count, plural, one {# eligible field} other {# eligible fields}} for the currently derived user group.",
     "singleHint": "Choose one answer or leave it empty.",
@@ -6968,60 +6745,6 @@
     "sectionShareOff": "Member switched sharing off",
     "sectionAudience": "Visible to: {audience}"
   },
-  "heroes": {
-    "eyebrow": "People discovery",
-    "title": "Hero campaigns",
-    "subtitle": "Manage the media carousel shown at the top of Discover. English is the fallback for both supported locales.",
-    "newCampaign": "New campaign",
-    "activeCount": "{active} active of {total}",
-    "preview": "Preview",
-    "mediaType": "Media type",
-    "image": "Image",
-    "video": "Video",
-    "campaignImage": "Campaign image",
-    "campaignImageHint": "The uploaded image is optimized and stored on the Friending image CDN.",
-    "videoUrl": "Video URL",
-    "videoUrlHint": "Use an HTTPS video URL served by an approved CDN.",
-    "destinationUrl": "Destination URL",
-    "destinationUrlHint": "Optional HTTPS link opened when the campaign is selected.",
-    "titleEn": "Title · English",
-    "titleHu": "Title · Hungarian",
-    "subtitleEn": "Subtitle · English",
-    "subtitleHu": "Subtitle · Hungarian",
-    "sortOrder": "Order",
-    "isActive": "Campaign is active",
-    "createTitle": "Create hero campaign",
-    "editTitle": "Edit hero campaign",
-    "deleteTitle": "Delete campaign?",
-    "deleteCopy": "This removes the campaign from the admin and Discover response. Its stored media file is retained.",
-    "empty": "No hero campaigns yet.",
-    "emptyCopy": "Create the first campaign to populate the People discovery carousel.",
-    "loadError": "Hero campaigns could not be loaded.",
-    "saveError": "The campaign could not be saved.",
-    "deleteError": "The campaign could not be deleted.",
-    "invalidUrl": "Upload an image or enter a valid HTTPS video URL. Destination links must also use HTTPS.",
-    "updated": "Campaign saved.",
-    "deleted": "Campaign deleted.",
-    "linkTitleEn": "Link label · English",
-    "linkTitleHu": "Link label · Hungarian",
-    "linkTitleHint": "Shown as the tappable link under the copy. Empty keeps the app's default label.",
-    "typography": "Typography (optional)",
-    "typographyHint": "Per-platform font size and color for the title and subtitle. Empty fields keep the app's default styling.",
-    "web": "Web",
-    "mobile": "Mobile",
-    "titleStyle": "Title",
-    "subtitleStyle": "Subtitle",
-    "sizeDefault": "size",
-    "colorDefault": "#color (default)",
-    "sizePx": "font size in pixels",
-    "colorHex": "font color",
-    "weightLabel": "font weight",
-    "weightDefault": "Weight: default",
-    "weightNormal": "Normal",
-    "weightSemibold": "Semibold",
-    "weightBold": "Bold",
-    "invalidTextStyle": "Font sizes must be 10–120 px and colors #rrggbb hex values; leave a field empty for the default."
-  },
   "landing": {
     "eyebrow": "Public web",
     "title": "Landing backgrounds",
@@ -7040,7 +6763,6 @@
     "fallbackEditTitle": "Edit image-free landing default",
     "fallbackDescription": "This protected default is always available when no active media rule matches. It has no image or video, cannot be disabled or deleted, and keeps independent responsive gradient and login-card settings.",
     "fallbackBadge": "Always available",
-    "noImage": "No background image",
     "noMedia": "No background media",
     "countryCode": "Country code",
     "countryCodeHint": "Two-letter ISO code, for example HU, US or CA.",
@@ -7128,81 +6850,6 @@
     "newRegionalName": "Regional landing",
     "priorityValue": "Priority {value}"
   },
-  "appLanding": {
-    "eyebrow": "Native app",
-    "title": "App landing screen",
-    "subtitle": "Control the background, title and description the iOS app shows before sign-in. Override rules may leave content blank: blank fields inherit from the global rule, then from the built-in app default.",
-    "newRule": "New landing rule",
-    "activeCount": "{active} active of {total}",
-    "precedence": "City match → country match → global default → built-in app landing",
-    "name": "Admin label",
-    "namePlaceholder": "Budapest summer app landing",
-    "scope": "Geographic scope",
-    "scopeGlobal": "Global default",
-    "scopeCountry": "Country",
-    "scopeCity": "City radius",
-    "countryCode": "Country code",
-    "countryCodeHint": "Two-letter ISO code, for example HU, US or CA.",
-    "cityName": "City name",
-    "latitude": "Center latitude",
-    "longitude": "Center longitude",
-    "radius": "Radius · miles",
-    "radiusHint": "The default is 40 miles. Valid range: 1–250 miles.",
-    "priority": "Priority",
-    "priorityHint": "Higher priority wins when matching rules overlap. Equal-priority cities use the nearest center.",
-    "backgroundType": "Background type",
-    "backgroundImage": "Image",
-    "backgroundVideo": "Video",
-    "backgroundImageLabel": "Background image",
-    "backgroundImageHint": "Optional. Leave it empty to inherit the global background.",
-    "videoUrl": "Background video URL",
-    "videoUrlHint": "HTTPS video URL served by an approved CDN. Leave it empty to inherit the global background.",
-    "posterImage": "Video poster · optional",
-    "posterHint": "Optional image shown while the video loads.",
-    "titleType": "Title type",
-    "titleText": "Text",
-    "titleImage": "Image",
-    "titleTextEn": "Title · English",
-    "titleTextHu": "Title · Hungarian",
-    "titleTextHint": "Optional. Blank titles inherit from the global rule; the built-in default is “friending.”.",
-    "titleImageLabel": "Title image",
-    "titleImageHint": "Required for image titles. Upload a PNG with transparency; it keeps its transparent background.",
-    "descriptionEn": "Description · English",
-    "descriptionHu": "Description · Hungarian",
-    "descriptionHint": "Optional, up to 300 characters. Blank descriptions inherit from the global rule.",
-    "preview": "Phone preview",
-    "previewHint": "The preview resolves inheritance: this rule → global rule → built-in app default.",
-    "builtInBackground": "Built-in app background",
-    "isActive": "This landing rule is active",
-    "createTitle": "Create app landing rule",
-    "editTitle": "Edit app landing rule",
-    "deleteTitle": "Delete app landing rule?",
-    "deleteCopy": "This removes “{name}” from app landing selection. Its stored media files are retained.",
-    "empty": "No app landing rules yet.",
-    "emptyCopy": "Create the global rule first. Until then, the app shows its built-in landing screen.",
-    "loadError": "App landing rules could not be loaded.",
-    "saveError": "The landing rule could not be saved.",
-    "deleteError": "The landing rule could not be deleted.",
-    "nameInvalid": "Enter an admin label.",
-    "backgroundInvalid": "Upload a background image or enter a valid HTTPS video URL.",
-    "posterInvalid": "The video poster must finish uploading, or remove it.",
-    "titleImageRequired": "Upload a title image, or switch the title type back to text.",
-    "countryInvalid": "Enter a valid two-letter country code.",
-    "geoInvalid": "Enter a city, valid coordinates and a radius between 1 and 250 miles.",
-    "priorityInvalid": "Priority must be a whole number from 0 to 10,000.",
-    "globalExists": "A global rule already exists. Edit that rule instead.",
-    "globalProtected": "The global rule is permanent. Edit its content instead of deleting it or changing its scope.",
-    "updated": "App landing rule saved.",
-    "deleted": "App landing rule deleted.",
-    "newGlobalName": "Global app landing",
-    "newRegionalName": "Regional app landing",
-    "priorityValue": "Priority {value}",
-    "backgroundLabel": "Background",
-    "titleLabel": "Title",
-    "descriptionLabel": "Description",
-    "fallbackInherit": "inherits",
-    "fallbackDefault": "app default"
-  },
   "appearance": {
     "eyebrow": "Native app",
     "title": "Appearance & placements",
@@ -7241,7 +6888,6 @@
       "notFound": "This rule no longer exists. The list was reloaded.",
       "globalProtected": "The global rule is permanent: edit its content instead of deleting it or changing its scope.",
       "writeRequired": "Your role can view appearance rules but not change them.",
-      "timeout": "Core did not answer in time. The write may or may not have landed — the list was reloaded; check before retrying.",
       "uncertainNotLanded": "Core's answer was lost. The list was reloaded and does not contain this change — you may redo it.",
       "uncertainConflict": "Another administrator's write took the next revision while yours was in flight (uncertain answer), so your write did not land and your draft was closed. The authoritative rule is shown — reopen it to make the change deliberately on top of theirs.",
       "uncertainSuperseded": "The rule moved on by more than one revision while your write was uncertain, so it is ambiguous whether it landed before being overwritten. Your draft was closed and is never retried; the authoritative rule is shown — reopen it to edit deliberately.",
@@ -7322,31 +6968,6 @@
       "landingTitle": "App landing screen",
       "landingCopyGlobal": "The base landing content. Blank fields fall back to the compiled app default.",
       "landingCopyOverride": "Fill only what differs; blank fields inherit from the global rule, then from the compiled default.",
-      "backgroundType": "Background type",
-      "backgroundImage": "Image",
-      "backgroundVideo": "Video",
-      "titleType": "Title type",
-      "titleInherit": "Inherited",
-      "titleText": "Text",
-      "titleImage": "Image",
-      "backgroundImageLabel": "Background image",
-      "backgroundVideoLabel": "Background video",
-      "backgroundInheritHint": "Optional. Leave it empty to inherit the background.",
-      "posterImage": "Video poster · optional",
-      "posterHint": "Optional. Inherits on its own and is shown only while the effective background is a video.",
-      "titleTextEn": "Title · English",
-      "titleTextHu": "Title · Hungarian",
-      "titleTextHint": "Optional. Blank titles inherit; the compiled default is “friending.”.",
-      "titleImageLabel": "Title image",
-      "titleImageHint": "Transparent PNG. Required while the title type is Image.",
-      "titleImageInheritHint": "Optional transparent PNG. Used only where the inherited title type is an image.",
-      "descriptionEn": "Description · English",
-      "descriptionHu": "Description · Hungarian",
-      "descriptionHint": "Optional, up to 300 characters. Blank descriptions inherit.",
-      "landingPreview": "Phone preview",
-      "builtInBackground": "Compiled app background",
-      "landingPreviewButton": "Continue",
-      "landingPreviewHint": "Resolved as this rule → global rule → compiled default, in the console's language. The button shows the resolved light accent.",
       "heroTitle": "Discover hero carousel",
       "heroCopy": "Inherit the chain's carousel or replace it with this rule's own items. An empty override falls through to the global hero.",
       "paletteTitle": "Palette",
@@ -7677,7 +7298,6 @@
       },
       "revision": "Revision {revision} · content {version}",
       "builtInBackground": "Compiled app background",
-      "landingButton": "Continue",
       "appleButton": "Continue with Apple",
       "divider": "or",
       "qrButton": "QR reader",
@@ -8334,7 +7954,6 @@
     "inactive": "Archived",
     "castCount": "{count, plural, one {# user group} other {# user groups}}",
     "multiRange": "Choose {min}–{max}",
-    "answers": "{count, plural, one {# answer} other {# answers}}",
     "showAnswers": "Show {count, plural, one {# answer} other {# answers}}",
     "hideAnswers": "Hide answers",
     "addOption": "Add answer",
@@ -9286,7 +8905,6 @@
         "models": { "openai": "OpenAI research model", "gemini": "Gemini page-extraction fallback" },
         "domainsTitle": "Domain declarations",
         "domainsEmpty": "No domains are declared. Undeclared domains never auto-publish.",
-        "domain": "Public hostname",
         "domainRow": "Public hostname — entry {row}",
         "domainInvalid": "Entry {row}: enter a hostname such as events.example.org, without a URL, path or underscore. Core still checks its public-host and suffix rules.",
         "domainDuplicate": "Entry {row} duplicates entry {other} after trimming and ignoring case. Keep only one declaration for this hostname.",
@@ -9337,7 +8955,6 @@
           "refused": "Refused"
         },
         "results": "Result per intake",
-        "tooMany": "Choose no more than {count} intakes.",
         "clearSelection": "Clear selection"
       },
       "help": {
@@ -10351,7 +9968,6 @@
       "wallMediaVideoLabel": "Event-wall video kept as evidence",
       "evidenceLoaded": "Evidence was loaded and the read was audited.",
       "noEvidence": "No retained evidence is available.",
-      "evidenceItem": "Evidence {index}",
       "redactedEvidence": "{count, plural, one {# sensitive item remains redacted.} other {# sensitive items remain redacted.}}",
       "trailEvidenceTitle": "Capture a necessary live-trail window",
       "trailEvidenceCopy": "Copies only an explicitly selected window (maximum 2 hours and 1,000 points) into restricted case evidence. The operational trail still follows its normal purge schedule, and the action is audited without coordinates.",
@@ -10457,8 +10073,6 @@
       "loadError": "AreYouIn configuration could not be loaded.",
       "operationFailed": "The change failed ({error}). Refresh before retrying.",
       "readOnly": "Your AreYouIn role can read these controls but cannot change them.",
-      "noCatalogRole": "Your administrator account has no catalogue role, so Core refuses this catalogue.",
-      "noCatalogRoleHint": "This is a permission, not an outage. An owner has to set catalog_role on your admin_emails record; there is no console control for it yet.",
       "runtimeTitle": "Runtime settings",
       "runtimeCopy": "Section availability is managed once in Configuration; this page exposes the remaining explicit AreYouIn keys, which cannot be deleted here.",
       "settingCount": "{count} settings",
@@ -12663,7 +12277,6 @@
     "audienceRequired": "Custom targeting requires at least one gender or user group.",
     "groupInactive": "Inactive group",
     "globalHint": "Everyone. Switch to Custom to narrow it by gender or user group.",
-    "customEmptyHint": "Nothing selected yet — this still means everyone. Pick the genders this side applies to; a user group can be recorded but does not filter.",
     "featureSwitchesPointer": {
       "title": "Feature availability",
       "copy": "The global Hey, Footprint-badge and photo-like switches live together in Configuration. Visitors is always available; badge limits and catalogue settings on this page keep their own document and revision.",
@@ -13333,7 +12946,6 @@
       },
       "refusals": {
         "audienceChanged": "The audience changed since your preview: now {count, plural, one {# person} other {# people}} would receive it. The preview was updated. Check it and send again.",
-        "tooLarge": "This audience is larger than the limit of {cap} for this email type. Choose fewer people.",
         "rateLimited": "You can send at most {limit} newsletters in {minutes} minutes. Try again later."
       },
       "confirm": {
