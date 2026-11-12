@@ -13,7 +13,9 @@
  * - the base cadence is the old interval; after `SUPPORT_POLL_QUIET_READS` reads in a
  *   row that changed nothing it slows to `SUPPORT_POLL_SLOW_MS`, and after
  *   `SUPPORT_POLL_SLOW_READS` more to `SUPPORT_POLL_IDLE_MS`; failed reads wait 15 s,
- *   30 s, then 60 s;
+ *   30 s, then 60 s. The quiet tiers are deliberately mild: an operator in a live
+ *   exchange keeps the old cadence for a minute after the last change (20 reads), and
+ *   a member's message on a conversation left open never waits more than 15 s;
  * - a read that changed something, and `reset()` (an explicit load: Retry, a send),
  *   put it back to the base cadence;
  * - while the tab is hidden nothing is read; on return it reads at once and starts
@@ -24,10 +26,10 @@ export type SupportPollOutcome = "changed" | "unchanged" | "failed";
 
 export const SUPPORT_THREAD_POLL_MS = 5_000;
 export const SUPPORT_MESSAGE_POLL_MS = 3_000;
-export const SUPPORT_POLL_QUIET_READS = 4;
-export const SUPPORT_POLL_SLOW_READS = 8;
-export const SUPPORT_POLL_SLOW_MS = 15_000;
-export const SUPPORT_POLL_IDLE_MS = 30_000;
+export const SUPPORT_POLL_QUIET_READS = 20;
+export const SUPPORT_POLL_SLOW_READS = 30;
+export const SUPPORT_POLL_SLOW_MS = 10_000;
+export const SUPPORT_POLL_IDLE_MS = 15_000;
 const SUPPORT_POLL_FAILURE_MS = [15_000, 30_000, 60_000];
 
 /** The wait before the next read, after `quiet` reads that changed nothing and `failures` failed reads in a row. */

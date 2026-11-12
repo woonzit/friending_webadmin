@@ -144,7 +144,8 @@ test("a hidden tab reads nothing; on return it reads at once and starts from the
   const time = clock(), seen = visibility(), calls = reads();
   const poll = startSupportPoll(calls.read(time), 3_000, { timers: time.timers, visibility: seen.source });
   await calls.answer("changed");
-  for (let index = 0; index < 6; index++) { await time.advance(time.pending[0]); await calls.answer("unchanged"); }
+  // Past the quiet threshold, so the cadence had slowed before the tab was hidden.
+  for (let index = 0; index < SUPPORT_POLL_QUIET_READS + 2; index++) { await time.advance(time.pending[0]); await calls.answer("unchanged"); }
   const before = calls.started.length;
   seen.set(true);
   assert.deepEqual(time.pending, [], "hiding the tab clears the timer");
