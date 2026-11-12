@@ -71,11 +71,6 @@ export function validSuspendMinutesInput(value: string): boolean {
   return Number.isSafeInteger(minutes) && minutes >= 1 && minutes <= 129600;
 }
 
-/** A suspension may be replaced or escalated; a permanent ban must be lifted first. */
-export function canComposeRestriction(status: Pick<ModerationStatus, "banned">): boolean {
-  return !status.banned;
-}
-
 // Lazy: tests import this module for the pure parsers, and module-level JSX
 // would evaluate at import time under the node test loader.
 function moderationIcon(name: "shield" | "clock" | "globe" | "power" | "coins"): JSX.Element {

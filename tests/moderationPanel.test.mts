@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  canComposeRestriction,
   parseModerationStatus,
   validModerationReason,
   validSuspendMinutesInput,
@@ -88,9 +87,4 @@ test("custom suspension accepts only bounded whole minutes", () => {
   for (const invalid of ["", "0", "129601", "1.5", "1e3", "soon", "-10"]) {
     assert.equal(validSuspendMinutesInput(invalid), false, invalid);
   }
-});
-
-test("a suspension can be replaced or escalated without an unsafe lift-first gap", () => {
-  assert.equal(canComposeRestriction({ banned: false }), true);
-  assert.equal(canComposeRestriction({ banned: true }), false);
 });

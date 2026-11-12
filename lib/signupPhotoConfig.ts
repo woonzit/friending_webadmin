@@ -47,7 +47,7 @@ const LOCALE_PATTERN = /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/;
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F]/u;
 
 /** The two locales the product ships. Both keys must exist in every localised map. */
-export const REQUIRED_LOCALES = ["en", "hu"] as const;
+const REQUIRED_LOCALES = ["en", "hu"] as const;
 
 export type SignupPhotoLocalizedText = Record<string, string>;
 
