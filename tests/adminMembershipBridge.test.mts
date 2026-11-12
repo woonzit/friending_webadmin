@@ -96,12 +96,40 @@ test("DERIVED action gate: a slow request body abandoned after membership does n
   const result = await bridge(MEMBERSHIP_CASES[0], "set_settings", { abandonBody: true });
   assert.equal(result.status, 503); assert.deepEqual(result.forwarded, []);
 });
-test("DERIVED membership read: a positive first check cannot bless a malformed or revoked second admin_me reply", async () => {
-  for (const finalMe of MEMBERSHIP_CASES.filter((answer) => answer.kind !== "confirmed")) {
-    const result = await bridge({ name: "confirmed", status: 200, data: MEMBERSHIP_MEMBER, kind: "confirmed" }, "admin_me", { finalMe });
-    assert.equal(result.status, finalMe.kind === "revoked" ? 401 : 503, finalMe.name);
-    assert.equal(result.body.email, undefined); assert.equal(result.checks.length, 2); assert.deepEqual(result.forwarded, []);
+// A browser `admin_me` is answered by the proxy's own membership check: one Core call, never a second one, and
+// the same status and body for every outcome as when the proxy forwarded the question again (the forward asked
+// Core exactly the same thing: `admin_email` and nothing else). scan/server-admin-me-parity.txt ran the route of
+// main 47a3aec against this one over these cases.
+for (const answer of MEMBERSHIP_CASES) test(`DERIVED browser admin_me / ${answer.name}: one Core call, answered as before`, async () => {
+  // Were Core asked again, it would now say "revoked": the reply must still be the one check's answer.
+  const result = await bridge(answer, "admin_me", { finalMe: MEMBERSHIP_CASES.find((row) => row.name === "revoked") });
+  assert.equal(result.checks.length, 1, "exactly one Core call"); assert.deepEqual(result.forwarded, []);
+  assert.equal(result.headers.get("cache-control"), "no-store");
+  if (answer.kind === "confirmed") {
+    assert.equal(result.status, 200); assert.deepEqual(result.body, answer.data, "Core's confirmed answer, whole and unchanged");
+    assert.equal(result.bodyReads, 1, "the body is still read, after the check");
+  } else {
+    const [status, error] = answer.kind === "revoked" ? [401, "auth-required"] : [503, ADMIN_MEMBERSHIP_UNCONFIRMED];
+    assert.equal(result.status, status); assert.deepEqual(result.body, { success: false, status_code: status, error });
+    assert.equal(result.bodyReads, 0, "a refusal reads nothing of the body");
   }
+});
+test("DERIVED browser admin_me: a Core call that throws, a session read that throws and a guest are classified as before", async () => {
+  const thrown = await bridge(MEMBERSHIP_CASES[0], "admin_me", { throws: true });
+  assert.equal(thrown.status, 503); assert.deepEqual(thrown.body, { success: false, status_code: 503, error: ADMIN_MEMBERSHIP_UNCONFIRMED }); assert.equal(thrown.checks.length, 1);
+  const session = await bridge(MEMBERSHIP_CASES[0], "admin_me", { sessionThrows: true });
+  assert.equal(session.status, 503); assert.equal(session.body.error, ADMIN_MEMBERSHIP_UNCONFIRMED); assert.equal(session.checks.length, 0);
+  const guest = await bridge(MEMBERSHIP_CASES[0], "admin_me", { guest: true });
+  assert.equal(guest.status, 401); assert.equal(guest.body.error, "auth-required"); assert.equal(guest.checks.length, 0);
+});
+test("DERIVED browser admin_me: the body asks for nothing; a field is refused, not ignored, and an abandoned read answers nothing", async () => {
+  for (const body of [{ extra: 1 }, { admin_email: "other@example.test" }, { __proto__: null, contract_version: 1 }]) {
+    const result = await bridge(MEMBERSHIP_CASES[0], "admin_me", { body });
+    assert.equal(result.status, 400); assert.deepEqual(result.body, { success: false, status_code: 400, error: "invalid-input" });
+    assert.equal(result.checks.length, 1); assert.deepEqual(result.forwarded, []);
+  }
+  const abandoned = await bridge(MEMBERSHIP_CASES[0], "admin_me", { abandonBody: true });
+  assert.equal(abandoned.status, 503); assert.equal(abandoned.body.email, undefined); assert.equal(abandoned.checks.length, 1);
 });
 test("DERIVED action gate: only a complete definite revocation after forwarding can force login; unknown 401s stay errors", async () => {
   for (const answer of MEMBERSHIP_CASES.filter((row) => row.status === 401 || row.kind === "revoked")) {

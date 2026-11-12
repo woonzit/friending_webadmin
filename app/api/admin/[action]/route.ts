@@ -439,19 +439,22 @@ export async function POST(
   // the server-owned actor identity is applied, so `admin_email` no longer
   // depends on the order of an object literal to stay authoritative.
   if (request.signal?.aborted) return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  // A browser `admin_me` asks Core exactly what the membership check above has just asked it - `admin_email`
+  // and nothing else - so that check's confirmed answer is the reply, as it is: forwarding the question again
+  // only cost a second, identical Core call. Revoked and unconfirmed answers were already refused above, as
+  // before. A body that asks for anything more is refused rather than silently ignored.
+  if (action === "admin_me") {
+    if (Object.keys(body).length > 0) return bridgeError("invalid-input", 400);
+    return NextResponse.json(decision.membership, { status: 200, headers: NO_STORE_HEADERS });
+  }
   const result = await coreCall(
     action,
     // D-143: the Admin intake contract selector goes with every Dates Admin request. It is added to the merged
     // parameters, after the browser's body and the actor, so it is server-owned like them.
     withDatesAdminContract(action, mergeCoreParams(body, { admin_email: session.email })),
     adminActionTimeoutMs(action),
-    action === "admin_me" ? { signal: request.signal, membershipCheck: true } : { signal: request.signal, strictResponse: true },
+    { signal: request.signal, strictResponse: true },
   );
-  if (action === "admin_me") {
-    const finalMembership = classifyAdminMembership(result, session.email, request.signal?.aborted === true);
-    if (finalMembership.kind === "revoked") return bridgeError("auth-required", 401);
-    if (finalMembership.kind !== "confirmed") return bridgeError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
-  }
   // The action may already have run. This is an unknown outcome, not the
   // definite pre-forward membership refusal used above.
   if (request.signal?.aborted) return bridgeError("core-timeout", 504);
