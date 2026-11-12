@@ -1,4 +1,4 @@
-import { getCountryDataList } from "countries-list";
+import { ISO_COUNTRIES } from "@/lib/isoCountries";
 import { adminBridgeErrorEnvelope } from "@/lib/adminBridge";
 import { webadminDataSuccessEnvelope, webadminEnvelope, webadminErrorEnvelope } from "@/lib/webadminEnvelope";
 
@@ -580,19 +580,14 @@ export type LocalizedAppearanceCountry = AppearanceCountry & { name: string };
 
 /**
  * Core `AppearancePolicy::ALPHA2_TO_ALPHA3` is the 249 current ISO 3166-1
- * assignments (T-468b finding 17). `countries-list` additionally carries the
- * CLDR subdivision-style territories AC/ASC and TA/TAA, which Core refuses.
+ * assignments (T-468b finding 17): `lib/isoCountries.ts`, shared with the
+ * forced-verification storefronts.
  */
-const NON_ISO_REGIONS: ReadonlySet<string> = new Set(["AC", "TA"]);
 export const APPEARANCE_COUNTRY_COUNT = 249;
-const COUNTRY_SOURCE = getCountryDataList().filter((country) => !country.userAssigned && !NON_ISO_REGIONS.has(country.iso2));
 const ENGLISH_COUNTRY_NAMES: ReadonlyMap<string, string> = new Map(
-  COUNTRY_SOURCE.map((country) => [country.iso2, country.name]),
+  ISO_COUNTRIES.map((country) => [country.alpha2, country.englishName]),
 );
-const COUNTRY_CATALOG: AppearanceCountry[] = COUNTRY_SOURCE
-  .map((country) => ({ alpha2: country.iso2, alpha3: country.iso3 }))
-  .filter((country) => /^[A-Z]{2}$/.test(country.alpha2) && /^[A-Z]{3}$/.test(country.alpha3))
-  .sort((left, right) => left.alpha3.localeCompare(right.alpha3));
+const COUNTRY_CATALOG: AppearanceCountry[] = ISO_COUNTRIES.map(({ alpha2, alpha3 }) => ({ alpha2, alpha3 }));
 const ALPHA3_CODES: ReadonlySet<string> = new Set(COUNTRY_CATALOG.map((country) => country.alpha3));
 const ALPHA2_CODES: ReadonlySet<string> = new Set(COUNTRY_CATALOG.map((country) => country.alpha2));
 

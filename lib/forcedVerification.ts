@@ -1,4 +1,4 @@
-import { getCountryDataList } from "countries-list";
+import { ISO_COUNTRIES } from "@/lib/isoCountries";
 import { wellFormedUtf16 } from "@/lib/appearanceRules";
 
 /**
@@ -77,13 +77,8 @@ export const WAITING_ROOM_COMPILED_COPY: Readonly<Record<WaitingRoomLocale, Wait
 type ForcedStorefront = { alpha2: string; alpha3: string; englishName: string };
 type LocalizedForcedStorefront = ForcedStorefront & { name: string };
 
-const NON_ISO_REGIONS = new Set(["AC", "TA"]);
-
-const STOREFRONT_CATALOGUE: ForcedStorefront[] = getCountryDataList()
-  .filter((country) => !country.userAssigned && !NON_ISO_REGIONS.has(country.iso2))
-  .map((country) => ({ alpha2: country.iso2, alpha3: country.iso3, englishName: country.name }))
-  .filter((country) => /^[A-Z]{2}$/.test(country.alpha2) && /^[A-Z]{3}$/.test(country.alpha3))
-  .sort((left, right) => left.alpha3.localeCompare(right.alpha3));
+// The ISO 3166-1 catalogue shared with Appearance & placements (lib/isoCountries.ts).
+const STOREFRONT_CATALOGUE: ForcedStorefront[] = ISO_COUNTRIES.map(({ alpha2, alpha3, englishName }) => ({ alpha2, alpha3, englishName }));
 
 const STOREFRONT_CODES: ReadonlySet<string> = new Set(STOREFRONT_CATALOGUE.map((country) => country.alpha3));
 const STOREFRONT_ALPHA2: ReadonlyMap<string, string> = new Map(STOREFRONT_CATALOGUE.map((country) => [country.alpha3, country.alpha2]));
