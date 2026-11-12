@@ -79,9 +79,15 @@ with "Finish sending" (`mode=resume`, a fresh id, then repeated). Write controls
 parsed, closed shapes. The CSV export is its own write route (`/api/admin/go-preorders-export`) with a
 formula-injection guard.
 
-Do not reintroduce AYI/Are You In, Deplug, curated activities/events, event creation/joining,
-waiting room, mandatory walkthrough, or other retired Friending surfaces. Persona verification is
-in scope only through its reviewed Core contract and dedicated operations surfaces.
+AreYouIn is in scope: the `/dates/*` consoles (activities and their detail, moderation cases,
+configuration, external events and their review, corrections, member intakes, event research and
+AI usage) are its operations surface, each on its reviewed Core contract (`docs/DATES_*.md`,
+`docs/WIRE_CORPUS_PINNING.md`). An earlier version of this file listed AreYouIn, events and the
+waiting room as retired; `docs/DATES_EXTERNAL_CONSOLE.md` records the decision that ended that,
+and the forced-verification waiting-room copy is edited under Verification settings.
+
+Do not reintroduce Deplug, the mandatory walkthrough, or other retired Friending surfaces. Persona
+verification is in scope only through its reviewed Core contract and dedicated operations surfaces.
 
 The interface is dark-only and bilingual. English is the base/fallback locale and Hungarian is
 fully supported. `messages/en.json` and `messages/hu.json` must keep identical key trees. Use the
