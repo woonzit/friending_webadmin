@@ -13,7 +13,6 @@ type Props = {
   value: string;
   disabled?: boolean;
   onChange: (value: { url: string; mime: string }) => void;
-  onBusyChange?: (busy: boolean) => void;
 };
 
 const ALLOWED = new Set(["image/png", "image/svg+xml"]);
@@ -29,7 +28,6 @@ export default function ProfileIconUploadField({
   value,
   disabled = false,
   onChange,
-  onBusyChange,
 }: Props) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -43,10 +41,8 @@ export default function ProfileIconUploadField({
       return;
     }
     setBusy(true);
-    onBusyChange?.(true);
     const response = await adminUploadProfileIcon(file);
     setBusy(false);
-    onBusyChange?.(false);
     if (
       !response?.success
       || typeof response.media_url !== "string"

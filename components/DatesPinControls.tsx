@@ -188,12 +188,12 @@ export function usePinColorDraft(target: string | undefined, color: string | nul
 }
 
 /** The HEX field and the native colour picker beside it. `pickerColor` is what the picker shows. */
-export function PinHexInputs({ draft, pickerColor, invalid, describedBy, inputId, labels }: {
-  draft: PinColorDraft; pickerColor: string; invalid: boolean; describedBy?: string; inputId?: string; labels: { hex: string; picker: string };
+export function PinHexInputs({ draft, pickerColor, invalid, describedBy, labels }: {
+  draft: PinColorDraft; pickerColor: string; invalid: boolean; describedBy?: string; labels: { hex: string; picker: string };
 }) {
   return (
     <div className="dates-event-color-inputs">
-      <input id={inputId} className="dates-event-hex-input" value={draft.hexText} maxLength={9} placeholder="#RRGGBB" spellCheck={false} autoComplete="off" autoCapitalize="characters"
+      <input className="dates-event-hex-input" value={draft.hexText} maxLength={9} placeholder="#RRGGBB" spellCheck={false} autoComplete="off" autoCapitalize="characters"
         aria-label={labels.hex} aria-invalid={invalid} aria-describedby={describedBy}
         onChange={event => draft.type(event.target.value)} onBlur={draft.blur} />
       <input type="color" aria-label={labels.picker} value={pickerColor.toLowerCase()} onChange={event => draft.pick(event.target.value)} />

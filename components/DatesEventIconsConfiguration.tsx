@@ -29,15 +29,13 @@ function PlusGlyph() {
   return <svg className="dates-event-glyph" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 4v12M4 10h12" /></svg>;
 }
 
-export default function DatesEventIconsConfiguration({ canManage, onHoldChange, initialState = EVENT_ICON_EDITOR_INITIAL }: {
+export default function DatesEventIconsConfiguration({ canManage, onHoldChange }: {
   canManage: boolean;
   /** Told whenever the editor starts or stops holding unsaved edits or a save in doubt, so that the page does not unmount it. */
   onHoldChange?: (hold: boolean) => void;
-  /** The state the editor starts in. Only a server render (a test, a preview) gives one; the page starts empty and reads. */
-  initialState?: EventIconEditorState;
 }) {
   const t = useTranslations("datesAdmin.eventIcons"), common = useTranslations("common"), locale = useLocale();
-  const [state, dispatch] = useReducer(eventIconEditorReducer, initialState);
+  const [state, dispatch] = useReducer(eventIconEditorReducer, EVENT_ICON_EDITOR_INITIAL);
   const [filter, setFilter] = useState<"all" | ActivityType>("all");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
