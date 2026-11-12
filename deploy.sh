@@ -9,6 +9,10 @@
 #
 # Order matters: publish `main` to its upstream FIRST, then deploy that exact
 # commit. The guards below refuse anything else.
+#
+# rsync never deletes on the server. The tracked files a release removed are
+# taken off the server by `scripts/deploy-prune.sh`, from an exact list: the
+# files of the commit the server runs that this commit no longer has.
 
 set -euo pipefail
 
@@ -59,6 +63,32 @@ fi
 echo "Commit:  $COMMIT_SHA"
 echo "Archive: sha256 $ARCHIVE_SHA256"
 
+# What the server runs now, and the tracked files of it that this commit no
+# longer has. A release must know what it replaces: a deploy record naming a
+# commit this checkout does not have stops here (fetch it first).
+LIVE_COMMIT="$(
+  ssh -i "$SSH_KEY" -o BatchMode=yes "$SERVER_HOST" "cat '$TARGET/.deploy_commit' 2>/dev/null || true" |
+    tr -d '[:space:]'
+)"
+REMOVED_PATHS="$STAGE/removed-paths.txt"
+: >"$REMOVED_PATHS"
+if [[ -z "$LIVE_COMMIT" ]]; then
+  echo "Live:    no deploy record on the server; no file will be removed there."
+elif [[ ! "$LIVE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Refusing to deploy: the server's deploy record is not a commit id." >&2
+  exit 1
+elif ! git -C "$SCRIPT_DIR" cat-file -e "$LIVE_COMMIT^{commit}" 2>/dev/null; then
+  echo "Refusing to deploy: this checkout does not have the commit the server runs ($LIVE_COMMIT)." >&2
+  echo "Fetch it first, then re-run this script." >&2
+  exit 1
+else
+  echo "Live:    $LIVE_COMMIT"
+  if ! git -C "$SCRIPT_DIR" merge-base --is-ancestor "$LIVE_COMMIT" "$COMMIT_SHA"; then
+    echo "Note:    this commit does not contain the live one (a rollback, or a divergent release)."
+  fi
+  bash "$SCRIPT_DIR/scripts/deploy-prune.sh" list "$SCRIPT_DIR" "$LIVE_COMMIT" "$COMMIT_SHA" >"$REMOVED_PATHS"
+fi
+
 # `.deploy_commit` is written on the server and must never be overwritten from
 # a workstation. `.env.local` is server-only. The rest cannot appear in an
 # archive of tracked files and is excluded as defence in depth.
@@ -79,6 +109,12 @@ if [[ "${1:-}" != "--go" ]]; then
     "${RSYNC_EXCLUDES[@]}" \
     -e "ssh -i $SSH_KEY -o BatchMode=yes" \
     "$STAGE/tree/" "$SERVER_HOST:$TARGET/"
+  if [[ -s "$REMOVED_PATHS" ]]; then
+    echo "Files --go removes from the server (in the live commit, not in this one):"
+    sed 's/^/  /' "$REMOVED_PATHS"
+  else
+    echo "No file would be removed from the server."
+  fi
   exit 0
 fi
 
@@ -94,6 +130,13 @@ rsync -az \
   "${RSYNC_EXCLUDES[@]}" \
   -e "ssh -i $SSH_KEY -o BatchMode=yes" \
   "$STAGE/tree/" "$SERVER_HOST:$TARGET/"
+
+# The removals, by the script the upload has just put on the server. It checks
+# every path before it removes the first one and refuses anything server-owned.
+if [[ -s "$REMOVED_PATHS" ]]; then
+  ssh -i "$SSH_KEY" -o BatchMode=yes "$SERVER_HOST" \
+    "bash '$TARGET/scripts/deploy-prune.sh' apply '$TARGET'" <"$REMOVED_PATHS"
+fi
 
 # PM2 runs as the login user (`googlecloud`); its daemon owns
 # friending-webadmin. Under `sudo` PM2 talks to root's daemon and reports the

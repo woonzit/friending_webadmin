@@ -202,8 +202,10 @@ checks. Any edited shell script must at least pass `bash -n` and its safe dry-ru
 - Deploy only a clean commit synchronized with its upstream. Read the live `.deploy_commit`
   immediately before cutover and never overwrite a newer divergent whole-tree release.
 - The deploy script preserves `.env.local`, excludes generated/dependency trees, never uses
-  `rsync --delete`, repeats tests/typecheck/build on the server, restarts PM2 only after success,
-  and writes the exact `.deploy_commit`.
+  `rsync --delete`, removes from the server exactly the tracked files the release removed
+  (`scripts/deploy-prune.sh`: the live commit's files the released commit no longer has), repeats
+  tests/typecheck/build on the server, restarts PM2 only after success, and writes the exact
+  `.deploy_commit`.
 - Run `sudo apache2ctl configtest` before any Apache reload. A failed config test means no reload.
 - Verify exact source hashes and `.deploy_commit`, not merely rsync or PM2 exit status.
 

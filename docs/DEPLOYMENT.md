@@ -93,16 +93,28 @@ steps 2 to 7 and refuses to start unless step 1 has happened.
    `.env`, `.deploy_commit`, `node_modules`, `.next/`, `.git`, build info and
    logs. The server keeps its own environment file, its build cache and its
    deploy record; nothing server-owned is overwritten from a workstation.
-5. **Server gates.** `npm ci`, `npm test`, `npm run typecheck` and
+5. **Remove what the release removed.** rsync never deletes, so a tracked
+   file that left the repository would otherwise stay on the server: still
+   compiled, still served when it is a route, still run when it is a test.
+   Before uploading, the script reads the live `.deploy_commit` and lists the
+   tracked files of that commit that the released commit no longer has
+   (`scripts/deploy-prune.sh list`); after the upload the server's copy of the
+   same script removes exactly those files and the directories they leave
+   empty (`apply`). It checks every path before it removes the first one and
+   refuses a list that names anything absolute, outside the application
+   directory, server-owned or generated. The dry run prints the list. The
+   script stops before uploading when the deploy record names a commit the
+   workstation does not have: fetch first.
+6. **Server gates.** `npm ci`, `npm test`, `npm run typecheck` and
    `npm run build` run again in `/opt/friending/admin`, and the script first
    asserts that `.env.local` is present.
-6. **Restart PM2 as the `googlecloud` user.** The PM2 daemon that owns
+7. **Restart PM2 as the `googlecloud` user.** The PM2 daemon that owns
    `friending-webadmin` belongs to that login user. Never wrap this in `sudo`:
    under `sudo` PM2 talks to root's daemon and reports the process as not
    found, which looks like a missing app while the real one keeps running the
    old code. The script restarts through the same SSH login, then writes the
    exact commit to `.deploy_commit` and runs `pm2 save`.
-7. **Smoke.** Run the checks under *Verification* below before you call the
+8. **Smoke.** Run the checks under *Verification* below before you call the
    release done.
 
 The canonical commands are:
@@ -113,7 +125,14 @@ The canonical commands are:
 ```
 
 The dry run stages and hashes the archive exactly like a real release, so the
-file list it prints is the file list `--go` would upload.
+file list it prints is the file list `--go` would upload, followed by the files
+`--go` would remove from the server.
+
+The removal list covers the step from the live commit to the released one. If
+a release stopped at the server gates, its uploaded files are on the server
+while `.deploy_commit` still names the previous commit: release a fixed commit
+on top (its list is computed from the same live commit), or, to go back,
+compare the server tree with the live commit by hand before the next release.
 
 Feature readiness flags are compatibility cutovers, not deploy conveniences. Flip a flag only
 after its matching Core provider release is live and its authenticated boundary smoke has passed.
