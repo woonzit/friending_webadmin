@@ -87,7 +87,7 @@ export default function UserDetailPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  // The albums, membership, granted-verification and audience panels each need Core's admin_me answer
+  // The albums, membership, granted-verification, audience and outbound-message panels each need Core's admin_me answer
   // when they mount; they share one, asked afresh whenever they mount again - for another member, or
   // after this page was loading or failed. A panel's retry or re-read after a write still asks Core itself.
   const ready = state === "ready";
@@ -177,7 +177,13 @@ export default function UserDetailPage() {
           never pins that vocabulary itself. */}
       <AudienceVisibilityUserPanel uid={uid} onIdentitySaved={load} adminMe={panelAdminMe} />
       <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
-      <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
+      <OutboundMessagingPanel
+        key={`outbound-messaging-${uid}`}
+        uid={uid}
+        displayName={profile.display_name}
+        codename={profile.codename}
+        adminMe={panelAdminMe}
+      />
       <UserContentEditor
         key={profile.uid}
         uid={uid}

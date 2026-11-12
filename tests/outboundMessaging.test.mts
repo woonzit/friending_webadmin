@@ -662,10 +662,11 @@ test("fixture browser state contains no contact or delivery-provider identifier 
   visit(fixtures);
 });
 
-test("user-detail shell, safe previews, locales, and seven Help sections stay bound to the released surface", async () => {
-  const [page, component, actions, route, model, enRaw, huRaw] = await Promise.all([
+test("the member page's panel is wired to Core: no fixture data, no preview-only badge, closed reads, inert content", async () => {
+  const [page, component, panel, actions, route, model, enRaw, huRaw] = await Promise.all([
     readFile(new URL("../app/(dashboard)/users/[uid]/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../components/OutboundMessagingPanel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/outboundMessagingPanel.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/adminActions.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/admin/[action]/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/outboundMessaging.ts", import.meta.url), "utf8"),
@@ -675,17 +676,28 @@ test("user-detail shell, safe previews, locales, and seven Help sections stay bo
   assert.match(actions, /OUTBOUND_MESSAGING_ACTIONS/);
   assert.match(actions, /\.\.\.ACTIVE_OUTBOUND_MESSAGING_ACTIONS/);
   assert.match(route, /normalizeOutboundMessagingProxyBody/);
-  assert.doesNotMatch(component, /adminCall|coreCall|core\.friending\.com|WEBADMIN_API_SECRET|console\./);
-  assert.match(component, /outboundMessageDraftMaterial/);
-  assert.match(component, /sandbox=""/);
+  assert.match(page, /<OutboundMessagingPanel\b[^>]*adminMe=\{panelAdminMe\}/);
+  // The mock's fixture is gone: no pinned ids, hashes, times or sample copy.
+  assert.doesNotMatch(component, /TEMPLATE_IDS|CONTENT_HASHES|FIXTURE_TIME|fixture\.|localOnly|65a0000|64f0000|bbbbbbbb|[0-9a-f]{64}/);
+  // It reaches Core only through the same-origin bridge, for exactly the four routes, the templates and admin_me.
+  assert.doesNotMatch(component, /coreCall|core\.friending\.com|WEBADMIN_API_SECRET|console\.|fetch\(/);
+  assert.deepEqual([...component.matchAll(/adminCall\("([a-z_]+)"/g)].map((match) => match[1]).sort(),
+    ["admin_me", "list_canned", "outbound_message_preview", "send_message", "user_history", "user_history_detail"]);
+  // Content is only ever inert: email in a sandboxed frame from canonical Core HTML, custom email as source text.
+  assert.equal(component.match(/sandbox=""/gu)?.length, 2);
   assert.match(component, /<pre>\{draft\.body\}<\/pre>/);
-  assert.equal(component.match(/aria-pressed=/gu)?.length, 3);
-  assert.match(component, /t\.raw\("fixture\.custom\.email\.body"\)/);
-  assert.match(component, /t\.raw\("fixture\.templates\.email\.body"\)/);
-  assert.match(component, /t\.raw\("fixture\.history\.emailBody"\)/);
-  assert.match(component, /disabled=\{preview\.requested_count === 1\}/);
-  assert.match(component, /historyDetail\.sent_by/);
-  assert.match(component, /historyDetail\.push_mode/);
+  assert.doesNotMatch(component, /dangerouslySetInnerHTML/);
+  assert.match(component, /const parsed = request \? await outboundHistoryDetailResponse\(response, request\) : null;/);
+  // The pending send is stored before it leaves, and only an observed outcome removes it.
+  assert.match(component, /if \(!storageKey \|\| !storeSessionCommand\(sessionCommandStorage\(\), storageKey, built\.pending\)\) \{\s*dispatch\(\{ type: "storageRefused" \}\);\s*return;\s*\}\s*inFlight\.current = true;\s*dispatch\(\{ type: "sendStarted", pending: built\.pending \}\);\s*void execute\(built\.pending\);/);
+  assert.match(component, /if \(outcome\.kind !== "unknown" && storageKey\) storeSessionCommand\(sessionCommandStorage\(\), storageKey, null\);/);
+  assert.match(component, /storeSessionCommand\(sessionCommandStorage\(\), storageKey, state\.command\.status === "idle" \? null : state\.command\.pending\);/);
+  assert.match(component, /if \(inFlight\.current \|\| state\.command\.status !== "doubt"\) return;\s*const pending = state\.command\.pending;/, "Retry sends the stored record itself");
+  assert.equal(component.match(/crypto\.randomUUID\(\)/g)?.length, 1, "one request id is minted, for a new send only");
+  // The FriendingGO tab store is the one implementation; there is no third.
+  assert.match(component, /from "@\/lib\/sessionCommandStorage";/);
+  assert.match(panel, /export function outboundPanelReducer\(/);
+  assert.doesNotMatch(component, /window\.sessionStorage/);
   assert.match(model, /globalThis\.crypto\.subtle\.digest\("SHA-256"/);
   assert.match(model, /cannedTemplateEmailPreviewDocument/);
 
@@ -693,7 +705,10 @@ test("user-detail shell, safe previews, locales, and seven Help sections stay bo
   const hu = JSON.parse(huRaw) as JsonObject;
   const enMessaging = object(en.outboundMessaging);
   const huMessaging = object(hu.outboundMessaging);
-  assert.deepEqual(Object.keys(enMessaging).sort(), Object.keys(huMessaging).sort());
+  const tree = (value: unknown, prefix = ""): string[] => value && typeof value === "object"
+    ? Object.entries(value as JsonObject).flatMap(([key, child]) => tree(child, prefix ? `${prefix}.${key}` : key))
+    : [prefix];
+  assert.deepEqual(tree(enMessaging).sort(), tree(huMessaging).sort(), "identical EN/HU trees");
   const expectedErrorKeys = new Set([
     ...Object.values(OUTBOUND_MESSAGING_ERROR_KEYS),
     ...Object.values(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS),
@@ -701,21 +716,6 @@ test("user-detail shell, safe previews, locales, and seven Help sections stay bo
   ]);
   assert.deepEqual(new Set(Object.keys(object(enMessaging.errors))), expectedErrorKeys);
   assert.deepEqual(new Set(Object.keys(object(huMessaging.errors))), expectedErrorKeys);
-  for (const messaging of [enMessaging, huMessaging]) {
-    const historyFixture = object(object(messaging.fixture).history);
-    for (const [format, subject, body] of [
-      ["sanitized_html", historyFixture.emailSubject, historyFixture.emailBody],
-      ["plain_text", "", historyFixture.smsBody],
-      ["plain_text", historyFixture.pushSubject, historyFixture.pushBody],
-    ] as const) {
-      const hash = await outboundContentSha256(
-        format,
-        stringValue(subject),
-        stringValue(body),
-      );
-      assert.ok(hash && component.includes(hash), "localized fixture content hash must be pinned");
-    }
-  }
   assert.deepEqual(
     Object.keys(object(object(object(en.adminHelp).pages).userDetail).sections).sort(),
     Object.keys(object(object(object(hu.adminHelp).pages).userDetail).sections).sort(),

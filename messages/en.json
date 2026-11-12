@@ -5772,11 +5772,11 @@
         },
         "channel_absent": {
           "label": "Channel absent",
-          "copy": "The member is eligible but Core cannot resolve a usable verified destination for this channel."
+          "copy": "The member is eligible but Core cannot resolve a usable verified destination for this channel: a member who signed up with a phone number has no email channel, and one without a registered device has no push."
         },
         "opted_out": {
           "label": "Opted out",
-          "copy": "The authoritative member preference forbids this administrative delivery channel."
+          "copy": "The member's own preference forbids administrative delivery on this channel. Members who joined in the app are opted out until they switch on “Messages from Friending” in the app's Settings; imported members start opted in to email."
         },
         "banned": {
           "label": "Not eligible",
@@ -5798,7 +5798,14 @@
       "smsPush": "SMS + push capacity",
       "ofLimit": "of {limit} in the rolling window",
       "expires": "Preview lifetime",
-      "fiveMinutes": "5 minutes"
+      "fiveMinutes": "5 minutes",
+      "refresh": "Check again",
+      "loading": "Reading the member's availability and your capacity from Core…",
+      "failed": "Availability could not be read; nothing is assumed about any channel.",
+      "expiredCopy": "This availability check has expired. It runs again when you review a send, or with Check again.",
+      "expired": "Expired",
+      "lifetime": "{minutes} min",
+      "validUntil": "Usable until {time}"
     },
     "content": {
       "title": "Template or custom content",
@@ -5829,7 +5836,15 @@
       "canonicalPreview": "Canonical stored preview",
       "draftPreview": "Local draft preview",
       "emailFrameTitle": "Sandboxed canonical email preview",
-      "emailSourceOnly": "Raw custom email source is never executed. Core must sanitize it before any rendered preview."
+      "emailSourceOnly": "Raw custom email source is never executed. Core must sanitize it before any rendered preview.",
+      "templatesLoading": "Reading the stored templates…",
+      "templatesFailed": "The stored templates could not be read. Custom content is still available.",
+      "templatesEmpty": "No stored template exists for {channel} yet.",
+      "templatesMore": "Load more templates",
+      "templateLabel": "Stored template",
+      "chooseTemplate": "Choose a template…",
+      "templateOption": "{name} · revision {revision}",
+      "chooseTemplateFirst": "Choose a stored template to see its exact canonical content."
     },
     "confirmation": {
       "title": "Confirmation and audit",
@@ -5844,10 +5859,26 @@
       "allowPartialCopy": "Multi-member requests may skip unavailable members. This one-member composer always stops on an availability change; rate-limit refusal still sends nobody.",
       "validate": "Validate local preview",
       "sendUnavailable": "Sending unavailable",
-      "validated": "The bounded local material is valid for {count, plural, one {# recipient} other {# recipients}}. Live sending remains disabled until the provider contract is released."
+      "validated": "The bounded local material is valid for {count, plural, one {# recipient} other {# recipients}}. Live sending remains disabled until the provider contract is released.",
+      "availabilityUnknown": "Not checked",
+      "review": "Review and send",
+      "dialogTitle": "Send this message?",
+      "dialogCopy": "Core sends exactly this content to this one member on this channel. Check every line before you confirm.",
+      "send": "Send now",
+      "sending": "Sending…",
+      "content": "Content",
+      "once": "The send carries one request identity: if its answer is lost, retrying it never sends the message twice."
     },
     "notices": {
-      "previewReady": "The local material is valid. Review the recipient, source, channel, partial choice and audit reason together."
+      "previewReady": "The local material is valid. Review the recipient, source, channel, partial choice and audit reason together.",
+      "sent": "Core accepted the message. Its delivery state follows in the history below.",
+      "replayed": "Core had already accepted this exact request; it was not sent a second time. Its current state is in the history.",
+      "earlierRecorded": "The earlier send is in Core's history ({status}). It is settled and was not sent again.",
+      "channelUnavailable": "{channel} is not available for this member ({state}). Nothing can be sent on it.",
+      "capacityExhausted": "Your rolling capacity for this channel is used up. Nothing can be sent until the window frees up.",
+      "previewRefreshing": "Checking the member's availability again before the review…",
+      "previewLapsed": "The availability check expired before sending. Review again to check it afresh.",
+      "storageUnavailable": "This browser tab could not store the send's request identity, so nothing was sent. Allow site storage and try again."
     },
     "validation": {
       "channel": "Choose one supported outbound channel.",
@@ -5861,7 +5892,8 @@
       "preview": "The preview no longer matches the exact recipient list.",
       "previewExpired": "The recipient preview expired. Read a fresh preview before continuing.",
       "uids": "The explicit recipient list is invalid.",
-      "requestId": "The durable request identity could not be created."
+      "requestId": "The durable request identity could not be created.",
+      "templateRequired": "Choose one stored template, or switch to custom content."
     },
     "results": {
       "title": "Result and recovery",
@@ -5884,7 +5916,20 @@
           "copy": "Core observed one closed terminal failure without exposing provider diagnostics or identifiers."
         }
       },
-      "recovery": "After a timeout, malformed reply or in-progress result, keep the exact saved request identity and material. Never create a second logical send; reconcile history or retry only that saved request."
+      "recovery": "After a timeout, malformed reply or in-progress result, keep the exact saved request identity and material. Never create a second logical send; reconcile history or retry only that saved request.",
+      "sending": "Sending…",
+      "request": "Request",
+      "storedAt": "Started",
+      "replayedTitle": "Already admitted earlier",
+      "replayedCopy": "Core answered with its record of the first admission, not with the message's current state. The current state is this request's history row:",
+      "replayedReading": "reading the history…",
+      "doubt": {
+        "title": "Send outcome not known",
+        "copy": "This request left the browser, but its answer did not arrive or could not be read: it may have been sent. Nothing else can be sent to this member from this tab until it is settled. History settles it as soon as it shows this request; Retry sends exactly the same request again, which Core never sends twice.",
+        "restored": "This tab kept it from before the page was reloaded.",
+        "retry": "Retry the same request",
+        "checkHistory": "Check history"
+      }
     },
     "history": {
       "title": "Delivery history",
@@ -5919,7 +5964,14 @@
       },
       "integrity": "Content integrity",
       "hashVerified": "SHA-256 verified before live display",
-      "reason": "Safe reason"
+      "reason": "Safe reason",
+      "loading": "Reading the delivery history…",
+      "failed": "The history could not be read, so it is not shown as empty.",
+      "empty": "Core holds no outbound message for this member.",
+      "moreFailed": "Older rows could not be read.",
+      "choose": "Choose a row to read its exact content.",
+      "detailLoading": "Reading the exact content…",
+      "detailFailed": "The exact content could not be read or verified."
     },
     "reasons": {
       "channel_absent": "Channel absent",
@@ -5935,7 +5987,7 @@
       "title": "Permissions and privacy",
       "copy": "Core grants history read, outbound send and canned-template access independently. The browser never reconstructs a capability from the role name.",
       "sendTitle": "Outbound send",
-      "sendAvailable": "This fixture principal carries the send capability; this local contract preview still blocks every action.",
+      "sendAvailable": "Core grants you outbound send: you may check this member's availability and send them one message at a time.",
       "sendUnavailable": "This principal may inspect history but cannot preview or send messages.",
       "historyTitle": "History read",
       "historyAvailable": "A read-only operator may inspect safe bounded rows and one exact UID-bound detail.",
@@ -6025,7 +6077,11 @@
       "generic": "The outbound operation failed safely. No success, empty state or delivery has been assumed.",
       "coreUnavailable": "Core did not answer in time, or its answer could not be read. Nothing has been assumed.",
       "membershipUnconfirmed": "Your administrator membership could not be confirmed just now. Try again shortly."
-    }
+    },
+    "loading": "Reading Core's outbound messaging access…",
+    "accessFailed": "Core's answer about outbound messaging could not be read, so nothing is shown and nothing can be sent.",
+    "retry": "Try again",
+    "historyOnly": "History only"
   },
   "audienceVisibilityAdmin": {
     "eyebrow": "Discovery and catalogue policy",

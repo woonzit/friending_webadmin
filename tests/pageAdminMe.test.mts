@@ -33,7 +33,7 @@ test("the member page makes one per mount of its panels and hands it to exactly 
   const imports = [...page.matchAll(/^import (\w+) from "@\/components\/(\w+)";$/gm)].map((match) => match[2]);
   assert.ok(imports.length >= 10, "the census reads every panel the page imports");
   const readers = imports.filter((name) => /admin_me/.test(read(`components/${name}.tsx`)));
-  assert.deepEqual(readers.sort(), ["AdminGrantedVerificationPanel", "AudienceVisibilityUserPanel", "UserAlbumsPanel", "UserMembershipPanel"]);
+  assert.deepEqual(readers.sort(), ["AdminGrantedVerificationPanel", "AudienceVisibilityUserPanel", "OutboundMessagingPanel", "UserAlbumsPanel", "UserMembershipPanel"]);
   for (const name of readers) assert.match(page, new RegExp(`<${name}\\b[^>]*adminMe=\\{panelAdminMe\\}`), name);
 });
 
@@ -52,7 +52,11 @@ test("each panel reads the shared answer at mount only; a retry or a re-read aft
   const audience = read("components/AudienceVisibilityUserPanel.tsx");
   assert.match(audience, /const meResponse = await \(atMount \? adminMe\(\) : adminCall\("admin_me", \{\}\)\);/);
   assert.match(audience, /useEffect\(\(\) => \{ void load\(firstLoad\.current\); firstLoad\.current = false; \}, \[load\]\);/);
-  for (const [name, source] of [["membership", membership], ["granted", granted], ["audience", audience]] as const) {
+  // The outbound-message panel: the shared answer once, at mount; its Retry (after an unreadable answer) asks Core.
+  const outbound = read("components/OutboundMessagingPanel.tsx");
+  assert.match(outbound, /const ask = firstAccess\.current \? adminMe\(\) : adminCall\("admin_me", \{\}\);\s*firstAccess\.current = false;/);
+  assert.match(outbound, /onClick=\{\(\) => dispatch\(\{ type: "accessAsked" \}\)\}/);
+  for (const [name, source] of [["membership", membership], ["granted", granted], ["audience", audience], ["outbound", outbound]] as const) {
     assert.doesNotMatch(source, /onClick=\{load\}|retry=\{load\}|retry=\{loadAdminAccess\}/, `${name}: an event is never taken for the mount flag`);
   }
   // What each panel may show is still derived from Core's answer, as before: the role, or the capability blocks.
@@ -61,4 +65,6 @@ test("each panel reads the shared answer at mount only; a retry or a re-read aft
   assert.match(granted, /adminGrantedVerificationAdminMe\(meResponse\?\.admin_granted_verification\)/);
   assert.match(audience, /audienceVisibilityAdminMe\(meResponse\?\.audience_visibility\)/);
   assert.match(audience, /audienceVisibilityIdentityAdminMe\(meResponse\?\.audience_visibility_identity\)/);
+  const panelRules = read("lib/outboundMessagingPanel.ts");
+  assert.match(panelRules, /const access = operator \? outboundMessagingAccess\(response\) : \{ kind: "invalid" as const \};/);
 });

@@ -26,6 +26,12 @@ import {
   type FriendingGoStatus,
   type FriendingGoStatusBody,
 } from "@/lib/friendinggo";
+import {
+  sessionCommandStorage,
+  storeSessionCommand,
+  storedSessionCommand,
+  type SessionCommandStorage,
+} from "@/lib/sessionCommandStorage";
 
 /**
  * The FriendingGO console's browser-side state (D-153, T-937): what one tab hands the next, what an
@@ -47,40 +53,18 @@ export const FRIENDINGGO_STORAGE_KEYS = {
   preordersSelection: "friending.friendinggo.preorders-selection.v1",
 } as const;
 
+// The tab store itself is shared with the member page's outbound message panel (lib/sessionCommandStorage.ts).
+export type FriendingGoStorage = SessionCommandStorage;
 /** This browser tab's session storage, or null where it cannot be used. */
-export function friendingGoSessionStorage(): FriendingGoStorage | null {
-  try { return typeof window === "undefined" ? null : window.sessionStorage; } catch { return null; }
-}
+export const friendingGoSessionStorage = sessionCommandStorage;
+/** A stored value, decoded; `null` when absent or unreadable (and then removed); `undefined` when storage is unavailable. */
+export const friendingGoStored = storedSessionCommand;
+/** Store (or, with `null`, remove) a value; `false` when the browser refused. */
+export const friendingGoStore = storeSessionCommand;
 
 /** Sign-out forgets every FriendingGO value of this browser tab: commands, audience, ticks and the text (review R3-2). */
 export function clearFriendingGoSession(storage: FriendingGoStorage | null): void {
   for (const key of Object.values(FRIENDINGGO_STORAGE_KEYS)) friendingGoStore(storage, key, null);
-}
-
-export type FriendingGoStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-
-/** A stored value, decoded; `null` when absent or unreadable (and then removed); `undefined` when storage is unavailable. */
-export function friendingGoStored<T>(storage: FriendingGoStorage | null, key: string, decode: (value: unknown) => T | null): T | null | undefined {
-  if (!storage) return undefined;
-  let raw: string | null;
-  try { raw = storage.getItem(key); } catch { return undefined; }
-  if (raw === null) return null;
-  let decoded: T | null = null;
-  try { decoded = decode(JSON.parse(raw)); } catch { decoded = null; }
-  if (decoded === null) friendingGoStore(storage, key, null);
-  return decoded;
-}
-
-/** Store (or, with `null`, remove) a value; `false` when the browser refused. */
-export function friendingGoStore(storage: FriendingGoStorage | null, key: string, value: unknown): boolean {
-  if (!storage) return false;
-  try {
-    if (value === null) storage.removeItem(key);
-    else storage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function record(value: unknown): Record<string, unknown> | null {

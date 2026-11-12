@@ -79,6 +79,21 @@ with "Finish sending" (`mode=resume`, a fresh id, then repeated). Write controls
 parsed, closed shapes. The CSV export is its own write route (`/api/admin/go-preorders-export`) with a
 formula-injection guard.
 
+The member page's Outbound message panel (Core `docs/OUTBOUND_MESSAGING_WEBADMIN_V1.md`) exists only while
+Core serves `admin_me.outbound_messaging` `{contract_version: 1, contract_ready: true}`; its capabilities, never
+the role, decide what an operator sees: history for every holder of the block, the recipient preview, canned
+templates (`list_canned`) and the composer only with `outbound_messages_send`. The bridge forwards the four
+routes' closed fields and hands back only the parsed answer or a known refusal, so no address, phone number,
+token or provider identifier reaches the browser. A send carries one caller-minted request id stored with its
+exact payload in `sessionStorage` (`lib/sessionCommandStorage.ts`, shared with FriendingGO) before it leaves;
+an unknown outcome is retried only with that same record, and the record is cleared only by an observed
+outcome (Core's answer, a definite refusal, or a history row carrying the request id); a replay is Core's record
+of the first admission, so the panel shows that request's current history state, never the replayed outcome. Core's
+captured bodies are pinned in `tests/fixtures/outbound_messaging_wire` (`tests/outboundMessagingWire.test.mts`).
+A preview is used only
+within its lifetime on the browser's clock and is asked again, never reused, after it expired or a send was
+refused over it.
+
 AreYouIn is in scope: the `/dates/*` consoles (activities and their detail, moderation cases,
 configuration, external events and their review, corrections, member intakes, event research and
 AI usage) are its operations surface, each on its reviewed Core contract (`docs/DATES_*.md`,

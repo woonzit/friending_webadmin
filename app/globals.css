@@ -11602,7 +11602,7 @@ fieldset.dates-external-fields {
   }
 }
 
-/* Dormant outbound-message composer and privacy-safe history shell. */
+/* Member page outbound message panel: availability, composer, receipt-backed send and privacy-safe history. */
 .outbound-messaging-panel {
   margin-bottom: 20px;
 }
@@ -11997,7 +11997,11 @@ fieldset.dates-external-fields {
 
 .outbound-history-list {
   display: grid;
+  align-content: start;
   gap: 8px;
+  max-height: 760px;
+  padding-right: 4px;
+  overflow-y: auto;
 }
 
 .outbound-history-list > button:not(.button) {
@@ -12075,6 +12079,40 @@ fieldset.dates-external-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.outbound-messaging-header > .status-badge {
+  flex: none;
+  white-space: nowrap;
+}
+
+.outbound-pending-card {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.outbound-pending-card code,
+.outbound-history-meta code,
+.outbound-result-guide code {
+  overflow-wrap: anywhere;
+}
+
+.outbound-confirm-summary {
+  margin: 12px 0;
+}
+
+.outbound-confirm-content {
+  position: static;
+  max-height: 320px;
+  margin-bottom: 12px;
+  overflow: auto;
+}
+
+.outbound-email-source > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
 }
 
 @media (max-width: 1120px) {

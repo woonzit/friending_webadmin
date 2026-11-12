@@ -5772,11 +5772,11 @@
         },
         "channel_absent": {
           "label": "Nincs csatorna",
-          "copy": "A tag jogosult, de a Core nem tud használható, ellenőrzött célt feloldani ehhez a csatornához."
+          "copy": "A tag jogosult, de a Core nem tud használható, ellenőrzött célt feloldani ehhez a csatornához: a telefonszámmal regisztrált tagnak nincs e-mail-csatornája, a regisztrált eszköz nélküli tagnak pedig nincs push-csatornája."
         },
         "opted_out": {
           "label": "Leiratkozott",
-          "copy": "A tag hiteles beállítása tiltja az adminisztratív kézbesítést ezen a csatornán."
+          "copy": "A tag saját beállítása tiltja az adminisztratív kézbesítést ezen a csatornán. Az alkalmazásban regisztrált tagok le vannak iratkozva, amíg az alkalmazás Beállításaiban be nem kapcsolják „A Friending üzenetei” lehetőséget; az importált tagok e-mailre alapból fel vannak iratkozva."
         },
         "banned": {
           "label": "Nem jogosult",
@@ -5798,7 +5798,14 @@
       "smsPush": "SMS + push kapacitás",
       "ofLimit": "a gördülő ablak {limit} értékéből",
       "expires": "Előnézet élettartama",
-      "fiveMinutes": "5 perc"
+      "fiveMinutes": "5 perc",
+      "refresh": "Újraellenőrzés",
+      "loading": "A tag elérhetőségének és a kapacitásodnak beolvasása a Core-ból…",
+      "failed": "Az elérhetőség nem olvasható; egyik csatornáról sem feltételezünk semmit.",
+      "expiredCopy": "Ez az elérhetőség-ellenőrzés lejárt. Küldés áttekintésekor vagy az Újraellenőrzés gombbal újra lefut.",
+      "expired": "Lejárt",
+      "lifetime": "{minutes} perc",
+      "validUntil": "Felhasználható eddig: {time}"
     },
     "content": {
       "title": "Sablon vagy egyedi tartalom",
@@ -5829,7 +5836,15 @@
       "canonicalPreview": "Kanonikus tárolt előnézet",
       "draftPreview": "Helyi piszkozat előnézete",
       "emailFrameTitle": "Sandboxolt kanonikus e-mail-előnézet",
-      "emailSourceOnly": "A nyers egyedi e-mail-forrás soha nem fut le. A Core-nak meg kell tisztítania bármilyen renderelt előnézet előtt."
+      "emailSourceOnly": "A nyers egyedi e-mail-forrás soha nem fut le. A Core-nak meg kell tisztítania bármilyen renderelt előnézet előtt.",
+      "templatesLoading": "A tárolt sablonok beolvasása…",
+      "templatesFailed": "A tárolt sablonok nem olvashatók. Egyedi tartalom továbbra is használható.",
+      "templatesEmpty": "Ehhez a csatornához még nincs tárolt sablon: {channel}.",
+      "templatesMore": "További sablonok betöltése",
+      "templateLabel": "Tárolt sablon",
+      "chooseTemplate": "Válassz sablont…",
+      "templateOption": "{name} · {revision}. revízió",
+      "chooseTemplateFirst": "Válassz tárolt sablont a pontos kanonikus tartalom megtekintéséhez."
     },
     "confirmation": {
       "title": "Megerősítés és audit",
@@ -5844,10 +5859,26 @@
       "allowPartialCopy": "A többtagos kérések kihagyhatják a nem elérhető tagokat. Ez az egytagos összeállító elérhetőségi változáskor mindig megáll; kapacitáskorlát esetén továbbra sem kap senki küldeményt.",
       "validate": "Helyi előnézet ellenőrzése",
       "sendUnavailable": "Küldés nem érhető el",
-      "validated": "A korlátozott helyi anyag érvényes {count, plural, one {# címzetthez} other {# címzetthez}}. Az élő küldés a szolgáltatói szerződés kiadásáig tiltott marad."
+      "validated": "A korlátozott helyi anyag érvényes {count, plural, one {# címzetthez} other {# címzetthez}}. Az élő küldés a szolgáltatói szerződés kiadásáig tiltott marad.",
+      "availabilityUnknown": "Nincs ellenőrizve",
+      "review": "Áttekintés és küldés",
+      "dialogTitle": "Elküldöd ezt az üzenetet?",
+      "dialogCopy": "A Core pontosan ezt a tartalmat küldi el ennek az egy tagnak ezen a csatornán. Megerősítés előtt ellenőrizz minden sort.",
+      "send": "Küldés most",
+      "sending": "Küldés…",
+      "content": "Tartalom",
+      "once": "A küldés egyetlen kérésazonosítót hordoz: ha a válasza elvész, az újrapróbálás soha nem küldi el kétszer az üzenetet."
     },
     "notices": {
-      "previewReady": "A helyi anyag érvényes. Együtt ellenőrizd a címzettet, forrást, csatornát, részleges választást és auditindokot."
+      "previewReady": "A helyi anyag érvényes. Együtt ellenőrizd a címzettet, forrást, csatornát, részleges választást és auditindokot.",
+      "sent": "A Core befogadta az üzenetet. A kézbesítési állapota az alábbi előzményekben követhető.",
+      "replayed": "A Core már befogadta pontosan ezt a kérést; nem ment el másodszor. Az aktuális állapota az előzményekben látható.",
+      "earlierRecorded": "A korábbi küldés szerepel a Core előzményeiben ({status}). Lezárult, és nem ment el újra.",
+      "channelUnavailable": "Ez a csatorna nem érhető el ennél a tagnál: {channel} ({state}). Ezen nem küldhető semmi.",
+      "capacityExhausted": "Ennek a csatornának a gördülő kapacitása elfogyott. Amíg az ablak fel nem szabadul, nem küldhető semmi.",
+      "previewRefreshing": "A tag elérhetőségének újraellenőrzése az áttekintés előtt…",
+      "previewLapsed": "Az elérhetőség-ellenőrzés a küldés előtt lejárt. Az újbóli áttekintés frissen ellenőrzi.",
+      "storageUnavailable": "Ez a böngészőlap nem tudta tárolni a küldés kérésazonosítóját, ezért semmi nem ment el. Engedélyezd a webhelytárolást, és próbáld újra."
     },
     "validation": {
       "channel": "Válassz egy támogatott kimenő csatornát.",
@@ -5861,7 +5892,8 @@
       "preview": "Az előnézet már nem egyezik a pontos címzettlistával.",
       "previewExpired": "A címzett-előnézet lejárt. Folytatás előtt olvass be friss előnézetet.",
       "uids": "A kifejezett címzettlista érvénytelen.",
-      "requestId": "Nem sikerült létrehozni a tartós kérésazonosságot."
+      "requestId": "Nem sikerült létrehozni a tartós kérésazonosságot.",
+      "templateRequired": "Válassz egy tárolt sablont, vagy válts egyedi tartalomra."
     },
     "results": {
       "title": "Eredmény és helyreállítás",
@@ -5884,7 +5916,20 @@
           "copy": "A Core zárt végleges hibát figyelt meg, szolgáltatói diagnosztika vagy azonosító felfedése nélkül."
         }
       },
-      "recovery": "Időtúllépés, hibás válasz vagy folyamatban lévő eredmény után őrizd meg pontosan a mentett kérésazonosságot és anyagot. Soha ne hozz létre második logikai küldést; egyeztesd az előzményt, vagy csak ugyanazt a mentett kérést próbáld újra."
+      "recovery": "Időtúllépés, hibás válasz vagy folyamatban lévő eredmény után őrizd meg pontosan a mentett kérésazonosságot és anyagot. Soha ne hozz létre második logikai küldést; egyeztesd az előzményt, vagy csak ugyanazt a mentett kérést próbáld újra.",
+      "sending": "Küldés…",
+      "request": "Kérés",
+      "storedAt": "Indítva",
+      "replayedTitle": "Korábban már befogadva",
+      "replayedCopy": "A Core az első befogadás nyilvántartásával válaszolt, nem az üzenet aktuális állapotával. Az aktuális állapot ennek a kérésnek az előzménysora:",
+      "replayedReading": "az előzmények beolvasása…",
+      "doubt": {
+        "title": "A küldés kimenetele nem ismert",
+        "copy": "Ez a kérés elhagyta a böngészőt, de a válasza nem érkezett meg vagy nem olvasható: lehet, hogy elment. Amíg le nem zárul, erről a lapról semmi más nem küldhető ennek a tagnak. Az előzmények lezárják, amint megjelenik bennük ez a kérés; az Újrapróbálás pontosan ugyanezt a kérést küldi újra, amit a Core soha nem küld el kétszer.",
+        "restored": "Ez a lap az oldal újratöltése előttről őrizte meg.",
+        "retry": "Ugyanannak a kérésnek az újrapróbálása",
+        "checkHistory": "Előzmények ellenőrzése"
+      }
     },
     "history": {
       "title": "Kézbesítési előzmények",
@@ -5919,7 +5964,14 @@
       },
       "integrity": "Tartalom sértetlensége",
       "hashVerified": "Élő megjelenítés előtt SHA-256-tal ellenőrizve",
-      "reason": "Biztonságos indok"
+      "reason": "Biztonságos indok",
+      "loading": "A kézbesítési előzmények beolvasása…",
+      "failed": "Az előzmények nem olvashatók, ezért nem jelennek meg üresként.",
+      "empty": "A Core-ban nincs kimenő üzenet ehhez a taghoz.",
+      "moreFailed": "A régebbi sorok nem olvashatók.",
+      "choose": "Válassz egy sort a pontos tartalma beolvasásához.",
+      "detailLoading": "A pontos tartalom beolvasása…",
+      "detailFailed": "A pontos tartalom nem olvasható vagy nem ellenőrizhető."
     },
     "reasons": {
       "channel_absent": "Nincs csatorna",
@@ -5935,7 +5987,7 @@
       "title": "Jogosultságok és adatvédelem",
       "copy": "A Core külön adja az előzményolvasási, kimenő küldési és sablonhozzáférési képességet. A böngésző soha nem következtet képességre a szerepkör nevéből.",
       "sendTitle": "Kimenő küldés",
-      "sendAvailable": "A mintaoperátornak van küldési képessége; ez a helyi szerződés-előnézet továbbra is minden műveletet blokkol.",
+      "sendAvailable": "A Core kimenő küldési képességet ad neked: ellenőrizheted a tag elérhetőségét, és egyszerre egy üzenetet küldhetsz neki.",
       "sendUnavailable": "Ez az operátor megvizsgálhatja az előzményt, de nem készíthet előnézetet és nem küldhet üzenetet.",
       "historyTitle": "Előzmények olvasása",
       "historyAvailable": "Az írásvédett operátor biztonságos, korlátozott sorokat és egy pontos, UID-hoz kötött részletet vizsgálhat.",
@@ -6025,7 +6077,11 @@
       "generic": "A kimenő művelet biztonságosan meghiúsult. A felület nem feltételez sikert, üres állapotot vagy kézbesítést.",
       "coreUnavailable": "A Core nem válaszolt időben, vagy a válasza nem olvasható. Semmit nem feltételeztünk.",
       "membershipUnconfirmed": "Az adminisztrátori tagságod most nem erősíthető meg. Próbáld újra hamarosan."
-    }
+    },
+    "loading": "A kimenő üzenetküldési hozzáférés beolvasása a Core-ból…",
+    "accessFailed": "A Core kimenő üzenetküldésre vonatkozó válasza nem olvasható, ezért semmi nem jelenik meg, és semmi nem küldhető.",
+    "retry": "Újra",
+    "historyOnly": "Csak előzmények"
   },
   "audienceVisibilityAdmin": {
     "eyebrow": "Felfedezési és katalógusszabályzat",
