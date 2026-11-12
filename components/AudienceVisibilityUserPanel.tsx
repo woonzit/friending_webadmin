@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { adminCall } from "@/lib/adminClient";
+import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import AudienceVisibilityIdentityEditor, {
   type AudienceVisibilityIdentityNotice,
 } from "@/components/AudienceVisibilityIdentityEditor";
@@ -63,8 +63,14 @@ function draftFrom(detail: AudienceVisibilityMemberDetail): AudienceVisibilityId
 export default function AudienceVisibilityUserPanel({
   uid,
   onIdentitySaved,
+  adminMe,
 }: {
   uid: number;
+  /**
+   * The page's one admin_me answer for the panels it mounts (lib/pageAdminMe.ts). The first load uses
+   * it; a retry and the re-read after a refused save ask Core again, as before.
+   */
+  adminMe: () => Promise<AdminResponse | null>;
   /**
    * A successful identity write changes the derived segment and the legacy
    * gender projection the rest of this page renders, so the page re-reads.
@@ -85,10 +91,10 @@ export default function AudienceVisibilityUserPanel({
    */
   const requestRef = useRef<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (atMount = false) => {
     setState("loading");
     setNotice(null);
-    const meResponse = await adminCall("admin_me", {});
+    const meResponse = await (atMount ? adminMe() : adminCall("admin_me", {}));
     const block = audienceVisibilityAdminMe(meResponse?.audience_visibility);
     // The sibling block (T-653 §2a). Absent on a Core that predates the
     // amendment, which reads as "no editor" and leaves the panel read-only.
@@ -110,9 +116,11 @@ export default function AudienceVisibilityUserPanel({
     setDetail(parsed);
     setDraft(draftFrom(parsed));
     setState("ready");
-  }, [uid]);
+  }, [adminMe, uid]);
 
-  useEffect(() => { void load(); }, [load]);
+  // The page's shared answer serves this mount's first load only; a load for another member asks Core.
+  const firstLoad = useRef(true);
+  useEffect(() => { void load(firstLoad.current); firstLoad.current = false; }, [load]);
 
   function adopt(member: AudienceVisibilityMemberDetail, message: AudienceVisibilityIdentityNotice) {
     requestRef.current = null;

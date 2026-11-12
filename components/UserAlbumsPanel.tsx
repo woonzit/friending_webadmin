@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { adminCall } from "@/lib/adminClient";
+import { adminCall, type AdminResponse } from "@/lib/adminClient";
 import { isAdminWriteRole } from "@/lib/authPolicy";
 import { parseProfilePhotoInsights, type ProfilePhotoInsights } from "@/lib/profilePresentation";
 import AdminImageEditor from "@/components/AdminImageEditor";
@@ -58,7 +58,8 @@ function parseAlbums(value: unknown): Album[] | null {
   return result;
 }
 
-export default function UserAlbumsPanel({ uid }: { uid: number }) {
+/** `adminMe`: the page's one admin_me answer for the panels it mounts (lib/pageAdminMe.ts), read once, at mount. */
+export default function UserAlbumsPanel({ uid, adminMe }: { uid: number; adminMe: () => Promise<AdminResponse | null> }) {
   const t = useTranslations("userDetail");
   const editor = useTranslations("imageEditor");
   const [albums, setAlbums] = useState<Album[] | null>(null);
@@ -75,7 +76,7 @@ export default function UserAlbumsPanel({ uid }: { uid: number }) {
 
   useEffect(() => {
     let active = true;
-    void adminCall("admin_me").then((response) => {
+    void adminMe().then((response) => {
       if (!active) return;
       if (response?.success !== true || typeof response.role !== "string") {
         setAccess("error");

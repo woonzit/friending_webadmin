@@ -1159,7 +1159,7 @@ test("released routes and panels rely on Core capability gates without a second 
   assert.doesNotMatch(actions, /ACTIVE_AUDIENCE_VISIBILITY_ADMIN_ACTIONS/);
   assert.match(
     memberPage,
-    /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/,
+    /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} adminMe=\{panelAdminMe\} \/>/,
   );
   assert.match(memberPanel, /audience_visibility_member_detail/);
   assert.doesNotMatch(memberPanel, /user_detail/);
@@ -1689,7 +1689,7 @@ test("the users detail panel gates the editor on the sibling block and the page 
   // no catalogue from the page and offers no detail control.
   assert.doesNotMatch(panel, /identityGroups|detailOptions|gender_detail/u);
   assert.doesNotMatch(editor, /detailOptions|gender_detail|show_gender_detail/u);
-  assert.match(page, /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} \/>/);
+  assert.match(page, /<AudienceVisibilityUserPanel uid=\{uid\} onIdentitySaved=\{load\} adminMe=\{panelAdminMe\} \/>/);
   // T-653 §2a: the server session decodes the sibling block, tolerantly.
   assert.match(session, /audienceVisibilityIdentityWriteAuthorized\(data\)/);
   assert.match(session, /const data = decision\.membership/);

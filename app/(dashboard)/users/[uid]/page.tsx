@@ -20,6 +20,7 @@ import VerificationUserPanel from "@/components/VerificationUserPanel";
 import AdminGrantedVerificationPanel from "@/components/AdminGrantedVerificationPanel";
 import AudienceVisibilityUserPanel from "@/components/AudienceVisibilityUserPanel";
 import { adminCall } from "@/lib/adminClient";
+import { pageAdminMe } from "@/lib/pageAdminMe";
 import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
 import { formatDate } from "@/lib/format";
 import {
@@ -85,6 +86,12 @@ export default function UserDetailPage() {
   }, [locale, uid]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // The albums, membership, granted-verification and audience panels each need Core's admin_me answer
+  // when they mount; they share one, asked afresh whenever they mount again - for another member, or
+  // after this page was loading or failed. A panel's retry or re-read after a write still asks Core itself.
+  const ready = state === "ready";
+  const panelAdminMe = useMemo(() => pageAdminMe(), [uid, ready]);
 
   if (state === "loading") return <LoadingPanel />;
   if (state === "not-found") return <ErrorPanel message={t("notFound")} retry={load} />;
@@ -155,20 +162,20 @@ export default function UserDetailPage() {
       </section>
       {/* Pictures first: editing, deleting, re-cropping and choosing the
           main photo are the most-used operator actions on this page. */}
-      <UserAlbumsPanel uid={uid} />
-      <UserMembershipPanel uid={uid} initial={data.membership} />
+      <UserAlbumsPanel uid={uid} adminMe={panelAdminMe} />
+      <UserMembershipPanel uid={uid} initial={data.membership} adminMe={panelAdminMe} />
       <UserModerationPanel uid={uid} />
       {/* P-074: sign-in addresses and shared-address accounts, collapsed until
           an operator opens it; it loads on its own and cannot hide this page. */}
       <UserModerationInsight key={`moderation-insight-${uid}`} uid={uid} />
       <VerificationUserPanel uid={uid} access={data.verification_access} />
-      {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} /> : null}
+      {ADMIN_GRANTED_VERIFICATION_CONTRACT_READY ? <AdminGrantedVerificationPanel key={`admin-granted-verification-${uid}`} uid={uid} adminMe={panelAdminMe} /> : null}
       {/* The canonical identity surface of this page: gender, detailed gender
           and audience live on the audience-visibility record, and the editor
           inside this panel is the only console write for them (T-653). The
           detailed-gender options are Core's own served catalogue, so the panel
           never pins that vocabulary itself. */}
-      <AudienceVisibilityUserPanel uid={uid} onIdentitySaved={load} />
+      <AudienceVisibilityUserPanel uid={uid} onIdentitySaved={load} adminMe={panelAdminMe} />
       <ProductPopupPanel key={`product-popup-${uid}`} uid={uid} />
       <OutboundMessagingPanel uid={uid} displayName={profile.display_name} codename={profile.codename} />
       <UserContentEditor

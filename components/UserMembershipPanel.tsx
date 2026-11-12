@@ -110,9 +110,12 @@ function isEditableGrant(grant: MembershipAdminGrant | null): grant is Membershi
 export default function UserMembershipPanel({
   uid,
   initial,
+  adminMe,
 }: {
   uid: number;
   initial: MembershipUserDetail;
+  /** The page's one admin_me answer for the panels it mounts (lib/pageAdminMe.ts): read at mount; a retry asks Core. */
+  adminMe: () => Promise<AdminResponse | null>;
 }) {
   const t = useTranslations("membershipUser");
   const membershipErrors = useTranslations("membershipErrors");
@@ -139,10 +142,11 @@ export default function UserMembershipPanel({
   const [grantStale, setGrantStale] = useState(false);
   const restoreChecked = useRef<string | null>(null);
 
-  const loadAdminAccess = useCallback(async () => {
+  // Stable, as before: `adminMe` is read only at mount, so the answer the panel mounted with is the one it asks for.
+  const loadAdminAccess = useCallback(async (atMount = false) => {
     setAdminAccess("loading");
     setAdminRole("");
-    const response = await adminCall("admin_me");
+    const response = await (atMount ? adminMe() : adminCall("admin_me"));
     const role = response?.success === true ? normalizeAdminRole(response.role) : "";
     if (!role) {
       setAdminAccess("error");
@@ -160,7 +164,7 @@ export default function UserMembershipPanel({
     setRollout(parsed ? membershipRolloutMode(parsed) : "unknown");
   }, []);
 
-  useEffect(() => { void loadAdminAccess(); }, [loadAdminAccess]);
+  useEffect(() => { void loadAdminAccess(true); }, [loadAdminAccess]);
   // P-100 Part B: when Core sends this member's live access, its rollout mode replaces the
   // configuration read below (the Part A inference), which stays the fallback without it.
   const liveAccessPresent = detail.live_access.state === "present";

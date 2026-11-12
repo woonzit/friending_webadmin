@@ -45,7 +45,11 @@ function pendingUid(pending: AdminGrantedVerificationPendingMutation): number | 
   return typeof uid === "number" && Number.isInteger(uid) ? uid : null;
 }
 
-export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) {
+/**
+ * `adminMe`: the page's one admin_me answer for the panels it mounts (lib/pageAdminMe.ts). The first load
+ * uses it; a retry and the re-read after a write ask Core again, as before.
+ */
+export default function AdminGrantedVerificationPanel({ uid, adminMe }: { uid: number; adminMe: () => Promise<AdminResponse | null> }) {
   const t = useTranslations("userDetail.adminGrantedVerification");
   const locale = useLocale();
   const [state, setState] = useState<"loading" | "ready" | "error" | "hidden">("loading");
@@ -126,11 +130,12 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
     }
   }, [t]);
 
-  const load = useCallback(async () => {
+  const firstLoad = useRef(true);
+  const load = useCallback(async (atMount = false) => {
     const sequence = loadSequenceRef.current + 1;
     loadSequenceRef.current = sequence;
     setState((current) => current === "ready" ? current : "loading");
-    const meResponse = await adminCall("admin_me", {});
+    const meResponse = await (atMount ? adminMe() : adminCall("admin_me", {}));
     if (sequence !== loadSequenceRef.current) return;
     const block = adminGrantedVerificationAdminMe(meResponse?.admin_granted_verification);
     if (!block) {
@@ -167,7 +172,7 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
       });
     }
     setState("ready");
-  }, [adopt, clearPending, t, uid]);
+  }, [adminMe, adopt, clearPending, t, uid]);
 
   useEffect(() => {
     try {
@@ -185,7 +190,9 @@ export default function AdminGrantedVerificationPanel({ uid }: { uid: number }) 
       setNotice({ tone: "error", text: t("live.persistenceUnavailable") });
     }
     readLegacyPending();
-    void load();
+    // The page's shared answer serves this mount's first load only; any later run asks Core.
+    void load(firstLoad.current);
+    firstLoad.current = false;
   }, [load, readLegacyPending, t]);
 
   async function executeMutation(next: AdminGrantedVerificationPendingMutation) {
