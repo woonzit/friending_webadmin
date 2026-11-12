@@ -14,7 +14,7 @@ import DatesResearchNavigationNotice from "@/components/DatesResearchNavigationN
 import { confirmResearchNavigation } from "@/lib/datesResearchNavigation";
 import { clearFriendingGoSession, friendingGoSessionStorage } from "@/lib/friendinggoConsole";
 
-type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "heroes" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail" | "friendingGo";
+type IconName = "overview" | "users" | "membership" | "appReview" | "userGroups" | "chat" | "templates" | "invite" | "footprints" | "pinger" | "photoModeration" | "reportedContent" | "intoTagModeration" | "verification" | "persona" | "profileLocation" | "dates" | "landing" | "appLanding" | "signupOptions" | "signupPhotos" | "profileFields" | "icebreakers" | "config" | "admins" | "audit" | "mail" | "friendingGo";
 
 const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; ready?: boolean }> = [
   { href: "/", key: "overview", icon: "overview", exact: true },
@@ -77,13 +77,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
   persona: <><path d="M12 22s7-3.7 7-10V5l-7-3-7 3v7c0 6.3 7 10 7 10Z"/><circle cx="12" cy="9" r="2.4"/><path d="M8.7 16a3.5 3.5 0 0 1 6.6 0"/></>,
   profileLocation: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
   dates: <><path d="M5 4v3M19 4v3M4 9h16"/><rect x="3" y="5" width="18" height="16" rx="3"/><path d="m8 15 2.3 2.3L16 12"/></>,
-  heroes: <><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></>,
   landing: <><path d="M3 5.5h18v13H3z"/><path d="m3 15 4.5-4.5 3.5 3 3.5-4 6.5 6"/><circle cx="8" cy="8.5" r="1.3"/></>,
   appLanding: <><rect x="7" y="2.5" width="10" height="19" rx="2.6"/><path d="m9 13.5 2.2-2.2 1.6 1.4 2.2-2.6"/><path d="M10.8 18.5h2.4"/></>,
   signupOptions: <><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/></>,
-  // A portrait card with a bust: the signup avatar tile. Deliberately not the `heroes` landscape
-  // frame or the `photoModeration` frame-with-a-tick — this section configures the signup photo
-  // step, and reusing either icon would read as "People hero" or "review queue" in the same list.
+  // A portrait card with a bust: the signup avatar tile. Deliberately not the `photoModeration`
+  // frame-with-a-tick — this section configures the signup photo step, and reusing that icon would
+  // read as "review queue" in the same list.
   signupPhotos: <><rect x="4" y="2.8" width="16" height="18.4" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7.6 18.4a4.6 4.6 0 0 1 8.8 0"/></>,
   profileFields: <><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4z"/><path d="M16.5 13v7M13 16.5h7"/></>,
   icebreakers: <><path d="M5 5h14v11H9l-4 3v-3H5z"/><path d="M8 9h8M8 12h5"/></>,
