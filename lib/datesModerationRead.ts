@@ -30,7 +30,7 @@ export type DatesEvidenceRead = {
   case_id: string; evidence: Array<Record<string, unknown>>; appeal_note: DatesAppealNote | null;
   redacted_sensitive_location_count: number; break_glass_used: boolean; audit_id: string;
 };
-export type DatesEvidenceScope = {
+type DatesEvidenceScope = {
   case_id: string; appeal_id: string | null; include_sensitive_location: boolean; break_glass: boolean;
 };
 
@@ -152,7 +152,7 @@ function uniqueRows(rows: unknown[], rules: Record<string, Rule>, key: string): 
   });
 }
 
-export type DatesModerationQueue = { cases: DatesCaseSummary[]; page: number; limit: number; total: number };
+type DatesModerationQueue = { cases: DatesCaseSummary[]; page: number; limit: number; total: number };
 
 /** Queue rows use the same metadata projection as detail, never evidence. */
 export function datesModerationQueue(value: unknown, requested: { page: number; limit: number }): DatesModerationQueue | null {
@@ -192,7 +192,7 @@ export function isDatesConsoleCommand(action: string): boolean {
   return Object.hasOwn(commandRules, action);
 }
 
-export type DatesConsoleCommandReceipt = {
+type DatesConsoleCommandReceipt = {
   case_id: string; revision: number; audit_id: string; idempotency_replayed: boolean;
 };
 

@@ -83,7 +83,7 @@ export function readThenSaved(): { read: Json; saved: Json } {
   return assert.fail("the corpus has a writer's read and the answer to a save made on it");
 }
 /** The switches turned, one event each, from what `model` shows to `target`. */
-export function toggles(model: FriendingStartPolicyModel, target: FriendingStartPolicyDraft): FriendingStartPolicyEvent[] {
+function toggles(model: FriendingStartPolicyModel, target: FriendingStartPolicyDraft): FriendingStartPolicyEvent[] {
   return FRIENDING_START_METHODS.filter((method) => model.draft![method] !== target[method])
     .map((method) => ({ type: "toggled", method, value: target[method] }));
 }

@@ -4,7 +4,7 @@ import {
 } from "@/lib/datesExternalAdmin";
 
 /** What one status read of the event detail found; null: the read failed or its body could not be decoded. */
-export interface DatesExternalRecheckStatus {
+interface DatesExternalRecheckStatus {
   detail: DatesExternalDetail;
   jobs: DatesExternalRows<DatesExternalRecheck> | null;
   /** A job of the event is queued or running. */

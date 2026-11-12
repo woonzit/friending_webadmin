@@ -56,7 +56,7 @@ function closed(value: unknown, keys: readonly string[], exact: boolean): value 
     && keys.every((key) => Object.hasOwn(value, key));
 }
 
-export function datesExternalTrim(value: string): string {
+function datesExternalTrim(value: string): string {
   // PHP trim(), not JS trim(): NBSP and other Unicode spaces are not discarded.
   return value.replace(/^[\x20\t\n\r\0\v]+|[\x20\t\n\r\0\v]+$/g, "");
 }

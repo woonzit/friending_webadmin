@@ -972,7 +972,7 @@ export const DATES_INTAKE_REFUSALS: Readonly<Record<string, number>> = {
   "dates-intake-text-invalid": 422, "dates-intake-unavailable": 404, "dates-intake-url-invalid": 422,
 };
 
-export type DatesIntakeRefusal =
+type DatesIntakeRefusal =
   /** Core answered with its closed refusal envelope: this is what it said. */
   | { kind: "core"; error: string; status: number }
   /** The console's own bridge refused (session, origin, shape, transport). */

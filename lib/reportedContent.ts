@@ -93,13 +93,13 @@ export type ReportedContentListData = {
   total: number;
 };
 
-export type ReportedContentActionData = {
+type ReportedContentActionData = {
   contract_version: 1;
   report: ReportedContentReport;
   replayed: boolean;
 };
 
-export type ReportedContentConflictData = {
+type ReportedContentConflictData = {
   contract_version: 1;
   report: ReportedContentReport;
 };

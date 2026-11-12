@@ -446,7 +446,7 @@ export function datesReportEntryPointsFor(scope: string, existing?: readonly str
     : allowed.filter((entry) => (entry === "external_event") === existing.includes("external_event"));
 }
 
-export type DatesReasonEntryPoints =
+type DatesReasonEntryPoints =
   | { ok: true; entryPoints: string[] }
   | { ok: false; error: "empty" }
   | { ok: false; error: "mixedExternal" }
@@ -595,7 +595,7 @@ export function datesSettingEffectiveText(
   return String(effective ?? "null");
 }
 
-export type DatesStorefrontEffectiveRow = { storefront: string; effective: boolean };
+type DatesStorefrontEffectiveRow = { storefront: string; effective: boolean };
 
 /**
  * AYI-074: a setting row's `effective_value` is the GLOBAL answer (no
@@ -609,7 +609,7 @@ export type DatesStorefrontEffectiveRow = { storefront: string; effective: boole
  * - "ready": the storefront rows, sorted; empty when no storefront overrides.
  * - "invalid": anything else. It is reported, never shown as "no overrides".
  */
-export type DatesStorefrontEffective =
+type DatesStorefrontEffective =
   | { status: "unsupported" }
   | { status: "notApplicable" }
   | { status: "ready"; rows: DatesStorefrontEffectiveRow[] }

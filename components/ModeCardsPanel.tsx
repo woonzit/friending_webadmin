@@ -92,7 +92,7 @@ function modeCardsDraftIsValid(draft: ModeCardsDraft): boolean {
  * one row whose height the text defines, and `app/globals.css` gives the row a
  * single inset token so the three distances cannot drift apart.
  */
-export function ModeCardsEditor({
+function ModeCardsEditor({
   draft,
   busy,
   pending,
