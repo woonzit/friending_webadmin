@@ -5756,7 +5756,6 @@
   "outboundMessaging": {
     "title": "Outbound message",
     "copy": "Preview one confirmed member, compose bounded content and inspect privacy-safe delivery history without revealing destinations or provider identifiers.",
-    "localOnly": "Contract preview only",
     "channels": {
       "email": "Email",
       "sms": "SMS",
@@ -5798,7 +5797,6 @@
       "smsPush": "SMS + push capacity",
       "ofLimit": "of {limit} in the rolling window",
       "expires": "Preview lifetime",
-      "fiveMinutes": "5 minutes",
       "refresh": "Check again",
       "loading": "Reading the member's availability and your capacity from Core…",
       "failed": "Availability could not be read; nothing is assumed about any channel.",
@@ -5857,9 +5855,6 @@
       "availability": "Current availability",
       "allowPartial": "Allow unavailable recipients to be skipped",
       "allowPartialCopy": "Multi-member requests may skip unavailable members. This one-member composer always stops on an availability change; rate-limit refusal still sends nobody.",
-      "validate": "Validate local preview",
-      "sendUnavailable": "Sending unavailable",
-      "validated": "The bounded local material is valid for {count, plural, one {# recipient} other {# recipients}}. Live sending remains disabled until the provider contract is released.",
       "availabilityUnknown": "Not checked",
       "review": "Review and send",
       "dialogTitle": "Send this message?",
@@ -5870,7 +5865,6 @@
       "once": "The send carries one request identity: if its answer is lost, retrying it never sends the message twice."
     },
     "notices": {
-      "previewReady": "The local material is valid. Review the recipient, source, channel, partial choice and audit reason together.",
       "sent": "Core accepted the message. Its delivery state follows in the history below.",
       "replayed": "Core had already accepted this exact request; it was not sent a second time. Its current state is in the history.",
       "earlierRecorded": "The earlier send is in Core's history ({status}). It is settled and was not sent again.",
@@ -5994,48 +5988,6 @@
       "templateTitle": "Template access",
       "templateSeparate": "Template read and template edit are separate capabilities; outbound send implies neither one.",
       "withheld": "Email addresses, phone numbers, registrations, device values, provider identifiers, credentials and raw provider errors are never available in this surface."
-    },
-    "fixture": {
-      "auditReason": "Approved account-support reminder",
-      "custom": {
-        "email": {
-          "subject": "A note about your Friending profile",
-          "body": "<p>Write a clear member update here.</p>"
-        },
-        "sms": {
-          "body": "A short Friending profile reminder."
-        },
-        "push": {
-          "subject": "Profile reminder",
-          "body": "Add a little more about yourself."
-        }
-      },
-      "templates": {
-        "email": {
-          "name": "Welcome email",
-          "subject": "Welcome to Friending",
-          "body": "<p>Welcome to <strong>Friending</strong>.</p>"
-        },
-        "sms": {
-          "name": "Profile check-in",
-          "body": "Your profile check-in is ready."
-        },
-        "push": {
-          "name": "Profile reminder",
-          "subject": "Profile reminder",
-          "body": "Add a little more about yourself."
-        }
-      },
-      "history": {
-        "emailSubject": "Welcome to Friending",
-        "emailExcerpt": "Welcome to Friending.",
-        "emailBody": "<p>Welcome to <strong>Friending</strong>.</p>",
-        "pushSubject": "Profile reminder",
-        "pushExcerpt": "Add a little more about yourself.",
-        "pushBody": "Add a little more about yourself.",
-        "smsExcerpt": "Your profile check-in is ready.",
-        "smsBody": "Your profile check-in is ready."
-      }
     },
     "errors": {
       "contractVersionInvalid": "Core refused the outbound-messaging contract version.",

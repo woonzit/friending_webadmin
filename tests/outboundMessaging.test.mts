@@ -709,6 +709,9 @@ test("the member page's panel is wired to Core: no fixture data, no preview-only
     ? Object.entries(value as JsonObject).flatMap(([key, child]) => tree(child, prefix ? `${prefix}.${key}` : key))
     : [prefix];
   assert.deepEqual(tree(enMessaging).sort(), tree(huMessaging).sort(), "identical EN/HU trees");
+  for (const gone of ["localOnly", "fixture", "notices.previewReady", "confirmation.validate", "confirmation.sendUnavailable", "confirmation.validated", "preview.fiveMinutes"]) {
+    assert.equal(tree(enMessaging).some((key) => key === gone || key.startsWith(`${gone}.`)), false, `${gone} described only the mock`);
+  }
   const expectedErrorKeys = new Set([
     ...Object.values(OUTBOUND_MESSAGING_ERROR_KEYS),
     ...Object.values(OUTBOUND_MESSAGING_BRIDGE_ERROR_KEYS),

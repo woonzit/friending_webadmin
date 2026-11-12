@@ -5756,7 +5756,6 @@
   "outboundMessaging": {
     "title": "Kimenő üzenet",
     "copy": "Egy megerősített tag előnézete, korlátozott tartalom összeállítása és adatvédelmi szempontból biztonságos kézbesítési előzmények a célcímek és szolgáltatói azonosítók felfedése nélkül.",
-    "localOnly": "Csak szerződés-előnézet",
     "channels": {
       "email": "E-mail",
       "sms": "SMS",
@@ -5798,7 +5797,6 @@
       "smsPush": "SMS + push kapacitás",
       "ofLimit": "a gördülő ablak {limit} értékéből",
       "expires": "Előnézet élettartama",
-      "fiveMinutes": "5 perc",
       "refresh": "Újraellenőrzés",
       "loading": "A tag elérhetőségének és a kapacitásodnak beolvasása a Core-ból…",
       "failed": "Az elérhetőség nem olvasható; egyik csatornáról sem feltételezünk semmit.",
@@ -5857,9 +5855,6 @@
       "availability": "Aktuális elérhetőség",
       "allowPartial": "A nem elérhető címzettek kihagyhatók",
       "allowPartialCopy": "A többtagos kérések kihagyhatják a nem elérhető tagokat. Ez az egytagos összeállító elérhetőségi változáskor mindig megáll; kapacitáskorlát esetén továbbra sem kap senki küldeményt.",
-      "validate": "Helyi előnézet ellenőrzése",
-      "sendUnavailable": "Küldés nem érhető el",
-      "validated": "A korlátozott helyi anyag érvényes {count, plural, one {# címzetthez} other {# címzetthez}}. Az élő küldés a szolgáltatói szerződés kiadásáig tiltott marad.",
       "availabilityUnknown": "Nincs ellenőrizve",
       "review": "Áttekintés és küldés",
       "dialogTitle": "Elküldöd ezt az üzenetet?",
@@ -5870,7 +5865,6 @@
       "once": "A küldés egyetlen kérésazonosítót hordoz: ha a válasza elvész, az újrapróbálás soha nem küldi el kétszer az üzenetet."
     },
     "notices": {
-      "previewReady": "A helyi anyag érvényes. Együtt ellenőrizd a címzettet, forrást, csatornát, részleges választást és auditindokot.",
       "sent": "A Core befogadta az üzenetet. A kézbesítési állapota az alábbi előzményekben követhető.",
       "replayed": "A Core már befogadta pontosan ezt a kérést; nem ment el másodszor. Az aktuális állapota az előzményekben látható.",
       "earlierRecorded": "A korábbi küldés szerepel a Core előzményeiben ({status}). Lezárult, és nem ment el újra.",
@@ -5994,48 +5988,6 @@
       "templateTitle": "Sablonhozzáférés",
       "templateSeparate": "A sablon olvasása és szerkesztése külön képesség; a kimenő küldés egyikre sem ad automatikus jogot.",
       "withheld": "E-mail-címek, telefonszámok, regisztrációk, eszközértékek, szolgáltatói azonosítók, hitelesítő adatok és nyers szolgáltatói hibák soha nem érhetők el ezen a felületen."
-    },
-    "fixture": {
-      "auditReason": "Jóváhagyott fióktámogatási emlékeztető",
-      "custom": {
-        "email": {
-          "subject": "Megjegyzés a Friending profilodról",
-          "body": "<p>Ide írj egyértelmű tagi tájékoztatást.</p>"
-        },
-        "sms": {
-          "body": "Rövid emlékeztető a Friending profilodról."
-        },
-        "push": {
-          "subject": "Profil-emlékeztető",
-          "body": "Írj egy kicsit többet magadról."
-        }
-      },
-      "templates": {
-        "email": {
-          "name": "Üdvözlő e-mail",
-          "subject": "Üdv a Friendingben",
-          "body": "<p>Üdv a <strong>Friendingben</strong>.</p>"
-        },
-        "sms": {
-          "name": "Profil-ellenőrzés",
-          "body": "Elkészült a profilod ellenőrzése."
-        },
-        "push": {
-          "name": "Profil-emlékeztető",
-          "subject": "Profil-emlékeztető",
-          "body": "Írj egy kicsit többet magadról."
-        }
-      },
-      "history": {
-        "emailSubject": "Üdv a Friendingben",
-        "emailExcerpt": "Üdv a Friendingben.",
-        "emailBody": "<p>Üdv a <strong>Friendingben</strong>.</p>",
-        "pushSubject": "Profil-emlékeztető",
-        "pushExcerpt": "Írj egy kicsit többet magadról.",
-        "pushBody": "Írj egy kicsit többet magadról.",
-        "smsExcerpt": "Elkészült a profilod ellenőrzése.",
-        "smsBody": "Elkészült a profilod ellenőrzése."
-      }
     },
     "errors": {
       "contractVersionInvalid": "A Core elutasította a kimenő üzenet szerződésverzióját.",
