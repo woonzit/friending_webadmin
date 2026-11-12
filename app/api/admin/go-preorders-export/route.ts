@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedText } from "@/lib/boundedStream";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { adminPostForwardError } from "@/lib/adminPostForward";
@@ -44,8 +45,8 @@ export async function POST(request: NextRequest) {
 
   let filters;
   try {
-    const raw = await request.text();
-    if (Buffer.byteLength(raw, "utf8") > BODY_LIMIT) return errorResponse("too-large", 413);
+    const raw = await readBoundedText(request.body, BODY_LIMIT);
+    if (raw === null) return errorResponse("too-large", 413);
     const body = record(raw ? JSON.parse(raw) : {});
     filters = body ? friendingGoExportFilters(body) : null;
   } catch {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedFormData } from "@/lib/boundedStream";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { adminPostForwardError } from "@/lib/adminPostForward";
@@ -41,8 +42,10 @@ export async function POST(request: NextRequest) {
 
   let icon: File;
   try {
-    const form = await request.formData();
+    // Never past the limit the declared length was held to, whatever the body turns out to be.
+    const form = await readBoundedFormData(request, MAX_ICON_BYTES + MAX_MULTIPART_OVERHEAD);
     if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    if (form === null) return errorResponse("profile-icon-too-large", 413);
     const entry = form.get("icon");
     if (!(entry instanceof File)) return errorResponse("profile-icon-missing", 400);
     icon = entry;

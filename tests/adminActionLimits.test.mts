@@ -7,6 +7,8 @@ import {
   adminActionBodyLimit,
   adminActionTimeoutMs,
 } from "../lib/adminActions.ts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 // `lib/core.ts` carries the shared Core credential and is therefore a `server-only` module. Plain
 // Node has no React Server Component resolution condition, so the marker package is pointed at an
@@ -192,7 +194,8 @@ test("the largest signup photo document fits under the default body ceiling", as
  * would refuse a document that is valid at every contract cap. Derive the maximum from the caps
  * alone, build that document, prove the proxy parser admits it, and pin both sides of the ceiling:
  * the maximum fits with the documented margin, and one byte over the ceiling fails the exact
- * predicate the bridge applies (`Buffer.byteLength(raw, "utf8") > bodyLimit` -> 413).
+ * predicate the bridge applies (the text's UTF-8 length over `bodyLimit` -> 413, counted by
+ * `readBoundedText` while the body is read).
  */
 test("the largest method-policy document fits its own ceiling and one byte over is refused", async () => {
   const {
@@ -271,6 +274,8 @@ test("the largest method-policy document fits its own ceiling and one byte over 
   assert.equal(Buffer.byteLength(atLimit, "utf8") > limit, false);
   assert.equal(Buffer.byteLength(overLimit, "utf8"), limit + 1);
   assert.equal(Buffer.byteLength(overLimit, "utf8") > limit, true, "one byte over the ceiling is a 413 before any parsing");
+  assert.equal(await readBoundedText(requestBody(atLimit).body, limit), atLimit, "the bridge's reader admits the body at the ceiling");
+  assert.equal(await readBoundedText(requestBody(overLimit).body, limit), null, "and refuses one byte over it");
 });
 
 test("a Core timeout is reported distinctly from an unreachable Core", async () => {
@@ -328,8 +333,8 @@ test("the bridge applies both per-action tables rather than a hardcoded constant
     "utf8",
   );
   assert.match(route, /adminActionBodyLimit\(action\)/);
-  // The predicate the body-ceiling regressions above mirror: strictly greater than the ceiling.
-  assert.match(route, /Buffer\.byteLength\(raw, "utf8"\) > bodyLimit/);
+  // The reader the body-ceiling regressions above run: strictly greater than the ceiling is refused, and read no further.
+  assert.match(route, /const raw = await readBoundedText\(request\.body, bodyLimit\);\s*if \(raw === null\) \{\s*return bridgeError\("too-large", 413\);/);
   assert.match(route, /adminActionTimeoutMs\(action\)/);
   // The literals used to live in the route; they belong with the rest of the per-action policy.
   assert.doesNotMatch(route, /256_000|1_100_000|10_000/);

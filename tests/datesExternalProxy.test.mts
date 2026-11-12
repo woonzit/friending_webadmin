@@ -17,6 +17,8 @@ import { datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProx
 import { normalizeDatesEventIconsProxyBody } from "../lib/datesEventIcons.ts";
 import { normalizeDatesExternalPinsProxyBody } from "../lib/datesExternalPins.ts";
 import { normalizeDatesLeaderboardProxyBody } from "../lib/datesSuggestionLeaderboard.ts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 // Execute the production POST function, not a reimplementation. Session/Core
 // I/O and NextResponse are controlled adapters; unrelated domain predicates
@@ -41,7 +43,7 @@ function harness() {
   // Parsing shares the production helpers' realm, so their plain-object guard
   // is tested without the artificial vm Object.prototype mismatch.
   // D-143: the route adds the Admin intake contract selector to Dates requests itself (the real function, as it is).
-  const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, withDatesAdminContract,
+  const context: any = { exports: {}, Buffer, JSON, readBoundedText, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, withDatesAdminContract,
     // The route hands the browser the projection of a Dates body (lead's ruling on D-143): the real functions, as they are.
     isDatesAdminRoute, projectDatesAdminResponse,
     datesAvailabilityWriteIsRetired, datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody,
@@ -66,7 +68,7 @@ function harness() {
   async function send(action = "dates_external_event_command", payload: unknown = command(), overrides: Record<string, string | null> = {}, raw?: string) {
     const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
     for (const [key, value] of Object.entries(overrides)) value === null ? headers.delete(key) : headers.set(key, value);
-    const response = await context.exports.POST({ headers, text: async () => raw ?? JSON.stringify(payload) }, { params: Promise.resolve({ action }) }) as Response;
+    const response = await context.exports.POST({ headers, body: requestBody(raw ?? JSON.stringify(payload)).body }, { params: Promise.resolve({ action }) }) as Response;
     assert.equal(response.headers.get("cache-control"), "no-store");
     return { status: response.status, body: await response.json() };
   }

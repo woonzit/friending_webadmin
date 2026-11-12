@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedFormData } from "@/lib/boundedStream";
 import { coreCall, coreMultipartFilesCall } from "@/lib/core";
 import { serveDatesIntakeCreate } from "@/lib/datesIntakeBridge";
 import { readAdminSession } from "@/lib/session";
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
  */
 export async function POST(request: NextRequest) {
   const reply = await serveDatesIntakeCreate(
-    { headers: request.headers, form: () => request.formData(), signal: request.signal },
+    { headers: request.headers, form: (limit) => readBoundedFormData(request, limit), signal: request.signal },
     { session: readAdminSession, core: coreCall, coreFiles: coreMultipartFilesCall, requestId: randomUUID },
   );
   return NextResponse.json("json" in reply ? reply.json : null, { status: reply.status, headers: reply.headers });

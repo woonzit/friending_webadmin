@@ -17,6 +17,8 @@ import * as go from "../lib/friendinggo.ts";
 import * as csv from "../lib/friendinggoExport.ts";
 import * as state from "../lib/friendinggoConsole.ts";
 import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 type Json = Record<string, any>;
 
@@ -666,7 +668,7 @@ const HEADERS = { origin: "https://admin.example.test", host: "admin.example.tes
 async function bridge(action: string, role: string, body: unknown, answer: { status: number; data: unknown }, membership: Json = READY) {
   const forwarded: Array<Record<string, unknown>> = [];
   const context: any = {
-    exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminBridgeCoreTransportError,
+    exports: {}, Buffer, JSON, readBoundedText, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminBridgeCoreTransportError,
     webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     normalizeMailDeliveryProxyBody, normalizeFriendingGoProxyBody: go.normalizeFriendingGoProxyBody,
     normalizeFriendingGoResponse: go.normalizeFriendingGoResponse, friendingGoProxyCapabilityAuthorized: go.friendingGoProxyCapabilityAuthorized,
@@ -684,7 +686,7 @@ async function bridge(action: string, role: string, body: unknown, answer: { sta
   };
   for (const name of BRIDGE.imports) if (context[name] === undefined && name !== "NextRequest") context[name] = () => undefined;
   vm.runInNewContext(BRIDGE.code, context);
-  const response = await context.exports.POST({ headers: new Headers(HEADERS), signal: new AbortController().signal, text: async () => JSON.stringify(body) },
+  const response = await context.exports.POST({ headers: new Headers(HEADERS), signal: new AbortController().signal, body: requestBody(JSON.stringify(body)).body },
     { params: Promise.resolve({ action }) }) as Response;
   return { status: response.status, body: await response.json(), cache: response.headers.get("cache-control"), forwarded };
 }
@@ -794,7 +796,7 @@ const EXPORT_ROUTE = compileRoute("../app/api/admin/go-preorders-export/route.ts
 async function exportRoute(body: unknown, writer: Json, answer: { status: number; data: unknown }, headers: Record<string, string> = HEADERS) {
   const forwarded: Array<Record<string, unknown>> = [];
   const context: any = {
-    exports: {}, Buffer, JSON, Date, Number, String, ADMIN_MEMBERSHIP_UNCONFIRMED, adminPostForwardError, isTrustedAdminRequest,
+    exports: {}, Buffer, JSON, readBoundedText, Date, Number, String, ADMIN_MEMBERSHIP_UNCONFIRMED, adminPostForwardError, isTrustedAdminRequest,
     FRIENDINGGO_CONTRACT_VERSION: go.FRIENDINGGO_CONTRACT_VERSION, friendingGoConsoleReady: go.friendingGoConsoleReady, friendingGoError: go.friendingGoError,
     friendingGoExport: go.friendingGoExport, friendingGoExportFilters: go.friendingGoExportFilters,
     friendingGoCsv: csv.friendingGoCsv, friendingGoExportFilename: csv.friendingGoExportFilename,
@@ -804,7 +806,7 @@ async function exportRoute(body: unknown, writer: Json, answer: { status: number
   };
   for (const name of EXPORT_ROUTE.imports) if (context[name] === undefined && name !== "NextRequest") context[name] = () => undefined;
   vm.runInNewContext(EXPORT_ROUTE.code, context);
-  const response = await context.exports.POST({ headers: new Headers(headers), signal: new AbortController().signal, text: async () => JSON.stringify(body) }) as Response;
+  const response = await context.exports.POST({ headers: new Headers(headers), signal: new AbortController().signal, body: requestBody(JSON.stringify(body)).body }) as Response;
   const raw = Buffer.from(await response.arrayBuffer());
   // `Response.text()` drops a byte-order mark; the file's bytes keep it.
   return { response, raw, text: new TextDecoder("utf-8", { ignoreBOM: true }).decode(raw), forwarded };

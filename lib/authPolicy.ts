@@ -5,11 +5,13 @@
  * code validation, bans, and every server-side authorization check.
  */
 
+import { readBoundedText } from "@/lib/boundedStream";
+
 type HeaderReader = { get(name: string): string | null };
 
-type TextRequest = {
+type BodyRequest = {
   headers: HeaderReader;
-  text(): Promise<string>;
+  body: ReadableStream<Uint8Array> | null;
 };
 
 const AUTH_BODY_MAX_BYTES = 4_096;
@@ -22,24 +24,25 @@ type BoundedJsonObject =
 /**
  * Read a small JSON object without letting a public authentication route buffer
  * an unbounded request body. Content-Length is only an early rejection hint;
- * the actual UTF-8 byte count remains authoritative for chunked or dishonest
- * requests.
+ * the UTF-8 byte count of the text stays authoritative for chunked or dishonest
+ * requests, and is applied while the body is read (`readBoundedText`), so a
+ * body that cannot fit is cancelled instead of being held in memory first.
  */
 export async function readBoundedJsonObject(
-  request: TextRequest,
+  request: BodyRequest,
   maximumBytes = AUTH_BODY_MAX_BYTES,
 ): Promise<BoundedJsonObject> {
   const limit = Math.max(1, Math.floor(maximumBytes));
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (Number.isFinite(declared) && declared > limit) return { kind: "too-large" };
 
-  let raw = "";
+  let raw: string | null;
   try {
-    raw = await request.text();
+    raw = await readBoundedText(request.body, limit);
   } catch {
     return { kind: "invalid" };
   }
-  if (new TextEncoder().encode(raw).byteLength > limit) return { kind: "too-large" };
+  if (raw === null) return { kind: "too-large" };
 
   try {
     const parsed = raw === "" ? {} : JSON.parse(raw);

@@ -14,6 +14,8 @@ import { GENUINE_AREA, researchFixture } from "./support/datesResearchCorpus.ts"
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { withDatesAdminContract } from "../lib/datesAdminContract.ts";
 import { MEMBERSHIP_CASES, MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER, type MembershipCase } from "./support/adminMembershipCases.mts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 // Actual production POST function; controlled session/Core/Next adapters.
 // DERIVED handler execution, not mounted Next or authenticated provider proof.
@@ -25,7 +27,7 @@ const code = ts.transpileModule(tree.statements.filter((node) => !ts.isImportDec
 async function bridge(answer: MembershipCase, action: string, config: { guest?: boolean; sessionThrows?: boolean; throws?: boolean; finalMe?: MembershipCase; abandonBody?: boolean; research?: boolean; body?: unknown; featureAnswer?: { status: number; data: unknown; abandoned?: boolean } } = {}) {
   const controller = new AbortController(), forwarded: string[] = [], checks: unknown[] = [];
   let bodyReads = 0;
-  const context: any = { exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
+  const context: any = { exports: {}, Buffer, JSON, readBoundedText, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership,
     adminBridgeCoreTransportError, webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract,
     ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     readAdminSession: async () => { if (config.sessionThrows) throw new Error("DERIVED cookie read failure"); return config.guest ? null : { email: MEMBERSHIP_EMAIL }; },
@@ -59,9 +61,8 @@ async function bridge(answer: MembershipCase, action: string, config: { guest?: 
   }
   vm.runInNewContext(code, context);
   const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
-  const response = await context.exports.POST({ headers, signal: controller.signal, text: async () => {
-    bodyReads++; if (config.abandonBody) controller.abort(); return JSON.stringify(config.body ?? {});
-  } }, { params: Promise.resolve({ action }) }) as Response;
+  const { body } = requestBody(JSON.stringify(config.body ?? {}), { onRead: () => { bodyReads++; if (config.abandonBody) controller.abort(); } });
+  const response = await context.exports.POST({ headers, signal: controller.signal, body }, { params: Promise.resolve({ action }) }) as Response;
   return { status: response.status, body: await response.json(), headers: response.headers, checks, forwarded, bodyReads };
 }
 

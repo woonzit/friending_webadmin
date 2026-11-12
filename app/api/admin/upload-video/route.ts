@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedFormData } from "@/lib/boundedStream";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { adminPostForwardError } from "@/lib/adminPostForward";
@@ -40,8 +41,10 @@ export async function POST(request: NextRequest) {
 
   let video: File;
   try {
-    const form = await request.formData();
+    // Never past the limit the declared length was held to, whatever the body turns out to be.
+    const form = await readBoundedFormData(request, MAX_ADMIN_VIDEO_INPUT_BYTES + MAX_MULTIPART_OVERHEAD);
     if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    if (form === null) return errorResponse("video-too-large", 413);
     const entry = form.get("video");
     if (!(entry instanceof File)) return errorResponse("video-missing", 400);
     video = entry;

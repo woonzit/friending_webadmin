@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedFormData } from "@/lib/boundedStream";
 import {
   AdminImageError,
   normalizeAdminImage,
@@ -47,8 +48,10 @@ export async function POST(request: NextRequest) {
 
   let image: File;
   try {
-    const form = await request.formData();
+    // Never past the limit the declared length was held to, whatever the body turns out to be.
+    const form = await readBoundedFormData(request, MAX_ADMIN_IMAGE_INPUT_BYTES + MAX_MULTIPART_OVERHEAD);
     if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    if (form === null) return errorResponse("image-too-large", 413);
     const entry = form.get("image");
     if (!(entry instanceof File)) {
       return errorResponse("image-missing", 400);

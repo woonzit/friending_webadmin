@@ -4,12 +4,15 @@ import { isTrustedAdminRequest } from "@/lib/requestGuard";
 import type { NormalizedAdminImage } from "@/lib/adminImage";
 
 type Deps = DatesIntakeBridgeDeps & { normalize: (bytes: Buffer) => Promise<NormalizedAdminImage> };
-type Request = { headers: { get(name: string): string | null }; json: () => Promise<unknown>; form: () => Promise<FormData>; signal?: AbortSignal };
+/** The body as text or as a form, read no further than `limit` bytes: `null` when it goes past them. */
+type Request = { headers: { get(name: string): string | null }; text: (limit: number) => Promise<string | null>;
+  form: (limit: number) => Promise<FormData | null>; signal?: AbortSignal };
+const MULTIPART_LIMIT = 11 * 1024 * 1024, JSON_LIMIT = 16000;
 export async function serveExternalMedia(request: Request, deps: Deps) {
   if (!isTrustedAdminRequest(request.headers)) return datesBridgeRefusal("bad-origin", 403);
   const multipart = request.headers.get("content-type")?.startsWith("multipart/form-data") === true;
-  const length = Number(request.headers.get("content-length"));
-  if (!Number.isSafeInteger(length) || length <= 0 || length > (multipart ? 11 * 1024 * 1024 : 16000)) return datesBridgeRefusal("invalid-input", 413);
+  const length = Number(request.headers.get("content-length")), limit = multipart ? MULTIPART_LIMIT : JSON_LIMIT;
+  if (!Number.isSafeInteger(length) || length <= 0 || length > limit) return datesBridgeRefusal("invalid-input", 413);
   // Read access may be less privileged than uploads; determine only the
   // transport first. JSON's action is validated before a capability is used.
   const who = await datesBridgeOperator(deps, multipart ? "dates_external_event_manage" : "dates_external_event_read", request.signal);
@@ -17,7 +20,8 @@ export async function serveExternalMedia(request: Request, deps: Deps) {
   let raw: unknown, image: File | null = null;
   try {
     if (multipart) {
-      const form = await request.form();
+      const form = await request.form(limit);
+      if (form === null) return datesBridgeRefusal("invalid-input", 413);
       const fields: Record<string, unknown> = {};
       for (const key of new Set(form.keys())) {
         const entries = form.getAll(key);
@@ -27,7 +31,11 @@ export async function serveExternalMedia(request: Request, deps: Deps) {
         else return datesBridgeRefusal("invalid-input", 400);
       }
       raw = fields;
-    } else raw = await request.json();
+    } else {
+      const text = await request.text(limit);
+      if (text === null) return datesBridgeRefusal("invalid-input", 413);
+      raw = JSON.parse(text);
+    }
   } catch { return datesBridgeRefusal("invalid-input", 400); }
   if (request.signal?.aborted) return datesBridgeRefusal("admin-membership-unconfirmed", 503);
   const input = normalizeExternalMediaRequest(raw);

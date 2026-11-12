@@ -74,8 +74,8 @@ async function bridge(config: { mode?: "read" | "upload" | "feature"; row?: type
     form.set("image", new File(["DERIVED normalized by injected decoder"], "art.png", { type: "image/png" }));
   }
   const reply = await serveExternalMedia({ headers: headers(mode === "upload", config.origin !== false), signal: controller.signal,
-    json: async () => { parsed++; return config.raw ?? (mode === "read" ? { action: "read", external_event_id: XEV }
-      : { action: "feature", external_event_id: XEV, expected_revision: 1, photo_id: PIC, reason: "Choose featured artwork.", idempotency_key: upload.idempotency_key }); },
+    text: async () => { parsed++; return JSON.stringify(config.raw ?? (mode === "read" ? { action: "read", external_event_id: XEV }
+      : { action: "feature", external_event_id: XEV, expected_revision: 1, photo_id: PIC, reason: "Choose featured artwork.", idempotency_key: upload.idempotency_key })); },
     form: async () => { parsed++; return form; } }, {
     session: async () => config.guest ? null : { email: MEMBERSHIP_EMAIL }, core: call,
     coreFiles: async (action, payload, files, timeout, options) => { const result = await call(action, payload, timeout, options); calls[calls.length - 1].files = files; return result; },

@@ -29,6 +29,8 @@ import {
 } from "../lib/mailDelivery.ts";
 import { MailDeliveryView, type MailDeliveryLoad } from "../components/MailDeliveryConsole.tsx";
 import { MEMBERSHIP_EMAIL, MEMBERSHIP_MEMBER } from "./support/adminMembershipCases.mts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 type Json = Record<string, any>;
 
@@ -280,7 +282,7 @@ const routeCode = ts.transpileModule(routeTree.statements.filter((node) => !ts.i
 async function bridge(role: string, body: unknown, answer: { status: number; data: unknown }) {
   const forwarded: Array<Record<string, unknown>> = [];
   const context: any = {
-    exports: {}, Buffer, JSON, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminBridgeCoreTransportError,
+    exports: {}, Buffer, JSON, readBoundedText, ...actions, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, adminBridgeCoreTransportError,
     webadminErrorEnvelope, isTrustedAdminRequest, withDatesAdminContract, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
     normalizeMailDeliveryProxyBody, normalizeMailDeliveryResponse,
     readAdminSession: async () => ({ email: MEMBERSHIP_EMAIL }),
@@ -303,7 +305,7 @@ async function bridge(role: string, body: unknown, answer: { status: number; dat
   }
   vm.runInNewContext(routeCode, context);
   const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
-  const response = await context.exports.POST({ headers, signal: new AbortController().signal, text: async () => JSON.stringify(body) },
+  const response = await context.exports.POST({ headers, signal: new AbortController().signal, body: requestBody(JSON.stringify(body)).body },
     { params: Promise.resolve({ action: "mail_delivery" }) }) as Response;
   return { status: response.status, body: await response.json(), cache: response.headers.get("cache-control"), forwarded };
 }

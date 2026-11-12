@@ -60,7 +60,8 @@ test("DERIVED session gates: absent, invalid, expired and locally revoked tokens
 test("DERIVED upload gates: abandoned form parsing cannot decode or forward bytes after an earlier positive membership read", async () => {
   for (const route of WRITER_ROUTES.filter((route) => !["persona-member", "profile-verification-evidence"].includes(route))) {
     const h = await sessionHarness(MEMBERSHIP_CASES[0]), incoming = writerRequest(h.controller.signal); let normalized = 0, forwarded = 0;
-    incoming.request.formData = async () => { h.controller.abort(); return new FormData(); };
+    const form = new FormData(); for (const field of ["image", "icon", "video"]) form.set(field, new File(["DERIVED"], "derived.png", { type: "image/png" }));
+    incoming.send(form, () => h.controller.abort());
     const module = await serverModule(`app/api/admin/${route}/route.ts`, { NextResponse: DerivedNextResponse, requireAdminWriter: h.api.requireAdminWriter,
       normalizeAdminImage: async () => { normalized++; }, normalizeSupportImage: async () => { normalized++; }, validateAdminProfileIcon: () => { normalized++; },
       validateAdminVideo: () => { normalized++; }, coreCall: async () => { forwarded++; }, coreMultipartCall: async () => { forwarded++; } });

@@ -18,6 +18,7 @@ import {
   verifyActiveSessionToken,
   verifySessionToken,
 } from "../lib/sessionCodec.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 const secret = "a".repeat(64);
 const now = 1_800_000_000;
@@ -138,7 +139,7 @@ test("only owner and admin roles may write; viewer, unknown and absent roles may
 test("public auth JSON parsing enforces declared and actual byte limits", async () => {
   const request = (raw: string, declared?: string) => ({
     headers: headers(declared === undefined ? {} : { "content-length": declared }),
-    text: async () => raw,
+    body: requestBody(raw).body,
   });
 
   assert.deepEqual(

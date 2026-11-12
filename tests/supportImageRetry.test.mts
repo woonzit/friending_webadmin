@@ -66,7 +66,7 @@ for (const firstAnswer of [
     fetch: async (url: string, options: RequestInit) => {
       assert.equal(url, "/api/admin/support-media", "no automatic probe or repeat is needed for a readable feature failure");
       const incoming = writerRequest(h.controller.signal);
-      incoming.request.formData = async () => options.body as FormData;
+      incoming.send(options.body as FormData);
       const response = await route.POST(incoming.request) as Response;
       bridgeAnswers.push({ status: response.status, data: await response.clone().json() });
       return response;

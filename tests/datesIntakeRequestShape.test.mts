@@ -24,6 +24,8 @@ import {
 import { serveDatesIntakeCreate, serveDatesIntakeMedia } from "../lib/datesIntakeBridge.ts";
 import { prepareDatesIntakeAsk, prepareDatesIntakeReject } from "../lib/datesIntakeConsole.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 // What the console REALLY sends to Core for each intake route, compared with
 // what Core's parsers accept (T-884 fix 74de1259, Core tip 06c8c3ea; the Core
@@ -99,7 +101,7 @@ async function bridge(action: string, browserBody: unknown, answer: unknown = { 
 }
 async function forward(action: string, browserBody: unknown, answer: unknown) {
   return capture(answer, async (core) => {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+    const context: any = { exports: {}, Buffer, JSON, readBoundedText, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       isDatesAdminRoute, projectDatesAdminResponse,
       datesExternalProxyCapabilityAuthorized, normalizeDatesExternalProxyBody, datesExternalResolutionAuthorized, normalizeDatesExternalResolutionProxyBody,
       datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true,
@@ -116,7 +118,7 @@ async function forward(action: string, browserBody: unknown, answer: unknown) {
     }
     vm.runInNewContext(routeCode, context);
     const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
-    const response = await context.exports.POST({ headers, text: async () => JSON.stringify(browserBody) }, { params: Promise.resolve({ action }) }) as Response;
+    const response = await context.exports.POST({ headers, body: requestBody(JSON.stringify(browserBody)).body }, { params: Promise.resolve({ action }) }) as Response;
     return { status: response.status, body: await response.json() };
   });
 }

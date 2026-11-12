@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readBoundedFormData } from "@/lib/boundedStream";
 import { coreMultipartCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { adminPostForwardError } from "@/lib/adminPostForward";
@@ -38,8 +39,10 @@ export async function POST(request: NextRequest) {
   let uid = 0;
   let requestId = "";
   try {
-    const form = await request.formData();
+    // Never past the limit the declared length was held to, whatever the body turns out to be.
+    const form = await readBoundedFormData(request, MAX_SUPPORT_IMAGE_INPUT_BYTES + MAX_MULTIPART_OVERHEAD);
     if (request.signal?.aborted) return failure(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+    if (form === null) return failure("support-image-too-large", 413);
     const entry = form.get("image");
     if (!(entry instanceof File)) return failure("support-image-missing", 400);
     image = entry;

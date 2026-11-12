@@ -24,8 +24,8 @@ async function request(route: "create" | "media", row: MembershipCase, config: {
   const h = await sessionHarness(membership(row)), incoming = writerRequest(h.controller.signal); let forwarded = 0, forms = 0;
   if (config.guest) h.state.token = "";
   incoming.request.nextUrl.searchParams = new URLSearchParams({ intake_id: "xin_" + "0".repeat(31) + "1", index: "1" });
-  incoming.request.formData = async () => { forms++; if (config.abandonForm) h.controller.abort();
-    const form = new FormData(); form.set("kind", "text"); form.set("text", "DERIVED public event input"); form.set("locale", "en"); form.set("idempotency_key", key); return form; };
+  const form = new FormData(); form.set("kind", "text"); form.set("text", "DERIVED public event input"); form.set("locale", "en"); form.set("idempotency_key", key);
+  incoming.send(form, () => { forms++; if (config.abandonForm) h.controller.abort(); });
   const call = async (action: string, payload: Record<string, unknown>, _timeout: unknown, options: { signal: AbortSignal; membershipCheck?: boolean; strictResponse?: boolean }) => {
     assert.equal(payload.admin_email, MEMBERSHIP_EMAIL); assert.equal(options.signal, h.controller.signal);
     if (action === "admin_me") {

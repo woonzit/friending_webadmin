@@ -130,8 +130,8 @@ const IMAGE_FIELDS = ["image_1", "image_2"];
  * The files go to Core as they are: Core re-encodes them, and nothing is
  * resized or stored here.
  */
-export async function serveDatesIntakeCreate(request: { headers: HeaderReader; form: () => Promise<FormData>; signal?: AbortSignal }, deps: DatesIntakeBridgeDeps):
-  Promise<DatesIntakeBridgeReply> {
+export async function serveDatesIntakeCreate(request: { headers: HeaderReader; form: (limit: number) => Promise<FormData | null>; signal?: AbortSignal },
+  deps: DatesIntakeBridgeDeps): Promise<DatesIntakeBridgeReply> {
   if (!isTrustedAdminRequest(request.headers)) return refusal("bad-origin", 403);
   const declared = Number(request.headers.get("content-length") ?? "");
   if (!Number.isFinite(declared) || declared <= 0) return refusal("invalid-input", 400);
@@ -139,9 +139,11 @@ export async function serveDatesIntakeCreate(request: { headers: HeaderReader; f
   const who = await operator(deps, "dates_external_event_manage", request.signal);
   if (!("email" in who)) return who;
 
-  let form: FormData;
-  try { form = await request.form(); } catch { return refusal("invalid-input", 400); }
+  // The form is read no further than the limit the declared length was held to (`null`: the body went past it).
+  let form: FormData | null;
+  try { form = await request.form(DATES_INTAKE_MAX_REQUEST_BYTES); } catch { return refusal("invalid-input", 400); }
   if (request.signal?.aborted) return refusal(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  if (form === null) return refusal("image-too-large", 413);
   const scalars: Record<string, unknown> = {}, uploads: Blob[] = [];
   for (const key of new Set(form.keys())) {
     const values = form.getAll(key);

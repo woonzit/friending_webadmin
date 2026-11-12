@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   ADMIN_GRANTED_VERIFICATION_CONTRACT_READY,
 } from "@/lib/contractReadiness";
+import { readBoundedText } from "@/lib/boundedStream";
 import { coreCall } from "@/lib/core";
 import { ADMIN_MEMBERSHIP_UNCONFIRMED } from "@/lib/adminMembership";
 import { adminPostForwardError } from "@/lib/adminPostForward";
@@ -65,9 +66,9 @@ export async function POST(request: NextRequest) {
 
   let body: Record<string, unknown>;
   try {
-    const raw = await request.text();
+    const raw = await readBoundedText(request.body, BODY_LIMIT);
     if (request.signal?.aborted) return errorResponse(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
-    if (Buffer.byteLength(raw, "utf8") > BODY_LIMIT) return errorResponse("too-large", 413);
+    if (raw === null) return errorResponse("too-large", 413);
     const parsed = raw ? JSON.parse(raw) : null;
     body = record(parsed) ?? Object.create(null);
   } catch {

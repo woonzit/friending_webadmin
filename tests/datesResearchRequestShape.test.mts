@@ -15,6 +15,8 @@ import { datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody } f
 import { datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody } from "../lib/datesResearchProxy.ts";
 import { isTrustedAdminRequest } from "../lib/requestGuard.ts";
 import { GENUINE_AREA, GENUINE_DEFAULTS, DERIVED_ENVELOPE, DERIVED_OVERVIEW, GENUINE_RUN, GENUINE_SOURCE } from "./support/datesResearchCorpus.ts";
+import { readBoundedText } from "../lib/boundedStream.ts";
+import { requestBody } from "./support/requestBody.mts";
 
 // The production JSON bridge -> coreCall -> fetch form bytes. No provider or
 // socket is reached. Response substitutions/missing Part B branches are DERIVED,
@@ -44,7 +46,7 @@ async function bridge(action: string, browser: unknown, answer: unknown = DERIVE
     return { status: 200, json: async () => answer } as Response;
   }) as typeof globalThis.fetch;
   try {
-    const context: any = { exports: {}, Buffer, JSON, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
+    const context: any = { exports: {}, Buffer, JSON, readBoundedText, ...actions, isTrustedAdminRequest, adminBridgeCoreTransportError, webadminErrorEnvelope, ADMIN_MEMBERSHIP_UNCONFIRMED, classifyAdminMembership, datesAvailabilityWriteIsRetired, withDatesAdminContract,
       isDatesAdminRoute, projectDatesAdminResponse, datesIntakeProxyCapabilityAuthorized, normalizeDatesIntakeProxyBody, datesResearchProxyCapabilityAuthorized, normalizeDatesResearchProxyBody,
       ADMIN_GRANTED_VERIFICATION_CONTRACT_READY: true, readAdminSession: async () => ({ email: actor }), coreCall, mergeCoreParams,
       NextResponse: { json: (value: unknown, options: ResponseInit) => new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }) } };
@@ -57,7 +59,7 @@ async function bridge(action: string, browser: unknown, answer: unknown = DERIVE
     }
     vm.runInNewContext(code, context);
     const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", "sec-fetch-site": "same-origin", "x-friending-admin-request": "1" });
-    const result = await context.exports.POST({ headers, text: async () => JSON.stringify(browser) }, { params: Promise.resolve({ action }) }) as Response;
+    const result = await context.exports.POST({ headers, body: requestBody(JSON.stringify(browser)).body }, { params: Promise.resolve({ action }) }) as Response;
     return { status: result.status, headers: result.headers, body: await result.json(), sent };
   } finally { globalThis.fetch = fetchBefore; }
 }

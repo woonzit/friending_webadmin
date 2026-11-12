@@ -35,9 +35,9 @@ for (const route of WRITER_ROUTES.filter((route) => route !== "profile-verificat
     const h = await sessionHarness(MEMBERSHIP_CASES[0]), incoming = writerRequest(h.controller.signal); let forwarded = 0;
     const file = new File(["DERIVED controlled normalization input"], route === "upload-video" ? "derived.mp4" : "derived.png",
       { type: route === "upload-video" ? "video/mp4" : "image/png" });
-    incoming.request.formData = async () => { const form = new FormData(); form.set("image", file); form.set("icon", file); form.set("video", file);
-      form.set("variant", "light"); form.set("uid", "123"); form.set("request_id", "3f2504e0-4f89-41d3-9a0c-0305e82c3301"); return form; };
-    incoming.request.text = async () => JSON.stringify({ uid: "123" });
+    const form = new FormData(); form.set("image", file); form.set("icon", file); form.set("video", file);
+    form.set("variant", "light"); form.set("uid", "123"); form.set("request_id", "3f2504e0-4f89-41d3-9a0c-0305e82c3301");
+    incoming.send(route === "persona-member" ? JSON.stringify({ uid: "123" }) : form);
     const forward = async (_action: string, payload: Record<string, unknown>, ...args: unknown[]) => {
       forwarded++; assert.equal(payload.admin_email, MEMBERSHIP_EMAIL);
       const options = args.at(-1) as { signal: AbortSignal; strictResponse: boolean };
@@ -96,9 +96,9 @@ const realSuccessShapes = {
 for (const route of Object.keys(realSuccessShapes) as (keyof typeof realSuccessShapes)[]) test(`DERIVED Core-source real success after forward: ${route}`, async () => {
   const h = await sessionHarness(MEMBERSHIP_CASES[0]), incoming = writerRequest(h.controller.signal); let forwards = 0;
   const file = new File(["DERIVED controlled normalization input"], route === "upload-video" ? "derived.mp4" : "derived.png", { type: route === "upload-video" ? "video/mp4" : "image/png" });
-  incoming.request.formData = async () => { const form = new FormData(); for (const field of ["image", "icon", "video"]) form.set(field, file);
-    form.set("variant", "light"); form.set("uid", "123"); form.set("request_id", "3f2504e0-4f89-41d3-9a0c-0305e82c3301"); return form; };
-  incoming.request.text = async () => JSON.stringify({ uid: "123" });
+  const form = new FormData(); for (const field of ["image", "icon", "video"]) form.set(field, file);
+  form.set("variant", "light"); form.set("uid", "123"); form.set("request_id", "3f2504e0-4f89-41d3-9a0c-0305e82c3301");
+  incoming.send(route === "persona-member" ? JSON.stringify({ uid: "123" }) : form);
   const forward = async () => { forwards++; return { status: 200, data: realSuccessShapes[route] }; };
   const normalized = { buffer: Buffer.from("DERIVED normalized bytes"), mime: route === "upload-video" ? "video/mp4" : "image/png" };
   const module = await serverModule(`app/api/admin/${route}/route.ts`, { NextResponse: DerivedNextResponse, requireAdminWriter: h.api.requireAdminWriter,

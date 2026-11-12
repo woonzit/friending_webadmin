@@ -66,12 +66,29 @@ export const WRITER_ROUTES = ["upload-image", "upload-video", "upload-profile-ic
 export class DerivedNextResponse extends Response {
   static json(value: unknown, options: ResponseInit) { return new Response(JSON.stringify(value), { ...options, headers: { ...options.headers, "Content-Type": "application/json" } }); }
 }
+/**
+ * A same-origin writer request as Next hands it to a route: the body is a stream (`request.body`), and
+ * `bodyReads` counts the reads of it, so a refusal can be shown to come before any byte of the body.
+ * `send` replaces the body: a FormData travels as the browser's multipart, with its Content-Type.
+ */
 export function writerRequest(signal: AbortSignal) {
   let bodyReads = 0;
-  return { get bodyReads() { return bodyReads; }, request: {
-    signal, headers: new Headers({ origin: "https://admin.example.test", host: "admin.example.test", referer: "https://admin.example.test/users",
-      "sec-fetch-site": "same-origin", "sec-fetch-dest": "image", "x-friending-admin-request": "1", "content-length": "100" }),
-    formData: async () => { bodyReads++; return new FormData(); }, text: async () => { bodyReads++; return "{}"; },
-    nextUrl: { searchParams: new URLSearchParams() },
-  } };
+  const headers = new Headers({ origin: "https://admin.example.test", host: "admin.example.test", referer: "https://admin.example.test/users",
+    "sec-fetch-site": "same-origin", "sec-fetch-dest": "image", "x-friending-admin-request": "1", "content-length": "100" });
+  const request = { signal, headers, body: null as ReadableStream<Uint8Array> | null, nextUrl: { searchParams: new URLSearchParams() } };
+  const send = (content: FormData | string, onRead?: () => void) => {
+    const encoded = new Response(content), source = encoded.body!.getReader();
+    let read = false;
+    request.body = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        if (!read) { read = true; bodyReads++; onRead?.(); }
+        const part = await source.read();
+        if (part.done) controller.close(); else controller.enqueue(part.value);
+      },
+      cancel: (reason) => source.cancel(reason),
+    }, { highWaterMark: 0 });
+    headers.set("content-type", typeof content === "string" ? "application/json" : encoded.headers.get("content-type")!);
+  };
+  send("{}");
+  return { get bodyReads() { return bodyReads; }, request, send };
 }

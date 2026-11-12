@@ -53,6 +53,7 @@ import {
   isAdminBridgeActionAuthorized,
 } from "@/lib/adminActions";
 import { ADMIN_GRANTED_VERIFICATION_CONTRACT_READY } from "@/lib/contractReadiness";
+import { readBoundedText } from "@/lib/boundedStream";
 import { coreCall, mergeCoreParams } from "@/lib/core";
 import { withDatesAdminContract } from "@/lib/datesAdminContract";
 import { isDatesAdminRoute, projectDatesAdminResponse } from "@/lib/datesAdminProjection";
@@ -217,8 +218,9 @@ export async function POST(
 
   let body: Record<string, unknown> = {};
   try {
-    const raw = await request.text();
-    if (Buffer.byteLength(raw, "utf8") > bodyLimit) {
+    // Read only as far as the limit: a chunked body without a Content-Length is cancelled once it cannot fit.
+    const raw = await readBoundedText(request.body, bodyLimit);
+    if (raw === null) {
       return bridgeError("too-large", 413);
     }
     const parsed = raw ? JSON.parse(raw) : {};
