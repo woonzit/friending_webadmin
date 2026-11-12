@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -8,6 +8,26 @@ import {
   adminHelpSections,
   type AdminHelpConsoleReadiness,
 } from "@/lib/adminHelp";
+
+/**
+ * The readiness the shell received from the dashboard layout, for the help mounts of
+ * the dashboard segments below it (`DashboardSegmentLayout`).
+ */
+export const AdminHelpReadinessContext = createContext<AdminHelpConsoleReadiness | null>(null);
+
+/** A dashboard segment's help: the shell's readiness, the segment's guides. */
+export function AdminHelpMount() {
+  const readiness = useContext(AdminHelpReadinessContext);
+  return readiness ? <AdminHelp {...readiness} /> : null;
+}
+
+type AdminHelpProps = AdminHelpConsoleReadiness & {
+  /**
+   * Set on the shell's mount only: when no guide resolves for the path it still
+   * offers the dialog, with the unavailable copy, as before scoped messages.
+   */
+  fallback?: boolean;
+};
 
 type CopyRecord = Record<string, unknown>;
 
@@ -45,11 +65,18 @@ function HelpIcon() {
  * it takes the same readiness the dashboard layout gives the sidebar: a guide
  * for a screen that refuses to render, or a section for a panel that is not
  * there, is withheld rather than shown (T-566).
+ *
+ * Each message scope ships only the guides of the screens it serves
+ * (`lib/clientMessageScopes.ts`), and a screen can sit under more than one help
+ * mount (the shell's, its segment's, a nested segment's). A mount shows the dialog
+ * only when its own provider has the guide, so exactly one does; the census test
+ * proves that for every screen.
  */
-export default function AdminHelp(readiness: AdminHelpConsoleReadiness) {
+export default function AdminHelp({ fallback = false, ...readiness }: AdminHelpProps) {
   const pathname = usePathname();
   const t = useTranslations("adminHelp");
   const page = adminHelpGuideForPath(pathname, readiness);
+  const shipped = page !== null && t.has(`pages.${page.key}`);
   const sections = page ? adminHelpSections(page) : [];
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -57,7 +84,7 @@ export default function AdminHelp(readiness: AdminHelpConsoleReadiness) {
   const dialogRef = useRef<HTMLElement>(null);
   const instanceId = useId().replace(/:/g, "");
 
-  const pageCopy = page ? record(t.raw(`pages.${page.key}`)) : null;
+  const pageCopy = page && shipped ? record(t.raw(`pages.${page.key}`)) : null;
   const pageTitle = text(pageCopy?.title) || t("unavailableTitle");
   const summary = text(pageCopy?.summary) || t("unavailableCopy");
   const steps = textList(pageCopy?.steps);
@@ -107,6 +134,8 @@ export default function AdminHelp(readiness: AdminHelpConsoleReadiness) {
 
   const titleId = `${instanceId}-admin-help-title`;
   const summaryId = `${instanceId}-admin-help-summary`;
+
+  if (page ? !shipped : !fallback) return null;
 
   return (
     <>

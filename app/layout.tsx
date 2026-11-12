@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale } from "next-intl/server";
+import { clientMessages } from "@/lib/clientMessages";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,11 +15,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  const messages = await getMessages();
+  // Each layout below ships only its own client messages (lib/clientMessageScopes.ts).
   return (
     <html lang={locale} data-theme="dark">
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={await clientMessages("root")}>{children}</NextIntlClientProvider>
       </body>
     </html>
   );

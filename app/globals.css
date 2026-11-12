@@ -4806,8 +4806,9 @@ body .verification-level-pill.level-strong {
   border-top: 1px solid var(--border);
 }
 
-/* Contextual operator guide. The trigger belongs to the authenticated shell,
-   so it remains available while a page is loading or showing an error. */
+/* Contextual operator guide. The trigger is mounted by the authenticated shell
+   and by each dashboard segment's layout (exactly one shows per screen), so it
+   remains available while a page is loading or showing an error. */
 .admin-help-trigger {
   position: fixed;
   z-index: 30;

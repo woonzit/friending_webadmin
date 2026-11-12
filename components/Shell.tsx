@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import AdminHelp from "@/components/AdminHelp";
+import AdminHelp, { AdminHelpReadinessContext } from "@/components/AdminHelp";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import AdminMembershipNotice, { AdminWriteOutcomeNotice, useAdminMembershipUnconfirmed, useAdminWriteOutcomeUnknown } from "@/components/AdminMembershipNotice";
 import AdminManualReload from "@/components/AdminManualReload";
@@ -135,6 +135,14 @@ export default function Shell({
   const [open, setOpen] = useState(false);
   const membershipUnconfirmed = useAdminMembershipUnconfirmed();
   const writeOutcomeUnknown = useAdminWriteOutcomeUnknown();
+  // Every help mount takes the readiness the sidebar uses (T-566).
+  const helpReadiness = useMemo(() => ({
+    personaConsoleReady,
+    verificationConsoleReady,
+    audienceVisibilityConsoleReady,
+    profileTextModerationConsoleReady,
+    friendingGoConsoleReady,
+  }), [personaConsoleReady, verificationConsoleReady, audienceVisibilityConsoleReady, profileTextModerationConsoleReady, friendingGoConsoleReady]);
 
   async function logout() {
     if (!await confirmResearchNavigation()) return;
@@ -146,8 +154,9 @@ export default function Shell({
     router.refresh();
   }
 
+  // The segments' help mounts (DashboardSegmentLayout) read the readiness from here.
   return (
-    <div className={`shell${open && !membershipUnconfirmed ? " nav-open" : ""}${membershipUnconfirmed ? " membership-unconfirmed" : ""}`}>
+    <AdminHelpReadinessContext.Provider value={helpReadiness}><div className={`shell${open && !membershipUnconfirmed ? " nav-open" : ""}${membershipUnconfirmed ? " membership-unconfirmed" : ""}`}>
       <button className="nav-backdrop" aria-label={common("closeMenu")} onClick={() => setOpen(false)} />
       <aside className="sidebar membership-retained" hidden={membershipUnconfirmed}>
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
@@ -214,13 +223,16 @@ export default function Shell({
           <div className="membership-retained" hidden={membershipUnconfirmed}>{children}</div>
         </main>
       </div>
+      {/* The shell's help shows the guides the dashboard scope ships (the overview's);
+          each segment's own mount shows its guides (lib/clientMessageScopes.ts). */}
       <div className="membership-retained" hidden={membershipUnconfirmed}><AdminHelp
         personaConsoleReady={personaConsoleReady}
         verificationConsoleReady={verificationConsoleReady}
         audienceVisibilityConsoleReady={audienceVisibilityConsoleReady}
         profileTextModerationConsoleReady={profileTextModerationConsoleReady}
         friendingGoConsoleReady={friendingGoConsoleReady}
+        fallback
       /></div>
-    </div>
+    </div></AdminHelpReadinessContext.Provider>
   );
 }

@@ -403,8 +403,18 @@ test("the feature-switch Help census names all three gates and permanent Visitor
 test("the authenticated shell always renders the visible accessible Help control", async () => {
   const shell = await readFile(path.join(root, "components", "Shell.tsx"), "utf8");
   const component = await readFile(path.join(root, "components", "AdminHelp.tsx"), "utf8");
+  const segment = await readFile(path.join(root, "components", "DashboardSegmentLayout.tsx"), "utf8");
 
-  assert.match(shell, /import AdminHelp from "@\/components\/AdminHelp"/);
+  // Scoped client messages: the shell's mount shows the overview's guide (and the
+  // unavailable copy where no guide resolves); every dashboard segment's layout
+  // mounts the help again inside its own provider, with the shell's readiness.
+  // tests/clientMessageScopes.test.mts renders each screen and counts one trigger.
+  assert.match(shell, /import AdminHelp, \{ AdminHelpReadinessContext \} from "@\/components\/AdminHelp"/);
+  assert.match(shell, /<AdminHelpReadinessContext\.Provider value=\{helpReadiness\}><div className=\{`shell/);
+  assert.match(shell, /friendingGoConsoleReady=\{friendingGoConsoleReady\}\n\s+fallback\n/);
+  assert.match(segment, /\{children\}\n\s+<AdminHelpMount \/>\n\s+<\/NextIntlClientProvider>/);
+  assert.match(component, /const readiness = useContext\(AdminHelpReadinessContext\);\n\s+return readiness \? <AdminHelp \{\.\.\.readiness\} \/> : null;/);
+  assert.match(component, /if \(page \? !shipped : !fallback\) return null;/);
   // The dialog receives the same four Core-projected booleans the sidebar
   // filter uses, so a guide cannot outlive the screen it documents (T-566).
   assert.match(shell, /<AdminHelp\n\s+personaConsoleReady=\{personaConsoleReady\}/);

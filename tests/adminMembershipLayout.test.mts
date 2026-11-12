@@ -27,7 +27,8 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED server render gate / every adm
       AudienceVisibilityAdminConsole: () => createElement("div", {}, "PROTECTED_CONSOLE"), ProfileTextModerationConsole: () => createElement("div", {}, "PROTECTED_CONSOLE"),
       AppearanceMapFrame: () => createElement("div", {}, "PROTECTED_MAP"), PROFILE_TEXT_MODERATION_CONTRACT_READY: true,
       redirect: (target: string) => { throw new Navigation(target); }, notFound: () => { throw new Navigation("not-found"); },
-      getLocale: async () => "en", getTranslations: async () => () => "public refusal copy" });
+      getLocale: async () => "en", getTranslations: async () => () => "public refusal copy",
+      NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children, clientMessages: async () => ({}) });
     let element: React.ReactElement | undefined, navigation: Navigation | undefined;
     try { element = await module.default({ children: createElement("div", {}, "PROTECTED_CHILD"), searchParams: Promise.resolve({}) }); }
     catch (error) { assert.ok(error instanceof Navigation, path); navigation = error; }
@@ -53,7 +54,8 @@ for (const row of MEMBERSHIP_CASES) test(`DERIVED server render gate / every adm
 test("DERIVED layout: an absent signed session redirects as before and does not query Core", async () => {
   const h = await sessionHarness(MEMBERSHIP_CASES[0]); h.state.token = "";
   const module = await serverModule(paths[0], { adminMe: h.api.adminMe, AdminMembershipUnconfirmedError: h.api.AdminMembershipUnconfirmedError,
-      AdminMembershipUnavailable: neutral, Shell: shell, redirect: (target: string) => { throw new Navigation(target); } });
+      AdminMembershipUnavailable: neutral, Shell: shell, redirect: (target: string) => { throw new Navigation(target); },
+      NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children, clientMessages: async () => assert.fail("no render without a session") });
   await assert.rejects(module.default({ children: "PROTECTED_CHILD" }), (error: unknown) => error instanceof Navigation && error.target === "/login");
   assert.equal(h.calls.length, 0);
 });
