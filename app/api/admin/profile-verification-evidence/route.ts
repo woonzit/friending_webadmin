@@ -50,11 +50,19 @@ export async function GET(request: NextRequest) {
   }
 
   if (request.signal?.aborted) return jsonError(ADMIN_MEMBERSHIP_UNCONFIRMED, 503);
+  // A <video> cancels Range requests all the time while it seeks: when the browser gives up, the read of
+  // Core stops with it, and nothing of a late answer is kept (as the wall-media bridge does).
   const upstream = await coreBinaryCall(
     "profile_verification_evidence",
     { admin_email: writer.session.email, case_id: caseId, kind },
     range,
+    undefined,
+    request.signal,
   );
+  if (request.signal?.aborted) {
+    upstream?.body?.cancel().catch(() => undefined);
+    return jsonError("core-timeout", 504);
+  }
   if (!upstream) return jsonError("core-unavailable", 502);
 
   const contentType = upstream.headers.get("content-type") ?? "";
