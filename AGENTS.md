@@ -104,6 +104,11 @@ and the forced-verification waiting-room copy is edited under Verification setti
 Do not reintroduce Deplug, the mandatory walkthrough, or other retired Friending surfaces. Persona
 verification is in scope only through its reviewed Core contract and dedicated operations surfaces.
 
+Woonz (`/woonz`) is a read-only report from the separate Woonz service. It uses its own
+server-only `WOONZ_ADMIN_SECRET`, checks active Core membership before every read, and the
+provider rechecks the shared admin allow-list. Woonz owns its `woonz_*` collections;
+reporting cannot mutate subscribers or send email. Viewer addresses are masked.
+
 The interface is dark-only and bilingual. English is the base/fallback locale and Hungarian is
 fully supported. `messages/en.json` and `messages/hu.json` must keep identical key trees. Use the
 bundled Proxima Nova fonts and never load remote fonts.

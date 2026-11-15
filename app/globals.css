@@ -14991,3 +14991,23 @@ fieldset.dates-external-fields {
   .stat-grid.friendinggo-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .friendinggo-email-frame { min-height: 520px; }
 }
+
+/* Woonz's read-only, first-party traffic and early-access report. */
+.woonz-console > .list-note { margin: 14px 0 22px; }
+.woonz-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.woonz-console .panel { margin-bottom: 24px; }
+.woonz-chart { display: block; width: 100%; max-height: 210px; color: var(--muted); }
+.woonz-chart-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+.woonz-breakdowns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.woonz-breakdown-list { padding: 0; margin: 0; list-style: none; }
+.woonz-breakdown-list li { display: flex; justify-content: space-between; gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.woonz-daily { margin-top: 24px; }
+.woonz-daily summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
+.woonz-name { display: block; color: var(--muted); margin-top: 5px; }
+.woonz-status { border-radius: 5px; padding: 4px 8px; font-size: 12px; background: var(--surface-2); white-space: nowrap; }
+.woonz-status-active { background: #294632; color: #bcf2cd; }
+.woonz-status-pending { background: #514725; color: #f7e69d; }
+.woonz-console .pagination { padding: 18px; gap: 16px; }
+.woonz-console .pagination > div { display: flex; gap: 12px; }
+@media (max-width: 850px) { .woonz-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .woonz-breakdowns { grid-template-columns: 1fr; gap: 0; } }
+@media (max-width: 480px) { .woonz-stats { grid-template-columns: 1fr; } }

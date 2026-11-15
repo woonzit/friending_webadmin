@@ -189,3 +189,19 @@ window: a consumer left enabled against a rolled-back provider fails closed and
 can make shared pages unavailable. A rollback of Webadmin alone never requires a
 Core rollback, but a Core rollback always requires un-flipping the dependent
 Webadmin switch.
+
+## Woonz read-only reporting
+
+`/woonz` reads the separate Woonz service at `https://woonz.com/api/admin-report`.
+Provision `WOONZ_ADMIN_SECRET` in `.env.local` with the dedicated, independently
+random Woonz reporting key. It is not the Core or session secret. The matching
+value lives outside Woonz's document root in `/opt/woonz/private/config.php`.
+Never print either value. This adds one server-only variable to the three listed
+above. Deploy the Woonz provider before this dashboard consumer.
+
+The page rechecks Core membership on every server render. The Woonz service
+checks the same authoritative active-admin allow-list again and masks recipients
+for viewers. The browser receives only the validated report, never the key or a
+Core credential. Woonz owns its `woonz_*` collections and queues its transactional
+messages through the existing Friending mail service; this integration does not
+change Core routes or trigger mail from the reporting page.

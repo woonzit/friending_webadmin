@@ -504,6 +504,12 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/mail-delivery"),
   },
   {
+    key: "woonz",
+    route: "/woonz",
+    sections: ["traffic", "sources", "subscribers"],
+    matches: exact("/woonz"),
+  },
+  {
     // D-153: FriendingGO preorder sign-ups, the email composer and the campaigns sent, three route tabs.
     key: "friendingGoPreorders",
     route: "/friendinggo",

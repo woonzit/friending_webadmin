@@ -3476,6 +3476,44 @@
             }
           }
         }
+      },
+      "woonz": {
+        "title": "Woonz látogatottság és korai feliratkozás",
+        "summary": "Ez az olvasási felület a Woonz saját forgalmi eseményeit, e-mail-megerősítéses feliratkozóit és a Friending meglévő levélkézbesítési adatait mutatja együtt. Google-mérés bekötésére nincs szükség.",
+        "steps": {
+          "1": "Válassz forgalmi időszakot, és szükség esetén szűrd a feliratkozókat állapot szerint.",
+          "2": "A napi táblázatban hasonlítsd össze a megtekintéseket, a látogatóbecslést, az űrlapkezdéseket és az új feliratkozásokat.",
+          "3": "Hiányzó levél esetén nézd meg a megerősítő és az üdvözlő levél állapotát."
+        },
+        "sections": {
+          "traffic": {
+            "title": "Forgalom és napi számok",
+            "purpose": "A kártyák és a diagram a Woonz mért landingoldal-forgalmát mutatják. A megerősített és függő feliratkozók kártyái a teljes listára vonatkoznak.",
+            "guidance": "A látogatóbecslés naponta újraindul, ezért több nap nem összevonható egyedi személyekké. A bot-, teszt-, DNT- és GPC-forgalom kimarad. A mérés a kiírt napon kezdődik, korábbi adat nincs kitalálva.",
+            "actions": {
+              "1": "Válassz hét, harminc vagy kilencven napot, majd kattints az Alkalmazás gombra.",
+              "2": "Nyisd le a napi táblázatot a megtekintések, látogatók, űrlapkezdések és feliratkozások pontos számaihoz."
+            }
+          },
+          "sources": {
+            "title": "Források és eszközök",
+            "purpose": "A táblázatok a mért oldalmegtekintéseket hivatkozó domain és egyszerű mobil vagy asztali eszközcsoport szerint összesítik.",
+            "guidance": "A közvetlen kategóriába a külső hivatkozó nélküli látogatások is bekerülnek. Keresőkifejezések, teljes hivatkozó URL-ek, nyers IP-címek és tartós látogatói azonosítók nem kerülnek az analitikai gyűjteménybe.",
+            "actions": {
+              "1": "A forrásokból láthatod, mely oldalakról érkeznek a látogatók.",
+              "2": "A mobil és asztali forgalom aránya segít a megjelenés további fejlesztésében."
+            }
+          },
+          "subscribers": {
+            "title": "Feliratkozók és levélkézbesítés",
+            "purpose": "A lapozható lista a függő, megerősített és leiratkozott címeket mutatja a megerősítő és üdvözlő levél állapotával. Ez a kimutatás nem küld levelet és nem módosít feliratkozást.",
+            "guidance": "A feliratkozás csak megerősítés után aktív. Az olvasói szerep maszkolt címeket lát, nevet és várost nem. A szolgáltatói átvétel nem jelent postaládába kézbesítést, és az állapotfrissítés késhet.",
+            "actions": {
+              "1": "Szűrj a függő állapotra a megerősítésre váró címekhez.",
+              "2": "Nézd meg mindkét levél állapotát, és frissíts, mielőtt sikertelen kézbesítést feltételezel."
+            }
+          }
+        }
       }
     }
   },
@@ -3547,7 +3585,8 @@
     "pinger": "Pinger",
     "inviteConfiguration": "Mobilos meghívások",
     "cannedTemplates": "Üzenetsablonok",
-    "appReview": "App Review sandbox"
+    "appReview": "App Review sandbox",
+    "woonz": "Woonz"
   },
   "pinger": {
     "eyebrow": "Tagok közötti interakció",
@@ -13067,6 +13106,92 @@
         "notYet": "Ez a küldés még halad. Ha {seconds} mp múlva is elakadt, próbáld újra.",
         "notSending": "Ez a kampány már nincs küldés alatt. A listát újratöltöttük."
       }
+    }
+  },
+  "woonz": {
+    "title": "Woonz",
+    "subtitle": "Korai feliratkozók, visszaigazoló levelek és saját webes látogatottsági adatok.",
+    "unavailable": "A Woonz kimutatása átmenetileg nem elérhető. Teljes, jogosultsággal ellenőrzött válaszig nem jelenítünk meg számokat.",
+    "refresh": "Frissítés",
+    "openSite": "woonz.com megnyitása",
+    "trackingSince": "A mérés kezdete: {date} UTC. A korábbi látogatásokat nem becsüljük visszamenőleg.",
+    "periodLabel": "Forgalom időszaka",
+    "statusLabel": "Feliratkozó állapota",
+    "period": "Utolsó {days} nap",
+    "apply": "Alkalmazás",
+    "statsLabel": "Woonz áttekintés",
+    "visitorEstimate": "Mai becsült egyedi látogatók, UTC szerint",
+    "allTime": "Összes megerősített feliratkozás",
+    "needsConfirmation": "Az e-mail-cím megerősítésére vár",
+    "includesPending": "Új feliratkozások az időszakban, a függőkkel együtt",
+    "cards": {
+      "views": "Oldalmegtekintések",
+      "visitorsToday": "Látogatók ma",
+      "confirmed": "Megerősített feliratkozók",
+      "pending": "Megerősítésre vár",
+      "starts": "Megkezdett feliratkozások",
+      "signups": "Új feliratkozók"
+    },
+    "traffic": "Napi látogatottság",
+    "utc": "A napok UTC időzóna szerint értendők",
+    "chartLabel": "A Woonz napi oldalmegtekintései; a pontos értékek a napi táblázatban találhatók.",
+    "analyticsNote": "Google Tags és követősütik nélkül. A látogatóbecslés naponta változó hash alapján készül; az analitikában nyers IP-cím nem tárolódik. Az ismert botokat, a megjelölt teszteket, a Do Not Track és a Global Privacy Control kéréseket kizárjuk. A számok a tényleges forgalomnál alacsonyabbak lehetnek. Az események 90 napig maradnak meg.",
+    "dailyTable": "Napi számok megjelenítése",
+    "daily": {
+      "day": "Nap (UTC)",
+      "views": "Oldalmegtekintés",
+      "visitors": "Becsült látogatók",
+      "starts": "Űrlapkezdés",
+      "signups": "Új feliratkozók"
+    },
+    "sources": "Forgalmi források",
+    "devices": "Eszközök",
+    "device": {
+      "mobile": "Mobil / tablet",
+      "desktop": "Asztali"
+    },
+    "noTraffic": "Ebben az időszakban még nincs mért forgalom.",
+    "direct": "Közvetlen / nincs hivatkozó",
+    "subscribers": "Korai feliratkozók",
+    "audience": "Megerősítve: {business} vállalkozás · {creator} alkotó · {unsubscribed} leiratkozott",
+    "deliveryNote": "A feliratkozás csak az e-mail-cím megerősítésével lesz aktív. Az „Átvette a szolgáltató” a levélküldő átvételét, a „Kézbesítve” a fogadó levelezőszerver átvételét jelenti; ez nem bizonyítja a beérkezést a fő postaládába. Az állapotok néhány perces késéssel frissülhetnek.",
+    "masked": "Olvasói jogosultsággal az e-mail-címek maszkoltak; a nevek és városok nem láthatók.",
+    "table": {
+      "email": "E-mail / név",
+      "role": "Csoport",
+      "city": "Város",
+      "status": "Feliratkozás",
+      "joined": "Feliratkozás (UTC)",
+      "confirmation": "Megerősítő levél",
+      "welcome": "Üdvözlő levél"
+    },
+    "empty": "Még nincs a szűrésnek megfelelő feliratkozó.",
+    "pagination": "{page}. oldal / {pages} · {total} feliratkozó",
+    "previous": "Előző",
+    "next": "Következő",
+    "updated": "Kimutatás frissítve: {date} UTC.",
+    "role": {
+      "business": "Vállalkozás",
+      "creator": "Alkotó"
+    },
+    "status": {
+      "all": "Minden feliratkozó",
+      "active": "Megerősítve",
+      "pending": "Függőben",
+      "unsubscribed": "Leiratkozott"
+    },
+    "mail": {
+      "queued": "Sorban áll",
+      "accepted": "Átvette a szolgáltató",
+      "delivered": "Kézbesítve",
+      "retry": "Újrapróbálás",
+      "failed": "Sikertelen",
+      "bounced": "Visszapattant",
+      "complained": "Spamjelzés",
+      "superseded": "Visszavonva",
+      "unknown": "Kézbesítési adatra vár",
+      "not_retained": "Kézbesítési adat lejárt",
+      "not_queued": "Még nincs sorban"
     }
   }
 }

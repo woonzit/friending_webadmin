@@ -50,6 +50,7 @@ const NAV: Array<{ href: string; key: string; icon: IconName; exact?: boolean; r
   { href: "/mail-delivery", key: "mailDelivery", icon: "mail" },
   // D-153: FriendingGO preorder sign-ups and the email sent to them, while Core serves admin_me.friendinggo.
   { href: "/friendinggo", key: "friendingGo", icon: "friendingGo" },
+  { href: "/woonz", key: "woonz", icon: "overview" },
   { href: "/help-cms", key: "helpCms", icon: "audit" },
   { href: "/configuration", key: "configuration", icon: "config" },
   { href: "/app-review", key: "appReview", icon: "appReview" },

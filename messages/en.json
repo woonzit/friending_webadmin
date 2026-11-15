@@ -3476,6 +3476,44 @@
             }
           }
         }
+      },
+      "woonz": {
+        "title": "Woonz traffic and early-access help",
+        "summary": "This read-only page combines the Woonz website’s own traffic events with its double-opt-in subscription list and the existing Friending mail delivery records. No Google tracking integration is required.",
+        "steps": {
+          "1": "Choose a traffic period and optionally filter the subscriber list by subscription status.",
+          "2": "Compare daily page views, estimated visitors, form starts, and new signups in the daily table.",
+          "3": "Check the confirmation and welcome email columns when a subscriber reports a missing message."
+        },
+        "sections": {
+          "traffic": {
+            "title": "Traffic and daily counts",
+            "purpose": "Cards and the daily chart describe measured Woonz landing-page traffic. Confirmed and pending subscriber cards describe the entire list.",
+            "guidance": "Visitor estimates rotate daily and are not cross-day unique people. Bot, test, DNT, and GPC traffic is excluded. Collection starts at the date shown; there is no invented history.",
+            "actions": {
+              "1": "Choose seven, thirty, or ninety days and press Apply to reload the report.",
+              "2": "Open the daily table to compare exact page views, daily visitors, form starts, and new signups."
+            }
+          },
+          "sources": {
+            "title": "Sources and devices",
+            "purpose": "These tables group the measured page views by referring hostname and by coarse mobile or desktop device category.",
+            "guidance": "Direct includes visits without a usable external referrer. Search terms, complete referring URLs, raw IP addresses, and persistent visitor identifiers are not stored in this analytics collection.",
+            "actions": {
+              "1": "Compare sources to see which sites are introducing visitors to Woonz.",
+              "2": "Compare mobile and desktop counts when prioritizing layout improvements."
+            }
+          },
+          "subscribers": {
+            "title": "Subscribers and email delivery",
+            "purpose": "The paginated list shows pending, confirmed, and unsubscribed addresses alongside the confirmation and welcome email states. The report does not send messages or change subscriptions.",
+            "guidance": "Only confirmation makes a subscription active. Read-only operators receive masked addresses and no names or cities. Provider acceptance is not inbox delivery, and delivery events may lag.",
+            "actions": {
+              "1": "Filter by Pending to find addresses still waiting for confirmation.",
+              "2": "Read both email states and refresh before concluding that a message failed."
+            }
+          }
+        }
       }
     }
   },
@@ -3547,7 +3585,8 @@
     "pinger": "Pinger",
     "inviteConfiguration": "Mobile invites",
     "cannedTemplates": "Message templates",
-    "appReview": "App Review sandbox"
+    "appReview": "App Review sandbox",
+    "woonz": "Woonz"
   },
   "pinger": {
     "eyebrow": "Member interaction",
@@ -13067,6 +13106,92 @@
         "notYet": "This send is still making progress. Try again in {seconds} s if it is still stalled then.",
         "notSending": "This campaign is no longer sending. The list was reloaded."
       }
+    }
+  },
+  "woonz": {
+    "title": "Woonz",
+    "subtitle": "Early-access signups, confirmation emails, and first-party website traffic.",
+    "unavailable": "The Woonz report is temporarily unavailable. No counts are shown until a complete, authorized response is available.",
+    "refresh": "Refresh",
+    "openSite": "Open woonz.com",
+    "trackingSince": "Tracking began {date} UTC. Earlier visits are not reconstructed.",
+    "periodLabel": "Traffic period",
+    "statusLabel": "Subscriber status",
+    "period": "Last {days} days",
+    "apply": "Apply",
+    "statsLabel": "Woonz overview",
+    "visitorEstimate": "Estimated unique visitors today, UTC",
+    "allTime": "All confirmed subscriptions",
+    "needsConfirmation": "Email confirmation still pending",
+    "includesPending": "New signups in this period, including pending",
+    "cards": {
+      "views": "Page views",
+      "visitorsToday": "Visitors today",
+      "confirmed": "Confirmed subscribers",
+      "pending": "Awaiting confirmation",
+      "starts": "Signup form starts",
+      "signups": "New signups"
+    },
+    "traffic": "Daily traffic",
+    "utc": "Days are measured in UTC",
+    "chartLabel": "Daily Woonz page views; the exact values follow in the daily table.",
+    "analyticsNote": "No Google tags or tracking cookies. Visitors are estimated using a daily rotating hash; raw IP addresses are not saved in analytics. Known bots, marked tests, Do Not Track, and Global Privacy Control are excluded. Counts can be lower than actual traffic. Events are retained for 90 days.",
+    "dailyTable": "Show daily numbers",
+    "daily": {
+      "day": "Day (UTC)",
+      "views": "Page views",
+      "visitors": "Estimated visitors",
+      "starts": "Form starts",
+      "signups": "New signups"
+    },
+    "sources": "Traffic sources",
+    "devices": "Devices",
+    "device": {
+      "mobile": "Mobile / tablet",
+      "desktop": "Desktop"
+    },
+    "noTraffic": "No measured traffic in this period yet.",
+    "direct": "Direct / no referrer",
+    "subscribers": "Early-access subscribers",
+    "audience": "Confirmed: {business} businesses · {creator} creators · {unsubscribed} unsubscribed",
+    "deliveryNote": "A signup becomes active only after email confirmation. Accepted means the mail provider took the message; Delivered means the receiving mail server accepted it, not proof it reached the inbox. Delivery events may take a few minutes to update.",
+    "masked": "Your read-only role sees masked email addresses. Names and cities are hidden.",
+    "table": {
+      "email": "Email / name",
+      "role": "Audience",
+      "city": "City",
+      "status": "Subscription",
+      "joined": "Joined (UTC)",
+      "confirmation": "Confirmation email",
+      "welcome": "Welcome email"
+    },
+    "empty": "No subscribers match this filter yet.",
+    "pagination": "Page {page} of {pages} · {total} subscribers",
+    "previous": "Previous",
+    "next": "Next",
+    "updated": "Report updated {date} UTC.",
+    "role": {
+      "business": "Business",
+      "creator": "Creator"
+    },
+    "status": {
+      "all": "All subscribers",
+      "active": "Confirmed",
+      "pending": "Pending",
+      "unsubscribed": "Unsubscribed"
+    },
+    "mail": {
+      "queued": "Queued",
+      "accepted": "Accepted by provider",
+      "delivered": "Delivered",
+      "retry": "Retrying",
+      "failed": "Failed",
+      "bounced": "Bounced",
+      "complained": "Spam complaint",
+      "superseded": "Cancelled",
+      "unknown": "Awaiting delivery update",
+      "not_retained": "Delivery record expired",
+      "not_queued": "Not queued"
     }
   }
 }

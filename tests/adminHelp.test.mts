@@ -76,8 +76,8 @@ test("all authenticated routes have a live guide or an explicit redirect to one"
   // The Freelove port adds Email delivery: 47 live guides plus the same two redirects.
   // Research follow-ups (owner request 2026-11-03) add the manual-check page: 48 live guides plus the same two redirects.
   // D-153 (T-937) adds the three FriendingGO tabs (Preorders, Email, Sent): 51 live guides plus the same two redirects.
-  assert.equal(actualRoutes.length, 53, "the current screen census changed; review every new or removed screen");
-  assert.equal(ADMIN_HELP_PAGES.length, 51, "review the live-screen census");
+  assert.equal(actualRoutes.length, 54, "the current screen census changed; review every new or removed screen");
+  assert.equal(ADMIN_HELP_PAGES.length, 52, "review the live-screen census");
   assert.equal(ADMIN_HELP_REDIRECTS.length, 2, "review the retired-route census");
   assert.deepEqual(helpRoutes, actualRoutes);
   assert.equal(new Set(helpRoutes).size, helpRoutes.length, "a screen may have only one help document");
@@ -165,7 +165,7 @@ test("every inventoried functional section has detailed English and Hungarian he
   // The Email delivery page (Freelove port) adds its filters, summary and list (294).
   // The research follow-ups page adds its filters, its rows and the Done / Dismiss / Reopen states (297).
   // D-153 (T-937) adds FriendingGO: Preorders 5, Email 6, Sent 2 (310).
-  assert.equal(totalSections, 310, "review the functional-section census when the UI changes");
+  assert.equal(totalSections, 313, "review the functional-section census when the UI changes");
   assert.deepEqual(
     ADMIN_HELP_PAGES.find((page) => page.route === "/signup-options")?.sections,
     [
