@@ -1,10 +1,11 @@
 export type WoonzStatus = 'all' | 'pending' | 'active' | 'unsubscribed';
 export type WoonzFilters = { days: 7 | 30 | 90; page: number; status: WoonzStatus };
 export type WoonzReport = WoonzFilters & {
-  ok: true; version: 1; generated_at: number; tracking_since: number; can_see_addresses: boolean; total: number;
+  ok: true; version: 2; generated_at: number; tracking_since: number; country_tracking_since: number; can_see_addresses: boolean; total: number;
   counts: { active: number; pending: number; unsubscribed: number; business: number; creator: number };
   daily: Array<{ date: string; pageviews: number; visitors: number; starts: number; signups: number }>;
   sources: Array<{ label: string; count: number }>; devices: Array<{ label: string; count: number }>;
+  countries: Array<{ code: string; count: number }>;
   subscribers: Array<{ id: string; email: string; name: string; city: string; role: 'business' | 'creator'; status: Exclude<WoonzStatus, 'all'>; created_at: number; confirmed_at: number | null; confirmation_mail: string; welcome_mail: string }>;
 };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -18,8 +19,9 @@ export function woonzFilters(params: Record<string, string | string[] | undefine
   return { days, page, status };
 }
 export function parseWoonzReport(value: unknown): WoonzReport | null {
-  if (!object(value) || !keys(value, ['ok', 'version', 'generated_at', 'tracking_since', 'can_see_addresses', 'days', 'page', 'status', 'total', 'counts', 'daily', 'sources', 'devices', 'subscribers'])
-    || value.ok !== true || value.version !== 1 || !count(value.generated_at) || !count(value.tracking_since)
+  if (!object(value) || !keys(value, ['ok', 'version', 'generated_at', 'tracking_since', 'country_tracking_since', 'can_see_addresses', 'days', 'page', 'status', 'total', 'counts', 'daily', 'sources', 'devices', 'countries', 'subscribers'])
+    || value.ok !== true || value.version !== 2 || !count(value.generated_at) || !count(value.tracking_since)
+    || !count(value.country_tracking_since) || value.country_tracking_since < value.tracking_since || value.country_tracking_since > value.generated_at
     || value.tracking_since > value.generated_at || typeof value.can_see_addresses !== 'boolean'
     || ![7, 30, 90].includes(Number(value.days)) || typeof value.days !== 'number'
     || !count(value.page) || value.page < 1 || value.page > 10000 || (!string(value.status, 20) || !['all', 'pending', 'active', 'unsubscribed'].includes(value.status))
@@ -40,6 +42,11 @@ export function parseWoonzReport(value: unknown): WoonzReport | null {
     if (!Array.isArray(items) || items.length > 10 || items.some(item => !object(item) || !keys(item, ['label', 'count'])
       || !string(item.label, 253) || !count(item.count) || (name === 'devices' && !['mobile', 'desktop'].includes(item.label)))) return null;
   }
+  if (!Array.isArray(value.countries) || value.countries.length > 300
+    || value.countries.some(item => !object(item) || !keys(item, ['code', 'count']) || !string(item.code, 2)
+      || !/^[A-Z]{2}$/.test(item.code) || !count(item.count) || item.count < 1)
+    || new Set(value.countries.map(item => item.code)).size !== value.countries.length
+    || value.countries.reduce((sum, item) => sum + item.count, 0) !== value.daily.reduce((sum, day) => sum + day.pageviews, 0)) return null;
   const mailStates = ['queued', 'accepted', 'delivered', 'retry', 'failed', 'bounced', 'complained', 'superseded', 'unknown', 'not_queued', 'not_retained'];
   if (!Array.isArray(value.subscribers) || value.subscribers.length > 25 || new Set(value.subscribers.map(r => object(r) ? r.id : null)).size !== value.subscribers.length) return null;
   for (const row of value.subscribers) {

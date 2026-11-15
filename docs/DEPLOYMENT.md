@@ -205,3 +205,9 @@ for viewers. The browser receives only the validated report, never the key or a
 Core credential. Woonz owns its `woonz_*` collections and queues its transactional
 messages through the existing Friending mail service; this integration does not
 change Core routes or trigger mail from the reporting page.
+
+The country breakdown requests Woonz report version 2 explicitly. Deploy the Woonz
+provider first; it retains the unchanged version 1 response for an older admin or
+rollback. Country totals include earlier events as Unknown and reconcile with the
+selected period's page views. The local DB-IP Country Lite data is maintained by
+Woonz outside its document root, with attribution in the report.

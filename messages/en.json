@@ -3496,8 +3496,8 @@
             }
           },
           "sources": {
-            "title": "Sources and devices",
-            "purpose": "These tables group the measured page views by referring hostname and by coarse mobile or desktop device category.",
+            "title": "Countries, sources and devices",
+            "purpose": "These tables group measured page views by approximate country, referring hostname, and coarse mobile or desktop category. Country shares include Unknown for earlier visits and unresolvable addresses.",
             "guidance": "Direct includes visits without a usable external referrer. Search terms, complete referring URLs, raw IP addresses, and persistent visitor identifiers are not stored in this analytics collection.",
             "actions": {
               "1": "Compare sources to see which sites are introducing visitors to Woonz.",
@@ -13144,6 +13144,13 @@
       "starts": "Form starts",
       "signups": "New signups"
     },
+    "countries": "Countries",
+    "countryName": "Country",
+    "countryShare": "Share of page views",
+    "countryUnknown": "Unknown / not recorded",
+    "countrySince": "Country tracking since {date} UTC",
+    "countryNote": "Approximate country from a local IP lookup, not nationality or GPS location. VPNs can change the result. Earlier visits and unresolvable addresses appear as Unknown. The selected traffic period applies to these page views.",
+    "countryAttribution": "IP Geolocation by DB-IP",
     "sources": "Traffic sources",
     "devices": "Devices",
     "device": {

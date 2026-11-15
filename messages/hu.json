@@ -3496,8 +3496,8 @@
             }
           },
           "sources": {
-            "title": "Források és eszközök",
-            "purpose": "A táblázatok a mért oldalmegtekintéseket hivatkozó domain és egyszerű mobil vagy asztali eszközcsoport szerint összesítik.",
+            "title": "Országok, források és eszközök",
+            "purpose": "A táblázatok a mért oldalmegtekintéseket becsült ország, hivatkozó domain és egyszerű mobil vagy asztali eszközcsoport szerint összesítik. A régi látogatások és a nem feloldható címek az Ismeretlen ország arányában szerepelnek.",
             "guidance": "A közvetlen kategóriába a külső hivatkozó nélküli látogatások is bekerülnek. Keresőkifejezések, teljes hivatkozó URL-ek, nyers IP-címek és tartós látogatói azonosítók nem kerülnek az analitikai gyűjteménybe.",
             "actions": {
               "1": "A forrásokból láthatod, mely oldalakról érkeznek a látogatók.",
@@ -13144,6 +13144,13 @@
       "starts": "Űrlapkezdés",
       "signups": "Új feliratkozók"
     },
+    "countries": "Országok",
+    "countryName": "Ország",
+    "countryShare": "Oldalmegtekintések aránya",
+    "countryUnknown": "Ismeretlen / nem rögzített",
+    "countrySince": "Országmérés kezdete: {date} UTC",
+    "countryNote": "Az országot helyi IP-kereséssel becsüljük; nem állampolgárságot vagy GPS-helyzetet mérünk. VPN használata eltérő országot adhat. A korábbi látogatások és a nem meghatározható címek Ismeretlenként jelennek meg. Az oldalmegtekintésekre a kiválasztott időszak érvényes.",
+    "countryAttribution": "Országadatok: DB-IP",
     "sources": "Forgalmi források",
     "devices": "Eszközök",
     "device": {

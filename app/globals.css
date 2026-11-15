@@ -14999,6 +14999,7 @@ fieldset.dates-external-fields {
 .woonz-chart { display: block; width: 100%; max-height: 210px; color: var(--muted); }
 .woonz-chart-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 20px; }
 .woonz-breakdowns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.woonz-country-table { max-height: 420px; overflow: auto; }
 .woonz-breakdown-list { padding: 0; margin: 0; list-style: none; }
 .woonz-breakdown-list li { display: flex; justify-content: space-between; gap: 18px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .woonz-daily { margin-top: 24px; }
