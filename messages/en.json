@@ -3514,6 +3514,44 @@
             }
           }
         }
+      },
+      "siteAnalytics": {
+        "title": "Friending website analytics help",
+        "summary": "This read-only report measures public friending.com pages, including the separate GO and Safety pages. The independent collector stores anonymous page and click events without matching member accounts.",
+        "steps": {
+          "1": "Select seven, thirty, or ninety days, then apply the filter.",
+          "2": "Compare homepage visits, GO clicks, and later GO page views in the funnel.",
+          "3": "Open individual anonymous visits to inspect their measured page and click sequence."
+        },
+        "sections": {
+          "traffic": {
+            "title": "Traffic, pages and countries",
+            "purpose": "The cards and chart count page views and anonymous tab visits. The tables show the most viewed pages, approximate countries, referring websites and coarse device types.",
+            "guidance": "Collection starts at the date shown. Visits reset after thirty minutes of inactivity or twenty-four hours; they are not unique people. DNT, GPC, bots, and signed tests are excluded. Events are retained for ninety days.",
+            "actions": {
+              "1": "Expand the daily table to compare exact counts.",
+              "2": "Treat Unknown countries and Direct sources as unavailable attribution, not a proven location or campaign."
+            }
+          },
+          "funnel": {
+            "title": "Homepage to FriendingGO",
+            "purpose": "The funnel follows visits that viewed Home, clicked a GO link from Home, and then recorded a GO page view later in that same tab visit.",
+            "guidance": "A click does not prove arrival, an order, or an email signup. A new tab can become a separate visit. Direct GO traffic is included in the GO card but is not part of the homepage funnel.",
+            "actions": {
+              "1": "Read the percentage as a share of homepage visits.",
+              "2": "Use the link table to compare header, content, and footer clicks."
+            }
+          },
+          "journeys": {
+            "title": "Anonymous visit paths",
+            "purpose": "Each expandable row lists the public pages and selected links recorded during a tab visit, in the browser sequence. No member identity, raw IP address, form field, or URL query is included.",
+            "guidance": "Only events in the selected period appear. Long rows show their first forty events and explicitly say when truncated. Blocked tab storage prevents grouping across page loads. The GO filter affects only the visit list.",
+            "actions": {
+              "1": "Choose visits involving GO to find GO clicks or page views.",
+              "2": "Expand a row and compare the clicked and viewed flags; use pagination for older visits."
+            }
+          }
+        }
       }
     }
   },
@@ -3586,7 +3624,8 @@
     "inviteConfiguration": "Mobile invites",
     "cannedTemplates": "Message templates",
     "appReview": "App Review sandbox",
-    "woonz": "Woonz"
+    "woonz": "Woonz",
+    "siteAnalytics": "Friending website analytics"
   },
   "pinger": {
     "eyebrow": "Member interaction",
@@ -13200,5 +13239,89 @@
       "not_retained": "Delivery record expired",
       "not_queued": "Not queued"
     }
+  },
+  "siteAnalytics": {
+    "title": "Friending website analytics",
+    "subtitle": "Public pages, link clicks, and anonymous visits on friending.com.",
+    "unavailable": "The website report is unavailable. No traffic totals could be confirmed. Try refreshing.",
+    "refresh": "Refresh",
+    "openSite": "Open friending.com",
+    "since": "Measurement started {date} UTC. Earlier visits are not available.",
+    "periodLabel": "Traffic period",
+    "period": "Last {days} days",
+    "focusLabel": "Visit list",
+    "allVisits": "All visits",
+    "goVisits": "Visits involving FriendingGO",
+    "apply": "Apply",
+    "statsLabel": "Website statistics",
+    "cards": {
+      "views": "Page views",
+      "visits": "Visits",
+      "clicks": "Link clicks",
+      "go_visits": "Visits viewing FriendingGO"
+    },
+    "traffic": "Daily traffic",
+    "utc": "UTC",
+    "chartLabel": "Daily measured page views",
+    "measurementNote": "A visit groups activity in one browser tab, with a reset after 30 minutes of inactivity or 24 hours. Visits are not unique people. No account matching or analytics cookies. Bots, signed tests, DNT and GPC traffic are excluded; blocked scripts cannot be measured. Events expire after 90 days.",
+    "dailyTable": "Show daily counts",
+    "day": "Date",
+    "funnel": "Home → FriendingGO",
+    "funnelSteps": {
+      "home_visits": "Visits viewing the homepage",
+      "home_go_clicks": "Those visits clicking a FriendingGO link",
+      "home_go_arrivals": "Those visits then viewing FriendingGO"
+    },
+    "funnelNote": "Percentages use homepage visits as the denominator. Arrival requires a later recorded FriendingGO page view in the same tab visit. A click can open a new tab, be canceled, or fail to load, so it does not prove arrival. Direct FriendingGO visits are counted separately in the card above.",
+    "pages": "Most viewed pages",
+    "page": "Page",
+    "top100": "Up to 100 leading rows",
+    "links": "Link clicks and destinations",
+    "linksNote": "Clicks include internal pages, selected page sections, and App Store, Google Play, or Shop links. Header, content, and footer placements are counted separately. Clicking a link is not a purchase or a completed preorder.",
+    "from": "From page",
+    "to": "Destination",
+    "placement": "Placement",
+    "clickCount": "Clicks",
+    "visitCount": "Visits",
+    "placements": {
+      "header": "Header / menu",
+      "content": "Page content",
+      "footer": "Footer"
+    },
+    "outbound": {
+      "app-store": "App Store",
+      "google-play": "Google Play",
+      "shop": "Friending Shop"
+    },
+    "journeys": "Visit paths",
+    "journeyNote": "Open a visit to see page views and clicks in browser sequence. These are anonymous tab visits, not identified members or a history across devices. The visit-list filter changes only this list; totals and tables above always cover the whole site. Paths show events within the selected period.",
+    "visit": "Visit {id}",
+    "visitCounts": "{views} views · {clicks} clicks",
+    "goStatus": "GO clicked: {clicked} · GO viewed: {visited}",
+    "yes": "Yes",
+    "no": "No",
+    "event": {
+      "pageview": "Viewed",
+      "click": "Clicked"
+    },
+    "truncated": "Only the first 40 events of this visit are shown. Its full counts are included above.",
+    "pagination": "Page {page} of {pages} · {total} visits",
+    "previous": "Previous",
+    "next": "Next",
+    "countries": "Countries",
+    "country": "Country",
+    "share": "Share of views",
+    "unknownCountry": "Unknown",
+    "countryNote": "Country is an approximate IP-based lookup performed locally. VPNs and unavailable lookups can affect it.",
+    "sources": "Referring websites · top 20",
+    "devices": "Devices",
+    "device": {
+      "mobile": "Mobile / tablet",
+      "desktop": "Desktop"
+    },
+    "direct": "Direct / unknown",
+    "home": "Home",
+    "empty": "No measured activity for this selection yet.",
+    "updated": "Report generated {date} UTC."
   }
 }

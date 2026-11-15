@@ -3514,6 +3514,44 @@
             }
           }
         }
+      },
+      "siteAnalytics": {
+        "title": "Segítség a Friending webstatisztikához",
+        "summary": "Ez az olvasható riport a friending.com nyilvános oldalait méri, a különálló GO és Safety oldallal együtt. A külön mérőszolgáltatás névtelen megtekintéseket és kattintásokat tárol, tagsági fiókokhoz rendelés nélkül.",
+        "steps": {
+          "1": "Válassz hét, harminc vagy kilencven napot, majd alkalmazd a szűrést.",
+          "2": "Hasonlítsd össze a főoldali látogatásokat, a GO-kattintásokat és a későbbi GO-megtekintéseket.",
+          "3": "Nyiss le egy névtelen látogatást a mért oldalak és kattintások sorrendjének ellenőrzéséhez."
+        },
+        "sections": {
+          "traffic": {
+            "title": "Forgalom, oldalak és országok",
+            "purpose": "A kártyák és a grafikon oldalmegtekintéseket és névtelen böngészőfül-látogatásokat számolnak. A táblák a legnézettebb oldalakat, becsült országokat, hivatkozó weboldalakat és eszköztípusokat mutatják.",
+            "guidance": "A gyűjtés a jelzett dátummal indul. Harminc perc inaktivitás vagy huszonnégy óra után új látogatás kezdődik; ez nem egyedi személyek száma. DNT, GPC, robotok és jelölt tesztek kimaradnak. Az eseményeket kilencven napig tároljuk.",
+            "actions": {
+              "1": "A napi táblában ellenőrizd a pontos darabszámokat.",
+              "2": "Az Ismeretlen ország és a Közvetlen forrás hiányzó hozzárendelést jelent, nem biztos helyet vagy kampányt."
+            }
+          },
+          "funnel": {
+            "title": "Főoldalról a FriendingGO-ra",
+            "purpose": "A tölcsér követi a főoldalt megtekintő látogatásokat, az onnan GO-linkre kattintókat és az ugyanazon böngészőfülön belül később GO-oldalt megtekintőket.",
+            "guidance": "A kattintás nem bizonyít megérkezést, vásárlást vagy e-mail-feliratkozást. Az új fül külön látogatást jelenthet. A közvetlen GO-forgalom a GO-kártyában szerepel, a főoldali tölcsérben nem.",
+            "actions": {
+              "1": "A százalékokat a főoldali látogatásokhoz viszonyítsd.",
+              "2": "A linktáblában hasonlítsd össze a fejléc, az oldaltartalom és a lábléc kattintásait."
+            }
+          },
+          "journeys": {
+            "title": "Névtelen látogatási útvonalak",
+            "purpose": "Minden lenyitható sor egy böngészőfül-látogatás nyilvános oldalait és kijelölt linkjeit mutatja a böngésző eseménysorrendjében. Nincs tagsági azonosító, nyers IP-cím, űrlapmező vagy URL-paraméter.",
+            "guidance": "Csak a kiválasztott időszak eseményei jelennek meg. Hosszú látogatásnál az első negyven esemény látszik, külön jelzéssel. Tiltott fülszintű tárhely mellett az oldalbetöltések nem kapcsolhatók össze. A GO-szűrés csak a listát érinti.",
+            "actions": {
+              "1": "Válaszd a GO-t érintő látogatásokat a GO-kattintások vagy megtekintések kereséséhez.",
+              "2": "Nyiss le egy sort és hasonlítsd össze a kattintás és megtekintés jelzését; lapozz a korábbi látogatásokhoz."
+            }
+          }
+        }
       }
     }
   },
@@ -3586,7 +3624,8 @@
     "inviteConfiguration": "Mobilos meghívások",
     "cannedTemplates": "Üzenetsablonok",
     "appReview": "App Review sandbox",
-    "woonz": "Woonz"
+    "woonz": "Woonz",
+    "siteAnalytics": "Friending webstatisztika"
   },
   "pinger": {
     "eyebrow": "Tagok közötti interakció",
@@ -13200,5 +13239,89 @@
       "not_retained": "Kézbesítési adat lejárt",
       "not_queued": "Még nincs sorban"
     }
+  },
+  "siteAnalytics": {
+    "title": "Friending webstatisztika",
+    "subtitle": "A friending.com nyilvános oldalai, linkkattintásai és névtelen látogatásai.",
+    "unavailable": "A webstatisztika most nem érhető el. Nem sikerült ellenőrizni a forgalmi adatokat. Próbáld meg frissíteni.",
+    "refresh": "Frissítés",
+    "openSite": "friending.com megnyitása",
+    "since": "A mérés kezdete: {date} UTC. Korábbi látogatásokról nincs adat.",
+    "periodLabel": "Forgalmi időszak",
+    "period": "Elmúlt {days} nap",
+    "focusLabel": "Látogatások listája",
+    "allVisits": "Minden látogatás",
+    "goVisits": "FriendingGO-t érintő látogatások",
+    "apply": "Alkalmazás",
+    "statsLabel": "Weboldal-statisztika",
+    "cards": {
+      "views": "Oldalmegtekintések",
+      "visits": "Látogatások",
+      "clicks": "Linkkattintások",
+      "go_visits": "FriendingGO-t megtekintő látogatások"
+    },
+    "traffic": "Napi forgalom",
+    "utc": "UTC",
+    "chartLabel": "Napi mért oldalmegtekintések",
+    "measurementNote": "Egy látogatás egy böngészőfül eseményeit kapcsolja össze; 30 perc inaktivitás vagy 24 óra után új kezdődik. A látogatások nem egyedi személyeket jelentenek. Nincs fiókokhoz rendelés vagy analitikai süti. A robotok, jelölt tesztek, DNT és GPC jelzésű látogatások kimaradnak; a blokkolt mérés nem látszik. Az események 90 nap után törlődnek.",
+    "dailyTable": "Napi adatok megnyitása",
+    "day": "Dátum",
+    "funnel": "Főoldal → FriendingGO",
+    "funnelSteps": {
+      "home_visits": "Főoldalt megtekintő látogatások",
+      "home_go_clicks": "Ezekből FriendingGO-linkre kattintott",
+      "home_go_arrivals": "Ezekből meg is nyitotta a FriendingGO-t"
+    },
+    "funnelNote": "A százalékok alapja a főoldali látogatások száma. A megérkezéshez ugyanazon böngészőfül látogatásán belül későbbi FriendingGO-megtekintés kell. A kattintás nyithat új fület, megszakadhat vagy betöltési hibába ütközhet, ezért önmagában nem bizonyít megérkezést. A közvetlen GO-látogatásokat a fenti kártya is számolja.",
+    "pages": "Legnézettebb oldalak",
+    "page": "Oldal",
+    "top100": "Legfeljebb 100 vezető találat",
+    "links": "Linkkattintások és céloldalak",
+    "linksNote": "A kattintások között belső oldalak, kijelölt oldalszakaszok, valamint App Store-, Google Play- és Shop-linkek szerepelnek. A fejléc, az oldaltartalom és a lábléc külön látszik. A kattintás nem vásárlás vagy befejezett előrendelés.",
+    "from": "Kiinduló oldal",
+    "to": "Cél",
+    "placement": "Elhelyezés",
+    "clickCount": "Kattintások",
+    "visitCount": "Látogatások",
+    "placements": {
+      "header": "Fejléc / menü",
+      "content": "Oldaltartalom",
+      "footer": "Lábléc"
+    },
+    "outbound": {
+      "app-store": "App Store",
+      "google-play": "Google Play",
+      "shop": "Friending Shop"
+    },
+    "journeys": "Látogatási útvonalak",
+    "journeyNote": "Nyiss le egy látogatást az oldalmegtekintések és kattintások böngészőben rögzített sorrendjéhez. Ezek névtelen böngészőfül-látogatások, nem azonosított tagok vagy eszközökön átívelő előzmények. A listaszűrő csak ezt a listát módosítja; a fenti összesítések az egész oldalra vonatkoznak. Az útvonalak a kiválasztott időszak eseményeit mutatják.",
+    "visit": "Látogatás: {id}",
+    "visitCounts": "{views} megtekintés · {clicks} kattintás",
+    "goStatus": "GO-kattintás: {clicked} · GO-megtekintés: {visited}",
+    "yes": "Igen",
+    "no": "Nem",
+    "event": {
+      "pageview": "Megtekintés",
+      "click": "Kattintás"
+    },
+    "truncated": "A látogatás első 40 eseménye látszik. Az összesítés minden eseményét tartalmazza.",
+    "pagination": "{page}. oldal / {pages} · {total} látogatás",
+    "previous": "Előző",
+    "next": "Következő",
+    "countries": "Országok",
+    "country": "Ország",
+    "share": "Megtekintések aránya",
+    "unknownCountry": "Ismeretlen",
+    "countryNote": "Az országot helyben, az IP-cím alapján becsüljük. VPN vagy hiányzó találat befolyásolhatja a pontosságot.",
+    "sources": "Hivatkozó weboldalak · első 20",
+    "devices": "Eszközök",
+    "device": {
+      "mobile": "Mobil / táblagép",
+      "desktop": "Asztali gép"
+    },
+    "direct": "Közvetlen / ismeretlen",
+    "home": "Főoldal",
+    "empty": "Még nincs mért aktivitás ehhez a kiválasztáshoz.",
+    "updated": "Riport készítése: {date} UTC."
   }
 }

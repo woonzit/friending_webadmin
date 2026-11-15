@@ -109,6 +109,12 @@ server-only `WOONZ_ADMIN_SECRET`, checks active Core membership before every rea
 provider rechecks the shared admin allow-list. Woonz owns its `woonz_*` collections;
 reporting cannot mutate subscribers or send email. Viewer addresses are masked.
 
+Friending website analytics (`/site-analytics`) is a read-only report from the separate
+first-party collector at `friending.com/site-metrics/report.php`, using the independent
+server-only `SITE_ANALYTICS_ADMIN_SECRET`. Both sides recheck active Core membership.
+The collector owns only `site_analytics_*` collections. Visits are anonymous tab sessions,
+not member accounts; reports never expose raw browser identifiers, IP addresses or form data.
+
 The interface is dark-only and bilingual. English is the base/fallback locale and Hungarian is
 fully supported. `messages/en.json` and `messages/hu.json` must keep identical key trees. Use the
 bundled Proxima Nova fonts and never load remote fonts.

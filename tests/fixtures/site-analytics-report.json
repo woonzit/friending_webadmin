@@ -1,0 +1,532 @@
+{
+    "ok": true,
+    "version": 1,
+    "generated_at": 1794747361,
+    "tracking_since": 1794747360,
+    "days": 7,
+    "page": 1,
+    "focus": "all",
+    "totals": {
+        "views": 6,
+        "clicks": 46,
+        "visits": 4,
+        "go_visits": 2,
+        "home_visits": 2,
+        "home_go_clicks": 2,
+        "home_go_arrivals": 1
+    },
+    "daily": [
+        {
+            "date": "2026-11-09",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-10",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-11",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-12",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-13",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-14",
+            "views": 0,
+            "visits": 0
+        },
+        {
+            "date": "2026-11-15",
+            "views": 6,
+            "visits": 4
+        }
+    ],
+    "countries": [
+        {
+            "label": "US",
+            "count": 3
+        },
+        {
+            "label": "ZZ",
+            "count": 3
+        }
+    ],
+    "devices": [
+        {
+            "label": "desktop",
+            "count": 3
+        },
+        {
+            "label": "mobile",
+            "count": 3
+        }
+    ],
+    "sources": [
+        {
+            "label": "google.com",
+            "count": 6
+        }
+    ],
+    "pages": [
+        {
+            "path": "/",
+            "title": "Home",
+            "views": 2,
+            "visits": 2
+        },
+        {
+            "path": "/go/",
+            "title": "FriendingGO",
+            "views": 2,
+            "visits": 2
+        },
+        {
+            "path": "/blog/",
+            "title": "Blog",
+            "views": 1,
+            "visits": 1
+        },
+        {
+            "path": "/safety/",
+            "title": "Safety",
+            "views": 1,
+            "visits": 1
+        }
+    ],
+    "links": [
+        {
+            "page": "/blog/",
+            "target": "/#download",
+            "placement": "header",
+            "clicks": 43,
+            "visits": 1
+        },
+        {
+            "page": "/",
+            "target": "/go/",
+            "placement": "header",
+            "clicks": 1,
+            "visits": 1
+        },
+        {
+            "page": "/",
+            "target": "/go/#preorder",
+            "placement": "header",
+            "clicks": 1,
+            "visits": 1
+        },
+        {
+            "page": "/go/",
+            "target": "/safety/",
+            "placement": "header",
+            "clicks": 1,
+            "visits": 1
+        }
+    ],
+    "journey_total": 4,
+    "journeys": [
+        {
+            "id": "2018a51a4a3f7ced",
+            "started_at": 1794747361,
+            "ended_at": 1794747361,
+            "country": "ZZ",
+            "device": "desktop",
+            "views": 1,
+            "clicks": 0,
+            "go_clicked": false,
+            "go_visited": true,
+            "truncated": false,
+            "steps": [
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/go/",
+                    "placement": "",
+                    "target": ""
+                }
+            ]
+        },
+        {
+            "id": "427e611ce3049d51",
+            "started_at": 1794747361,
+            "ended_at": 1794747361,
+            "country": "ZZ",
+            "device": "desktop",
+            "views": 1,
+            "clicks": 43,
+            "go_clicked": false,
+            "go_visited": false,
+            "truncated": true,
+            "steps": [
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/blog/",
+                    "placement": "",
+                    "target": ""
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/blog/",
+                    "placement": "header",
+                    "target": "/#download"
+                }
+            ]
+        },
+        {
+            "id": "60dbef1606c75c38",
+            "started_at": 1794747361,
+            "ended_at": 1794747361,
+            "country": "US",
+            "device": "mobile",
+            "views": 3,
+            "clicks": 2,
+            "go_clicked": true,
+            "go_visited": true,
+            "truncated": false,
+            "steps": [
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/",
+                    "placement": "",
+                    "target": ""
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/",
+                    "placement": "header",
+                    "target": "/go/"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/go/",
+                    "placement": "",
+                    "target": ""
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/go/",
+                    "placement": "header",
+                    "target": "/safety/"
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/safety/",
+                    "placement": "",
+                    "target": ""
+                }
+            ]
+        },
+        {
+            "id": "e460e073af2859b2",
+            "started_at": 1794747361,
+            "ended_at": 1794747361,
+            "country": "ZZ",
+            "device": "desktop",
+            "views": 1,
+            "clicks": 1,
+            "go_clicked": true,
+            "go_visited": false,
+            "truncated": false,
+            "steps": [
+                {
+                    "at": 1794747361,
+                    "kind": "pageview",
+                    "page": "/",
+                    "placement": "",
+                    "target": ""
+                },
+                {
+                    "at": 1794747361,
+                    "kind": "click",
+                    "page": "/",
+                    "placement": "header",
+                    "target": "/go/#preorder"
+                }
+            ]
+        }
+    ]
+}

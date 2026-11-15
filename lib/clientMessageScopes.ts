@@ -170,6 +170,7 @@ export const CLIENT_MESSAGE_SCOPES = {
   "invite-configuration": { messages: ["common", "inviteConfiguration"], help: ["inviteConfiguration"] },
   landing: { messages: ["common", "imageUpload", "landing", "videoUpload"], help: ["landing"] },
   woonz: { messages: ["adminMembership", "adminWriteOutcome", "common"], help: ["woonz"] },
+  "site-analytics": { messages: ["adminMembership", "adminWriteOutcome", "common"], help: ["siteAnalytics"] },
   "mail-delivery": { messages: ["common", "mailDelivery"], help: ["mailDelivery"] },
   membership: { messages: ["common", "membershipConfig", "membershipErrors"], help: ["membership"] },
   persona: { messages: ["adminMembership", "adminWriteOutcome", "common", "personaAdmin"], help: ["persona"] },

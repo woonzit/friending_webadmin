@@ -211,3 +211,32 @@ provider first; it retains the unchanged version 1 response for an older admin o
 rollback. Country totals include earlier events as Unknown and reconcile with the
 selected period's page views. The local DB-IP Country Lite data is maintained by
 Woonz outside its document root, with attribution in the report.
+
+## Friending public website reporting
+
+`/site-analytics` reads version 1 of `https://friending.com/site-metrics/report.php`.
+Provision the independent `SITE_ANALYTICS_ADMIN_SECRET` in `.env.local`; its matching
+value is stored outside the public document root in
+`/opt/friending/site-analytics/private/config.php`. The collector deployment provisions
+this key without printing it. Deploy the provider before this consumer, then use the
+normal Webadmin deployment to load the environment. No Core deployment is involved.
+
+Every render rechecks active Core membership; the provider checks `admin_emails` again.
+The strict report parser admits only bounded page, click, country, device, source and
+anonymous visit records. No browser endpoint can supply the reporting actor. All roles
+receive the same anonymous read-only report, with no account links, form fields, raw IP
+addresses, original browser identifiers or full URLs. Service errors are unavailable
+states, never zero traffic. The provider owns only `site_analytics_*` collections.
+
+Collection covers published WordPress pages/posts/category archives plus static GO and
+Safety. A MU plugin refreshes the public-page allow-list on publication changes and
+adds the tracker to eligible public pages. Tab session identifiers rotate after thirty
+minutes idle or twenty-four hours; storage failure limits grouping to the current page.
+The report distinguishes a click from a later page view, and the homepage-to-GO funnel
+requires both in order in the same tab visit. The visit list is paginated and long paths
+are explicitly truncated. Events expire after ninety days. Country lookup uses a local
+DB-IP database refreshed weekly; the report and public privacy page provide attribution.
+
+Provider source and deployment instructions live in the marketing workspace's
+`website/analytics/README.md`. The Webadmin release must verify the real server adapter
+against an active operator, with secrets kept in memory, and a guest route redirect.

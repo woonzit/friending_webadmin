@@ -510,6 +510,12 @@ export const ADMIN_HELP_PAGES = [
     matches: exact("/woonz"),
   },
   {
+    key: "siteAnalytics",
+    route: "/site-analytics",
+    sections: ["traffic", "funnel", "journeys"],
+    matches: exact("/site-analytics"),
+  },
+  {
     // D-153: FriendingGO preorder sign-ups, the email composer and the campaigns sent, three route tabs.
     key: "friendingGoPreorders",
     route: "/friendinggo",
