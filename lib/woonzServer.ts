@@ -8,7 +8,7 @@ export async function readWoonzReport(adminEmail: string, filters: WoonzFilters)
   const response = await fetch('https://woonz.com/api/admin-report', {
     method: 'POST', cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(12000),
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${secret}` },
-    body: JSON.stringify({ ...filters, version: 2, admin_email: adminEmail }),
+    body: JSON.stringify({ ...filters, version: 3, admin_email: adminEmail }),
   });
   if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('woonz-unavailable');
   const text = await response.text();

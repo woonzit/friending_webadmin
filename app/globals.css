@@ -15005,6 +15005,8 @@ fieldset.dates-external-fields {
 .woonz-daily { margin-top: 24px; }
 .woonz-daily summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
 .woonz-name { display: block; color: var(--muted); margin-top: 5px; }
+.woonz-profile-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.woonz-profile-links a { white-space: nowrap; text-underline-offset: 3px; }
 .woonz-status { border-radius: 5px; padding: 4px 8px; font-size: 12px; background: var(--surface-2); white-space: nowrap; }
 .woonz-status-active { background: #294632; color: #bcf2cd; }
 .woonz-status-pending { background: #514725; color: #f7e69d; }

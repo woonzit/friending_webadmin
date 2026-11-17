@@ -13201,7 +13201,7 @@
     "subscribers": "Korai feliratkozók",
     "audience": "Megerősítve: {business} vállalkozás · {creator} alkotó · {unsubscribed} leiratkozott",
     "deliveryNote": "A feliratkozás csak az e-mail-cím megerősítésével lesz aktív. Az „Átvette a szolgáltató” a levélküldő átvételét, a „Kézbesítve” a fogadó levelezőszerver átvételét jelenti; ez nem bizonyítja a beérkezést a fő postaládába. Az állapotok néhány perces késéssel frissülhetnek.",
-    "masked": "Olvasói jogosultsággal az e-mail-címek maszkoltak; a nevek és városok nem láthatók.",
+    "masked": "Olvasói jogosultsággal az e-mail-címek maszkoltak; a nevek, helyadatok és közösségi profilok nem láthatók.",
     "table": {
       "email": "E-mail / név",
       "role": "Csoport",
@@ -13209,7 +13209,9 @@
       "status": "Feliratkozás",
       "joined": "Feliratkozás (UTC)",
       "confirmation": "Megerősítő levél",
-      "welcome": "Üdvözlő levél"
+      "welcome": "Üdvözlő levél",
+      "location": "Hely",
+      "profiles": "Közösségi profilok"
     },
     "empty": "Még nincs a szűrésnek megfelelő feliratkozó.",
     "pagination": "{page}. oldal / {pages} · {total} feliratkozó",
@@ -13238,6 +13240,12 @@
       "unknown": "Kézbesítési adatra vár",
       "not_retained": "Kézbesítési adat lejárt",
       "not_queued": "Még nincs sorban"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram": "Instagram",
+      "youtube": "YouTube",
+      "twitch": "Twitch"
     }
   },
   "siteAnalytics": {

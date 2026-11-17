@@ -13201,7 +13201,7 @@
     "subscribers": "Early-access subscribers",
     "audience": "Confirmed: {business} businesses · {creator} creators · {unsubscribed} unsubscribed",
     "deliveryNote": "A signup becomes active only after email confirmation. Accepted means the mail provider took the message; Delivered means the receiving mail server accepted it, not proof it reached the inbox. Delivery events may take a few minutes to update.",
-    "masked": "Your read-only role sees masked email addresses. Names and cities are hidden.",
+    "masked": "Your read-only role sees masked email addresses. Names, locations, and social profiles are hidden.",
     "table": {
       "email": "Email / name",
       "role": "Audience",
@@ -13209,7 +13209,9 @@
       "status": "Subscription",
       "joined": "Joined (UTC)",
       "confirmation": "Confirmation email",
-      "welcome": "Welcome email"
+      "welcome": "Welcome email",
+      "location": "Location",
+      "profiles": "Social profiles"
     },
     "empty": "No subscribers match this filter yet.",
     "pagination": "Page {page} of {pages} · {total} subscribers",
@@ -13238,6 +13240,12 @@
       "unknown": "Awaiting delivery update",
       "not_retained": "Delivery record expired",
       "not_queued": "Not queued"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram": "Instagram",
+      "youtube": "YouTube",
+      "twitch": "Twitch"
     }
   },
   "siteAnalytics": {

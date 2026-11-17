@@ -1,12 +1,31 @@
+import countryNames from 'countries-list/minimal/countries.en.min.json';
+
+export const WOONZ_SOCIAL_PLATFORMS = ['tiktok', 'instagram', 'youtube', 'twitch'] as const;
+export type WoonzSocialPlatform = typeof WOONZ_SOCIAL_PLATFORMS[number];
+
+export function validWoonzSocialUrl(value: unknown, platform: WoonzSocialPlatform): value is string {
+  if (value === '') return true;
+  if (typeof value !== 'string' || value.length > 1800) return false;
+  try {
+    const url = new URL(value);
+    const domain = { tiktok: 'tiktok.com', instagram: 'instagram.com', youtube: 'youtube.com', twitch: 'twitch.tv' }[platform];
+    if (url.origin !== `https://${domain}` || url.username || url.password || url.search || url.hash || url.href !== value) return false;
+    const path = decodeURIComponent(url.pathname);
+    if (platform === 'youtube') return /^\/(?:@|channel\/|c\/|user\/)[\p{L}\p{M}\p{N}._·-]{1,100}$/u.test(path);
+    if (platform === 'twitch') return /^\/[a-zA-Z0-9_]{1,100}$/.test(path);
+    return (platform === 'tiktok' ? /^\/@[\p{L}\p{N}._]{1,100}$/u : /^\/[\p{L}\p{N}._]{1,100}$/u).test(path);
+  } catch { return false; }
+}
+
 export type WoonzStatus = 'all' | 'pending' | 'active' | 'unsubscribed';
 export type WoonzFilters = { days: 7 | 30 | 90; page: number; status: WoonzStatus };
 export type WoonzReport = WoonzFilters & {
-  ok: true; version: 2; generated_at: number; tracking_since: number; country_tracking_since: number; can_see_addresses: boolean; total: number;
+  ok: true; version: 3; generated_at: number; tracking_since: number; country_tracking_since: number; can_see_addresses: boolean; total: number;
   counts: { active: number; pending: number; unsubscribed: number; business: number; creator: number };
   daily: Array<{ date: string; pageviews: number; visitors: number; starts: number; signups: number }>;
   sources: Array<{ label: string; count: number }>; devices: Array<{ label: string; count: number }>;
   countries: Array<{ code: string; count: number }>;
-  subscribers: Array<{ id: string; email: string; name: string; city: string; role: 'business' | 'creator'; status: Exclude<WoonzStatus, 'all'>; created_at: number; confirmed_at: number | null; confirmation_mail: string; welcome_mail: string }>;
+  subscribers: Array<{ id: string; email: string; name: string; city: string; country: string; social_profiles: Record<WoonzSocialPlatform, string>; role: 'business' | 'creator'; status: Exclude<WoonzStatus, 'all'>; created_at: number; confirmed_at: number | null; confirmation_mail: string; welcome_mail: string }>;
 };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const count = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
@@ -20,7 +39,7 @@ export function woonzFilters(params: Record<string, string | string[] | undefine
 }
 export function parseWoonzReport(value: unknown): WoonzReport | null {
   if (!object(value) || !keys(value, ['ok', 'version', 'generated_at', 'tracking_since', 'country_tracking_since', 'can_see_addresses', 'days', 'page', 'status', 'total', 'counts', 'daily', 'sources', 'devices', 'countries', 'subscribers'])
-    || value.ok !== true || value.version !== 2 || !count(value.generated_at) || !count(value.tracking_since)
+    || value.ok !== true || value.version !== 3 || !count(value.generated_at) || !count(value.tracking_since)
     || !count(value.country_tracking_since) || value.country_tracking_since < value.tracking_since || value.country_tracking_since > value.generated_at
     || value.tracking_since > value.generated_at || typeof value.can_see_addresses !== 'boolean'
     || ![7, 30, 90].includes(Number(value.days)) || typeof value.days !== 'number'
@@ -50,12 +69,15 @@ export function parseWoonzReport(value: unknown): WoonzReport | null {
   const mailStates = ['queued', 'accepted', 'delivered', 'retry', 'failed', 'bounced', 'complained', 'superseded', 'unknown', 'not_queued', 'not_retained'];
   if (!Array.isArray(value.subscribers) || value.subscribers.length > 25 || new Set(value.subscribers.map(r => object(r) ? r.id : null)).size !== value.subscribers.length) return null;
   for (const row of value.subscribers) {
-    if (!object(row) || !keys(row, ['id', 'email', 'name', 'city', 'role', 'status', 'created_at', 'confirmed_at', 'confirmation_mail', 'welcome_mail'])
+    if (!object(row) || !keys(row, ['id', 'email', 'name', 'city', 'country', 'social_profiles', 'role', 'status', 'created_at', 'confirmed_at', 'confirmation_mail', 'welcome_mail'])
       || !string(row.id, 24) || !/^[a-f0-9]{24}$/.test(row.id) || !string(row.email, 254) || !/^[^\s@]+@[^\s@]+$/.test(row.email)
-      || !string(row.name, 200) || !string(row.city, 240) || (!string(row.role, 20) || !['business', 'creator'].includes(row.role))
+      || !string(row.name, 200) || !string(row.city, 240) || !string(row.country, 2) || (row.country !== '' && !Object.hasOwn(countryNames, row.country))
+      || !object(row.social_profiles) || !keys(row.social_profiles, [...WOONZ_SOCIAL_PLATFORMS])
+      || !WOONZ_SOCIAL_PLATFORMS.every(platform => validWoonzSocialUrl((row.social_profiles as Record<string, unknown>)[platform], platform))
+      || (!string(row.role, 20) || !['business', 'creator'].includes(row.role))
       || (!string(row.status, 20) || !['pending', 'active', 'unsubscribed'].includes(row.status)) || !count(row.created_at)
       || (row.confirmed_at !== null && !count(row.confirmed_at)) || (!string(row.confirmation_mail, 30) || !mailStates.includes(row.confirmation_mail)) || (!string(row.welcome_mail, 30) || !mailStates.includes(row.welcome_mail))
-      || (value.can_see_addresses === false && (!/^.\*\*\*@/.test(row.email) || row.name !== '' || row.city !== ''))) return null;
+      || (value.can_see_addresses === false && (!/^.\*\*\*@/.test(row.email) || row.name !== '' || row.city !== '' || row.country !== '' || Object.values(row.social_profiles).some(url => url !== '')))) return null;
   }
   return value as unknown as WoonzReport;
 }
