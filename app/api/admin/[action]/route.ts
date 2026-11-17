@@ -1,3 +1,4 @@
+import { normalizeIdentityBody, normalizeIdentityResponse } from "@/lib/identityVerification";
 import { NextRequest, NextResponse } from "next/server";
 import { adminBridgeCoreTransportError } from "@/lib/adminBridge";
 import { webadminErrorEnvelope } from "@/lib/webadminEnvelope";
@@ -433,6 +434,10 @@ export async function POST(
 
   // Email delivery takes exactly its five closed filters; Core receives the defaults of the
   // optional three left out, and its answer is checked against the same filters below.
+  const identityBody = normalizeIdentityBody(action, body);
+  if (identityBody === null) return bridgeError("invalid-input", 400);
+  if (identityBody !== undefined) body = identityBody;
+
   const mailDeliveryBody = normalizeMailDeliveryProxyBody(action, body);
   if (mailDeliveryBody === null) {
     return bridgeError("invalid-input", 400);
@@ -477,6 +482,11 @@ export async function POST(
   // A 5xx SUCCESS or malformed body is unknown, not feature success. Preserve
   // complete named Core refusal envelopes at their actual logical status:
   // existing feature classifiers, not membership, own their settlement.
+  if (identityBody !== undefined) {
+    const projected = normalizeIdentityResponse(result.data);
+    if (!projected) return bridgeError("invalid-core-response", 502);
+    return NextResponse.json(projected, { status: projected.success ? 200 : Number(projected.status_code), headers: NO_STORE_HEADERS });
+  }
   const namedRefusal = webadminErrorEnvelope(result.data) ?? webadminErrorEnvelope(result.data, "required");
   if (result.status >= 500 && namedRefusal?.status_code !== result.status) return bridgeError("invalid-core-response", 502);
   const coreError = (result.data as Record<string, unknown> | null)?.error;

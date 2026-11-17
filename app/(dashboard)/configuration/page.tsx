@@ -7,6 +7,7 @@ import FeatureSwitchesPanel from "@/components/FeatureSwitchesPanel";
 import FriendingStartConfiguration from "@/components/FriendingStartConfiguration";
 import LocationAccessConfiguration from "@/components/LocationAccessConfiguration";
 import PageHeader from "@/components/PageHeader";
+import IdentityVerificationConfiguration from "@/components/IdentityVerificationConfiguration";
 import ProfilePresenceConfiguration from "@/components/ProfilePresenceConfiguration";
 import ProfileVerificationConfiguration from "@/components/ProfileVerificationConfiguration";
 import SectionAvailabilityConfigurationCard from "@/components/SectionAvailabilityConfigurationCard";
@@ -607,6 +608,7 @@ export default function ConfigurationPage() {
         </aside>
       </div>
       <WelcomeMessageConfiguration />
+      <IdentityVerificationConfiguration />
       <ProfilePresenceConfiguration />
       <LocationAccessConfiguration />
       <FriendingStartConfiguration />

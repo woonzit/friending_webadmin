@@ -80,7 +80,7 @@ export const CLIENT_MESSAGE_SCOPES = {
   "canned-templates": { messages: ["cannedTemplates", "common"], help: ["cannedTemplates"] },
   configuration: {
     messages: [
-      "adminMembership", "common", "configuration", "featureSwitches", "imageUpload", "profilePresence.configuration",
+      "adminMembership", "common", "configuration", "featureSwitches", "identityVerification", "imageUpload", "profilePresence.configuration",
       "profileVerification.configuration", "verificationAdmin.live.methodReasons",
     ],
     help: ["configuration"],

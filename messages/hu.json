@@ -13331,5 +13331,30 @@
     "home": "Főoldal",
     "empty": "Még nincs mért aktivitás ehhez a kiválasztáshoz.",
     "updated": "Riport készítése: {date} UTC."
+  },
+  "identityVerification": {
+    "title": "Személyazonosság-hitelesítés szolgáltatója",
+    "subtitle": "Szolgáltatóválasztás az új hitelesítési folyamatot támogató iOS-appokhoz.",
+    "legacy": "A már kiadott appok Personát használnak. A meglévő hitelesítések érvényesek maradnak. Ez a beállítás csak a kompatibilis iOS-verziók új ellenőrzéseire vonatkozik.",
+    "provider": "Az új iOS-ellenőrzések szolgáltatója",
+    "paused": "Új ellenőrzések szüneteltetése",
+    "minimumBuild": "Legkisebb kompatibilis iOS-build",
+    "workflow": "Didit workflow azonosító",
+    "environment": "Didit környezet",
+    "live": "Éles",
+    "sandbox": "Teszt (nem ad hitelesített státuszt)",
+    "revision": "{revision}. verzió",
+    "api_key": "Szerveroldali API-kulcs",
+    "webhook_secret": "Webhook aláírókulcs",
+    "application_id": "Alkalmazásazonosító",
+    "media_hosts": "Engedélyezett szelfikiszolgálók",
+    "environment_allowed": "Engedélyezett környezet",
+    "ready": "Beállítva",
+    "missing": "Hiányzik vagy nem elérhető",
+    "secrets": "A kulcsokat a Core tárolja. A böngésző csak a beállításuk állapotát mutatja. A Personát a kiadott appok miatt továbbra is működtetni kell.",
+    "loadError": "A szolgáltatóbeállítás nem érhető el. Előbb a kompatibilis Core-verziót kell telepíteni.",
+    "saved": "A hitelesítési szolgáltató beállításait elmentettük.",
+    "conflict": "A beállítások közben megváltoztak. Betöltöttük az aktuális értékeket; mentés előtt ellenőrizd őket.",
+    "saveError": "A mentés eredménye nem igazolható. Újrapróbálás előtt ellenőrizd az újra betöltött beállításokat."
   }
 }

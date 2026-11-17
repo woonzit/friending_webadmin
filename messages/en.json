@@ -13331,5 +13331,30 @@
     "home": "Home",
     "empty": "No measured activity for this selection yet.",
     "updated": "Report generated {date} UTC."
+  },
+  "identityVerification": {
+    "title": "Identity verification provider",
+    "subtitle": "Choose the provider for iOS apps supporting the new identity flow.",
+    "legacy": "Released apps keep Persona. Existing verifications stay valid. This setting applies only to new checks in compatible iOS versions.",
+    "provider": "Provider for new iOS checks",
+    "paused": "Pause new checks",
+    "minimumBuild": "Minimum compatible iOS build",
+    "workflow": "Didit workflow ID",
+    "environment": "Didit environment",
+    "live": "Live",
+    "sandbox": "Sandbox (never grants verification)",
+    "revision": "Revision {revision}",
+    "api_key": "Server API key",
+    "webhook_secret": "Webhook signing secret",
+    "application_id": "Application ID",
+    "media_hosts": "Approved selfie media hosts",
+    "environment_allowed": "Environment allowed",
+    "ready": "Ready",
+    "missing": "Missing or unavailable",
+    "secrets": "Credentials stay on Core. The browser only shows whether they are configured. Keep Persona configured while released apps use it.",
+    "loadError": "Identity provider configuration is unavailable. Deploy the compatible Core contract first.",
+    "saved": "Identity provider settings saved.",
+    "conflict": "Settings changed elsewhere. The current settings have been reloaded. Review them before saving.",
+    "saveError": "Save could not be confirmed. Check the reloaded settings before trying again."
   }
 }

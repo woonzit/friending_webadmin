@@ -173,6 +173,8 @@ export const ADMIN_ACTIONS = [
   "resolve_footprint_report",
   "profile_verification_config",
   "save_profile_verification_config",
+  "identity_verification_configuration",
+  "identity_verification_configuration_save",
   "profile_presence_configuration",
   "save_profile_presence_configuration",
   "location_access_policy",
@@ -350,6 +352,8 @@ export const ADMIN_ACTION_ACCESS = {
   save_profile_verification_config: "write",
   // Presence availability is visible to every active administrator. Disabling
   // a mode rewrites affected member profiles, so only editors may save it.
+  identity_verification_configuration: "read",
+  identity_verification_configuration_save: "write",
   profile_presence_configuration: "read",
   save_profile_presence_configuration: "write",
   // P-073 location access policy. Any active administrator may read it and
