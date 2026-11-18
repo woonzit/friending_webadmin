@@ -483,7 +483,7 @@ export async function POST(
   // complete named Core refusal envelopes at their actual logical status:
   // existing feature classifiers, not membership, own their settlement.
   if (identityBody !== undefined) {
-    const projected = normalizeIdentityResponse(result.data);
+    const projected = normalizeIdentityResponse(result.data, result.status);
     if (!projected) return bridgeError("invalid-core-response", 502);
     return NextResponse.json(projected, { status: projected.success ? 200 : Number(projected.status_code), headers: NO_STORE_HEADERS });
   }

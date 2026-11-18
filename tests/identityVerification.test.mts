@@ -15,8 +15,16 @@ test("identity provider projection is closed, typed and secret-free", () => {
   assert.equal(parseIdentityPayload({ ...payload, configuration: { ...payload.configuration, min_ios_build: true } }), null);
   assert.equal(parseIdentityPayload({ ...payload, configuration: { ...payload.configuration, provider: ["persona"] } }), null);
   assert.equal(parseIdentityPayload({ ...payload, didit: { ...payload.didit, environment: ["live"] } }), null);
-  assert.deepEqual(normalizeIdentityResponse({ success: false, status_code: 409, error: "identity-configuration-conflict", secret: "hidden" }),
+  assert.deepEqual(normalizeIdentityResponse({ success: false, status_code: 409, error: "identity-configuration-conflict", secret: "hidden" }, 200),
     { success: false, status_code: 409, error: "identity-configuration-conflict" });
+});
+test("identity answers count only with Core's HTTP 200 transport status", () => {
+  const success = { success: true, status_code: 200, data: payload };
+  assert.deepEqual(normalizeIdentityResponse(success, 200), { success: true, status_code: 200, data: payload });
+  for (const status of [0, 201, 401, 500, 502, 503]) {
+    assert.equal(normalizeIdentityResponse(success, status), null);
+    assert.equal(normalizeIdentityResponse({ success: false, status_code: 409, error: "identity-configuration-conflict" }, status), null);
+  }
 });
 test("identity writes carry only exact revision and validated candidate", () => {
   const action = "identity_verification_configuration_save";

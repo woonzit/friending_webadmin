@@ -55,8 +55,10 @@ export function normalizeIdentityBody(action: string, body: Record<string, unkno
     return candidate ? { expected_revision: body.expected_revision, configuration_json: JSON.stringify(candidate) } : null;
   } catch { return null; }
 }
-export function normalizeIdentityResponse(value: unknown): Record<string, unknown> | null {
-  if (!object(value)) return null;
+// Core answers every identity action with HTTP 200 and a logical status_code. Any other
+// transport status means the outcome is unknown, whatever the body says.
+export function normalizeIdentityResponse(value: unknown, httpStatus: number): Record<string, unknown> | null {
+  if (!object(value) || httpStatus !== 200) return null;
   if (value.success === true && value.status_code === 200) {
     const data = parseIdentityPayload(value.data);
     return data ? { success: true, status_code: 200, data } : null;
