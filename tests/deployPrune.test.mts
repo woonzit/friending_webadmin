@@ -177,3 +177,12 @@ test("deploy.sh still never lets rsync delete, and prunes between the upload and
   assert.ok(list < upload, "the removal list is computed from the live commit before anything is uploaded");
   assert.ok(upload < apply && apply < serverGates, "removals follow the upload and precede the server's own gates");
 });
+
+test("deploy.sh runs the dependency audit gate before anything is uploaded, with no standing exception", () => {
+  const source = readFileSync(DEPLOY, "utf8");
+  const gate = source.indexOf('bash "$SCRIPT_DIR/scripts/audit-gate.sh"');
+  assert.ok(gate > 0 && gate < source.indexOf("rsync -az \\"), "the audit gate precedes the upload");
+  assert.ok(!/FRIENDING_WEBADMIN_AUDIT_ALLOW=/.test(source), "deploy.sh never carries an accepted advisory itself");
+  const audit = readFileSync(fileURLToPath(new URL("../scripts/audit-gate.sh", import.meta.url)), "utf8");
+  assert.match(audit, /exec npm audit --omit=dev/, "without an owner-accepted list the gate is plain npm audit");
+});

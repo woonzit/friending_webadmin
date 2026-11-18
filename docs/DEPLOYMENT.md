@@ -88,7 +88,11 @@ steps 2 to 7 and refuses to start unless step 1 has happened.
    ignored file on the workstation can never reach production. The script
    prints the commit and the archive hash — record both with the release.
 3. **Local gates.** `npm test`, `npm run typecheck`, `npm run build` and
-   `npm audit --omit=dev` run on the workstation before anything is uploaded.
+   `npm audit --omit=dev` (`scripts/audit-gate.sh`) run on the workstation
+   before anything is uploaded. Only when the owner explicitly accepts an
+   advisory that has no fixed release may the release set
+   `FRIENDING_WEBADMIN_AUDIT_ALLOW=<GHSA id>[,<GHSA id>]` for that one run;
+   every other advisory still stops it. Record the accepted ids with the release.
 4. **Upload the stage.** `rsync` without `--delete`, excluding `.env.local`,
    `.env`, `.deploy_commit`, `node_modules`, `.next/`, `.git`, build info and
    logs. The server keeps its own environment file, its build cache and its

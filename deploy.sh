@@ -122,7 +122,7 @@ cd "$SCRIPT_DIR"
 npm test
 npm run typecheck
 npm run build
-npm audit --omit=dev
+bash "$SCRIPT_DIR/scripts/audit-gate.sh"
 
 # Never `--delete`: the server keeps `.env.local`, its build cache and its
 # `.deploy_commit`.
